@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>图片背景透明化 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="图片背景透明化工具，纯前端Canvas颜色容差自动抠图去背景，魔棒选区删除指定颜色，导出透明PNG，数据本地处理。"/>
+<meta name="robots" content="noindex, follow" />
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.canvas-box canvas{max-width:100%;border-radius:8px;border:1px solid #e0e6ed;cursor:crosshair;}
+.ctrl-panel{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;max-width:500px;margin-left:auto;margin-right:auto;}
+@media(max-width:600px){.ctrl-panel{grid-template-columns:1fr;}}
+.ctrl-panel label{font-size:.82em;color:#64748b;font-weight:600;}
+.ctrl-panel input,.ctrl-panel select{padding:8px 12px;border:1px solid #e0e6ed;border-radius:6px;font-size:.88em;outline:none;}
+.ctrl-panel input[type=range]{padding:0;}
+.bg-pattern{background-image:linear-gradient(45deg,#e0e6ed 25%,transparent 25%),linear-gradient(-45deg,#e0e6ed 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#e0e6ed 75%),linear-gradient(-45deg,transparent 75%,#e0e6ed 75%);background-size:16px 16px;background-position:0 0,0 8px,8px -8px,-8px 0;}
+</style>
+    <meta name="keywords" content="图片背景移除,在线图片背景移除,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/bg-remove-tool.html" />
+    <meta property="og:title" content="图片背景透明化" />
+    <meta property="og:description" content="图片背景透明化工具，纯前端Canvas颜色容差自动抠图去背景，魔棒选区删除指定颜色，导出透明PNG，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/bg-remove-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="图片背景透明化" />
+    <meta itemprop="description" content="图片背景透明化工具，纯前端Canvas颜色容差自动抠图去背景，魔棒选区删除指定颜色，导出透明PNG，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "图片背景移除",
+                "item": "https://box.lynvortex.top/image/bg-remove-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "图片背景移除",
+        "url": "https://box.lynvortex.top/image/bg-remove-tool.html",
+        "description": "基于颜色容差算法自动移除图片背景，支持自定义背景色与透明导出",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🪄 图片背景透明化</h1><p>颜色容差自动抠图去背景，导出透明PNG</p></div>
+<div class="upload-zone" id="dropZone">📁 上传图片<input type="file" id="fileInput" accept="image/*" style="display:none;"/></div>
+<div id="editorArea" style="display:none;">
+<div class="ctrl-panel">
+<div><label>容差(0-100)</label><input type="range" id="tolerance" min="0" max="100" value="30"/><span id="tolVal" style="font-weight:700;color:#4a90e2;">30</span></div>
+<div><label>边缘羽化(0-10px)</label><input type="range" id="feather" min="0" max="10" value="2"/><span id="featherVal" style="font-weight:700;color:#4a90e2;">2</span></div>
+</div>
+<div style="text-align:center;margin-bottom:12px;">
+<button class="btn" id="pickBtn" style="padding:8px 16px;border:1px solid #e0e6ed;border-radius:8px;background:#f8fafc;color:#475569;cursor:pointer;font-size:.85em;font-weight:600;">🎯 点击图片选择背景色</button>
+<button class="btn btn-primary" id="processBtn" style="padding:8px 20px;margin-left:8px;">✨ 去除背景</button>
+<button class="btn" id="downloadBtn" style="padding:8px 16px;margin-left:8px;border:1px solid #4a90e2;border-radius:8px;background:#fff;color:#4a90e2;cursor:pointer;font-size:.85em;font-weight:600;">⬇ 下载PNG</button>
+</div>
+<div class="canvas-wrap">
+<div class="canvas-box"><canvas id="origCanvas"></canvas><div class="cl">原图（点击选背景色）</div></div>
+<div class="canvas-box"><canvas id="resultCanvas" class="bg-pattern"></canvas><div class="cl">透明背景结果</div></div>
+</div>
+</div>
+<div id="statusBar" class="status-bar info">上传图片后点击背景区域选择要去处的颜色</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 图片背景透明化</h3><p>颜色容差自动抠图去背景</p><div class="feature-chips"><span class="feature-chip">魔棒选色</span><span class="feature-chip">容差调节</span><span class="feature-chip">边缘羽化</span><span class="feature-chip">透明PNG</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>点击原图选择要去除的背景颜色</li><li>容差越大去除颜色范围越广</li><li>羽化值使边缘更自然过渡</li><li>适合纯色背景抠图，复杂背景效果有限</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var origImg=null,pickedColor=null,pickMode=false;
+document.getElementById('dropZone').onclick=function(){document.getElementById('fileInput').click();};
+document.getElementById('fileInput').onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){origImg=new Image();origImg.onload=function(){var c=document.getElementById('origCanvas');var maxW=400,scale=Math.min(1,maxW/origImg.width);c.width=origImg.width*scale;c.height=origImg.height*scale;var ctx=c.getContext('2d');ctx.drawImage(origImg,0,0,c.width,c.height);var rc=document.getElementById('resultCanvas');rc.width=c.width;rc.height=c.height;document.getElementById('editorArea').style.display='block';};origImg.src=ev.target.result;};r.readAsDataURL(f);};
+document.getElementById('tolerance').oninput=function(){document.getElementById('tolVal').textContent=this.value;};
+document.getElementById('feather').oninput=function(){document.getElementById('featherVal').textContent=this.value;};
+document.getElementById('pickBtn').onclick=function(){pickMode=true;document.getElementById('statusBar').textContent='点击原图中要去除的背景颜色区域';};
+document.getElementById('origCanvas').onclick=function(e){if(!pickMode)return;var c=this,ctx=c.getContext('2d'),rect=c.getBoundingClientRect(),x=Math.round((e.clientX-rect.left)*c.width/rect.width),y=Math.round((e.clientY-rect.top)*c.height/rect.height);var d=ctx.getImageData(x,y,1,1).data;pickedColor={r:d[0],g:d[1],b:d[2]};pickMode=false;document.getElementById('statusBar').textContent='已选颜色 RGB('+d[0]+','+d[1]+','+d[2]+')，点击"去除背景"';document.getElementById('statusBar').className='status-bar info';};
+document.getElementById('processBtn').onclick=function(){if(!pickedColor){document.getElementById('statusBar').textContent='请先点击图片选择背景颜色';document.getElementById('statusBar').className='status-bar error';return;}var oc=document.getElementById('origCanvas'),octx=oc.getContext('2d');var rc=document.getElementById('resultCanvas'),rctx=rc.getContext('2d');rctx.clearRect(0,0,rc.width,rc.height);rctx.drawImage(oc,0,0);var imgData=rctx.getImageData(0,0,rc.width,rc.height);var data=imgData.data;var tol=parseInt(document.getElementById('tolerance').value);var feather=parseInt(document.getElementById('feather').value);var tolR=tol*2.55;for(var i=0;i<data.length;i+=4){var dr=data[i]-pickedColor.r,dg=data[i+1]-pickedColor.g,db=data[i+2]-pickedColor.b;var dist=Math.sqrt(dr*dr+dg*dg+db*db);if(dist<=tolR){data[i+3]=0;}else if(dist<=tolR+feather*5){data[i+3]=Math.round(255*(dist-tolR)/(feather*5));}}rctx.putImageData(imgData,0,0);document.getElementById('statusBar').textContent='背景去除完成！';document.getElementById('statusBar').className='status-bar success';};
+document.getElementById('downloadBtn').onclick=function(){var rc=document.getElementById('resultCanvas');rc.toBlob(function(blob){var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='transparent.png';a.click();});};
+var dz=document.getElementById('dropZone');dz.ondragover=function(e){e.preventDefault();dz.style.borderColor='#4a90e2';};dz.ondragleave=function(){dz.style.borderColor='#e0e6ed';};dz.ondrop=function(e){e.preventDefault();dz.style.borderColor='#e0e6ed';var f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/')){document.getElementById('fileInput').files=e.dataTransfer.files;document.getElementById('fileInput').onchange({target:{files:[f]}});}};
+initSidebar('image');
+</script>
+</body>
+</html>

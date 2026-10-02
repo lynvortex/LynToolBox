@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>文本转语音 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="文本转语音工具，浏览器内置 SpeechSynthesis 朗读文本，可选音色、语速、音调，纯前端离线可用。" />
+    <meta name="robots" content="noindex, follow" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+        .ctrl-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+        @media (max-width: 600px) { .ctrl-grid { grid-template-columns: 1fr; } }
+        .range-val { font-size: 0.82em; color: #4a90e2; font-weight: 600; }
+        input[type=range] { width: 100%; accent-color: #4a90e2; }
+        .play-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; }
+        .voice-select { width: 100%; }
+        .progress { height: 6px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-top: 12px; }
+        .progress-bar { height: 100%; background: #4a90e2; width: 0; transition: width 0.2s; }
+        .support-warn { background: #fef3c7; color: #92400e; padding: 10px 14px; border-radius: 8px; font-size: 0.85em; margin-bottom: 16px; display: none; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="文字转语音,在线文字转语音,文本处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/text/tts-tool.html" />
+    <meta property="og:title" content="文本转语音" />
+    <meta property="og:description" content="文本转语音工具，浏览器内置 SpeechSynthesis 朗读文本，可选音色、语速、音调，纯前端离线可用。" />
+    <meta property="og:url" content="https://box.lynvortex.top/text/tts-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="文本转语音" />
+    <meta itemprop="description" content="文本转语音工具，浏览器内置 SpeechSynthesis 朗读文本，可选音色、语速、音调，纯前端离线可用。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文本处理",
+                "item": "https://box.lynvortex.top/text.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "文字转语音",
+                "item": "https://box.lynvortex.top/text/tts-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "文字转语音",
+        "url": "https://box.lynvortex.top/text/tts-tool.html",
+        "description": "使用浏览器内置语音引擎将文字转为语音朗读，支持多语言",
+        "applicationCategory": "文本处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🔊 文本转语音</h1>
+                <p>使用浏览器内置语音引擎朗读文本，可调音色、语速与音调，纯前端离线</p>
+            </div>
+
+            <div class="support-warn" id="supportWarn">⚠️ 当前浏览器不支持语音合成（SpeechSynthesis）API，请使用 Chrome / Edge / Safari。</div>
+
+            <div class="form-item" style="margin-bottom:16px;">
+                <label>朗读文本</label>
+                <textarea class="code" id="textInput" style="min-height:130px;">绘萤工具箱，以萤火之光，绘万千想象。欢迎使用文本转语音工具。</textarea>
+            </div>
+
+            <div class="form-item" style="margin-bottom:16px;">
+                <label>语音音色</label>
+                <select id="voiceSel" class="voice-select"></select>
+            </div>
+
+            <div class="ctrl-grid">
+                <div class="form-item">
+                    <label>语速 <span class="range-val" id="rateVal">1.0×</span></label>
+                    <input type="range" id="rateInput" min="0.5" max="2" step="0.1" value="1" />
+                </div>
+                <div class="form-item">
+                    <label>音调 <span class="range-val" id="pitchVal">1.0</span></label>
+                    <input type="range" id="pitchInput" min="0" max="2" step="0.1" value="1" />
+                </div>
+                <div class="form-item">
+                    <label>音量 <span class="range-val" id="volVal">100%</span></label>
+                    <input type="range" id="volInput" min="0" max="1" step="0.05" value="1" />
+                </div>
+            </div>
+
+            <div class="play-row">
+                <button class="btn btn-primary" id="playBtn">▶ 朗读</button>
+                <button class="btn btn-outline" id="pauseBtn">⏸ 暂停</button>
+                <button class="btn btn-outline" id="resumeBtn">⏵ 继续</button>
+                <button class="btn btn-ghost" id="stopBtn">⏹ 停止</button>
+                <button class="btn btn-ghost" id="downloadNote">💡 下载说明</button>
+            </div>
+
+            <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+
+            <div id="statusBar" class="status-bar info">点击「朗读」开始，可随时暂停/继续</div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 文字转语音</h3>
+                <p>使用浏览器 Web Speech API 将文字转为语音朗读</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">Web Speech API</span>
+                    <span class="feature-chip">多语言</span>
+                    <span class="feature-chip">语音合成</span>
+                    <span class="feature-chip">离线可用</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>需要浏览器支持 SpeechSynthesis API</li>
+                    <li>可调节语速、音调和音量</li>
+                    <li>支持暂停、继续和停止</li>
+                    <li>可用的语音列表取决于浏览器和操作系统</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const textInput = document.getElementById('textInput');
+    const voiceSel = document.getElementById('voiceSel');
+    const rateInput = document.getElementById('rateInput');
+    const pitchInput = document.getElementById('pitchInput');
+    const volInput = document.getElementById('volInput');
+    const rateVal = document.getElementById('rateVal');
+    const pitchVal = document.getElementById('pitchVal');
+    const volVal = document.getElementById('volVal');
+    const playBtn = document.getElementById('playBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resumeBtn = document.getElementById('resumeBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const statusBar = document.getElementById('statusBar');
+    const progressBar = document.getElementById('progressBar');
+    const supportWarn = document.getElementById('supportWarn');
+    const setStatus = (m, t) => { statusBar.textContent = m; statusBar.className = 'status-bar ' + (t || 'info'); };
+
+    const supported = 'speechSynthesis' in window;
+    if (!supported) { supportWarn.style.display = 'block'; playBtn.disabled = true; }
+
+    let voices = [];
+    const loadVoices = () => {
+        voices = speechSynthesis.getVoices();
+        if (!voices.length) return;
+        const cn = voices.filter(v => /zh|cmn/i.test(v.lang));
+        const list = cn.length ? cn : voices;
+        voiceSel.innerHTML = list.map((v, i) => `<option value="${voices.indexOf(v)}">${v.name}（${v.lang}）</option>`).join('');
+    };
+    loadVoices();
+    if (supported) speechSynthesis.onvoiceschanged = loadVoices;
+
+    [rateInput, pitchInput, volInput].forEach(el => el.addEventListener('input', () => {
+        rateVal.textContent = parseFloat(rateInput.value).toFixed(1) + '×';
+        pitchVal.textContent = parseFloat(pitchInput.value).toFixed(1);
+        volVal.textContent = Math.round(volInput.value * 100) + '%';
+    }));
+
+    playBtn.addEventListener('click', () => {
+        if (!supported) return;
+        const text = textInput.value.trim();
+        if (!text) { setStatus('请输入朗读文本', 'error'); return; }
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        const vi = parseInt(voiceSel.value, 10);
+        if (!isNaN(vi) && voices[vi]) u.voice = voices[vi];
+        u.rate = parseFloat(rateInput.value);
+        u.pitch = parseFloat(pitchInput.value);
+        u.volume = parseFloat(volInput.value);
+        u.onstart = () => { setStatus('正在朗读...', 'info'); playBtn.textContent = '🔄 重读'; };
+        u.onend = () => { setStatus('朗读完成 ✓', 'success'); progressBar.style.width = '100%'; setTimeout(() => progressBar.style.width = '0', 800); playBtn.textContent = '▶ 朗读'; };
+        u.onerror = (e) => { setStatus('朗读出错：' + (e.error || '未知'), 'error'); };
+        u.onboundary = (e) => { if (text.length) progressBar.style.width = Math.min(100, (e.charIndex / text.length) * 100) + '%'; };
+        speechSynthesis.speak(u);
+        setStatus('准备朗读...', 'info');
+    });
+    pauseBtn.addEventListener('click', () => { if (speechSynthesis.speaking) { speechSynthesis.pause(); setStatus('已暂停', 'info'); } });
+    resumeBtn.addEventListener('click', () => { if (speechSynthesis.paused) { speechSynthesis.resume(); setStatus('继续朗读...', 'info'); } });
+    stopBtn.addEventListener('click', () => { speechSynthesis.cancel(); setStatus('已停止', 'info'); progressBar.style.width = '0'; playBtn.textContent = '▶ 朗读'; });
+    document.getElementById('downloadNote').addEventListener('click', () => setStatus('💡 浏览器安全限制无法直接下载音频文件，可在朗读时用系统录屏/录音软件捕获', 'info'));
+
+    initSidebar('text');
+</script>
+</body>
+</html>

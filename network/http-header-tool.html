@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>HTTP响应头分析 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="HTTP响应头分析工具，纯前端解析HTTP响应头，检测安全头配置、缓存策略、内容类型，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.header-area{width:100%;min-height:180px;padding:12px 14px;border:1px solid #e0e6ed;border-radius:8px;font-size:.85em;font-family:'Courier New',monospace;outline:none;resize:vertical;box-sizing:border-box;background:#1e293b;color:#e2e8f0;}
+.header-area:focus{border-color:#4a90e2;}
+.url-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.url-row input{flex:1;min-width:200px;padding:10px 14px;border:1px solid #e0e6ed;border-radius:8px;font-size:.85em;outline:none;box-sizing:border-box;}
+.url-row input:focus{border-color:#4a90e2;}
+.result-section{background:#f8fafc;border:1px solid #e0e6ed;border-radius:10px;padding:14px;margin-bottom:12px;}
+.result-section h3{font-size:.92em;margin-bottom:10px;color:#2c3e50;display:flex;align-items:center;gap:6px;}
+.header-table{width:100%;border-collapse:collapse;font-size:.83em;}
+.header-table th{background:#f1f5f9;padding:8px 10px;text-align:left;font-weight:600;color:#475569;border-bottom:2px solid #e0e6ed;}
+.header-table td{padding:8px 10px;border-bottom:1px solid #f1f5f9;color:#334155;word-break:break-all;}
+.header-table td:first-child{font-weight:600;color:#4a90e2;white-space:nowrap;}
+.security-badge{display:inline-block;padding:3px 10px;border-radius:4px;font-size:.78em;font-weight:600;}
+.badge-ok{background:#dcfce7;color:#16a34a;}
+.badge-warn{background:#fef3c7;color:#d97706;}
+.badge-miss{background:#fee2e2;color:#dc2626;}
+.badge-info{background:#dbeafe;color:#2563eb;}
+.tabs{display:flex;gap:8px;margin-bottom:12px;}
+.tab{padding:8px 18px;border-radius:8px;border:1px solid #e0e6ed;background:#f8fafc;color:#64748b;cursor:pointer;font-size:.85em;font-weight:600;transition:.2s;}
+.tab.active{background:#4a90e2;color:#fff;border-color:#4a90e2;}
+.check-list{list-style:none;padding:0;margin:0;}
+.check-list li{padding:8px 0;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:10px;font-size:.85em;}
+.check-list li:last-child{border-bottom:none;}
+.check-icon{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75em;font-weight:700;flex-shrink:0;}
+.check-pass{background:#dcfce7;color:#16a34a;}
+.check-warn{background:#fef3c7;color:#d97706;}
+.check-fail{background:#fee2e2;color:#dc2626;}
+</style>
+    <meta name="keywords" content="HTTP响应头分析,在线HTTP响应头分析,网络工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/network/http-header-tool.html" />
+    <meta property="og:title" content="HTTP响应头分析" />
+    <meta property="og:description" content="HTTP响应头分析工具，纯前端解析HTTP响应头，检测安全头配置、缓存策略、内容类型，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/network/http-header-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="HTTP响应头分析" />
+    <meta itemprop="description" content="HTTP响应头分析工具，纯前端解析HTTP响应头，检测安全头配置、缓存策略、内容类型，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "网络工具",
+                "item": "https://box.lynvortex.top/network.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "HTTP响应头分析",
+                "item": "https://box.lynvortex.top/network/http-header-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "HTTP响应头分析",
+        "url": "https://box.lynvortex.top/network/http-header-tool.html",
+        "description": "解析HTTP响应头，检测安全头配置、缓存策略、内容类型",
+        "applicationCategory": "网络工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>📋 HTTP响应头分析</h1><p>解析HTTP响应头，检测安全头与缓存策略配置</p></div>
+<div class="tabs">
+<div class="tab active" data-mode="paste">粘贴分析</div>
+<div class="tab" data-mode="fetch">URL抓取</div>
+</div>
+<div id="pasteMode">
+<textarea class="header-area" id="headerInput" placeholder="粘贴完整的HTTP响应头，例如：&#10;HTTP/2 200&#10;content-type: text/html; charset=utf-8&#10;strict-transport-security: max-age=31536000&#10;x-content-type-options: nosniff&#10;..."></textarea>
+<div style="text-align:center;margin-top:10px;">
+<button class="btn btn-primary" id="analyzeBtn" style="padding:10px 24px;">🔍 分析</button>
+</div>
+</div>
+<div id="fetchMode" style="display:none;">
+<div class="url-row">
+<input type="text" id="urlInput" placeholder="输入URL，如 https://example.com"/>
+<button class="btn btn-primary" id="fetchBtn" style="padding:10px 24px;">📡 抓取</button>
+</div>
+</div>
+<div id="resultArea" style="display:none;">
+<div class="result-section">
+<h3>🛡️ 安全头检测</h3>
+<ul class="check-list" id="securityCheck"></ul>
+</div>
+<div class="result-section">
+<h3>📦 缓存策略</h3>
+<ul class="check-list" id="cacheCheck"></ul>
+</div>
+<div class="result-section">
+<h3>📋 所有响应头</h3>
+<table class="header-table">
+<thead><tr><th>头部名称</th><th>值</th></tr></thead>
+<tbody id="headerBody"></tbody>
+</table>
+</div>
+<div class="result-section">
+<h3>ℹ️ 基本信息</h3>
+<table class="header-table">
+<thead><tr><th>字段</th><th>值</th></tr></thead>
+<tbody id="infoBody"></tbody>
+</table>
+</div>
+</div>
+<div id="statusBar" class="status-bar info">粘贴HTTP响应头或输入URL进行分析</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 HTTP响应头分析</h3><p>检测安全头与缓存策略配置</p><div class="feature-chips"><span class="feature-chip">安全头检测</span><span class="feature-chip">缓存分析</span><span class="feature-chip">URL抓取</span><span class="feature-chip">离线可用</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>可直接粘贴HTTP响应头文本进行分析</li><li>URL抓取模式通过CORS代理获取响应头</li><li>检测HSTS、CSP、X-Frame-Options等安全头</li><li>分析缓存控制策略与内容类型</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var securityHeaders={
+'strict-transport-security':{name:'HSTS',desc:'强制HTTPS连接',recommend:'max-age=31536000; includeSubDomains'},
+'content-security-policy':{name:'CSP',desc:'内容安全策略，防止XSS',recommend:'default-src \'self\''},
+'x-frame-options':{name:'X-Frame-Options',desc:'防止点击劫持',recommend:'DENY 或 SAMEORIGIN'},
+'x-content-type-options':{name:'X-Content-Type-Options',desc:'防止MIME嗅探',recommend:'nosniff'},
+'x-xss-protection':{name:'X-XSS-Protection',desc:'浏览器XSS过滤',recommend:'1; mode=block'},
+'referrer-policy':{name:'Referrer-Policy',desc:'控制Referrer信息',recommend:'strict-origin-when-cross-origin'},
+'permissions-policy':{name:'Permissions-Policy',desc:'控制浏览器功能权限',recommend:'根据需要配置'},
+'cross-origin-opener-policy':{name:'COOP',desc:'跨域隔离',recommend:'same-origin'},
+'cross-origin-embedder-policy':{name:'COEP',desc:'跨域嵌入策略',recommend:'require-corp'},
+'cross-origin-resource-policy':{name:'CORP',desc:'跨域资源策略',recommend:'same-site'}
+};
+function parseHeaders(text){
+  var lines=text.split('\n');
+  var headers={};
+  var statusLine=null;
+  lines.forEach(function(line){
+    line=line.trim();
+    if(!line)return;
+    if(/^(HTTP\/[\d.]+)\s+(\d+)/.test(line)){statusLine=line;return;}
+    var idx=line.indexOf(':');
+    if(idx>0){
+      var key=line.substring(0,idx).trim().toLowerCase();
+      var val=line.substring(idx+1).trim();
+      headers[key]=val;
+    }
+  });
+  return{headers:headers,statusLine:statusLine};
+}
+function analyze(headers,statusLine){
+  var secHtml='';
+  Object.keys(securityHeaders).forEach(function(key){
+    var info=securityHeaders[key];
+    if(headers[key]){
+      secHtml+='<li><span class="check-icon check-pass">✓</span><div><strong>'+info.name+'</strong>: '+info.desc+'<br/><span style="color:#64748b;font-size:.9em;">当前值: '+escapeHtml(headers[key])+'</span></div></li>';
+    }else{
+      secHtml+='<li><span class="check-icon check-fail">✗</span><div><strong>'+info.name+'</strong>: '+info.desc+'<br/><span style="color:#dc2626;font-size:.9em;">缺失，建议设置: '+info.recommend+'</span></div></li>';
+    }
+  });
+  document.getElementById('securityCheck').innerHTML=secHtml;
+  var cacheHtml='';
+  var cacheHeaders=['cache-control','expires','etag','last-modified','age','pragma'];
+  cacheHeaders.forEach(function(key){
+    if(headers[key]){
+      cacheHtml+='<li><span class="check-icon check-pass">✓</span><div><strong>'+escapeHtml(key)+'</strong>: '+escapeHtml(headers[key])+'</div></li>';
+    }else{
+      cacheHtml+='<li><span class="check-icon check-warn">!</span><div><strong>'+escapeHtml(key)+'</strong>: <span style="color:#d97706;">未设置</span></div></li>';
+    }
+  });
+  if(headers['cache-control']){
+    var cc=headers['cache-control'].toLowerCase();
+    if(cc.includes('no-cache'))cacheHtml+='<li><span class="check-icon check-info">i</span><div>缓存策略: <strong>no-cache</strong>，每次请求都验证</div></li>';
+    else if(cc.includes('no-store'))cacheHtml+='<li><span class="check-icon check-info">i</span><div>缓存策略: <strong>no-store</strong>，禁止缓存</div></li>';
+    else if(cc.includes('max-age'))cacheHtml+='<li><span class="check-icon check-info">i</span><div>缓存策略: <strong>可缓存</strong>，'+escapeHtml(cc.match(/max-age=(\d+)/)&&cc.match(/max-age=(\d+)/)[0]||'')+'秒</div></li>';
+  }
+  document.getElementById('cacheCheck').innerHTML=cacheHtml;
+  var hdrHtml='';
+  Object.keys(headers).forEach(function(key){
+    hdrHtml+='<tr><td>'+escapeHtml(key)+'</td><td>'+escapeHtml(headers[key])+'</td></tr>';
+  });
+  document.getElementById('headerBody').innerHTML=hdrHtml;
+  var infoRows=[];
+  if(statusLine){
+    var m=statusLine.match(/^(HTTP\/[\d.]+)\s+(\d+)\s*(.*)/);
+    if(m){
+      infoRows.push(['HTTP版本',m[1]]);
+      infoRows.push(['状态码','<span class="security-badge '+(m[2].startsWith('2')?'badge-ok':m[2].startsWith('3')?'badge-info':m[2].startsWith('4')?'badge-warn':'badge-miss')+'">'+m[2]+'</span>']);
+      infoRows.push(['状态描述',escapeHtml(m[3]||'-')]);
+    }
+  }
+  if(headers['content-type'])infoRows.push(['内容类型',escapeHtml(headers['content-type'])]);
+  if(headers['server'])infoRows.push(['服务器',escapeHtml(headers['server'])]);
+  if(headers['date'])infoRows.push(['响应日期',escapeHtml(headers['date'])]);
+  if(headers['content-length'])infoRows.push(['内容长度',escapeHtml(headers['content-length'])+' bytes ('+formatSize(parseInt(headers['content-length']))+')']);
+  if(headers['set-cookie'])infoRows.push(['Cookie','已设置 ('+headers['set-cookie'].split('\n').length+'个)']);
+  document.getElementById('infoBody').innerHTML=infoRows.map(function(r){return '<tr><td style="font-weight:600;color:#64748b;">'+r[0]+'</td><td>'+r[1]+'</td></tr>';}).join('');
+}
+function formatSize(bytes){
+  if(bytes<1024)return bytes+' B';
+  if(bytes<1048576)return (bytes/1024).toFixed(1)+' KB';
+  return (bytes/1048576).toFixed(1)+' MB';
+}
+document.querySelectorAll('.tab').forEach(function(t){
+  t.onclick=function(){
+    document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active');});
+    t.classList.add('active');
+    var mode=t.dataset.mode;
+    document.getElementById('pasteMode').style.display=mode==='paste'?'block':'none';
+    document.getElementById('fetchMode').style.display=mode==='fetch'?'block':'none';
+  };
+});
+document.getElementById('analyzeBtn').onclick=function(){
+  var text=document.getElementById('headerInput').value.trim();
+  if(!text){document.getElementById('statusBar').textContent='请粘贴HTTP响应头';document.getElementById('statusBar').className='status-bar error';return;}
+  var result=parseHeaders(text);
+  if(Object.keys(result.headers).length===0){document.getElementById('statusBar').textContent='未能解析出有效的HTTP头';document.getElementById('statusBar').className='status-bar error';return;}
+  analyze(result.headers,result.statusLine);
+  document.getElementById('resultArea').style.display='block';
+  document.getElementById('statusBar').textContent='分析完成，共解析 '+Object.keys(result.headers).length+' 个响应头';
+  document.getElementById('statusBar').className='status-bar success';
+};
+document.getElementById('fetchBtn').onclick=function(){
+  var url=document.getElementById('urlInput').value.trim();
+  if(!url){document.getElementById('statusBar').textContent='请输入URL';document.getElementById('statusBar').className='status-bar error';return;}
+  if(!/^https?:\/\//.test(url))url='https://'+url;
+  document.getElementById('statusBar').textContent='正在抓取响应头...';
+  document.getElementById('statusBar').className='status-bar info';
+  fetch('https://corsproxy.io/?url='+encodeURIComponent(url),{method:'GET',redirect:'follow'}).then(function(resp){
+    var headerText='';
+    headerText+='HTTP/'+(resp.httpVersion||'1.1')+' '+resp.status+' '+resp.statusText+'\n';
+    resp.headers.forEach(function(val,key){headerText+=key+': '+val+'\n';});
+    document.getElementById('headerInput').value=headerText;
+    var result=parseHeaders(headerText);
+    analyze(result.headers,'HTTP/1.1 '+resp.status+' '+resp.statusText);
+    document.getElementById('resultArea').style.display='block';
+    document.getElementById('statusBar').textContent='抓取成功，状态码: '+resp.status;
+    document.getElementById('statusBar').className='status-bar success';
+  }).catch(function(err){
+    document.getElementById('statusBar').textContent='抓取失败: '+err.message+'（可能受CORS限制）';
+    document.getElementById('statusBar').className='status-bar error';
+  });
+};
+initSidebar('network');
+</script>
+</body>
+</html>

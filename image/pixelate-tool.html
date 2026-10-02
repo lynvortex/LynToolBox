@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>像素画转换 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="图片转像素画工具，将照片转换为复古像素风格，可调像素块大小、颜色层级与饱和度，纯前端Canvas处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<style>
+.canvas-wrap canvas{max-width:420px;max-height:380px;image-rendering:pixelated;}
+</style>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="像素画转换,图片转像素,像素风格,Pixel Art,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/image/pixelate-tool.html"/>
+<meta property="og:title" content="像素画转换"/>
+<meta property="og:description" content="照片转复古像素画风格，可调像素块与颜色层级。"/>
+<meta property="og:url" content="https://box.lynvortex.top/image/pixelate-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="像素画转换"/>
+<meta itemprop="description" content="照片转复古像素画风格，可调像素块与颜色层级。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"图像工具","item":"https://box.lynvortex.top/image.html"},{"@type":"ListItem","position":3,"name":"像素画转换","item":"https://box.lynvortex.top/image/pixelate-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"像素画转换","url":"https://box.lynvortex.top/image/pixelate-tool.html","description":"照片转像素画风格","applicationCategory":"图像工具","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>👾 像素画转换</h1>
+        <p>一键生成复古像素风格图片</p>
+    </div>
+    <div class="upload-zone" id="dropZone">
+        <p style="margin:0;color:#64748b;">🖼️ 点击选择或拖入图片</p>
+        <input type="file" id="fileInput" accept="image/*" style="display:none;"/>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>像素块大小（越大越粗糙）</label><input type="range" id="blockSize" min="2" max="48" value="12"/><span class="hint" id="blockVal">12 px</span></div>
+        <div class="form-item"><label>颜色层级（越少越复古）</label><input type="range" id="levels" min="2" max="32" value="8"/><span class="hint" id="levelVal">8 级</span></div>
+        <div class="form-item"><label>饱和度增强</label><input type="range" id="sat" min="0" max="200" value="120"/><span class="hint" id="satVal">120%</span></div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-outline" id="dlBtn" disabled>下载 PNG</button>
+    </div>
+    <div class="status-bar info" id="statusBar">请先选择图片，参数调整实时生效</div>
+    <div class="canvas-wrap">
+        <div class="canvas-box"><canvas id="outCanvas"></canvas><div class="cl">像素化结果</div></div>
+    </div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 像素画转换</h3>
+        <p>降采样 + 颜色量化模拟经典像素画效果。</p>
+        <div class="feature-chips"><span class="feature-chip">像素块调节</span><span class="feature-chip">颜色层级</span><span class="feature-chip">实时预览</span><span class="feature-chip">PNG导出</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>颜色层级调到 4 以下可获得 GameBoy 风格</li>
+            <li>下载的图片保持原图尺寸，像素块清晰锐利</li>
+            <li>处理在本地完成，图片不会上传</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+var srcImg = null;
+var outCanvas = document.getElementById('outCanvas');
+var dropZone = document.getElementById('dropZone'), fileInput = document.getElementById('fileInput');
+dropZone.onclick = function(){ fileInput.click(); };
+dropZone.ondragover = function(e){ e.preventDefault(); };
+dropZone.ondrop = function(e){ e.preventDefault(); if (e.dataTransfer.files[0]) loadImg(e.dataTransfer.files[0]); };
+fileInput.onchange = function(){ if (fileInput.files[0]) loadImg(fileInput.files[0]); };
+
+function loadImg(f) {
+    var img = new Image();
+    img.onload = function(){ srcImg = img; render(); setStatus('图片已加载：' + img.width + ' × ' + img.height, 'success'); document.getElementById('dlBtn').disabled = false; };
+    img.src = URL.createObjectURL(f);
+}
+
+function render() {
+    if (!srcImg) return;
+    var block = parseInt(document.getElementById('blockSize').value);
+    var levels = parseInt(document.getElementById('levels').value);
+    var sat = parseInt(document.getElementById('sat').value) / 100;
+    document.getElementById('blockVal').textContent = block + ' px';
+    document.getElementById('levelVal').textContent = levels + ' 级';
+    document.getElementById('satVal').textContent = Math.round(sat * 100) + '%';
+    var w = srcImg.width, h = srcImg.height;
+    var sw = Math.max(1, Math.round(w / block)), sh = Math.max(1, Math.round(h / block));
+    var small = document.createElement('canvas');
+    small.width = sw; small.height = sh;
+    var sctx = small.getContext('2d');
+    sctx.imageSmoothingEnabled = true;
+    sctx.drawImage(srcImg, 0, 0, sw, sh);
+    var data = sctx.getImageData(0, 0, sw, sh);
+    var d = data.data, step = 255 / (levels - 1);
+    for (var i = 0; i < d.length; i += 4) {
+        var r = d[i], g = d[i + 1], b = d[i + 2];
+        var gray = 0.299 * r + 0.587 * g + 0.114 * b;
+        r = gray + (r - gray) * sat; g = gray + (g - gray) * sat; b = gray + (b - gray) * sat;
+        d[i] = Math.round(Math.min(255, Math.max(0, r)) / step) * step;
+        d[i + 1] = Math.round(Math.min(255, Math.max(0, g)) / step) * step;
+        d[i + 2] = Math.round(Math.min(255, Math.max(0, b)) / step) * step;
+    }
+    sctx.putImageData(data, 0, 0);
+    outCanvas.width = w; outCanvas.height = h;
+    var ctx = outCanvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(small, 0, 0, w, h);
+}
+
+['blockSize', 'levels', 'sat'].forEach(function(id){
+    document.getElementById(id).addEventListener('input', render);
+});
+document.getElementById('dlBtn').onclick = function(){
+    outCanvas.toBlob(function(blob){
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'pixel-art.png';
+        a.click();
+    }, 'image/png');
+};
+initSidebar('image');
+</script>
+</body>
+</html>

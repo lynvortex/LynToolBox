@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>音频拼接 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="音频拼接工具，纯前端Web Audio API合并多个音频文件，支持拖拽排序、交叉淡入淡出，导出WAV，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.track-list{margin-bottom:16px;}
+.track-item{display:flex;gap:10px;align-items:center;padding:12px;background:#f8fafc;border:1px solid #e0e6ed;border-radius:8px;margin-bottom:8px;cursor:move;transition:.2s;}
+.track-item.dragging{opacity:.5;}
+.track-item .idx{width:30px;height:30px;border-radius:50%;background:#4a90e2;color:#fff;display:flex;align-items:center;justify-content:center;font-size:.82em;font-weight:700;flex:none;}
+.track-item .name{flex:1;font-size:.85em;color:#2c3e50;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.track-item .dur{font-size:.78em;color:#94a3b8;font-family:'Courier New',monospace;flex:none;}
+.track-item .del{cursor:pointer;color:#ef4444;font-size:1.1em;padding:4px;flex:none;}
+.track-item .move{cursor:grab;color:#94a3b8;font-size:1.1em;flex:none;}
+.control-row{display:flex;gap:14px;align-items:center;margin-bottom:16px;flex-wrap:wrap;}
+.control-row label{font-size:.82em;color:#64748b;font-weight:600;}
+.control-row select,.control-row input{padding:8px 12px;border:1px solid #e0e6ed;border-radius:8px;font-size:.85em;}
+.result-area{margin-top:16px;}
+audio{width:100%;margin-top:10px;}
+.progress-bar{height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden;margin:14px 0;display:none;}
+.progress-fill{height:100%;background:linear-gradient(90deg,#4a90e2,#3a7bd5);border-radius:4px;transition:.3s;width:0;}
+</style>
+    <meta name="keywords" content="音频拼接,在线音频拼接,音视频处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/media/audio-merge-tool.html" />
+    <meta property="og:title" content="音频拼接" />
+    <meta property="og:description" content="音频拼接工具，纯前端Web Audio API合并多个音频文件，支持拖拽排序、交叉淡入淡出，导出WAV，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/media/audio-merge-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="音频拼接" />
+    <meta itemprop="description" content="音频拼接工具，纯前端Web Audio API合并多个音频文件，支持拖拽排序、交叉淡入淡出，导出WAV，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "音视频处理",
+                "item": "https://box.lynvortex.top/media.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "音频拼接",
+                "item": "https://box.lynvortex.top/media/audio-merge-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "音频拼接",
+        "url": "https://box.lynvortex.top/media/audio-merge-tool.html",
+        "description": "多段音频拼接合并为一个文件，支持交叉淡入淡出",
+        "applicationCategory": "音视频处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🎵 音频拼接</h1><p>合并多个音频文件，支持交叉淡入淡出</p></div>
+<div class="upload-zone" id="dropZone">📁 点击或拖拽上传音频文件 (可多选)<input type="file" id="fileInput" accept="audio/*" multiple style="display:none;"/></div>
+<div class="track-list" id="trackList"></div>
+<div class="control-row">
+<label>🔀 淡入淡出</label>
+<select id="crossfade"><option value="0">无</option><option value="0.5" selected>0.5秒</option><option value="1">1秒</option><option value="2">2秒</option></select>
+<label style="margin-left:12px;">📁 输出格式</label>
+<select id="outFormat"><option value="wav">WAV</option></select>
+</div>
+<div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+<div style="text-align:center;margin-bottom:14px;">
+<button class="btn btn-primary" id="mergeBtn" style="padding:12px 32px;" disabled>🎵 合并音频</button>
+</div>
+<div class="result-area" id="resultArea" style="display:none;">
+<h3 style="font-size:.95em;color:#2c3e50;">🎵 合并结果</h3>
+<audio id="resultAudio" controls></audio>
+<div style="text-align:center;margin-top:10px;">
+<button class="btn btn-outline" id="dlBtn" style="padding:10px 24px;">⬇ 下载合并音频</button>
+</div>
+</div>
+<div id="statusBar" class="status-bar info">上传多个音频文件进行拼接</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 音频拼接</h3><p>合并多个音频文件</p><div class="feature-chips"><span class="feature-chip">多文件合并</span><span class="feature-chip">拖拽排序</span><span class="feature-chip">交叉淡入淡出</span><span class="feature-chip">WAV导出</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>上传多个音频文件自动添加到列表</li><li>拖拽列表项可调整播放顺序</li><li>交叉淡入淡出使过渡更自然</li><li>所有处理在浏览器本地完成</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var tracks=[];
+var dz=document.getElementById('dropZone'),fi=document.getElementById('fileInput');
+dz.onclick=function(){fi.click();};dz.ondragover=function(e){e.preventDefault();};dz.ondrop=function(e){e.preventDefault();var fs=e.dataTransfer.files;for(var i=0;i<fs.length;i++)if(fs[i].type.startsWith('audio/'))addTrack(fs[i]);};
+fi.onchange=function(){for(var i=0;i<fi.files.length;i++)addTrack(fi.files[i]);fi.value='';};
+function addTrack(file){
+tracks.push({file:file,name:file.name,duration:0,buffer:null});
+renderList();
+loadDuration(tracks.length-1);
+}
+function loadDuration(idx){
+var url=URL.createObjectURL(tracks[idx].file);
+var a=new Audio();a.src=url;
+a.onloadedmetadata=function(){
+tracks[idx].duration=a.duration;
+renderList();
+URL.revokeObjectURL(url);
+};
+}
+function renderList(){
+var html='';
+tracks.forEach(function(t,i){
+var m=Math.floor(t.duration/60),s=Math.floor(t.duration%60);
+html+='<div class="track-item" draggable="true" data-idx="'+i+'">';
+html+='<span class="move">⠿</span>';
+html+='<div class="idx">'+(i+1)+'</div>';
+html+='<div class="name">'+t.name+'</div>';
+html+='<div class="dur">'+m+':'+(s<10?'0':'')+s+'</div>';
+html+='<span class="del" data-idx="'+i+'">✕</span>';
+html+='</div>';
+});
+document.getElementById('trackList').innerHTML=html;
+document.getElementById('mergeBtn').disabled=tracks.length<2;
+document.querySelectorAll('.track-item .del').forEach(function(btn){btn.onclick=function(e){e.stopPropagation();var idx=parseInt(this.dataset.idx);tracks.splice(idx,1);renderList();};});
+var dragIdx=null;
+document.querySelectorAll('.track-item').forEach(function(item){
+item.ondragstart=function(){dragIdx=parseInt(this.dataset.idx);this.classList.add('dragging');};
+item.ondragend=function(){this.classList.remove('dragging');};
+item.ondragover=function(e){e.preventDefault();};
+item.ondrop=function(e){e.preventDefault();var dropIdx=parseInt(this.dataset.idx);if(dragIdx!==null&&dragIdx!==dropIdx){var tmp=tracks[dragIdx];tracks.splice(dragIdx,1);tracks.splice(dropIdx,0,tmp);renderList();}};
+});
+}
+document.getElementById('mergeBtn').onclick=function(){
+if(tracks.length<2)return;
+document.getElementById('statusBar').textContent='正在合并音频...';document.getElementById('statusBar').className='status-bar info';
+document.getElementById('progressBar').style.display='block';
+document.getElementById('progressFill').style.width='10%';
+var audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+var loaded=0;
+tracks.forEach(function(t,i){
+var reader=new FileReader();
+reader.onload=function(e){
+audioCtx.decodeAudioData(e.target.result,function(buffer){
+t.buffer=buffer;loaded++;
+document.getElementById('progressFill').style.width=(10+loaded/tracks.length*60)+'%';
+if(loaded===tracks.length)doMerge(audioCtx);
+},function(){loaded++;if(loaded===tracks.length)doMerge(audioCtx);});
+};
+reader.readAsArrayBuffer(t.file);
+});
+};
+function doMerge(audioCtx){
+var crossfade=parseFloat(document.getElementById('crossfade').value);
+var totalLen=0;var maxCh=1;var sampleRate=audioCtx.sampleRate;
+tracks.forEach(function(t,i){
+if(t.buffer){
+totalLen+=t.buffer.length;
+if(i>0&&crossfade>0)totalLen-=crossfade*sampleRate;
+maxCh=Math.max(maxCh,t.buffer.numberOfChannels);
+sampleRate=t.buffer.sampleRate;
+}
+});
+var merged=audioCtx.createBuffer(maxCh,totalLen,sampleRate);
+var offset=0;
+tracks.forEach(function(t,i){
+if(!t.buffer)return;
+var fadeLen=crossfade*sampleRate;
+for(var ch=0;ch<maxCh;ch++){
+var srcData=t.buffer.getChannelData(Math.min(ch,t.buffer.numberOfChannels-1));
+var dstData=merged.getChannelData(ch);
+if(i>0&&crossfade>0){
+for(var j=0;j<fadeLen&&j<srcData.length&&offset-fadeLen+j>=0;j++){
+dstData[offset-fadeLen+j]=dstData[offset-fadeLen+j]*((fadeLen-j)/fadeLen)+srcData[j]*(j/fadeLen);
+}
+for(var j=fadeLen;j<srcData.length;j++){dstData[offset-fadeLen+j]=srcData[j];}
+offset+=srcData.length-fadeLen;
+}else{
+for(var j=0;j<srcData.length;j++)dstData[offset+j]=srcData[j];
+offset+=srcData.length;
+}
+}
+});
+document.getElementById('progressFill').style.width='90%';
+var blob=encodeWAV(merged);
+var url=URL.createObjectURL(blob);
+document.getElementById('resultAudio').src=url;
+document.getElementById('resultArea').style.display='block';
+document.getElementById('progressFill').style.width='100%';
+document.getElementById('progressBar').style.display='none';
+document.getElementById('statusBar').textContent='合并完成';document.getElementById('statusBar').className='status-bar success';
+window._mergedBlob=blob;
+}
+function encodeWAV(buffer){
+var numCh=buffer.numberOfChannels,sr=buffer.sampleRate;
+var len=buffer.length*numCh*2+44;var ab=new ArrayBuffer(len);var view=new DataView(ab);
+var ws=function(o,s){for(var i=0;i<s.length;i++)view.setUint8(o+i,s.charCodeAt(i));};
+ws(0,'RIFF');view.setUint32(4,36+len-44,true);ws(8,'WAVE');ws(12,'fmt ');
+view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,numCh,true);
+view.setUint32(24,sr,true);view.setUint32(28,sr*numCh*2,true);
+view.setUint16(32,numCh*2,true);view.setUint16(34,16,true);ws(36,'data');
+view.setUint32(40,len-44,true);
+var off=44;
+for(var i=0;i<buffer.length;i++)for(var ch=0;ch<numCh;ch++){var s=Math.max(-1,Math.min(1,buffer.getChannelData(ch)[i]));view.setInt16(off,s<0?s*0x8000:s*0x7FFF,true);off+=2;}
+return new Blob([ab],{type:'audio/wav'});
+}
+document.getElementById('dlBtn').onclick=function(){if(window._mergedBlob){var a=document.createElement('a');a.href=URL.createObjectURL(window._mergedBlob);a.download='merged-audio.wav';a.click();}};
+initSidebar('media');
+</script>
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Loading动画生成器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="可视化生成CSS Loading加载动画，支持多种样式和颜色，一键复制CSS代码" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+
+        .lg-preview { display: flex; align-items: center; justify-content: center; min-height: 180px; background: #f8fafc; border-radius: 10px; margin-bottom: 16px; border: 2px dashed #cbd5e1; }
+        .lg-types { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+        .lg-type-btn { padding: 8px 14px; border-radius: 8px; border: 1px solid #e0e6ed; background: #f8fafc; cursor: pointer; font-size: 0.85em; transition: 0.2s; }
+        .lg-type-btn.active { background: #4a90e2; color: #fff; border-color: #4a90e2; }
+    
+    </style>
+    <script src="../assets/sidebar.js"></script>
+
+    <meta name="keywords" content="Loading动画生成器,在线Loading动画生成器,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/loading-gen-tool.html" />
+    <meta property="og:title" content="Loading动画生成器" />
+    <meta property="og:description" content="可视化生成CSS Loading加载动画，支持多种样式和颜色，一键复制CSS代码" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/loading-gen-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="Loading动画生成器" />
+    <meta itemprop="description" content="可视化生成CSS Loading加载动画，支持多种样式和颜色，一键复制CSS代码" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Loading动画生成器",
+                "item": "https://box.lynvortex.top/work/loading-gen-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Loading动画生成器",
+        "url": "https://box.lynvortex.top/work/loading-gen-tool.html",
+        "description": "可视化生成CSS Loading加载动画，支持多种样式和颜色",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>⏳ Loading动画生成器</h1>
+                <p>可视化生成CSS Loading加载动画，支持多种样式和颜色，一键复制CSS代码</p>
+            </div>
+
+            <div class="lg-types" id="lgTypes"></div>
+            <div class="lg-preview" id="lgPreview"></div>
+            <div class="form-grid">
+                <div class="form-item"><label>动画颜色</label><input type="color" id="lgColor" value="#4a90e2" /></div>
+                <div class="form-item"><label>背景色</label><input type="color" id="lgBg" value="#f8fafc" /></div>
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-outline" id="lgCopy">📋 复制CSS代码</button>
+            </div>
+            <pre class="output" id="lgCode" style="margin-top:12px;"></pre>
+    
+            <div id="statusBar" class="status-bar info">准备就绪，请按提示操作</div>
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 Loading动画生成器</h3>
+                <p>生成6种常用CSS加载动画，支持颜色自定义和代码导出</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">纯CSS动画</span>
+                    <span class="feature-chip">6种样式</span>
+                    <span class="feature-chip">颜色自定义</span>
+                    <span class="feature-chip">一键复制</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>提供旋转圆环、跳动圆点、脉冲、音波柱、双环旋转、翻转方块6种动画</li>
+                    <li>可自定义动画颜色和背景色</li>
+                    <li>生成的CSS代码包含keyframes和样式定义</li>
+                    <li>复制后直接在HTML中使用即可</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+
+    const setStatus = (m,t) => { const s=document.getElementById('statusBar'); s.textContent=m; s.className='status-bar '+(t||'info'); };
+    const types = [
+        { id: 'spinner', name: '旋转圆环' },
+        { id: 'dots', name: '跳动圆点' },
+        { id: 'pulse', name: '脉冲' },
+        { id: 'bars', name: '音波柱' },
+        { id: 'ring', name: '双环旋转' },
+        { id: 'square', name: '翻转方块' }
+    ];
+    let curType = 'spinner';
+    let styleEl = document.createElement('style');
+    document.head.appendChild(styleEl);
+
+    document.getElementById('lgTypes').innerHTML = types.map(t =>
+        `<div class="lg-type-btn ${t.id===curType?'active':''}" data-type="${t.id}">${t.name}</div>`
+    ).join('');
+
+    document.querySelectorAll('.lg-type-btn').forEach(b => b.addEventListener('click', () => {
+        document.querySelectorAll('.lg-type-btn').forEach(x => x.classList.remove('active'));
+        b.classList.add('active'); curType = b.dataset.type; update();
+    }));
+
+    document.getElementById('lgColor').addEventListener('input', update);
+    document.getElementById('lgBg').addEventListener('input', update);
+
+    function generateCSS(type, color, bg) {
+        const animations = `
+@keyframes lg-spin { to { transform: rotate(360deg); } }
+@keyframes lg-pulse { 0%,100% { transform: scale(0.8); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 1; } }
+@keyframes lg-bounce { 0%,80%,100% { transform: scale(0); } 40% { transform: scale(1); } }
+@keyframes lg-stretch { 0%,40%,100% { transform: scaleY(0.4); } 20% { transform: scaleY(1); } }
+@keyframes lg-ring { 0% { transform: rotate(0); } 50% { transform: rotate(140deg); } 100% { transform: rotate(360deg); } }
+@keyframes lg-flip { 0% { transform: rotate(0); } 50% { transform: rotate(180deg); } 100% { transform: rotate(360deg); } }`;
+
+        const templates = {
+            spinner: `.loading { width: 40px; height: 40px; border: 4px solid ${bg}; border-top-color: ${color}; border-radius: 50%; animation: lg-spin 0.8s linear infinite; }`,
+            dots: `.loading { display: flex; gap: 6px; }
+.loading span { width: 12px; height: 12px; background: ${color}; border-radius: 50%; display: inline-block; animation: lg-bounce 1.4s infinite ease-in-out both; }
+.loading span:nth-child(1) { animation-delay: -0.32s; }
+.loading span:nth-child(2) { animation-delay: -0.16s; }`,
+            pulse: `.loading { width: 40px; height: 40px; background: ${color}; border-radius: 50%; animation: lg-pulse 1s infinite ease-in-out; }`,
+            bars: `.loading { display: flex; gap: 4px; align-items: center; height: 40px; }
+.loading span { width: 6px; height: 100%; background: ${color}; display: inline-block; animation: lg-stretch 1s infinite ease-in-out; }
+.loading span:nth-child(2) { animation-delay: 0.1s; }
+.loading span:nth-child(3) { animation-delay: 0.2s; }
+.loading span:nth-child(4) { animation-delay: 0.3s; }`,
+            ring: `.loading { position: relative; width: 50px; height: 50px; }
+.loading div { position: absolute; width: 100%; height: 100%; border: 4px solid transparent; border-top-color: ${color}; border-radius: 50%; animation: lg-ring 1s infinite; }
+.loading div:nth-child(2) { animation-delay: 0.5s; border-top-color: ${color}80; }`,
+            square: `.loading { width: 40px; height: 40px; background: ${color}; animation: lg-flip 1s infinite ease-in-out; }`
+        };
+
+        let html = '';
+        if (type === 'dots' || type === 'bars') {
+            html = '<div class="loading"><span></span><span></span><span></span>' + (type==='bars'?'<span></span>':'') + '</div>';
+        } else if (type === 'ring') {
+            html = '<div class="loading"><div></div><div></div></div>';
+        } else {
+            html = '<div class="loading"></div>';
+        }
+        return { css: animations + '\n' + templates[type], html };
+    }
+
+    function update() {
+        const color = document.getElementById('lgColor').value;
+        const bg = document.getElementById('lgBg').value;
+        const { css, html } = generateCSS(curType, color, bg);
+        styleEl.textContent = css;
+        document.getElementById('lgPreview').innerHTML = html;
+        document.getElementById('lgCode').textContent = css;
+    }
+
+    document.getElementById('lgCopy').addEventListener('click', () => {
+        navigator.clipboard.writeText(document.getElementById('lgCode').textContent).then(() => setStatus('CSS代码已复制', 'success'));
+    });
+
+    update();
+    
+    initSidebar('work');
+</script>
+</body>
+</html>

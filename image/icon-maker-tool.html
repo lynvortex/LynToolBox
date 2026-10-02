@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图标生成器 - 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="图标生成器，生成纯色/渐变圆角图标，可调大小颜色。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'PingFang SC', -apple-system, sans-serif; background: #f4f7f9; margin: 0; display: flex; height: 100vh; overflow: hidden; color: #333; }
+
+        .mobile-header {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 60px;
+            background: #fff;
+            padding: 0 20px;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            z-index: 1000;
+        }
+        .mobile-brand { font-size: 1.2em; font-weight: bold; color: #2c3e50; }
+        .menu-toggle { font-size: 24px; cursor: pointer; background: none; border: none; color: #4ae2b7; }
+
+        .sidebar { width: 240px; background: #fff; border-right: 1px solid #e1e4e8; display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02); transition: transform 0.3s; z-index: 1001; flex-shrink: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item { display: block; padding: 14px 22px; color: #606266; text-decoration: none; transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em; }
+        .category-item:hover, .category-item.active { background: #e6faf4; color: #4ae2b7; border-left-color: #4ae2b7; }
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+        .tool-container { width: 100%; max-width: 960px; background: #fff; border-radius: 12px; padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06); }
+        .tool-header { text-align: center; margin-bottom: 28px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+        .icon-workspace {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 600px) { .icon-workspace { grid-template-columns: 1fr; } }
+
+        .icon-preview-area {
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            padding: 20px;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .icon-preview-area label {
+            font-size: 0.85em;
+            color: #64748b;
+            margin-bottom: 12px;
+            font-weight: 500;
+            align-self: flex-start;
+        }
+        #iconCanvas {
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        }
+        .icon-preview-info {
+            margin-top: 10px;
+            font-size: 0.8em;
+            color: #94a3b8;
+        }
+
+        .icon-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .control-group {
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            padding: 14px;
+            background: #f8fafc;
+        }
+        .control-group label {
+            display: block;
+            font-size: 0.85em;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .shape-grid {
+            display: flex;
+            gap: 8px;
+        }
+        .shape-btn {
+            flex: 1;
+            padding: 8px 0;
+            border: 1px solid #e0e6ed;
+            border-radius: 6px;
+            background: #fff;
+            color: #64748b;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            text-align: center;
+        }
+        .shape-btn:hover { border-color: #4ae2b7; color: #4ae2b7; }
+        .shape-btn.active { border-color: #4ae2b7; color: #4ae2b7; background: #d1f7ec; }
+
+        .color-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .color-row input[type="color"] {
+            width: 48px;
+            height: 36px;
+            border: 1px solid #e0e6ed;
+            border-radius: 6px;
+            padding: 2px;
+            cursor: pointer;
+            background: #fff;
+        }
+        .color-row input[type="text"] {
+            flex: 1;
+            padding: 8px 10px;
+            border: 1px solid #e0e6ed;
+            border-radius: 6px;
+            font-size: 0.85em;
+            outline: none;
+            font-family: 'Consolas', monospace;
+        }
+        .color-row input[type="text"]:focus { border-color: #4ae2b7; }
+
+        .gradient-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .gradient-toggle input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #4ae2b7;
+            cursor: pointer;
+        }
+        .gradient-toggle label {
+            font-size: 0.85em;
+            color: #64748b;
+            cursor: pointer;
+            margin-bottom: 0;
+        }
+
+        .gradient-colors {
+            display: none;
+            gap: 10px;
+            margin-top: 8px;
+            align-items: center;
+        }
+        .gradient-colors.show { display: flex; }
+        .gradient-colors input[type="color"] {
+            width: 40px;
+            height: 32px;
+            border: 1px solid #e0e6ed;
+            border-radius: 4px;
+            padding: 1px;
+            cursor: pointer;
+        }
+
+        .size-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .size-control input[type="range"] {
+            flex: 1;
+            height: 4px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #ddd;
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+        }
+        .size-control input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #4ae2b7;
+            cursor: pointer;
+        }
+        .size-control input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #4ae2b7;
+            cursor: pointer;
+            border: none;
+        }
+        .size-control .size-label {
+            min-width: 45px;
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #4ae2b7;
+            text-align: right;
+        }
+
+        .radius-control {
+            margin-top: 8px;
+        }
+        .radius-control input[type="range"] {
+            width: 100%;
+            height: 4px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #ddd;
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+        }
+        .radius-control input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #4ae2b7;
+            cursor: pointer;
+        }
+        .radius-control input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #4ae2b7;
+            cursor: pointer;
+            border: none;
+        }
+
+        .action-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em; font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap; }
+        .btn-primary { background: #4ae2b7; color: white; }
+        .btn-primary:hover { background: #3ac9a0; }
+        .btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+.btn-outline { background: transparent; color: #4ae2b7; border: 1px solid #4ae2b7; }
+.btn-outline:hover { background: #4ae2b7; color: white; }
+.btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+.btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+        .btn-secondary { background: #f0f2f5; color: #606266; }
+        .btn-secondary:hover { background: #e1e4e8; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-success:hover { background: #059669; }
+
+        .status-bar { min-height: 20px; font-size: 0.85em; padding: 8px 12px; border-radius: 6px; margin-bottom: 16px; }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+        .footer a { color: #4ae2b7; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        .info-cards {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-top: 4px;
+        }
+        .info-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 22px 24px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+            border: 1px solid #f0f2f5;
+        }
+        .info-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1em;
+            color: #2c3e50;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .info-card p {
+            margin: 0 0 10px 0;
+            font-size: 0.82em;
+            color: #64748b;
+        }
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip {
+            background: #e0f2fe; color: #0369a1;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace;
+        }
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a {
+            font-size: 0.85em; color: #4ae2b7; text-decoration: none;
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s;
+        }
+        .tool-links a:hover { background: #e2e8f0; }
+
+    @media (max-width: 768px) {
+    body { display: block; height: auto; overflow: auto; }
+    .mobile-header { display: flex; }
+    .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+    .sidebar.active { transform: translateX(0); }
+    .close-sidebar { display: block; }
+    .main-content { display: block; }
+    .main-scroll { padding: 72px 16px 32px; gap: 20px;  }
+    .tool-container { padding: 24px 16px; border-radius: 10px; }
+    .tool-header h1 { font-size: 1.3em; }
+    .overlay.active { display: block; }
+}
+@media (max-width: 380px) { .tool-header h1 { font-size: 1.1em; } }
+
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="图标生成器,在线图标生成器,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/icon-maker-tool.html" />
+    <meta property="og:title" content="图标生成器" />
+    <meta property="og:description" content="图标生成器，生成纯色/渐变圆角图标，可调大小颜色。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/icon-maker-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="图标生成器" />
+    <meta itemprop="description" content="图标生成器，生成纯色/渐变圆角图标，可调大小颜色。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "图标生成器",
+                "item": "https://box.lynvortex.top/image/icon-maker-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "图标生成器",
+        "url": "https://box.lynvortex.top/image/icon-maker-tool.html",
+        "description": "生成纯色/渐变圆角图标，可调大小颜色",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+<main class="main-content">
+    <div class="main-scroll">
+
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>图标生成器</h1>
+                <p>快速生成自定义颜色、形状和大小的图标，支持下载PNG格式</p>
+            </div>
+
+            <div class="icon-workspace">
+                <div class="icon-preview-area">
+                    <label>图标预览</label>
+                    <canvas id="iconCanvas" width="200" height="200"></canvas>
+                    <div class="icon-preview-info">
+                        <span id="iconSizeInfo">200 x 200 px</span>
+                    </div>
+                </div>
+
+                <div class="icon-controls">
+                    <div class="control-group">
+                        <label>形状</label>
+                        <div class="shape-grid" id="shapeGrid">
+                            <button class="shape-btn active" data-shape="circle" onclick="selectShape('circle')">圆形</button>
+                            <button class="shape-btn" data-shape="square" onclick="selectShape('square')">方形</button>
+                            <button class="shape-btn" data-shape="rounded" onclick="selectShape('rounded')">圆角</button>
+                        </div>
+                        <div class="radius-control" id="radiusControl" style="display:none;">
+                            <label style="font-size:0.8em; margin-bottom:4px; display:block;">圆角半径: <span id="radiusVal">20</span></label>
+                            <input type="range" id="radiusInput" min="0" max="80" value="20" oninput="updateRadius()">
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label>填充颜色</label>
+                        <div class="color-row">
+                            <input type="color" id="fillColor" value="#4ae2b7" onchange="updateFillColor()">
+                            <input type="text" id="fillColorText" value="#4ae2b7" oninput="updateFillColorText()">
+                        </div>
+                        <div class="gradient-toggle">
+                            <input type="checkbox" id="useGradient" onchange="toggleGradient()">
+                            <label for="useGradient">使用渐变色</label>
+                        </div>
+                        <div class="gradient-colors" id="gradientColors">
+                            <input type="color" id="gradColor1" value="#4ae2b7" onchange="renderIcon()">
+                            <span style="color:#94a3b8; font-size:0.85em;">到</span>
+                            <input type="color" id="gradColor2" value="#ec4899" onchange="renderIcon()">
+                            <select id="gradDirection" onchange="renderIcon()" style="padding:4px; border:1px solid #e0e6ed; border-radius:4px; font-size:0.8em; font-family:inherit;">
+                                <option value="to right">横向</option>
+                                <option value="to bottom">纵向</option>
+                                <option value="to bottom right">对角线</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label>图标大小</label>
+                        <div class="size-control">
+                            <input type="range" id="iconSize" min="32" max="512" value="200" oninput="updateIconSize()">
+                            <span class="size-label" id="sizeLabel">200</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-row">
+                <button class="btn btn-success" onclick="downloadIcon()">下载PNG图标</button>
+                <button class="btn btn-secondary" onclick="resetDefaults()">恢复默认</button>
+            </div>
+
+            <div class="status-bar info" id="statusBar">选择参数，实时预览图标效果</div>
+
+            <footer class="footer">
+                &copy; 2026 绘萤者-Lynvortex &middot; 美梦多彩 理想自由
+            <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4ae2b7;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4ae2b7;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>图标生成器功能</h3>
+                <p>快速生成自定义颜色、形状和大小的图标，支持渐变色和圆角</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">图标生成</span>
+                    <span class="tld-chip">形状选择</span>
+                    <span class="tld-chip">渐变色</span>
+                    <span class="tld-chip">PNG下载</span>
+                    <span class="tld-chip">Canvas绘制</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>使用须知</h3>
+                <ul class="tips-list">
+                    <li>选择圆形、方形或圆角矩形三种形状</li>
+                    <li>支持自定义填充颜色和渐变色效果</li>
+                    <li>图标大小可在 32x32 到 512x512 之间调节</li>
+                    <li>生成的图标可下载为PNG格式</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<script>
+window.escapeHtml = function(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+};
+
+let currentShape = 'circle';
+let currentSize = 200;
+
+function renderIcon() {
+    let canvas = document.getElementById('iconCanvas');
+    let ctx = canvas.getContext('2d');
+    let size = currentSize;
+    canvas.width = size;
+    canvas.height = size;
+
+    ctx.clearRect(0, 0, size, size);
+
+    // 透明背景
+    ctx.clearRect(0, 0, size, size);
+
+    let useGrad = document.getElementById('useGradient').checked;
+
+    let fillStyle;
+    if (useGrad) {
+        let c1 = document.getElementById('gradColor1').value;
+        let c2 = document.getElementById('gradColor2').value;
+        let dir = document.getElementById('gradDirection').value;
+        let grad;
+        if (dir === 'to right') {
+            grad = ctx.createLinearGradient(0, 0, size, 0);
+        } else if (dir === 'to bottom') {
+            grad = ctx.createLinearGradient(0, 0, 0, size);
+        } else {
+            grad = ctx.createLinearGradient(0, 0, size, size);
+        }
+        grad.addColorStop(0, c1);
+        grad.addColorStop(1, c2);
+        fillStyle = grad;
+    } else {
+        fillStyle = document.getElementById('fillColor').value;
+    }
+
+    ctx.fillStyle = fillStyle;
+
+    let padding = size * 0.08;
+    let x = padding;
+    let y = padding;
+    let w = size - 2 * padding;
+    let h = size - 2 * padding;
+
+    ctx.beginPath();
+    if (currentShape === 'circle') {
+        ctx.arc(size / 2, size / 2, (size / 2 - padding), 0, Math.PI * 2);
+    } else if (currentShape === 'square') {
+        ctx.rect(x, y, w, h);
+    } else if (currentShape === 'rounded') {
+        let r = parseInt(document.getElementById('radiusInput').value) * (size / 200);
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    document.getElementById('iconSizeInfo').textContent = size + ' x ' + size + ' px';
+}
+
+function selectShape(shape) {
+    currentShape = shape;
+    document.querySelectorAll('#shapeGrid .shape-btn').forEach(function(b) {
+        b.classList.remove('active');
+    });
+    document.querySelector('#shapeGrid .shape-btn[data-shape="' + shape + '"]').classList.add('active');
+    document.getElementById('radiusControl').style.display = shape === 'rounded' ? 'block' : 'none';
+    renderIcon();
+}
+
+function updateRadius() {
+    document.getElementById('radiusVal').textContent = document.getElementById('radiusInput').value;
+    renderIcon();
+}
+
+function updateFillColor() {
+    let c = document.getElementById('fillColor').value;
+    document.getElementById('fillColorText').value = c;
+    renderIcon();
+}
+
+function updateFillColorText() {
+    let val = document.getElementById('fillColorText').value.trim();
+    if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+        document.getElementById('fillColor').value = val;
+        renderIcon();
+    }
+}
+
+function toggleGradient() {
+    let checked = document.getElementById('useGradient').checked;
+    document.getElementById('gradientColors').classList.toggle('show', checked);
+    renderIcon();
+}
+
+function updateIconSize() {
+    let val = parseInt(document.getElementById('iconSize').value);
+    currentSize = val;
+    document.getElementById('sizeLabel').textContent = val;
+    renderIcon();
+}
+
+function downloadIcon() {
+    let canvas = document.getElementById('iconCanvas');
+    canvas.toBlob(function(blob) {
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = 'icon_' + currentSize + 'x' + currentSize + '_' + currentShape + '.png';
+        a.click();
+        URL.revokeObjectURL(url);
+        setStatus('图标已下载', 'success');
+    }, 'image/png');
+}
+
+function resetDefaults() {
+    currentShape = 'circle';
+    currentSize = 200;
+    document.querySelectorAll('#shapeGrid .shape-btn').forEach(function(b) {
+        b.classList.remove('active');
+    });
+    document.querySelector('#shapeGrid .shape-btn[data-shape="circle"]').classList.add('active');
+    document.getElementById('radiusControl').style.display = 'none';
+    document.getElementById('radiusInput').value = 20;
+    document.getElementById('radiusVal').textContent = '20';
+    document.getElementById('fillColor').value = '#4ae2b7';
+    document.getElementById('fillColorText').value = '#4ae2b7';
+    document.getElementById('useGradient').checked = false;
+    document.getElementById('gradientColors').classList.remove('show');
+    document.getElementById('iconSize').value = 200;
+    document.getElementById('sizeLabel').textContent = '200';
+    renderIcon();
+    setStatus('已恢复默认设置', 'info');
+}
+
+// 初始渲染
+renderIcon();
+
+initSidebar('image');
+</script>
+</body>
+</html>

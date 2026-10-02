@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tab 空格转换 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线 Tab 与空格互转工具，支持 2/4/8 宽度设置，仅转换行首缩进或全部替换，保持代码对齐，纯前端处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="tab转空格,空格转tab,缩进转换,代码缩进,编辑器配置,文本处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/text/tab-space-tool.html"/>
+<meta property="og:title" content="Tab 空格转换"/>
+<meta property="og:description" content="Tab/空格缩进互转，保持对齐。"/>
+<meta property="og:url" content="https://box.lynvortex.top/text/tab-space-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="Tab 空格转换"/>
+<meta itemprop="description" content="Tab/空格缩进互转，保持对齐。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"文本处理","item":"https://box.lynvortex.top/text.html"},{"@type":"ListItem","position":3,"name":"Tab 空格转换","item":"https://box.lynvortex.top/text/tab-space-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"Tab 空格转换","url":"https://box.lynvortex.top/text/tab-space-tool.html","description":"Tab与空格互转工具","applicationCategory":"文本处理","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>⇥ Tab 空格转换</h1>
+        <p>代码缩进 Tab ⇄ 空格，支持列对齐智能处理</p>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>转换方向</label>
+            <select id="dir">
+                <option value="t2s">Tab → 空格</option>
+                <option value="s2t">空格 → Tab</option>
+            </select>
+        </div>
+        <div class="form-item"><label>Tab 宽度</label>
+            <select id="width"><option value="2">2 空格</option><option value="4" selected>4 空格</option><option value="8">8 空格</option></select>
+        </div>
+        <div class="form-item"><label>转换范围</label>
+            <select id="scope">
+                <option value="indent">仅行首缩进（推荐）</option>
+                <option value="all">全文所有 Tab/空格</option>
+            </select>
+        </div>
+        <div class="form-item"><label>统计</label>
+            <select id="showStats" disabled style="color:#94a3b8;"><option>转换后显示</option></select>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="runBtn">⇥ 转换</button>
+        <button class="btn btn-outline" id="copyBtn">复制结果</button>
+        <button class="btn btn-ghost" id="swapBtn">↔ 使用结果作为输入</button>
+    </div>
+    <div class="status-bar info" id="statusBar">粘贴代码，选择方向后转换</div>
+    <textarea class="code" id="input" style="min-height:200px;" placeholder="粘贴代码…"></textarea>
+    <p style="font-size:0.8em;color:#94a3b8;margin:8px 0;">↓ 转换结果</p>
+    <pre class="output" id="output" style="white-space:pre;display:block;"></pre>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 Tab 空格转换</h3>
+        <p>按 Tab Stop 列位对齐展开，缩进收拢同样保持层级。</p>
+        <div class="feature-chips"><span class="feature-chip">列对齐</span><span class="feature-chip">2/4/8宽度</span><span class="feature-chip">仅缩进/全文</span><span class="feature-chip">双向转换</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>Tab→空格按制表位对齐（第 n 个字符处补齐），不是简单 1:N 替换</li>
+            <li>「仅行首缩进」不改动字符串字面量与对齐空格，更安全</li>
+            <li>空格→Tab 只收拢行首连续空格，行中对齐保持原样</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+var output = document.getElementById('output');
+
+document.getElementById('runBtn').onclick = function() {
+    var text = document.getElementById('input').value;
+    if (!text) { setStatus('请先粘贴代码', 'error'); return; }
+    var dir = document.getElementById('dir').value;
+    var w = parseInt(document.getElementById('width').value);
+    var scope = document.getElementById('scope').value;
+    var tabCount = 0, lines = text.split('\n');
+    var result;
+
+    if (dir === 't2s') {
+        result = lines.map(function(line) {
+            var m = line.match(/^[\t]*/)[0];
+            if (m) tabCount += m.length;
+            if (scope === 'indent') {
+                var indent = '', col = 0;
+                for (var i = 0; i < m.length; i++) {
+                    col += w - (col % w);
+                }
+                indent = ' '.repeat(col);
+                return indent + line.slice(m.length);
+            }
+            var out = '', col = 0;
+            for (var j = 0; j < line.length; j++) {
+                if (line[j] === '\t') { tabCount++; var pad = w - (col % w); out += ' '.repeat(pad); col += pad; }
+                else { out += line[j]; col++; }
+            }
+            return out;
+        }).join('\n');
+    } else {
+        result = lines.map(function(line) {
+            var m = line.match(/^ */)[0];
+            if (m.length >= w || (scope === 'all' && m.length > 0)) {
+                var tabs = Math.floor(m.length / w);
+                var rest = m.length - tabs * w;
+                tabCount += tabs;
+                return '\t'.repeat(tabs) + ' '.repeat(rest) + line.slice(m.length);
+            }
+            if (scope === 'all') return line.replace(/ {2,}/g, function(s){ var t = Math.floor(s.length / w); return t > 0 ? '\t'.repeat(t) + ' '.repeat(s.length - t * w) : s; });
+            return line;
+        }).join('\n');
+    }
+
+    output.textContent = result;
+    setStatus('转换完成：处理了 ' + tabCount + ' 个制表位，' + lines.length + ' 行', 'success');
+};
+
+document.getElementById('copyBtn').onclick = function() {
+    var t = output.textContent;
+    if (t) navigator.clipboard.writeText(t).then(function(){ setStatus('已复制', 'success'); });
+};
+document.getElementById('swapBtn').onclick = function() {
+    if (output.textContent) {
+        document.getElementById('input').value = output.textContent;
+        setStatus('已将结果填入输入区，可反向转换', 'info');
+    }
+};
+initSidebar('text');
+</script>
+</body>
+</html>

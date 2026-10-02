@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>音频格式转换 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="上传音频文件，在线转换为WAV或WebM格式，纯浏览器本地处理" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+
+        .conv-result { margin-top: 16px; }
+        .conv-item { display: flex; align-items: center; gap: 12px; background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; }
+    
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="音频格式转换,在线音频格式转换,音视频处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/media/audio-convert-tool.html" />
+    <meta property="og:title" content="音频格式转换" />
+    <meta property="og:description" content="上传音频文件，在线转换为WAV或WebM格式，纯浏览器本地处理" />
+    <meta property="og:url" content="https://box.lynvortex.top/media/audio-convert-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="音频格式转换" />
+    <meta itemprop="description" content="上传音频文件，在线转换为WAV或WebM格式，纯浏览器本地处理" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "音视频处理",
+                "item": "https://box.lynvortex.top/media.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "音频格式转换",
+                "item": "https://box.lynvortex.top/media/audio-convert-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "音频格式转换",
+        "url": "https://box.lynvortex.top/media/audio-convert-tool.html",
+        "description": "音频文件在线转换为WAV或WebM格式，支持采样率调整",
+        "applicationCategory": "音视频处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🔄 音频格式转换</h1>
+                <p>上传音频文件，在线转换为WAV或WebM格式，纯浏览器本地处理</p>
+            </div>
+
+            <div class="form-item" style="margin-bottom:16px;">
+                <label>选择音频文件</label>
+                <input type="file" id="convFile" accept="audio/*" multiple />
+            </div>
+            <div class="form-grid">
+                <div class="form-item"><label>目标格式</label><select id="convFmt"><option value="wav">WAV (无损)</option><option value="webm">WebM (压缩)</option></select></div>
+                <div class="form-item"><label>采样率</label><select id="convRate"><option value="0">原始</option><option value="44100">44100 Hz</option><option value="22050">22050 Hz</option><option value="16000">16000 Hz</option><option value="8000">8000 Hz</option></select></div>
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-primary" id="convBtn" disabled>🔄 开始转换</button>
+            </div>
+            <div class="conv-result" id="convResult"></div>
+    
+            <div id="statusBar" class="status-bar info">准备就绪，请按提示操作</div>
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 音频格式转换</h3>
+                <p>基于Web Audio API实现音频格式互转，支持采样率调整</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">WAV导出</span>
+                    <span class="feature-chip">WebM导出</span>
+                    <span class="feature-chip">采样率调整</span>
+                    <span class="feature-chip">批量处理</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>支持MP3、WAV、OGG、M4A等常见音频格式上传</li>
+                    <li>可转换为WAV（无损）或WebM（压缩）格式</li>
+                    <li>可选调整输出采样率以改变音质和文件大小</li>
+                    <li>所有转换在浏览器本地完成，不上传服务器</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+
+    let convCtx = null;
+    const setStatus = (m,t) => { const s=document.getElementById('statusBar'); s.textContent=m; s.className='status-bar '+(t||'info'); };
+
+    document.getElementById('convFile').addEventListener('change', e => {
+        document.getElementById('convBtn').disabled = e.target.files.length === 0;
+    });
+
+    document.getElementById('convBtn').addEventListener('click', async () => {
+        const files = document.getElementById('convFile').files;
+        const fmt = document.getElementById('convFmt').value;
+        const rate = +document.getElementById('convRate').value;
+        const result = document.getElementById('convResult');
+        result.innerHTML = '';
+        convCtx = convCtx || new (window.AudioContext || window.webkitAudioContext)();
+        if (convCtx.state === 'suspended') await convCtx.resume();
+
+        for (let i = 0; i < files.length; i++) {
+            setStatus('正在转换 ' + files[i].name + ' (' + (i+1) + '/' + files.length + ')...', 'info');
+            try {
+                const ab = await files[i].arrayBuffer();
+                let buf = await convCtx.decodeAudioData(ab);
+                if (rate > 0 && buf.sampleRate !== rate) {
+                    const offCtx = new OfflineAudioContext(buf.numberOfChannels, Math.ceil(buf.length * rate / buf.sampleRate), rate);
+                    const src = offCtx.createBufferSource(); src.buffer = buf;
+                    src.connect(offCtx.destination); src.start(0);
+                    buf = await offCtx.startRendering();
+                }
+                let blob;
+                if (fmt === 'wav') blob = new Blob([audioBufferToWav(buf)], { type: 'audio/wav' });
+                else {
+                    const mr = new MediaRecorder(await getStream(buf));
+                    const chunks = [];
+                    mr.ondataavailable = e => chunks.push(e.data);
+                    const p = new Promise(res => mr.onstop = () => res(new Blob(chunks, { type: 'audio/webm' })));
+                    mr.start(); await new Promise(r => setTimeout(r, buf.duration * 1000 + 200)); mr.stop();
+                    blob = await p;
+                }
+                const url = URL.createObjectURL(blob);
+                const name = files[i].name.replace(/\.[^.]+$/, '') + '.' + fmt;
+                result.innerHTML += `<div class="conv-item"><span style="flex:1;font-size:0.88em;">${name}</span><audio controls src="${url}" style="height:36px;"></audio><button class="btn btn-outline" style="padding:6px 12px;font-size:0.8em;" onclick="dl('${url}','${name}')">⬇</button></div>`;
+            } catch (e) { result.innerHTML += `<div class="conv-item" style="color:#ef4444;">${files[i].name} 转换失败: ${e.message}</div>`; }
+        }
+        setStatus('转换完成', 'success');
+    });
+
+    async function getStream(buf) {
+        const dest = convCtx.createMediaStreamDestination();
+        const src = convCtx.createBufferSource(); src.buffer = buf; src.connect(dest);
+        src.start(0); return dest.stream;
+    }
+    window.dl = (url, name) => { const a = document.createElement('a'); a.href = url; a.download = name; a.click(); };
+
+    function audioBufferToWav(buffer) {
+        const numCh = buffer.numberOfChannels, len = buffer.length * numCh * 2 + 44;
+        const ab = new ArrayBuffer(len), view = new DataView(ab);
+        const wr = (off, str) => { for (let i=0;i<str.length;i++) view.setUint8(off+i, str.charCodeAt(i)); };
+        wr(0, 'RIFF'); view.setUint32(4, len-8, true); wr(8, 'WAVE'); wr(12, 'fmt ');
+        view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, numCh, true);
+        view.setUint32(24, buffer.sampleRate, true); view.setUint32(28, buffer.sampleRate*numCh*2, true);
+        view.setUint16(32, numCh*2, true); view.setUint16(34, 16, true); wr(36, 'data'); view.setUint32(40, len-44, true);
+        let off = 44;
+        for (let i=0;i<buffer.length;i++) for (let ch=0;ch<numCh;ch++) {
+            let s = Math.max(-1, Math.min(1, buffer.getChannelData(ch)[i]));
+            view.setInt16(off, s<0?s*0x8000:s*0x7FFF, true); off += 2;
+        }
+        return ab;
+    }
+    
+    initSidebar('media');
+</script>
+</body>
+</html>

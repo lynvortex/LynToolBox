@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>视频倒放 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线视频倒放工具，将视频从后往前播放并导出WebM，制作倒叙魔术效果，支持帧率与画质设置，纯前端本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="视频倒放,视频倒叙,反向播放,倒放特效,视频处理,音视频工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/media/video-reverse-tool.html"/>
+<meta property="og:title" content="视频倒放"/>
+<meta property="og:description" content="视频逆序播放，导出WebM。"/>
+<meta property="og:url" content="https://box.lynvortex.top/media/video-reverse-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="视频倒放"/>
+<meta itemprop="description" content="视频逆序播放，导出WebM。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"音视频处理","item":"https://box.lynvortex.top/media.html"},{"@type":"ListItem","position":3,"name":"视频倒放","item":"https://box.lynvortex.top/media/video-reverse-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"视频倒放","url":"https://box.lynvortex.top/media/video-reverse-tool.html","description":"视频倒放工具","applicationCategory":"音视频工具","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>◀️ 视频倒放</h1>
+        <p>从最后一帧倒着播放，制作时间倒流效果</p>
+    </div>
+    <div class="upload-zone" id="dropZone">
+        <p style="margin:0;color:#64748b;">🎬 点击选择或拖入视频文件</p>
+        <input type="file" id="fileInput" accept="video/*" style="display:none;"/>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>输出帧率</label>
+            <select id="fps"><option value="12">12 fps（快速生成）</option><option value="24" selected>24 fps</option><option value="30">30 fps</option></select>
+        </div>
+        <div class="form-item"><label>画质</label>
+            <select id="quality"><option value="2500000">标准</option><option value="6000000" selected>高清</option><option value="12000000">极高</option></select>
+        </div>
+        <div class="form-item"><label>输出宽度（0=原尺寸）</label><input type="number" id="ow" value="0" min="0"/></div>
+        <div class="form-item"><label>时长限制</label>
+            <select id="limit"><option value="10">前10秒</option><option value="20">前20秒</option><option value="0">全部（较慢）</option></select>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="runBtn" disabled>◀️ 开始倒放处理</button>
+        <button class="btn btn-outline" id="dlBtn" disabled>下载 WebM</button>
+    </div>
+    <div class="status-bar info" id="statusBar">请先选择视频文件</div>
+    <div style="max-width:100%;text-align:center;margin-bottom:12px;"><video id="preview" controls style="max-width:100%;max-height:360px;border-radius:8px;display:none;"></video></div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 视频倒放</h3>
+        <p>逐帧 seek 到时间轴末端向前重采样，合成倒叙视频。</p>
+        <div class="feature-chips"><span class="feature-chip">时间倒流</span><span class="feature-chip">逐帧精确</span><span class="feature-chip">时长截取</span><span class="feature-chip">导出WebM</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>倒放不含音轨（音频倒放无意义），成品为无声视频</li>
+            <li>建议先用「时长限制」截取精彩片段，处理更快</li>
+            <li>倒水、撕纸、跳跃类短视频效果最有趣</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+var videoEl = null, outBlob = null;
+var dropZone = document.getElementById('dropZone'), fileInput = document.getElementById('fileInput');
+dropZone.onclick = function(){ fileInput.click(); };
+dropZone.ondragover = function(e){ e.preventDefault(); };
+dropZone.ondrop = function(e){ e.preventDefault(); if (e.dataTransfer.files[0]) loadVideo(e.dataTransfer.files[0]); };
+fileInput.onchange = function(){ if (fileInput.files[0]) loadVideo(fileInput.files[0]); };
+
+function loadVideo(f) {
+    videoEl = document.getElementById('preview');
+    videoEl.src = URL.createObjectURL(f);
+    videoEl.style.display = 'inline-block';
+    videoEl.onloadedmetadata = function() {
+        document.getElementById('runBtn').disabled = false;
+        setStatus('已加载：' + f.name + '，' + videoEl.videoWidth + '×' + videoEl.videoHeight + '，时长 ' + videoEl.duration.toFixed(1) + ' 秒', 'success');
+    };
+}
+
+document.getElementById('runBtn').onclick = function() {
+    if (!videoEl) return;
+    var btn = this; btn.disabled = true;
+    var fps = parseInt(document.getElementById('fps').value);
+    var bitrate = parseInt(document.getElementById('quality').value);
+    var limit = parseInt(document.getElementById('limit').value);
+    var ow = parseInt(document.getElementById('ow').value) || videoEl.videoWidth;
+    var oh = Math.round(ow * videoEl.videoHeight / videoEl.videoWidth / 2) * 2;
+    var duration = videoEl.duration;
+    if (limit > 0 && duration > limit) duration = limit;
+
+    var canvas = document.createElement('canvas');
+    canvas.width = ow; canvas.height = oh;
+    var cctx = canvas.getContext('2d');
+    var stream = canvas.captureStream(fps);
+    var chunks = [];
+    var mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm';
+    var rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: bitrate });
+    rec.ondataavailable = function(e){ if (e.data.size) chunks.push(e.data); };
+    rec.onstop = function() {
+        outBlob = new Blob(chunks, { type: 'video/webm' });
+        videoEl.src = URL.createObjectURL(outBlob);
+        document.getElementById('dlBtn').disabled = false;
+        btn.disabled = false;
+        setStatus('倒放完成：' + (outBlob.size / 1048576).toFixed(2) + ' MB，可预览或下载', 'success');
+    };
+
+    videoEl.muted = true;
+    rec.start(250);
+    var step = 1 / fps;
+    var t = duration - step;
+    setStatus('开始倒序采样…', 'info');
+
+    function nextFrame() {
+        if (t <= 0) {
+            setTimeout(function(){ if (rec.state === 'recording') rec.stop(); }, 300);
+            return;
+        }
+        videoEl.currentTime = Math.max(0, t);
+        videoEl.onseeked = function() {
+            cctx.drawImage(videoEl, 0, 0, ow, oh);
+            setStatus('倒放进度：' + t.toFixed(2) + 's / ' + duration.toFixed(2) + 's', 'info');
+            t -= step;
+            setTimeout(nextFrame, 0);
+        };
+    }
+    nextFrame();
+};
+
+document.getElementById('dlBtn').onclick = function() {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(outBlob);
+    a.download = 'reversed.webm';
+    a.click();
+};
+initSidebar('media');
+</script>
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>颜色对比度检测 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="颜色对比度检测工具，WCAG标准检测前景背景色对比度，无障碍合规检查，纯前端计算。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+        .color-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+        @media (max-width: 600px) { .color-row { grid-template-columns: 1fr; } }
+        .color-picker-card { background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 12px; padding: 16px; }
+        .color-picker-card label { font-size: 0.85em; color: #64748b; font-weight: 600; display: block; margin-bottom: 8px; }
+        .color-picker-card .pc-row { display: flex; gap: 10px; align-items: center; }
+        .color-picker-card input[type=color] { width: 60px; height: 44px; border: 1px solid #e0e6ed; border-radius: 8px; cursor: pointer; background: #fff; padding: 2px; }
+        .color-picker-card input[type=text] { flex: 1; padding: 10px 12px; border: 1px solid #e0e6ed; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.9em; outline: none; }
+        .preview-box { border-radius: 12px; padding: 32px 24px; text-align: center; margin-bottom: 20px; border: 1px solid #e1e4e8; }
+        .preview-box h2 { margin: 0 0 8px; font-size: 1.4em; }
+        .preview-box p { margin: 0; font-size: 1em; opacity: 0.85; }
+        .preview-box .small { font-size: 0.85em; margin-top: 12px; }
+        .ratio-card { background: linear-gradient(135deg, #4a90e2, #3a7bd5); color: #fff; border-radius: 14px; padding: 24px; text-align: center; margin-bottom: 20px; }
+        .ratio-big { font-size: 3em; font-weight: 700; font-family: 'Courier New', monospace; line-height: 1; }
+        .ratio-label { font-size: 0.9em; opacity: 0.9; margin-top: 6px; }
+        .level-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+        .level-card { border-radius: 10px; padding: 14px; border: 2px solid; text-align: center; }
+        .level-card.pass { border-color: #16a34a; background: #f0fdf4; }
+        .level-card.fail { border-color: #ef4444; background: #fef2f2; }
+        .level-card .ll { font-size: 0.82em; color: #64748b; margin-bottom: 4px; }
+        .level-card .lv { font-size: 1.3em; font-weight: 700; }
+        .level-card.pass .lv { color: #16a34a; }
+        .level-card.fail .lv { color: #ef4444; }
+        .preset-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+        .preset-btn { padding: 6px 12px; border-radius: 6px; border: 1px solid #e0e6ed; background: #fff; cursor: pointer; font-size: 0.78em; color: #475569; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="颜色对比度检查,在线颜色对比度检查,日常通用,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/daily/contrast-check-tool.html" />
+    <meta property="og:title" content="颜色对比度检测" />
+    <meta property="og:description" content="颜色对比度检测工具，WCAG标准检测前景背景色对比度，无障碍合规检查，纯前端计算。" />
+    <meta property="og:url" content="https://box.lynvortex.top/daily/contrast-check-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="颜色对比度检测" />
+    <meta itemprop="description" content="颜色对比度检测工具，WCAG标准检测前景背景色对比度，无障碍合规检查，纯前端计算。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "日常通用",
+                "item": "https://box.lynvortex.top/daily.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "颜色对比度检查",
+                "item": "https://box.lynvortex.top/daily/contrast-check-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "颜色对比度检查",
+        "url": "https://box.lynvortex.top/daily/contrast-check-tool.html",
+        "description": "检查颜色对比度是否符合WCAG无障碍标准",
+        "applicationCategory": "日常通用",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>👁️ 颜色对比度检测</h1>
+                <p>WCAG 标准检测前景色与背景色对比度，无障碍合规检查</p>
+            </div>
+
+            <div class="color-row">
+                <div class="color-picker-card">
+                    <label>前景色（文字）</label>
+                    <div class="pc-row">
+                        <input type="color" id="fgColor" value="#ffffff" />
+                        <input type="text" id="fgHex" value="#FFFFFF" />
+                    </div>
+                </div>
+                <div class="color-picker-card">
+                    <label>背景色</label>
+                    <div class="pc-row">
+                        <input type="color" id="bgColor" value="#4a90e2" />
+                        <input type="text" id="bgHex" value="#4A90E2" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="preset-row">
+                <span class="preset-btn" data-fg="#000000" data-bg="#ffffff">黑/白</span>
+                <span class="preset-btn" data-fg="#ffffff" data-bg="#000000">白/黑</span>
+                <span class="preset-btn" data-fg="#757575" data-bg="#ffffff">灰/白</span>
+                <span class="preset-btn" data-fg="#ffffff" data-bg="#4a90e2">白/蓝</span>
+                <span class="preset-btn" data-fg="#ff0000" data-bg="#ffffff">红/白</span>
+                <span class="preset-btn" id="swapBtn">⇄ 交换</span>
+            </div>
+
+            <div class="preview-box" id="previewBox">
+                <h2>预览标题文字</h2>
+                <p>这是一段正文示例，用于展示文字在背景色上的可读性。</p>
+                <p class="small">小字示例 Small Text Sample 1234567890</p>
+            </div>
+
+            <div class="ratio-card">
+                <div class="ratio-big" id="ratioVal">—</div>
+                <div class="ratio-label" id="ratioLabel">对比度比率</div>
+            </div>
+
+            <div class="level-grid">
+                <div class="level-card" id="cardAA-normal"><div class="ll">AA 正文（≥ 4.5）</div><div class="lv">—</div></div>
+                <div class="level-card" id="cardAA-large"><div class="ll">AA 大字（≥ 3.0）</div><div class="lv">—</div></div>
+                <div class="level-card" id="cardAAA-normal"><div class="ll">AAA 正文（≥ 7.0）</div><div class="lv">—</div></div>
+                <div class="level-card" id="cardAAA-large"><div class="ll">AAA 大字（≥ 4.5）</div><div class="lv">—</div></div>
+            </div>
+
+            <div id="statusBar" class="status-bar info">WCAG 2.1 标准，调整颜色实时检测</div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 颜色对比度检查</h3>
+                <p>检查前景色与背景色的 WCAG 对比度</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">WCAG 2.1</span>
+                    <span class="feature-chip">对比度</span>
+                    <span class="feature-chip">无障碍</span>
+                    <span class="feature-chip">AA/AAA</span>
+                    <span class="feature-chip">离线可用</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>遵循 WCAG 2.1 无障碍标准</li>
+                    <li>检查 AA（4.5:1）和 AAA（7:1）合规级别</li>
+                    <li>同时显示对比度比值和通过状态</li>
+                    <li>适合网页设计师和无障碍开发者</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const fgColor = document.getElementById('fgColor');
+    const bgColor = document.getElementById('bgColor');
+    const fgHex = document.getElementById('fgHex');
+    const bgHex = document.getElementById('bgHex');
+    const previewBox = document.getElementById('previewBox');
+    const ratioVal = document.getElementById('ratioVal');
+    const ratioLabel = document.getElementById('ratioLabel');
+
+    const hexToRgb = (hex) => { hex = hex.replace('#', ''); if (hex.length === 3) hex = hex.split('').map(c => c + c).join(''); const n = parseInt(hex, 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+    const relLum = (rgb) => { const [r, g, b] = rgb.map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+    const contrast = (fg, bg) => { const l1 = relLum(hexToRgb(fg)), l2 = relLum(hexToRgb(bg)); const lighter = Math.max(l1, l2), darker = Math.min(l1, l2); return (lighter + 0.05) / (darker + 0.05); };
+
+    const check = () => {
+        const fg = fgColor.value, bg = bgColor.value;
+        previewBox.style.color = fg; previewBox.style.background = bg;
+        fgHex.value = fg.toUpperCase(); bgHex.value = bg.toUpperCase();
+        const ratio = contrast(fg, bg);
+        ratioVal.textContent = ratio.toFixed(2) + ' : 1';
+        ratioLabel.textContent = ratio >= 7 ? '极佳，满足所有等级' : ratio >= 4.5 ? '良好，满足 AA 等级' : ratio >= 3 ? '一般，仅满足大字 AA' : '不足，不达标';
+        const setCard = (id, pass) => { const c = document.getElementById(id); c.className = 'level-card ' + (pass ? 'pass' : 'fail'); c.querySelector('.lv').textContent = pass ? '通过 ✓' : '未通过 ✗'; };
+        setCard('cardAA-normal', ratio >= 4.5);
+        setCard('cardAA-large', ratio >= 3);
+        setCard('cardAAA-normal', ratio >= 7);
+        setCard('cardAAA-large', ratio >= 4.5);
+    };
+
+    fgColor.addEventListener('input', check);
+    bgColor.addEventListener('input', check);
+    fgHex.addEventListener('change', () => { if (/^#?[0-9a-fA-F]{6}$/.test(fgHex.value)) fgColor.value = fgHex.value.startsWith('#') ? fgHex.value : '#' + fgHex.value; check(); });
+    bgHex.addEventListener('change', () => { if (/^#?[0-9a-fA-F]{6}$/.test(bgHex.value)) bgColor.value = bgHex.value.startsWith('#') ? bgHex.value : '#' + bgHex.value; check(); });
+
+    document.querySelectorAll('.preset-btn[data-fg]').forEach(b => b.addEventListener('click', () => { fgColor.value = b.dataset.fg; bgColor.value = b.dataset.bg; check(); }));
+    document.getElementById('swapBtn').addEventListener('click', () => { const f = fgColor.value; fgColor.value = bgColor.value; bgColor.value = f; check(); });
+
+    check();
+    initSidebar('daily');
+</script>
+</body>
+</html>

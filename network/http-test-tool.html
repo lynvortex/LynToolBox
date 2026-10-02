@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>HTTP请求测试器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="HTTP请求测试器，纯前端模拟Postman发送GET POST PUT DELETE请求，查看响应头状态码与耗时，支持自定义Header与Body，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.method-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px;}
+.method-row select{padding:10px 14px;border:1px solid #e0e6ed;border-radius:8px;font-size:.9em;font-weight:600;background:#fff;color:#4a90e2;outline:none;}
+.method-row input{flex:1;min-width:200px;padding:10px 14px;border:1px solid #e0e6ed;border-radius:8px;font-size:.9em;font-family:'Consolas',monospace;outline:none;}
+.method-row input:focus{border-color:#4a90e2;}
+.tabs{display:flex;gap:0;margin-bottom:14px;border-bottom:2px solid #f0f2f5;}
+.tab{padding:10px 20px;cursor:pointer;font-size:.88em;font-weight:600;color:#94a3b8;border-bottom:2px solid transparent;margin-bottom:-2px;transition:.2s;}
+.tab.active{color:#4a90e2;border-bottom-color:#4a90e2;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+.kv-row{display:grid;grid-template-columns:1fr 2fr auto;gap:8px;margin-bottom:8px;align-items:center;}
+.kv-row input{padding:8px 12px;border:1px solid #e0e6ed;border-radius:6px;font-size:.85em;outline:none;font-family:'Consolas',monospace;}
+.kv-row input:focus{border-color:#4a90e2;}
+.kv-del{background:#fef2f2;color:#ef4444;border:none;border-radius:6px;padding:8px 12px;cursor:pointer;font-size:.85em;}
+.add-btn{background:#f1f5f9;color:#64748b;border:1px dashed #cbd5e1;border-radius:6px;padding:8px 16px;cursor:pointer;font-size:.85em;margin-top:4px;}
+.add-btn:hover{background:#e2e8f0;}
+.body-area{width:100%;min-height:120px;padding:12px;border:1px solid #e0e6ed;border-radius:8px;font-family:'Consolas',monospace;font-size:.85em;resize:vertical;outline:none;background:#f8fafc;}
+.body-area:focus{border-color:#4a90e2;background:#fff;}
+.resp-meta{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;}
+.resp-badge{padding:6px 14px;border-radius:20px;font-size:.82em;font-weight:600;}
+.resp-status{background:#dbeafe;color:#1e40af;}
+.resp-time{background:#dcfce7;color:#166534;}
+.resp-size{background:#fef3c7;color:#92400e;}
+.resp-tabs{display:flex;gap:0;margin-bottom:10px;border-bottom:1px solid #f0f2f5;}
+.resp-tab{padding:8px 16px;cursor:pointer;font-size:.82em;font-weight:600;color:#94a3b8;border-bottom:2px solid transparent;margin-bottom:-1px;}
+.resp-tab.active{color:#4a90e2;border-bottom-color:#4a90e2;}
+pre.resp-body{max-height:400px;}
+.resp-headers{font-size:.82em;color:#475569;max-height:300px;overflow:auto;}
+.resp-headers table{width:100%;border-collapse:collapse;}
+.resp-headers td{padding:6px 10px;border-bottom:1px solid #f1f5f9;}
+.resp-headers td:first-child{font-weight:600;color:#2c3e50;width:40%;}
+</style>
+    <meta name="keywords" content="HTTP请求模拟器,在线HTTP请求模拟器,网络工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/network/http-test-tool.html" />
+    <meta property="og:title" content="HTTP请求测试器" />
+    <meta property="og:description" content="HTTP请求测试器，纯前端模拟Postman发送GET POST PUT DELETE请求，查看响应头状态码与耗时，支持自定义Header与Body，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/network/http-test-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="HTTP请求测试器" />
+    <meta itemprop="description" content="HTTP请求测试器，纯前端模拟Postman发送GET POST PUT DELETE请求，查看响应头状态码与耗时，支持自定义Header与Body，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "网络工具",
+                "item": "https://box.lynvortex.top/network.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "HTTP请求模拟器",
+                "item": "https://box.lynvortex.top/network/http-test-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "HTTP请求模拟器",
+        "url": "https://box.lynvortex.top/network/http-test-tool.html",
+        "description": "模拟发送GET/POST/PUT/DELETE等HTTP请求，查看响应头、状态码和Body",
+        "applicationCategory": "网络工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🔗 HTTP请求测试器</h1><p>纯前端发送HTTP请求，查看响应头、状态码与耗时</p></div>
+<div class="method-row">
+<select id="method"><option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option><option>HEAD</option><option>OPTIONS</option></select>
+<input type="text" id="url" placeholder="https://api.example.com/users" value="https://httpbin.org/get"/>
+</div>
+<div class="tabs">
+<div class="tab active" data-tab="headers">Headers</div>
+<div class="tab" data-tab="body">Body</div>
+<div class="tab" data-tab="auth">Auth</div>
+</div>
+<div class="tab-panel active" id="panel-headers">
+<div id="headerList">
+<div class="kv-row"><input type="text" class="hk" value="Accept" placeholder="Header名"/><input type="text" class="hv" value="application/json" placeholder="Header值"/><button class="kv-del" onclick="this.parentElement.remove()">✕</button></div>
+</div>
+<button class="add-btn" id="addHeader">+ 添加Header</button>
+</div>
+<div class="tab-panel" id="panel-body">
+<div class="form-item" style="margin-bottom:8px;">
+<label>Content-Type</label>
+<select id="contentType" style="padding:8px;border:1px solid #e0e6ed;border-radius:6px;font-size:.85em;">
+<option value="application/json">application/json</option>
+<option value="application/x-www-form-urlencoded">application/x-www-form-urlencoded</option>
+<option value="text/plain">text/plain</option>
+<option value="text/html">text/html</option>
+</select>
+</div>
+<textarea class="body-area" id="bodyText" placeholder='{"key":"value"}'></textarea>
+</div>
+<div class="tab-panel" id="panel-auth">
+<div class="form-item" style="margin-bottom:8px;">
+<label>认证方式</label>
+<select id="authType" style="padding:8px;border:1px solid #e0e6ed;border-radius:6px;font-size:.85em;">
+<option value="none">无</option>
+<option value="bearer">Bearer Token</option>
+<option value="basic">Basic Auth</option>
+</select>
+</div>
+<input type="text" id="authVal" placeholder="Token 或 username:password" style="width:100%;padding:10px;border:1px solid #e0e6ed;border-radius:8px;font-size:.85em;font-family:'Consolas',monospace;outline:none;"/>
+</div>
+<div class="btn-row" style="margin-top:16px;">
+<button class="btn btn-primary" id="sendBtn">🚀 发送请求</button>
+<button class="btn btn-ghost" id="clearResp">清空响应</button>
+</div>
+<div id="statusBar" class="status-bar info">输入URL后点击发送，支持CORS的接口可直接请求</div>
+<div id="respArea" style="display:none;margin-top:16px;">
+<div class="resp-meta">
+<span class="resp-badge resp-status" id="rStatus">—</span>
+<span class="resp-badge resp-time" id="rTime">—</span>
+<span class="resp-badge resp-size" id="rSize">—</span>
+</div>
+<div class="resp-tabs">
+<div class="resp-tab active" data-rtab="body">响应体</div>
+<div class="resp-tab" data-rtab="headers">响应头</div>
+</div>
+<pre class="resp-body output" id="rBody"></pre>
+<div class="resp-headers" id="rHeaders" style="display:none;"></div>
+</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+</footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 功能说明</h3><p>纯前端HTTP请求测试，支持多种方法和自定义请求头</p><div class="feature-chips"><span class="feature-chip">GET/POST</span><span class="feature-chip">PUT/DELETE</span><span class="feature-chip">自定义Header</span><span class="feature-chip">Bearer认证</span><span class="feature-chip">响应耗时</span><span class="feature-chip">离线本地</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>受浏览器CORS策略限制，未开启CORS的接口可能请求失败</li><li>请求和响应均在浏览器本地处理，数据不上传</li><li>支持JSON、表单、纯文本等多种Body类型</li><li>响应自动检测JSON并格式化高亮显示</li><li>显示HTTP状态码、响应耗时与响应体大小</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+initSidebar('network');
+var sb=document.getElementById('statusBar');
+document.querySelectorAll('.tab').forEach(function(t){t.onclick=function(){document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active');});document.querySelectorAll('.tab-panel').forEach(function(x){x.classList.remove('active');});t.classList.add('active');document.getElementById('panel-'+t.dataset.tab).classList.add('active');};});
+document.getElementById('addHeader').onclick=function(){var d=document.createElement('div');d.className='kv-row';d.innerHTML='<input type="text" class="hk" placeholder="Header名"/><input type="text" class="hv" placeholder="Header值"/><button class="kv-del">✕</button>';d.querySelector('.kv-del').onclick=function(){d.remove();};document.getElementById('headerList').appendChild(d);};
+document.querySelectorAll('.resp-tab').forEach(function(t){t.onclick=function(){document.querySelectorAll('.resp-tab').forEach(function(x){x.classList.remove('active');});t.classList.add('active');var isH=t.dataset.rtab==='headers';document.getElementById('rBody').style.display=isH?'none':'block';document.getElementById('rHeaders').style.display=isH?'block':'none';};});
+document.getElementById('sendBtn').onclick=async function(){
+var url=document.getElementById('url').value.trim();if(!url){setStatus('请输入URL','error');return;}
+var method=document.getElementById('method').value;
+var headers={};
+document.querySelectorAll('#headerList .kv-row').forEach(function(r){var k=r.querySelector('.hk').value.trim();var v=r.querySelector('.hv').value.trim();if(k)headers[k]=v;});
+var body=null;
+var ct=document.getElementById('contentType').value;
+var authType=document.getElementById('authType').value;var authVal=document.getElementById('authVal').value.trim();
+if(authType==='bearer'&&authVal)headers['Authorization']='Bearer '+authVal;
+if(authType==='basic'&&authVal)headers['Authorization']='Basic '+btoa(authVal);
+if(['POST','PUT','PATCH'].indexOf(method)>=0){var bt=document.getElementById('bodyText').value;if(bt.trim()){body=bt;if(!headers['Content-Type'])headers['Content-Type']=ct;}}
+document.getElementById('sendBtn').disabled=true;setStatus('发送中...','info');
+var t0=performance.now();
+try{
+var opt={method:method,headers:headers};
+if(body)opt.body=body;
+var resp=await fetch(url,opt);
+var t1=performance.now();
+var respHeaders={};resp.headers.forEach(function(v,k){respHeaders[k]=v;});
+var text=await resp.text();
+var size=new Blob([text]).size;
+document.getElementById('rStatus').textContent='状态 '+resp.status+' '+resp.statusText;
+document.getElementById('rTime').textContent='耗时 '+(t1-t0).toFixed(0)+'ms';
+document.getElementById('rSize').textContent='大小 '+formatSize(size);
+var rBody=document.getElementById('rBody');
+try{var j=JSON.parse(text);rBody.textContent=JSON.stringify(j,null,2);}catch(e){rBody.textContent=text;}
+var hTable='<table>';for(var k in respHeaders){hTable+='<tr><td>'+escapeHtml(k)+'</td><td>'+escapeHtml(respHeaders[k])+'</td></tr>';}hTable+='</table>';
+document.getElementById('rHeaders').innerHTML=hTable;
+document.getElementById('respArea').style.display='block';
+var sc=resp.status;setStatus('请求完成 · '+resp.status+' '+(sc>=200&&sc<300?'成功':sc>=300&&sc<400?'重定向':sc>=400&&sc<500?'客户端错误':'服务器错误'),sc>=200&&sc<400?'success':'error');
+}catch(e){setStatus('请求失败：'+e.message+'（可能是CORS限制）','error');}
+document.getElementById('sendBtn').disabled=false;
+};
+function formatSize(b){if(b<1024)return b+'B';if(b<1048576)return(b/1024).toFixed(1)+'KB';return(b/1048576).toFixed(2)+'MB';}
+document.getElementById('clearResp').onclick=function(){document.getElementById('respArea').style.display='none';setStatus('已清空响应','info');};
+</script>
+</body>
+</html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Meta/OG标签生成器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="生成HTML meta标签和Open Graph社交分享标签，支持SEO优化，一键复制" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+
+        textarea.code { min-height: 180px; }
+    
+    </style>
+    <script src="../assets/sidebar.js"></script>
+
+    <link rel="canonical" href="https://box.lynvortex.top/work/meta-tag-tool.html" />
+    <meta itemprop="name" content="Meta/OG标签生成器" />
+    <meta itemprop="description" content="生成HTML meta标签和Open Graph社交分享标签，支持SEO优化，一键复制" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Meta/OG标签生成器",
+                "item": "https://box.lynvortex.top/work/meta-tag-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Meta/OG标签生成器",
+        "url": "https://box.lynvortex.top/work/meta-tag-tool.html",
+        "description": "生成HTML meta标签和Open Graph社交分享标签",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🏷️ Meta/OG标签生成器</h1>
+                <p>生成HTML meta标签和Open Graph社交分享标签，支持SEO优化，一键复制</p>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-item"><label>页面标题(title)</label><input type="text" id="mtTitle" placeholder="网页标题" /></div>
+                <div class="form-item"><label>页面描述(description)</label><input type="text" id="mtDesc" placeholder="网页描述" /></div>
+            </div>
+            <div class="form-grid">
+                <div class="form-item"><label>关键词(keywords)</label><input type="text" id="mtKeywords" placeholder="关键词1,关键词2" /></div>
+                <div class="form-item"><label>作者(author)</label><input type="text" id="mtAuthor" placeholder="作者名" /></div>
+            </div>
+            <div class="form-grid">
+                <div class="form-item"><label>网站URL</label><input type="text" id="mtUrl" placeholder="https://example.com" /></div>
+                <div class="form-item"><label>OG图片URL</label><input type="text" id="mtImg" placeholder="https://example.com/og.jpg" /></div>
+            </div>
+            <div class="form-grid">
+                <div class="form-item"><label>网站名称(og:site_name)</label><input type="text" id="mtSite" placeholder="网站名称" /></div>
+                <div class="form-item"><label>Twitter Card类型</label><select id="mtTw"><option value="summary">summary</option><option value="summary_large_image">summary_large_image</option></select></div>
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-primary" id="mtGen">🏷️ 生成标签</button>
+                <button class="btn btn-outline" id="mtCopy">📋 复制代码</button>
+            </div>
+            <pre class="output" id="mtResult" style="margin-top:12px;"></pre>
+    
+            <div id="statusBar" class="status-bar info">准备就绪，请按提示操作</div>
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 Meta/OG标签生成器</h3>
+                <p>生成SEO meta标签和社交分享Open Graph标签</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">SEO优化</span>
+                    <span class="feature-chip">Open Graph</span>
+                    <span class="feature-chip">Twitter Card</span>
+                    <span class="feature-chip">一键复制</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>填写页面标题、描述、关键词等基本信息</li>
+                    <li>Open Graph标签用于微信/微博/Facebook等社交平台分享</li>
+                    <li>Twitter Card标签用于Twitter分享预览</li>
+                    <li>复制生成的代码粘贴到HTML的<head>标签内</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+
+    const setStatus = (m,t) => { const s=document.getElementById('statusBar'); s.textContent=m; s.className='status-bar '+(t||'info'); };
+    const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+    document.getElementById('mtGen').addEventListener('click', () => {
+        const title = document.getElementById('mtTitle').value;
+        const desc = document.getElementById('mtDesc').value;
+        const kw = document.getElementById('mtKeywords').value;
+        const author = document.getElementById('mtAuthor').value;
+        const url = document.getElementById('mtUrl').value;
+        const img = document.getElementById('mtImg').value;
+        const site = document.getElementById('mtSite').value;
+        const tw = document.getElementById('mtTw').value;
+
+        let tags = [];
+        if (title) tags.push(`<title>${esc(title)}</title>`);
+        if (desc) tags.push(`<meta name="description" content="${esc(desc)}" />`);
+        if (kw) tags.push(`<meta name="keywords" content="${esc(kw)}" />`);
+        if (author) tags.push(`<meta name="author" content="${esc(author)}" />`);
+        tags.push('<meta name="viewport" content="width=device-width, initial-scale=1.0" />');
+        tags.push('<meta charset="UTF-8" />');
+
+        if (title || url || img) {
+            tags.push('');
+            tags.push('<!-- Open Graph / 社交分享 -->');
+            if (title) tags.push(`<meta property="og:title" content="${esc(title)}" />`);
+            if (desc) tags.push(`<meta property="og:description" content="${esc(desc)}" />`);
+            if (url) tags.push(`<meta property="og:url" content="${esc(url)}" />`);
+            tags.push('<meta property="og:type" content="website" />');
+            if (site) tags.push(`<meta property="og:site_name" content="${esc(site)}" />`);
+            if (img) tags.push(`<meta property="og:image" content="${esc(img)}" />`);
+        }
+
+        if (title || img) {
+            tags.push('');
+            tags.push('<!-- Twitter Card -->');
+            tags.push(``);
+            if (title) tags.push(``);
+            if (desc) tags.push(``);
+            if (img) tags.push(``);
+        }
+
+        document.getElementById('mtResult').textContent = tags.join('\n');
+        setStatus('已生成 ' + tags.filter(t=>t&&!t.startsWith('<!--')).length + ' 个标签', 'success');
+    });
+
+    document.getElementById('mtCopy').addEventListener('click', () => {
+        const code = document.getElementById('mtResult').textContent;
+        if (!code) { setStatus('请先生成标签', 'error'); return; }
+        navigator.clipboard.writeText(code).then(() => setStatus('代码已复制到剪贴板', 'success'));
+    });
+    
+    initSidebar('work');
+</script>
+</body>
+</html>

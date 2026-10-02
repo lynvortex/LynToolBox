@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>域名注册状态查询 - 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="网站注册状态与WHOIS查询，查询域名的注册状态、日期与所有者等详细信息。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+* { box-sizing: border-box; }
+body {
+    font-family: 'PingFang SC', -apple-system, sans-serif;
+    background: #f4f7f9;
+    margin: 0;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    color: #333;
+}
+
+.mobile-header {
+    display: none;
+    position: fixed; top: 0; left: 0; right: 0; height: 60px;
+    background: #fff; padding: 0 20px; align-items: center;
+    justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+}
+.mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+.mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+.menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #4a90e2; }
+
+.sidebar {
+    width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+    display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+    transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+}
+.brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+.brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+.brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+.brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+.close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+.category-list { padding: 16px 0; flex: 1; }
+.category-item {
+    display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+    transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+}
+.category-item:hover, .category-item.active { background: #ebf5ff; color: #4a90e2; border-left-color: #4a90e2; }
+
+.main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+.tool-container {
+    width: 100%;
+    max-width: 960px;
+    background: #fff; border-radius: 12px;
+    padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+}
+.tool-header { text-align: center; margin-bottom: 28px; }
+.tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+.tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+.btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em; font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap; }
+.btn-primary { background: #4a90e2; color: white; }
+.btn-primary:hover { background: #3a7bd5; }
+.btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+.btn-outline { background: transparent; color: #4a90e2; border: 1px solid #4a90e2; }
+.btn-outline:hover { background: #4a90e2; color: white; }
+.btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+.btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+
+.status-bar { min-height: 20px; font-size: 0.85em; padding: 8px 12px; border-radius: 6px; margin-bottom: 16px; }
+.status-bar.success { color: #16a34a; background: #f0fdf4; }
+.status-bar.error { color: #ef4444; background: #fef2f2; }
+.status-bar.info { color: #64748b; background: #f8fafc; }
+
+.info-cards { width: 100%; max-width: 960px; display: flex; flex-direction: column; gap: 18px; }
+.info-card { background: #fff; border-radius: 12px; padding: 22px 24px; box-shadow: 0 4px 25px rgba(0,0,0,0.06); border: 1px solid #f0f2f5; }
+.info-card h3 { margin: 0 0 10px 0; font-size: 1em; color: #2c3e50; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.info-card p { margin: 0 0 10px 0; font-size: 0.82em; color: #64748b; }
+
+.footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+.footer p { margin: 0; }
+        .footer a { color: #4a90e2; text-decoration: none; }
+
+.overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+
+@media (max-width: 768px) {
+    body { display: block; height: auto; overflow: auto; }
+    .mobile-header { display: flex; }
+    .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+    .sidebar.active { transform: translateX(0); }
+    .close-sidebar { display: block; }
+    .main-content { display: block; }
+    .main-scroll { padding: 72px 16px 32px; gap: 20px;  }
+    .tool-container { padding: 24px 16px; border-radius: 10px; }
+    .tool-header h1 { font-size: 1.3em; }
+    .overlay.active { display: block; }
+}
+        input:focus { border-color: #4a90e2; }
+        button {
+            background: #4a90e2; color: white; border: none; padding: 11px 22px;
+            border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1em;
+            transition: 0.2s; white-space: nowrap;
+        }
+        button:hover:not(:disabled) { background: #357abd; }
+        button:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .tab-bar { display: none; gap: 0; border-bottom: 2px solid #f0f2f5; overflow-x: auto; }
+        .tab-btn {
+            background: none; border: none; padding: 10px 18px; color: #94a3b8;
+            font-size: 0.86em; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent;
+            margin-bottom: -2px; border-radius: 0; transition: color 0.2s, border-color 0.2s; white-space: nowrap;
+        }
+        .tab-btn.active { color: #4a90e2; border-bottom-color: #4a90e2; }
+        .tab-btn:hover:not(.active) { color: #4a90e2; }
+        .result-area { display: none; margin-top: 10px; border: 1px solid #f0f2f5; border-radius: 10px; overflow: hidden; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+        .res-table { width: 100%; border-collapse: collapse; }
+        .res-table tr:last-child th, .res-table tr:last-child td { border-bottom: none; }
+        .res-table tr th {
+            background: #f8fafc; width: 32%; padding: 12px 13px; text-align: left;
+            color: #64748b; font-size: 0.83em; border-bottom: 1px solid #f0f2f5; vertical-align: middle; white-space: nowrap;
+        }
+        .res-table tr td {
+            padding: 12px 13px; color: #1e293b; font-size: 0.88em; border-bottom: 1px solid #f0f2f5;
+            word-break: break-all; font-family: 'Consolas', monospace; line-height: 1.6;
+        }
+        .status-badge {
+            display: inline-block; background: #eff6ff; color: #3b82f6; border-radius: 4px;
+            padding: 2px 7px; font-size: 0.8em; margin: 2px 2px 2px 0; word-break: break-word; white-space: normal;
+        }
+        .registered-badge { display: inline-block; background: #f0fdf4; color: #16a34a; border-radius: 4px; padding: 3px 10px; font-size: 0.88em; font-weight: 600; }
+        .unregistered-badge { display: inline-block; background: #fef2f2; color: #ef4444; border-radius: 4px; padding: 3px 10px; font-size: 0.88em; font-weight: 600; }
+        .source-badge { display: inline-block; font-size: 0.72em; padding: 2px 8px; border-radius: 10px; margin-left: 6px; font-weight: 500; vertical-align: middle; background: #e0f2fe; color: #0369a1; }
+        .raw-whois {
+            padding: 14px; background: #f8fafc; font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.8em; color: #334155; line-height: 1.7; white-space: pre-wrap;
+            word-break: break-all; max-height: 400px; overflow-y: auto; border-radius: 0 0 10px 10px; margin: 0;
+        }
+        .raw-whois::-webkit-scrollbar { width: 5px; }
+        .raw-whois::-webkit-scrollbar-track { background: #f1f5f9; }
+        .raw-whois::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .loader { display: none; margin: 18px auto; border: 3px solid #f3f3f3; border-top: 3px solid #4a90e2; border-radius: 50%; width: 24px; height: 24px; animation: spin 0.8s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .error-tip { color: #ef4444; background: #fef2f2; padding: 14px; border-radius: 8px; font-size: 0.85em; margin-top: 16px; display: none; text-align: center; }
+        .footer a { color: #4a90e2; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+        /* ========== 信息卡片区域（同样去掉最大宽度） ========== */
+        .info-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1em;
+            color: #2c3e50;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .info-card p {
+            margin: 0 0 10px 0;
+            font-size: 0.82em;
+            color: #64748b;
+        }
+        .tld-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .tld-chip {
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 500;
+            font-family: 'Consolas', monospace;
+        }
+        .tips-list {
+            padding-left: 20px;
+            margin: 0;
+        }
+        .tips-list li {
+            font-size: 0.82em;
+            color: #475569;
+            margin-bottom: 4px;
+            line-height: 1.5;
+        }
+        .tips-list code {
+            background: #e2e8f0;
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .tool-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .tool-links a {
+            font-size: 0.85em;
+            color: #4a90e2;
+            text-decoration: none;
+            padding: 4px 10px;
+            background: #f1f5f9;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        .tool-links a:hover {
+            background: #e2e8f0;
+        }
+            .tool-header h1 { font-size: 1.25em; }
+            .input-group { flex-direction: column; gap: 8px; }
+            input { width: 100%; font-size: 0.95em; }
+            button { width: 100%; padding: 12px; font-size: 0.95em; }
+            .res-table, .res-table tbody, .res-table tr, .res-table th, .res-table td { display: block; width: 100%; }
+            .res-table tr { border-bottom: 1px solid #f0f2f5; }
+            .res-table tr:last-child { border-bottom: none; }
+            .res-table tr th { width: 100%; background: #f8fafc; padding: 10px 12px 4px; border-bottom: none; font-size: 0.78em; color: #94a3b8; white-space: normal; }
+            .res-table tr td { padding: 4px 12px 10px; font-size: 0.85em; border-bottom: none; }
+            .raw-whois { font-size: 0.75em; max-height: 320px; padding: 12px; }
+            .overlay.active { display: block; }
+        }
+            .res-table tr td { font-size: 0.8em; }
+        }
+</style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="网站注册状态与WHOIS查询,在线网站注册状态与WHOIS查询,网络工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/network/whois-state-tool.html" />
+    <meta property="og:title" content="域名注册状态查询" />
+    <meta property="og:description" content="网站注册状态与WHOIS查询，查询域名的注册状态、日期与所有者等详细信息。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/network/whois-state-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="域名注册状态查询" />
+    <meta itemprop="description" content="网站注册状态与WHOIS查询，查询域名的注册状态、日期与所有者等详细信息。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "网络工具",
+                "item": "https://box.lynvortex.top/network.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "网站注册状态与WHOIS查询",
+                "item": "https://box.lynvortex.top/network/whois-state-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "网站注册状态与WHOIS查询",
+        "url": "https://box.lynvortex.top/network/whois-state-tool.html",
+        "description": "查询域名的注册状态、日期与所有者等详细信息",
+        "applicationCategory": "网络工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+<main class="main-content">
+    <div class="main-scroll">
+        <!-- 查询工具主体（全宽） -->
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>📋 域名注册状态查询</h1>
+                <p>通过 RDAP 协议直连域名注册局，安全、无限制</p>
+            </div>
+
+            <div class="input-group">
+                <input type="text" id="domainInput" placeholder="输入域名 (如: example.com)" spellcheck="false" autocomplete="off" />
+                <button id="runBtn" onclick="performQuery()">查询</button>
+            </div>
+
+            <div id="loader" class="loader"></div>
+            <div id="errorTip" class="error-tip"></div>
+
+            <div class="tab-bar" id="tabBar">
+                <button class="tab-btn active" onclick="switchTab('parsed', this)">📋 解析结果</button>
+                <button class="tab-btn" onclick="switchTab('raw', this)">📄 原始数据</button>
+            </div>
+
+            <div id="resultArea" class="result-area">
+                <div class="tab-panel active" id="panel-parsed">
+                    <table class="res-table"><tbody id="resultBody"></tbody></table>
+                </div>
+                <div class="tab-panel" id="panel-raw">
+                    <pre class="raw-whois" id="rawWhoisText"></pre>
+                </div>
+            </div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 工具下方的信息卡片（全宽） -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>🌍 支持查询的后缀</h3>
+                <p>常用域名均可查（100+ 后缀）</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">.com</span>
+                    <span class="tld-chip">.cn</span>
+                    <span class="tld-chip">.net</span>
+                    <span class="tld-chip">.org</span>
+                    <span class="tld-chip">.xyz</span>
+                    <span class="tld-chip">.top</span>
+                    <span class="tld-chip">.io</span>
+                    <span class="tld-chip">.ai</span>
+                    <span class="tld-chip">.dev</span>
+                    <span class="tld-chip">.app</span>
+                    <span class="tld-chip">.uk</span>
+                    <span class="tld-chip">.de</span>
+                    <span class="tld-chip">.eu</span>
+                    <span class="tld-chip">.jp</span>
+                    <span class="tld-chip">.kr</span>
+                    <span class="tld-chip">.fr</span>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h3>💡 查询须知</h3>
+                <ul class="tips-list">
+                    <li>直接输入域名，如 <code>google.com</code></li>
+                    <li>支持带协议的网址，会自动清理</li>
+                    <li>查询结果来自 ICANN 官方 RDAP 接口</li>
+                    <li>部分国家域名（ccTLD）可能返回较少字段</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p class="brand-tagline">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top">完全免费</a>
+                    <a href="https://lynvortex.top">开源精神</a>
+                    <a href="https://lynvortex.top">极客风范</a>
+                    <a href="https://lynvortex.top">协作共创</a>
+                </div>
+                <p class="brand-desc">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    initSidebar('network');
+
+    // ========== 标签页切换 ==========
+    const switchTab = function(name, btn) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('panel-' + name).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    // ========== RDAP 解析逻辑 ==========
+    const parseVcardArray = function(vcardArray) {
+        if (!vcardArray || !Array.isArray(vcardArray) || vcardArray.length < 2) return {};
+        const props = vcardArray[1];
+        if (!Array.isArray(props)) return {};
+        const result = {};
+        for (const prop of props) {
+            if (!Array.isArray(prop) || prop.length < 4) continue;
+            const name = prop[0], value = prop[3];
+            if (name === 'fn') result.fn = value;
+            if (name === 'org') result.org = value;
+            if (name === 'email') result.email = value;
+            if (name === 'tel') result.tel = value;
+            if (name === 'adr' && Array.isArray(value)) result.adr = value.filter(p => typeof p === 'string' && p.trim()).join(', ');
+        }
+        return result;
+    }
+
+    const getEntityByRole = function(entities, role) {
+        if (!Array.isArray(entities)) return null;
+        return entities.find(ent => Array.isArray(ent.roles) && ent.roles.includes(role)) || null;
+    }
+
+    const getEventDate = function(rdapData, action) {
+        if (!Array.isArray(rdapData.events)) return null;
+        const event = rdapData.events.find(e => e.eventAction === action);
+        return event ? event.eventDate : null;
+    }
+
+    const formatISODate = function(isoStr) {
+        if (!isoStr) return '';
+        try {
+            const d = new Date(isoStr);
+            return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')} ${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')} (UTC)`;
+        } catch { return isoStr; }
+    }
+
+    const parseRdapResult = function(rdapData) {
+        const rows = [];
+        const add = (label, value) => { if (value) rows.push([label, value]); };
+
+        add('域名', rdapData.ldhName || '');
+
+        const statuses = rdapData.status || [];
+        if (statuses.length) add('域名状态', statuses.join(' '));
+
+        const regDate = getEventDate(rdapData, 'registration');
+        if (regDate) add('注册时间', formatISODate(regDate));
+
+        const expDate = getEventDate(rdapData, 'expiration');
+        if (expDate) add('到期时间', formatISODate(expDate));
+
+        const updDate = getEventDate(rdapData, 'last changed') || getEventDate(rdapData, 'last update of RDAP database');
+        if (updDate) add('更新时间', formatISODate(updDate));
+
+        const registrarEnt = getEntityByRole(rdapData.entities, 'registrar');
+        if (registrarEnt) {
+            const vc = parseVcardArray(registrarEnt.vcardArray);
+            if (vc.fn) add('注册商', vc.fn);
+            if (vc.email) add('注册商邮箱', vc.email);
+            if (vc.tel) add('注册商电话', vc.tel);
+            const ianaId = (registrarEnt.publicIds || []).find(p => p.type === 'IANA Registrar ID');
+            if (ianaId) add('注册商 IANA ID', ianaId.identifier);
+        }
+
+        const registrantEnt = getEntityByRole(rdapData.entities, 'registrant');
+        if (registrantEnt) {
+            const vc = parseVcardArray(registrantEnt.vcardArray);
+            if (vc.fn) add('注册人', vc.fn);
+            if (vc.org) add('注册人机构', vc.org);
+            if (vc.email) add('注册人邮箱', vc.email);
+            if (vc.adr) add('注册人地址', vc.adr);
+            if (vc.tel) add('注册人电话', vc.tel);
+        }
+
+        const adminEnt = getEntityByRole(rdapData.entities, 'administrative');
+        if (adminEnt) {
+            const vc = parseVcardArray(adminEnt.vcardArray);
+            const name = vc.fn || vc.org || '(已设置)';
+            add('管理员', name);
+            if (vc.email) add('管理员邮箱', vc.email);
+        }
+
+        const techEnt = getEntityByRole(rdapData.entities, 'technical');
+        if (techEnt) {
+            const vc = parseVcardArray(techEnt.vcardArray);
+            const name = vc.fn || vc.org || '(已设置)';
+            add('技术联系人', name);
+            if (vc.email) add('技术联系人邮箱', vc.email);
+        }
+
+        const ns = (rdapData.nameservers || []).map(n => n.ldhName).filter(Boolean);
+        if (ns.length) add('DNS 服务器', ns.join(', '));
+
+        if (rdapData.secureDNS && rdapData.secureDNS.delegationSigned !== undefined) {
+            add('DNSSEC', rdapData.secureDNS.delegationSigned ? '已签名 (Signed)' : '未签名');
+        }
+
+        if (rdapData.handle) add('注册局域名 ID', rdapData.handle);
+
+        return rows;
+    }
+
+    // ========== RDAP 服务器映射（直接查询，无需 Worker） ==========
+    const RDAP_SERVERS = {
+        // 通用顶级域 (gTLD)
+        'com': 'https://rdap.verisign.com/com/v1/domain/',
+        'net': 'https://rdap.verisign.com/net/v1/domain/',
+        'org': 'https://rdap.afilias.net/rdap/domain/',
+        'info': 'https://rdap.afilias.net/rdap/domain/',
+        'biz': 'https://rdap.afilias.net/rdap/domain/',
+        'name': 'https://rdap.verisign.com/name/v1/domain/',
+        'mobi': 'https://rdap.afilias.net/rdap/domain/',
+        'pro': 'https://rdap.afilias.net/rdap/domain/',
+        // 新通用顶级域 (new gTLD)
+        'xyz': 'https://rdap.nic.xyz/rdap/domain/',
+        'top': 'https://rdap.nic.top/rdap/domain/',
+        'icu': 'https://rdap.centralnic.com/rdap/domain/',
+        'io': 'https://rdap.nic.io/rdap/domain/',
+        'ai': 'https://rdap.nic.ai/rdap/domain/',
+        'dev': 'https://rdap.nic.dev/rdap/domain/',
+        'app': 'https://rdap.nic.app/rdap/domain/',
+        'me': 'https://rdap.nic.me/rdap/domain/',
+        'co': 'https://rdap.nic.co/rdap/domain/',
+        'shop': 'https://rdap.nic.shop/rdap/domain/',
+        'fun': 'https://rdap.nic.fun/rdap/domain/',
+        'online': 'https://rdap.centralnic.com/rdap/domain/',
+        'tech': 'https://rdap.nic.tech/rdap/domain/',
+        'site': 'https://rdap.nic.site/rdap/domain/',
+        'space': 'https://rdap.centralnic.com/rdap/domain/',
+        'live': 'https://rdap.nic.live/rdap/domain/',
+        'cloud': 'https://rdap.nic.cloud/rdap/domain/',
+        'club': 'https://rdap.nic.club/rdap/domain/',
+        'design': 'https://rdap.nic.design/rdap/domain/',
+        'world': 'https://rdap.nic.world/rdap/domain/',
+        'work': 'https://rdap.nic.work/rdap/domain/',
+        'life': 'https://rdap.nic.life/rdap/domain/',
+        'vip': 'https://rdap.nic.vip/rdap/domain/',
+        'win': 'https://rdap.nic.win/rdap/domain/',
+        'ren': 'https://rdap.nic.ren/rdap/domain/',
+        'bid': 'https://rdap.nic.bid/rdap/domain/',
+        'xin': 'https://rdap.nic.xin/rdap/domain/',
+        'store': 'https://rdap.nic.store/rdap/domain/',
+        'band': 'https://rdap.nic.band/rdap/domain/',
+        // 国家和地区顶级域 (ccTLD)
+        'cc': 'https://rdap.verisign.com/cc/v1/domain/',
+        'tv': 'https://rdap.verisign.com/tv/v1/domain/',
+        'cn': 'https://rdap.cnnic.net.cn/rdap/domain/',
+        'cm': 'https://rdap.telecom.com.cn/rdap/domain/',
+        'wang': 'https://rdap.nic.wang/rdap/domain/',
+        'uk': 'https://rdap.nic.uk/rdap/domain/',
+        'de': 'https://rdap.denic.de/rdap/domain/',
+        'eu': 'https://rdap.eu/rdap/domain/',
+        'jp': 'https://rdap.nic.ad.jp/rdap/domain/',
+        'kr': 'https://rdap.nic.or.kr/rdap/domain/',
+        'fr': 'https://rdap.nic.fr/rdap/domain/',
+        'ru': 'https://rdap.nic.ru/rdap/domain/',
+        'br': 'https://rdap.nic.br/rdap/domain/',
+        'au': 'https://rdap.auda.net.au/rdap/domain/',
+        // 赞助顶级域 (sTLD)
+        'gov': 'https://rdap.verisign.com/gov/v1/domain/',
+        'edu': 'https://rdap.educause.edu/rdap/domain/',
+    };
+
+    const queryRdapDirect = async function(domain) {
+        const tld = domain.split('.').pop().toLowerCase();
+        const baseUrl = RDAP_SERVERS[tld] || null;
+        if (baseUrl) {
+            const url = baseUrl + encodeURIComponent(domain);
+            const resp = await fetch(url);
+            if (resp.ok) {
+                const data = await resp.json();
+                return { registered: true, data };
+            }
+            if (resp.status === 404) {
+                return { registered: false, data: null };
+            }
+            // 如果特定服务器失败，降级到下一方法
+        }
+        // 降级：使用 DNS DoH 查询 A 记录判断是否注册
+        const dohUrl = `https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=A`;
+        const dohResp = await fetch(dohUrl);
+        if (dohResp.ok) {
+            const dohData = await dohResp.json();
+            const hasARecord = dohData.Answer && dohData.Answer.some(a => a.type === 1);
+            return { registered: hasARecord, data: null, note: 'DNS 查询模式（部分信息不可用）' };
+        }
+        throw new Error('无法查询域名信息，请检查网络连接');
+    }
+
+    // ========== 主查询函数 ==========
+    const performQuery = async function() {
+        const input = document.getElementById('domainInput');
+        const btn = document.getElementById('runBtn');
+        const loader = document.getElementById('loader');
+        const resultArea = document.getElementById('resultArea');
+        const tabBar = document.getElementById('tabBar');
+        const resBody = document.getElementById('resultBody');
+        const rawText = document.getElementById('rawWhoisText');
+        const errorTip = document.getElementById('errorTip');
+
+        let domain = input.value.trim().toLowerCase()
+            .replace(/^(https?):\/\//, '').split('/')[0].replace(/^www\./, '');
+
+        if (!domain || !/^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/.test(domain)) {
+            alert('请输入有效的域名（如 example.com）');
+            return;
+        }
+
+        loader.style.display = 'block';
+        resultArea.style.display = 'none';
+        tabBar.style.display = 'none';
+        errorTip.style.display = 'none';
+        btn.disabled = true;
+
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('panel-parsed').classList.add('active');
+        document.querySelectorAll('.tab-btn')[0]?.classList.add('active');
+
+        try {
+            const result = await queryRdapDirect(domain);
+            const registered = result.registered;
+            const data = result.data;
+            const note = result.note || '';
+
+            let statusHtml = '';
+            let rows = [];
+            let rawContent = '';
+
+            if (registered && data) {
+                statusHtml = '<span class="registered-badge">✓ 已注册</span>';
+                rows = parseRdapResult(data);
+                rawContent = JSON.stringify(data, null, 2);
+            } else if (registered && !data) {
+                statusHtml = '<span class="registered-badge">✓ 已注册（DNS 验证）</span>';
+                rawContent = 'DNS 查询确认域名已注册，但 RDAP 详细信息不可用';
+            } else {
+                statusHtml = '<span class="unregistered-badge">✗ 未注册</span>';
+                rawContent = 'RDAP 返回 404 – 该域名未注册';
+            }
+
+            const sourceBadge = '<span class="source-badge">数据来源: ICANN RDAP（直接查询）</span>';
+            let tableHtml = `<tr><th>注册状态</th><td>${statusHtml} ${sourceBadge}</td></tr>`;
+            if (note) {
+                tableHtml += `<tr><th>提示</th><td style="color:#f59e0b;">${window.escapeHtml(note)}</td></tr>`;
+            }
+            for (const [label, value] of rows) {
+                tableHtml += `<tr><th>${window.escapeHtml(label)}</th><td>${window.escapeHtml(value)}</td></tr>`;
+            }
+            resBody.innerHTML = tableHtml;
+            rawText.textContent = rawContent || '（无原始数据）';
+            tabBar.style.display = 'flex';
+            resultArea.style.display = 'block';
+        } catch (err) {
+            errorTip.style.display = 'block';
+            errorTip.innerHTML = `⚠️ <strong>查询失败</strong><br>${window.escapeHtml(err.message)}<br><br>💡 请检查域名是否有效，或 RDAP 服务器是否可达`;
+        } finally {
+            loader.style.display = 'none';
+            btn.disabled = false;
+        }
+    }
+
+    document.getElementById('domainInput').addEventListener('keypress', e => {
+        if (e.key === 'Enter') performQuery();
+    });
+</script>
+</body>
+</html>

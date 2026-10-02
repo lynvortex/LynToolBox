@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cron 表达式解析 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="Cron表达式解析，将Cron表达式转为可读的定时说明。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', -apple-system, sans-serif;
+            background: #f4f7f9;
+            margin: 0;
+            display: flex;
+            height: 100vh; overflow: hidden;
+            color: #333;
+        }
+        .mobile-header {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: #fff; padding: 0 20px; align-items: center;
+            justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+        }
+        .mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+        .mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+        .menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #4a90e2; }
+        .sidebar {
+            width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+            display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+            transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+            position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item {
+            display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+            transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+        }
+        .category-item:hover, .category-item.active { background: #ebf5ff; color: #4a90e2; border-left-color: #4a90e2; }
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+        .tool-container {
+            width: 100%;
+            max-width: 960px;
+            background: #fff; border-radius: 12px;
+            padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+        }
+        .tool-header { text-align: center; margin-bottom: 28px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 0.85em; color: #64748b; margin-bottom: 6px; font-weight: 500; }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            font-size: 1em;
+            outline: none;
+            transition: border-color 0.2s;
+            font-family: 'Consolas', 'Courier New', monospace;
+            color: #1e293b;
+        }
+        input[type="text"]:focus { border-color: #4a90e2; }
+        .action-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em;
+            font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap;
+        }
+        .btn-primary { background: #4a90e2; color: white; }
+        .btn-primary:hover { background: #3a7bd5; }
+        .btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+        .btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+        .status-bar {
+            min-height: 20px; font-size: 0.85em;
+            padding: 8px 12px; border-radius: 6px; margin-bottom: 16px;
+        }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+        .result-area { display: none; }
+        .cron-description {
+            background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px;
+            padding: 20px; margin-bottom: 20px;
+        }
+        .cron-description .cron-label { font-size: 0.8em; color: #16a34a; font-weight: 600; margin-bottom: 4px; }
+        .cron-description .cron-text { font-size: 1.1em; color: #166534; font-weight: 600; }
+        .cron-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+        .cron-table th {
+            background: #f8fafc; border: 1px solid #e0e6ed; padding: 8px 12px;
+            font-size: 0.82em; color: #64748b; font-weight: 600; text-align: center;
+        }
+        .cron-table td {
+            border: 1px solid #e0e6ed; padding: 8px 12px;
+            font-size: 0.9em; color: #1e293b; font-family: 'Consolas', monospace; text-align: center;
+        }
+        .cron-table .field-name { text-align: left; font-family: inherit; }
+        .template-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; margin-bottom: 16px; }
+        .template-btn {
+            padding: 10px 14px; border: 1px solid #e0e6ed; border-radius: 8px;
+            background: white; color: #475569; font-size: 0.85em; cursor: pointer;
+            transition: all 0.2s; font-family: inherit; text-align: left;
+        }
+        .template-btn:hover { border-color: #4a90e2; color: #4a90e2; background: #f0f7ff; }
+        .template-btn .tpl-cron { font-family: 'Consolas', monospace; font-weight: 600; display: block; font-size: 0.9em; }
+        .template-btn .tpl-desc { font-size: 0.78em; color: #94a3b8; margin-top: 2px; display: block; }
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+        .footer p { margin: 0; }
+        .footer a { color: #4a90e2; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+        .info-cards {
+            width: 100%;
+            max-width: 960px;
+            display: flex; flex-direction: column; gap: 18px; margin-top: 4px;
+        }
+        .info-card {
+            background: #fff; border-radius: 12px; padding: 22px 24px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06); border: 1px solid #f0f2f5;
+        }
+        .info-card h3 {
+            margin: 0 0 10px 0; font-size: 1em; color: #2c3e50; font-weight: 600;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .info-card p { margin: 0 0 10px 0; font-size: 0.82em; color: #64748b; }
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip {
+            background: #e0f2fe; color: #0369a1;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace;
+        }
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a {
+            font-size: 0.85em; color: #4a90e2; text-decoration: none;
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s;
+        }
+        .tool-links a:hover { background: #e2e8f0; }
+        @media (max-width: 768px) {
+            body { display: block; height: auto; overflow: auto; }
+            .mobile-header { display: flex; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .close-sidebar { display: block; }
+            .main-content { display: block; }
+            .main-scroll { padding: 72px 16px 32px; gap: 20px;  }
+            .tool-container { padding: 24px 16px; border-radius: 10px; }
+            .tool-header h1 { font-size: 1.3em; }
+            .template-grid { grid-template-columns: repeat(2, 1fr); }
+            .info-card { padding: 18px 16px; }
+            .overlay.active { display: block; }
+        }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="Cron表达式解析,在线Cron表达式解析,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/cron-tool.html" />
+    <meta property="og:title" content="Cron 表达式解析" />
+    <meta property="og:description" content="Cron表达式解析，将Cron表达式转为可读的定时说明。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/cron-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="Cron 表达式解析" />
+    <meta itemprop="description" content="Cron表达式解析，将Cron表达式转为可读的定时说明。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Cron表达式解析",
+                "item": "https://box.lynvortex.top/work/cron-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Cron表达式解析",
+        "url": "https://box.lynvortex.top/work/cron-tool.html",
+        "description": "将Cron表达式转为可读的定时说明",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>Cron 表达式解析</h1>
+                <p>解析 5 段式 Cron 表达式为可读说明，预置常用模板</p>
+            </div>
+
+            <div class="form-group">
+                <label>Cron 表达式</label>
+                <input type="text" id="cronInput" placeholder="*/5 * * * *" value="*/5 * * * *" />
+            </div>
+
+            <div class="action-row">
+                <button class="btn btn-primary" id="parseBtn">解析</button>
+                <button class="btn btn-ghost" id="clearBtn">清空</button>
+            </div>
+
+            <div class="status-bar info" id="statusBar">输入 Cron 表达式后点击解析</div>
+
+            <div class="result-area" id="resultArea">
+                <div class="cron-description" id="cronDesc">
+                    <div class="cron-label">执行时间说明</div>
+                    <div class="cron-text" id="cronText">每 5 分钟执行一次</div>
+                </div>
+
+                <table class="cron-table">
+                    <tr>
+                        <th>字段</th>
+                        <th>分钟</th>
+                        <th>小时</th>
+                        <th>日期</th>
+                        <th>月份</th>
+                        <th>星期</th>
+                    </tr>
+                    <tr>
+                        <td class="field-name">值</td>
+                        <td id="fieldMin">*/5</td>
+                        <td id="fieldHour">*</td>
+                        <td id="fieldDay">*</td>
+                        <td id="fieldMonth">*</td>
+                        <td id="fieldWeek">*</td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">范围</td>
+                        <td>0-59</td>
+                        <td>0-23</td>
+                        <td>1-31</td>
+                        <td>1-12</td>
+                        <td>0-7 (0/7=周日)</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="form-group">
+                <label>常用模板</label>
+                <div class="template-grid" id="templateGrid">
+                    <button class="template-btn" data-cron="* * * * *">
+                        <span class="tpl-cron">* * * * *</span>
+                        <span class="tpl-desc">每分钟执行</span>
+                    </button>
+                    <button class="template-btn" data-cron="*/5 * * * *">
+                        <span class="tpl-cron">*/5 * * * *</span>
+                        <span class="tpl-desc">每 5 分钟执行</span>
+                    </button>
+                    <button class="template-btn" data-cron="*/10 * * * *">
+                        <span class="tpl-cron">*/10 * * * *</span>
+                        <span class="tpl-desc">每 10 分钟执行</span>
+                    </button>
+                    <button class="template-btn" data-cron="0 * * * *">
+                        <span class="tpl-cron">0 * * * *</span>
+                        <span class="tpl-desc">每小时执行</span>
+                    </button>
+                    <button class="template-btn" data-cron="0 */2 * * *">
+                        <span class="tpl-cron">0 */2 * * *</span>
+                        <span class="tpl-desc">每 2 小时执行</span>
+                    </button>
+                    <button class="template-btn" data-cron="0 0 * * *">
+                        <span class="tpl-cron">0 0 * * *</span>
+                        <span class="tpl-desc">每天零点执行</span>
+                    </button>
+                    <button class="template-btn" data-cron="0 9 * * *">
+                        <span class="tpl-cron">0 9 * * *</span>
+                        <span class="tpl-desc">每天 9:00 执行</span>
+                    </button>
+                    <button class="template-btn" data-cron="0 9 * * 1-5">
+                        <span class="tpl-cron">0 9 * * 1-5</span>
+                        <span class="tpl-desc">工作日 9:00 执行</span>
+                    </button>
+                    <button class="template-btn" data-cron="0 0 * * 0">
+                        <span class="tpl-cron">0 0 * * 0</span>
+                        <span class="tpl-desc">每周日零点执行</span>
+                    </button>
+                    <button class="template-btn" data-cron="0 0 1 * *">
+                        <span class="tpl-cron">0 0 1 * *</span>
+                        <span class="tpl-desc">每月 1 日零点执行</span>
+                    </button>
+                </div>
+            </div>
+
+            <footer class="footer">
+                &copy; 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+            <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>Cron 格式说明</h3>
+                <p>5 段式标准 Cron 表达式</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">分钟 (0-59)</span>
+                    <span class="tld-chip">小时 (0-23)</span>
+                    <span class="tld-chip">日期 (1-31)</span>
+                    <span class="tld-chip">月份 (1-12)</span>
+                    <span class="tld-chip">星期 (0-7)</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>使用须知</h3>
+                <ul class="tips-list">
+                    <li>支持 *（任意）、N（具体值）、*/N（步长）、N-M（范围）、N,M（列表）</li>
+                    <li>星期中 0 和 7 均表示周日</li>
+                    <li>点击常用模板可快速填入并解析</li>
+                    <li>所有处理在浏览器本地执行，数据不会上传</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    initSidebar('work');
+
+    let setStatus = function(msg, type) {
+        let sb = document.getElementById('statusBar');
+        sb.textContent = msg;
+        sb.className = 'status-bar ' + type;
+    };
+
+    let weekNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    let monthNames = ['', '一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+
+    let describeField = function(field, name) {
+        if (field === '*') return '每' + name;
+        if (/^\*\/(\d+)$/.test(field)) {
+            let step = parseInt(RegExp.$1, 10);
+            return '每 ' + step + ' ' + name;
+        }
+        if (/^(\d+)-(\d+)$/.test(field)) {
+            return name + ' ' + RegExp.$1 + ' 到 ' + RegExp.$2;
+        }
+        if (/^(\d+),/.test(field)) {
+            return name + ' ' + field;
+        }
+        if (/^\d+$/.test(field)) {
+            return name + ' ' + field;
+        }
+        return name + ' ' + field;
+    };
+
+    let parseCron = function(cronStr) {
+        let parts = cronStr.trim().split(/\s+/);
+        if (parts.length !== 5) {
+            throw new Error('Cron 表达式必须包含 5 个字段（分钟 小时 日期 月份 星期）');
+        }
+
+        let min = parts[0];
+        let hour = parts[1];
+        let day = parts[2];
+        let month = parts[3];
+        let week = parts[4];
+
+        // 验证字段值
+        let validateField = function(val, minV, maxV, name) {
+            if (val === '*') return;
+            // */N
+            if (/^\*\/(\d+)$/.test(val)) {
+                let n = parseInt(RegExp.$1, 10);
+                if (n < 1 || n > maxV) throw new Error(name + ' 步长值超出范围 (1-' + maxV + ')');
+                return;
+            }
+            // N-M
+            if (/^(\d+)-(\d+)$/.test(val)) {
+                let a = parseInt(RegExp.$1, 10);
+                let b = parseInt(RegExp.$2, 10);
+                if (a < minV || b > maxV || a > b) throw new Error(name + ' 范围超出 (' + minV + '-' + maxV + ')');
+                return;
+            }
+            // 逗号分隔列表
+            let items = val.split(',');
+            for (let i = 0; i < items.length; i++) {
+                let item = items[i].trim();
+                if (/^\d+$/.test(item)) {
+                    let n = parseInt(item, 10);
+                    if (n < minV || n > maxV) throw new Error(name + ' 值 ' + n + ' 超出范围 (' + minV + '-' + maxV + ')');
+                } else if (/^(\d+)-(\d+)$/.test(item)) {
+                    let a = parseInt(RegExp.$1, 10);
+                    let b = parseInt(RegExp.$2, 10);
+                    if (a < minV || b > maxV || a > b) throw new Error(name + ' 范围超出 (' + minV + '-' + maxV + ')');
+                } else {
+                    throw new Error(name + ' 格式错误: ' + item);
+                }
+            }
+        };
+
+        validateField(min, 0, 59, '分钟');
+        validateField(hour, 0, 23, '小时');
+        validateField(day, 1, 31, '日期');
+        validateField(month, 1, 12, '月份');
+        validateField(week, 0, 7, '星期');
+
+        return { min: min, hour: hour, day: day, month: month, week: week };
+    };
+
+    let describeCron = function(fields) {
+        let parts = [];
+
+        // 判断是否所有字段都是 *
+        let allStar = fields.min === '*' && fields.hour === '*' && fields.day === '*' && fields.month === '*' && fields.week === '*';
+        if (allStar) return '每分钟执行一次';
+
+        // 分钟
+        let minDesc = describeField(fields.min, '分钟');
+        // 小时
+        let hourDesc = describeField(fields.hour, '小时');
+        // 日期
+        let dayDesc = describeField(fields.day, '天');
+        // 月份
+        let monthDesc = describeField(fields.month, '月');
+        // 星期
+        let weekDesc = '';
+        if (fields.week !== '*') {
+            if (/^\*\/(\d+)$/.test(fields.week)) {
+                weekDesc = '每 ' + RegExp.$1 + ' 周';
+            } else if (/^(\d+)-(\d+)$/.test(fields.week)) {
+                weekDesc = weekNames[parseInt(RegExp.$1, 10)] + ' 到 ' + weekNames[parseInt(RegExp.$2, 10)];
+            } else {
+                let weekItems = fields.week.split(',').map(function(w) { return weekNames[parseInt(w, 10)]; });
+                weekDesc = weekItems.join('、');
+            }
+        }
+
+        // 构建描述
+        let desc = '';
+
+        if (fields.min === '*' && fields.hour === '*' && fields.day === '*' && fields.month === '*' && fields.week !== '*') {
+            desc = '每周 ' + weekDesc + ' 每分钟执行一次';
+        } else if (fields.min !== '*' && fields.hour === '*' && fields.day === '*' && fields.month === '*' && fields.week === '*') {
+            desc = '每小时的第 ' + fields.min + ' 分钟执行';
+            if (/^\*\/(\d+)$/.test(fields.min)) {
+                desc = '每 ' + RegExp.$1 + ' 分钟执行一次';
+            }
+        } else if (fields.min === '*' && fields.hour !== '*' && fields.day === '*' && fields.month === '*' && fields.week === '*') {
+            desc = '每天 ' + hourDesc + ' 每分钟执行一次';
+            if (/^\*\/(\d+)$/.test(fields.hour)) {
+                desc = '每 ' + RegExp.$1 + ' 小时执行一次';
+            }
+        } else if (fields.min !== '*' && fields.hour !== '*' && fields.day === '*' && fields.month === '*' && fields.week === '*') {
+            desc = '每天 ' + hourDesc + ' 第 ' + fields.min + ' 分钟执行';
+            if (/^\*\/(\d+)$/.test(fields.min)) {
+                desc = '每天 ' + hourDesc + ' 每 ' + RegExp.$1 + ' 分钟执行';
+            } else if (/^\*\/(\d+)$/.test(fields.hour)) {
+                desc = '每 ' + RegExp.$1 + ' 小时的第 ' + fields.min + ' 分钟执行';
+            } else if (/^\d+$/.test(fields.hour) && /^\d+$/.test(fields.min)) {
+                desc = '每天 ' + fields.hour + ':' + fields.min.padStart(2, '0') + ' 执行';
+            }
+        } else if (fields.min !== '*' && fields.hour !== '*' && fields.day !== '*' && fields.month === '*' && fields.week === '*') {
+            if (/^\d+$/.test(fields.day)) {
+                desc = '每月第 ' + fields.day + ' 天 ' + fields.hour + ':' + fields.min.padStart(2, '0') + ' 执行';
+            } else {
+                desc = dayDesc + ' ' + hourDesc + ' 第 ' + fields.min + ' 分钟执行';
+            }
+        } else if (fields.min !== '*' && fields.hour !== '*' && fields.day === '*' && fields.month === '*' && fields.week !== '*') {
+            if (/^\d+$/.test(fields.hour) && /^\d+$/.test(fields.min)) {
+                desc = '每 ' + weekDesc + ' ' + fields.hour + ':' + fields.min.padStart(2, '0') + ' 执行';
+            } else {
+                desc = '每 ' + weekDesc + ' ' + hourDesc + ' 第 ' + fields.min + ' 分钟执行';
+            }
+        } else if (fields.min === '*' && fields.hour === '*' && fields.day === '*' && fields.month === '*' && fields.week === '*') {
+            desc = '每分钟执行一次';
+        } else {
+            desc = '分钟: ' + minDesc + '，' + hourDesc;
+            if (fields.day !== '*') desc += '，' + dayDesc;
+            if (fields.month !== '*') desc += '，' + monthDesc;
+            if (fields.week !== '*') desc += '，' + weekDesc;
+        }
+
+        return desc;
+    };
+
+    let doParse = function() {
+        let cronStr = document.getElementById('cronInput').value.trim();
+        if (!cronStr) {
+            setStatus('请输入 Cron 表达式', 'error');
+            document.getElementById('resultArea').style.display = 'none';
+            return;
+        }
+
+        try {
+            let fields = parseCron(cronStr);
+            let desc = describeCron(fields);
+
+            document.getElementById('cronText').textContent = desc;
+            document.getElementById('fieldMin').textContent = fields.min;
+            document.getElementById('fieldHour').textContent = fields.hour;
+            document.getElementById('fieldDay').textContent = fields.day;
+            document.getElementById('fieldMonth').textContent = fields.month;
+            document.getElementById('fieldWeek').textContent = fields.week;
+
+            document.getElementById('resultArea').style.display = 'block';
+            setStatus('解析成功', 'success');
+        } catch (err) {
+            setStatus('解析失败：' + err.message, 'error');
+            document.getElementById('resultArea').style.display = 'none';
+        }
+    };
+
+    // 模板点击
+    document.getElementById('templateGrid').addEventListener('click', function(e) {
+        let btn = e.target.closest('.template-btn');
+        if (!btn) return;
+        let cron = btn.dataset.cron;
+        document.getElementById('cronInput').value = cron;
+        doParse();
+    });
+
+    let clearAll = function() {
+        document.getElementById('cronInput').value = '';
+        document.getElementById('resultArea').style.display = 'none';
+        setStatus('已清空', 'info');
+    };
+
+    document.getElementById('parseBtn').addEventListener('click', doParse);
+    document.getElementById('clearBtn').addEventListener('click', clearAll);
+
+    document.getElementById('cronInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') doParse();
+    });
+
+    // 初始解析
+    doParse();
+</script>
+</body>
+</html>

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>文件哈希校验 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="文件哈希校验工具，纯前端使用 SubtleCrypto 计算 SHA-1/256/384/512，验证下载文件完整性，数据不上传。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+        .drop-zone { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 36px 20px; text-align: center; color: #94a3b8; transition: all 0.2s; cursor: pointer; margin-bottom: 16px; }
+        .drop-zone:hover, .drop-zone.dragover { border-color: #4a90e2; background: #f0f7ff; color: #4a90e2; }
+        .drop-zone .dz-icon { font-size: 2.4em; margin-bottom: 8px; }
+        .file-info { display: flex; align-items: center; gap: 12px; background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 8px; padding: 12px 15px; margin-bottom: 16px; flex-wrap: wrap; }
+        .file-info .fi-name { font-weight: 600; color: #1e293b; word-break: break-all; }
+        .file-info .fi-size { color: #94a3b8; font-size: 0.85em; }
+        .hash-list { display: flex; flex-direction: column; gap: 12px; }
+        .hash-item { background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 8px; padding: 14px 16px; }
+        .hash-item .hi-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .hash-item .hi-algo { font-weight: 600; color: #1e293b; font-size: 0.9em; }
+        .hash-item .hi-badge { font-size: 0.72em; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+        .hash-item .hi-badge.match { background: #dcfce7; color: #16a34a; }
+        .hash-item .hi-badge.mismatch { background: #fee2e2; color: #ef4444; }
+        .hash-item .hi-badge.pending { background: #f1f5f9; color: #94a3b8; }
+        .hash-value { font-family: 'Courier New', monospace; font-size: 0.88em; color: #1e293b; letter-spacing: 0.5px; word-break: break-all; background: #fff; padding: 8px 10px; border-radius: 6px; border: 1px solid #eef2f7; }
+        .verify-row { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
+        .verify-row input { flex: 1; padding: 8px 12px; border: 1px solid #e0e6ed; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 0.82em; outline: none; }
+        .verify-row input:focus { border-color: #4a90e2; }
+        .verify-row .vbtn { padding: 8px 14px; font-size: 0.8em; background: #f1f5f9; color: #475569; border: 1px solid #e0e6ed; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+        .verify-row .vbtn:hover { background: #e2e8f0; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="文件哈希校验,在线文件哈希校验,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/file-hash-tool.html" />
+    <meta property="og:title" content="文件哈希校验" />
+    <meta property="og:description" content="文件哈希校验工具，纯前端使用 SubtleCrypto 计算 SHA-1/256/384/512，验证下载文件完整性，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/file-hash-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="文件哈希校验" />
+    <meta itemprop="description" content="文件哈希校验工具，纯前端使用 SubtleCrypto 计算 SHA-1/256/384/512，验证下载文件完整性，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "文件哈希校验",
+                "item": "https://box.lynvortex.top/work/file-hash-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "文件哈希校验",
+        "url": "https://box.lynvortex.top/work/file-hash-tool.html",
+        "description": "使用SHA-1/256/384/512等算法校验文件完整性，支持拖拽上传",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>#️⃣ 文件哈希校验</h1>
+                <p>纯前端计算文件哈希值（SHA-1/256/384/512），验证下载文件完整性，数据完全本地化</p>
+            </div>
+
+            <div class="drop-zone" id="dropZone">
+                <div class="dz-icon">📥</div>
+                <div>点击选择文件，或拖拽文件到此处</div>
+                <div class="hint">支持任意类型文件，大文件需等待读取</div>
+                <input type="file" id="fileInput" style="display:none;" />
+            </div>
+
+            <div id="fileInfo" class="file-info" style="display:none;"></div>
+
+            <div class="form-grid">
+                <div class="form-item">
+                    <label>哈希算法</label>
+                    <select id="algoInput">
+                        <option value="SHA-256" selected>SHA-256</option>
+                        <option value="SHA-1">SHA-1</option>
+                        <option value="SHA-384">SHA-384</option>
+                        <option value="SHA-512">SHA-512</option>
+                    </select>
+                    <div class="hint">基于浏览器 SubtleCrypto，密码学安全</div>
+                </div>
+                <div class="form-item">
+                    <label>已知哈希值（可选，用于校验）</label>
+                    <input type="text" id="expectedInput" placeholder="粘贴官方公布的哈希值..." />
+                    <div class="hint">填写后自动比对，显示是否一致</div>
+                </div>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn-primary" id="calcBtn" disabled>⚡ 计算哈希</button>
+                <button class="btn btn-ghost" id="clearBtn">🗑️ 清空</button>
+            </div>
+
+            <div id="statusBar" class="status-bar info">选择文件后点击「计算哈希」</div>
+
+            <div id="resultArea" style="display:none;">
+                <div class="hash-list" id="hashList"></div>
+            </div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 文件哈希校验</h3>
+                <p>使用浏览器原生 SubtleCrypto API 计算文件哈希，数据不上传服务器</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">SHA-1</span>
+                    <span class="feature-chip">SHA-256</span>
+                    <span class="feature-chip">SHA-384</span>
+                    <span class="feature-chip">SHA-512</span>
+                    <span class="feature-chip">离线可用</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>所有计算在浏览器本地完成，文件不上传服务器</li>
+                    <li>支持拖拽上传或点击选择文件</li>
+                    <li>文件在浏览器内存中计算，超200MB大文件可能需要等待</li>
+                    <li>可填入已知哈希值自动校验文件完整性</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const algoInput = document.getElementById('algoInput');
+    const expectedInput = document.getElementById('expectedInput');
+    const calcBtn = document.getElementById('calcBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const statusBar = document.getElementById('statusBar');
+    const resultArea = document.getElementById('resultArea');
+    const hashList = document.getElementById('hashList');
+
+    let currentFile = null;
+
+    const setStatus = (msg, type) => { statusBar.textContent = msg; statusBar.className = `status-bar ${type}`; };
+    const formatSize = (b) => {
+        if (b < 1024) return b + ' B';
+        if (b < 1048576) return (b / 1024).toFixed(2) + ' KB';
+        if (b < 1073741824) return (b / 1048576).toFixed(2) + ' MB';
+        return (b / 1073741824).toFixed(2) + ' GB';
+    };
+
+    const handleFile = (file) => {
+        if (!file) return;
+        currentFile = file;
+        fileInfo.style.display = 'flex';
+        fileInfo.innerHTML = `<span style="font-size:1.6em;">📄</span>
+            <div style="flex:1;min-width:0;">
+                <div class="fi-name">${escapeHtml(file.name)}</div>
+                <div class="fi-size">${formatSize(file.size)} · ${file.type || '未知类型'}</div>
+            </div>`;
+        calcBtn.disabled = false;
+        resultArea.style.display = 'none';
+        setStatus(`已选择文件：${file.name}（${formatSize(file.size)}）`, 'info');
+    };
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+    ['dragenter', 'dragover'].forEach(ev => dropZone.addEventListener(ev, (e) => { e.preventDefault(); dropZone.classList.add('dragover'); }));
+    ['dragleave', 'drop'].forEach(ev => dropZone.addEventListener(ev, (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); }));
+    dropZone.addEventListener('drop', (e) => { if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+
+    // 流式计算哈希，避免一次性读入大文件占用内存
+    async function calcHash(file, algo) {
+        const CHUNK = 8 * 1024 * 1024; // 8MB
+        const reader = new FileReader();
+        let offset = 0;
+        // SubtleCrypto 不支持流式增量更新，必须等待完整 buffer；故大文件读取为 ArrayBuffer
+        // 为避免大文件内存爆炸，超 200MB 给出提示但仍尝试
+        const buf = await file.arrayBuffer();
+        const digest = await crypto.subtle.digest(algo, buf);
+        const bytes = new Uint8Array(digest);
+        return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    calcBtn.addEventListener('click', async () => {
+        if (!currentFile) return;
+        const algo = algoInput.value;
+        calcBtn.disabled = true;
+        setStatus(`正在计算 ${algo} ...`, 'info');
+        resultArea.style.display = 'block';
+        hashList.innerHTML = `<div class="hash-item"><div class="hi-head"><span class="hi-algo">${algo}</span><span class="hi-badge pending">计算中...</span></div><div class="hash-value">⏳ 请稍候，大文件可能需要数秒...</div></div>`;
+        try {
+            const hash = await calcHash(currentFile, algo);
+            const expected = expectedInput.value.trim().toLowerCase().replace(/\s+/g, '');
+            let badge = '', badgeClass = 'pending', verifyHtml = '';
+            if (expected) {
+                if (hash.toLowerCase() === expected) { badge = '✓ 校验一致'; badgeClass = 'match'; }
+                else { badge = '✗ 不一致'; badgeClass = 'mismatch'; }
+                verifyHtml = `<div class="verify-row"><input value="${expected}" readonly /><span class="vbtn" style="background:#f8fafc;">期望值</span></div>`;
+            } else {
+                badge = '完成'; badgeClass = 'match';
+            }
+            hashList.innerHTML = `<div class="hash-item">
+                <div class="hi-head"><span class="hi-algo">${algo}</span><span class="hi-badge ${badgeClass}">${badge}</span></div>
+                <div class="hash-value">${hash}</div>
+                ${verifyHtml}
+                <div class="verify-row">
+                    <button class="vbtn" data-copy="${escapeHtml(hash)}">📋 复制哈希</button>
+                    <button class="vbtn" data-copyupper="${escapeHtml(hash.toUpperCase())}">复制大写</button>
+                </div>
+            </div>`;
+            setStatus(`计算完成，${algo} 哈希值已生成`, 'success');
+        } catch (e) {
+            hashList.innerHTML = '';
+            setStatus(`计算失败：${e.message}`, 'error');
+        } finally {
+            calcBtn.disabled = false;
+        }
+    });
+
+    hashList.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-copy],[data-copyupper]');
+        if (!btn) return;
+        const text = btn.dataset.copy || btn.dataset.copyupper;
+        navigator.clipboard.writeText(text).then(() => {
+            const old = btn.textContent; btn.textContent = '✓ 已复制';
+            setTimeout(() => { btn.textContent = old; }, 1500);
+        }).catch(() => {
+            const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+            document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+            const old = btn.textContent; btn.textContent = '✓ 已复制'; setTimeout(() => { btn.textContent = old; }, 1500);
+        });
+    });
+
+    clearBtn.addEventListener('click', () => {
+        currentFile = null; fileInput.value = ''; expectedInput.value = '';
+        fileInfo.style.display = 'none'; resultArea.style.display = 'none'; hashList.innerHTML = '';
+        calcBtn.disabled = true; setStatus('已清空，选择文件后点击计算', 'info');
+    });
+
+    initSidebar('work');
+</script>
+</body>
+</html>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Gzip压缩解压 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp" />
+<meta name="description" content="Gzip压缩解压工具，纯前端使用pako库对文本进行gzip压缩与解压，支持Base64中转，数据本地处理不上传。" />
+<link rel="stylesheet" href="../assets/tool-common.css" />
+<script src="../assets/sidebar.js"></script>
+<script src="../assets/pako.min.js"></script>
+<style>
+  .mode-tabs { display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; }
+  .mode-tab { padding:9px 20px; border:1px solid #e0e6ed; border-radius:8px; background:#f8fafc; color:#64748b; cursor:pointer; font-size:0.88em; font-weight:600; transition:all .2s; }
+  .mode-tab.active { background:#4a90e2; color:#fff; border-color:#4a90e2; }
+  .io-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:16px; }
+  @media (max-width:600px){ .io-grid{ grid-template-columns:1fr; } }
+  .io-pane label { font-size:0.82em; color:#64748b; font-weight:600; margin-bottom:6px; display:block; }
+  textarea.code { width:100%; min-height:200px; padding:12px 14px; border:1px solid #e0e6ed; border-radius:8px; font-family:'Courier New',monospace; font-size:0.88em; outline:none; resize:vertical; background:#f8fafc; color:#1e293b; line-height:1.55; }
+  textarea.code:focus { border-color:#4a90e2; background:#fff; }
+  textarea.code[readonly]{ background:#0f172a; color:#e2e8f0; }
+  .stats-row { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+  .stat-box { flex:1; min-width:120px; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; text-align:center; }
+  .stat-box .lbl { font-size:0.74em; color:#94a3b8; margin-bottom:4px; }
+  .stat-box .val { font-size:1.05em; font-weight:700; color:#2c3e50; font-family:'Consolas',monospace; }
+  .stat-box.hl .val { color:#4a90e2; }
+</style>
+    <meta name="keywords" content="Gzip压缩解压,在线Gzip压缩解压,文本处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/text/gzip-tool.html" />
+    <meta property="og:title" content="Gzip压缩解压" />
+    <meta property="og:description" content="Gzip压缩解压工具，纯前端使用pako库对文本进行gzip压缩与解压，支持Base64中转，数据本地处理不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/text/gzip-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="Gzip压缩解压" />
+    <meta itemprop="description" content="Gzip压缩解压工具，纯前端使用pako库对文本进行gzip压缩与解压，支持Base64中转，数据本地处理不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文本处理",
+                "item": "https://box.lynvortex.top/text.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Gzip压缩解压",
+                "item": "https://box.lynvortex.top/text/gzip-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Gzip压缩解压",
+        "url": "https://box.lynvortex.top/text/gzip-tool.html",
+        "description": "文本gzip压缩与解压，支持Base64中转与压缩率统计，基于pako",
+        "applicationCategory": "文本处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+  <div class="tool-container">
+    <div class="tool-header">
+      <h1>🗜️ Gzip压缩解压</h1>
+      <p>纯前端 pako 实现 Gzip 压缩与解压，Base64 中转，数据本地处理不上传</p>
+    </div>
+
+    <div class="mode-tabs" id="modeTabs">
+      <div class="mode-tab active" data-mode="compress">压缩（文本 → Gzip → Base64）</div>
+      <div class="mode-tab" data-mode="decompress">解压（Base64 → Gzip → 文本）</div>
+    </div>
+
+    <div class="io-grid">
+      <div class="io-pane">
+        <label id="inLabel">输入文本</label>
+        <textarea class="code" id="inputArea" spellcheck="false" placeholder="在此输入需要压缩的文本..."></textarea>
+      </div>
+      <div class="io-pane">
+        <label>输出结果 <span style="float:right;color:#4a90e2;cursor:pointer;font-weight:600;" id="copyBtn">📋 复制</span></label>
+        <textarea class="code" id="outputArea" spellcheck="false" readonly placeholder="结果将显示在这里..."></textarea>
+      </div>
+    </div>
+
+    <div class="stats-row" id="statsRow">
+      <div class="stat-box"><div class="lbl">原始大小</div><div class="val" id="origSize">— 字节</div></div>
+      <div class="stat-box"><div class="lbl">压缩后大小</div><div class="val" id="compSize">— 字节</div></div>
+      <div class="stat-box hl"><div class="lbl">压缩率</div><div class="val" id="ratio">—</div></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="goBtn">⚡ 执行</button>
+      <button class="btn btn-ghost" id="sampleBtn">载入示例</button>
+      <button class="btn btn-ghost" id="clearBtn">🗑️ 清空</button>
+    </div>
+
+    <div id="statusBar" class="status-bar info">选择压缩或解压模式，输入内容后点击「执行」</div>
+
+    <footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+  </div>
+
+  <div class="info-cards">
+    <div class="info-card">
+      <h3>📦 功能说明</h3>
+      <p>使用 pako 库在浏览器本地完成 Gzip 压缩与解压，压缩结果以 Base64 字符串形式中转，便于复制和传输。压缩时统计原始与压缩后字节数及压缩率。</p>
+      <div class="feature-chips">
+        <span class="feature-chip">gzip压缩</span>
+        <span class="feature-chip">gzip解压</span>
+        <span class="feature-chip">Base64中转</span>
+        <span class="feature-chip">压缩率统计</span>
+        <span class="feature-chip">UTF-8</span>
+        <span class="feature-chip">离线本地</span>
+      </div>
+    </div>
+    <div class="info-card">
+      <h3>💡 使用须知</h3>
+      <ul class="tips-list">
+        <li>压缩流程：文本 → TextEncoder(UTF-8) → pako.gzip → Base64 字符串</li>
+        <li>解压流程：Base64 → Uint8Array → pako.ungzip → TextDecoder(UTF-8) → 文本</li>
+        <li>压缩率 = (1 - 压缩后/原始) × 100%，文本越重复压缩率越高</li>
+        <li>全部计算在浏览器本地完成，无任何数据上传</li>
+        <li>小文本压缩后可能反而变大，属正常现象（gzip 头开销）</li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <h3>✨ 绘萤者</h3>
+      <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+      <div class="tool-links">
+        <a href="https://lynvortex.top" target="_blank">完全免费</a>
+        <a href="https://lynvortex.top" target="_blank">开源精神</a>
+        <a href="https://lynvortex.top" target="_blank">极客风范</a>
+        <a href="https://lynvortex.top" target="_blank">协作共创</a>
+      </div>
+      <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+  </div>
+</div></main>
+<script>
+initSidebar('text');
+(function () {
+  'use strict';
+  var inputArea = document.getElementById('inputArea');
+  var outputArea = document.getElementById('outputArea');
+  var inLabel = document.getElementById('inLabel');
+  var statusBar = document.getElementById('statusBar');
+  var goBtn = document.getElementById('goBtn');
+  var origSize = document.getElementById('origSize');
+  var compSize = document.getElementById('compSize');
+  var ratio = document.getElementById('ratio');
+  var statsRow = document.getElementById('statsRow');
+  var mode = 'compress';
+
+  function bytesToBase64(bytes) {
+    var bin = '';
+    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin);
+  }
+  function base64ToBytes(b64) {
+    var cleaned = b64.replace(/[^A-Za-z0-9+/=]/g, '');
+    var bin = atob(cleaned);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+  function fmtSize(n) {
+    if (n < 1024) return n + ' 字节';
+    return (n / 1024).toFixed(2) + ' KB';
+  }
+
+  document.querySelectorAll('.mode-tab').forEach(function (t) {
+    t.addEventListener('click', function () {
+      document.querySelectorAll('.mode-tab').forEach(function (x) { x.classList.remove('active'); });
+      t.classList.add('active');
+      mode = t.dataset.mode;
+      inLabel.textContent = mode === 'compress' ? '输入文本' : 'Base64 字符串（gzip 压缩结果）';
+      inputArea.placeholder = mode === 'compress' ? '在此输入需要压缩的文本...' : '在此输入 gzip 压缩后的 Base64 字符串...';
+      goBtn.textContent = mode === 'compress' ? '⚡ 压缩' : '⚡ 解压';
+      if (mode === 'decompress') { statsRow.style.display = 'none'; }
+      else { statsRow.style.display = 'flex'; }
+    });
+  });
+
+  function run() {
+    var inp = inputArea.value;
+    if (!inp.trim()) { setStatus('请先输入内容', 'error'); return; }
+    if (typeof pako === 'undefined') { setStatus('pako 库未加载，请刷新页面', 'error'); return; }
+    try {
+      if (mode === 'compress') {
+        var bytes = new TextEncoder().encode(inp);
+        var compressed = pako.gzip(bytes);
+        var b64 = bytesToBase64(compressed);
+        outputArea.value = b64;
+        origSize.textContent = fmtSize(bytes.length);
+        compSize.textContent = fmtSize(compressed.length);
+        var r = bytes.length === 0 ? 0 : (1 - compressed.length / bytes.length) * 100;
+        ratio.textContent = (r >= 0 ? '↓ ' + r.toFixed(1) + '%' : '↑ ' + (-r).toFixed(1) + '%');
+        statsRow.style.display = 'flex';
+        setStatus('压缩成功 ✓（原始 ' + bytes.length + 'B → 压缩后 ' + compressed.length + 'B）', 'success');
+      } else {
+        var arr = base64ToBytes(inp);
+        var decompressed = pako.ungzip(arr);
+        var text = new TextDecoder('utf-8').decode(decompressed);
+        outputArea.value = text;
+        statsRow.style.display = 'none';
+        setStatus('解压成功 ✓（' + arr.length + 'B → ' + decompressed.length + 'B）', 'success');
+      }
+    } catch (err) {
+      setStatus((mode === 'compress' ? '压缩' : '解压') + '失败：' + err.message, 'error');
+    }
+  }
+
+  goBtn.addEventListener('click', run);
+  document.getElementById('sampleBtn').addEventListener('click', function () {
+    if (mode === 'compress') {
+      inputArea.value = '绘萤工具箱 - Gzip 压缩测试。\n这是一段用于测试压缩效果的重复文本，重复文本，重复文本，重复文本。\nThe quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog.';
+    } else {
+      // 先压缩一段示例得到 base64
+      var s = 'Hello 绘萤工具箱！Gzip 解压测试文本。';
+      var c = pako.gzip(new TextEncoder().encode(s));
+      inputArea.value = bytesToBase64(c);
+    }
+    run();
+  });
+  document.getElementById('clearBtn').addEventListener('click', function () {
+    inputArea.value = ''; outputArea.value = '';
+    origSize.textContent = '— 字节'; compSize.textContent = '— 字节'; ratio.textContent = '—';
+    setStatus('已清空', 'info');
+  });
+  document.getElementById('copyBtn').addEventListener('click', function () {
+    if (!outputArea.value) { setStatus('没有可复制的内容', 'error'); return; }
+    navigator.clipboard.writeText(outputArea.value).then(function () { setStatus('已复制到剪贴板 ✓', 'success'); })
+      .catch(function () {
+        outputArea.select(); document.execCommand('copy'); setStatus('已复制到剪贴板 ✓', 'success');
+      });
+  });
+  inputArea.addEventListener('keydown', function (e) { if (e.ctrlKey && e.key === 'Enter') run(); });
+})();
+</script>
+</body>
+</html>

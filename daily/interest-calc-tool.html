@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>利息计算器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="利息计算器，纯前端计算存款贷款利息，支持单利复利、等额本息等额本金，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.mode-tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+.mode-tab{padding:10px 18px;border-radius:8px;border:1px solid #e0e6ed;background:#f8fafc;color:#64748b;cursor:pointer;font-size:.85em;font-weight:600;transition:.2s;}
+.mode-tab.active{background:#4a90e2;color:#fff;border-color:#4a90e2;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr;}}
+.form-item label{display:block;font-size:.82em;color:#64748b;font-weight:600;margin-bottom:5px;}
+.form-item input,.form-item select{width:100%;padding:10px 14px;border:1px solid #e0e6ed;border-radius:8px;font-size:.9em;outline:none;box-sizing:border-box;}
+.result-card{background:linear-gradient(135deg,#4a90e2,#3a7bd5);color:#fff;border-radius:14px;padding:24px;text-align:center;margin-bottom:16px;}
+.result-big{font-size:2.4em;font-weight:700;font-family:'Courier New',monospace;}
+.result-label{font-size:.85em;opacity:.9;margin-top:6px;}
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;}
+.detail-item{background:#f8fafc;border:1px solid #e0e6ed;border-radius:10px;padding:14px;text-align:center;}
+.detail-item .dv{font-size:1.3em;font-weight:700;color:#2c3e50;font-family:'Courier New',monospace;}
+.detail-item .dl{font-size:.78em;color:#94a3b8;margin-top:4px;}
+.schedule-table{width:100%;border-collapse:collapse;margin-top:14px;font-size:.8em;}
+.schedule-table th,.schedule-table td{padding:7px 8px;border:1px solid #e0e6ed;text-align:center;}
+.schedule-table th{background:#f1f5f9;color:#475569;font-weight:600;}
+</style>
+    <meta name="keywords" content="利息计算器,在线利息计算器,日常通用,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/daily/interest-calc-tool.html" />
+    <meta property="og:title" content="利息计算器" />
+    <meta property="og:description" content="利息计算器，纯前端计算存款贷款利息，支持单利复利、等额本息等额本金，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/daily/interest-calc-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="利息计算器" />
+    <meta itemprop="description" content="利息计算器，纯前端计算存款贷款利息，支持单利复利、等额本息等额本金，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "日常通用",
+                "item": "https://box.lynvortex.top/daily.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "利息计算器",
+                "item": "https://box.lynvortex.top/daily/interest-calc-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "利息计算器",
+        "url": "https://box.lynvortex.top/daily/interest-calc-tool.html",
+        "description": "存款贷款利息计算，支持单利复利、等额本息等额本金",
+        "applicationCategory": "日常通用",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🏦 利息计算器</h1><p>存款贷款利息计算，支持单利复利及还款方式</p></div>
+<div class="mode-tabs">
+<div class="mode-tab active" data-mode="deposit">💰 存款利息</div>
+<div class="mode-tab" data-mode="loan">🏠 贷款还款</div>
+</div>
+<div class="form-grid">
+<div class="form-item"><label>本金 (元)</label><input type="number" id="principal" value="100000" min="0" step="1000"/></div>
+<div class="form-item"><label id="rateLabel">年利率 (%)</label><input type="number" id="rate" value="3.5" min="0" step="0.01"/></div>
+<div class="form-item"><label id="termLabel">期限 (年)</label><input type="number" id="years" value="3" min="1" step="1"/></div>
+<div class="form-item" id="compoundTypeWrap"><label>计息方式</label><select id="compoundType"><option value="simple">单利</option><option value="compound" selected>复利(年复利)</option></select></div>
+<div class="form-item" id="loanTypeWrap" style="display:none;"><label>还款方式</label><select id="loanType"><option value="equal-payment" selected>等额本息</option><option value="equal-principal">等额本金</option></select></div>
+</div>
+<div class="result-card">
+<div class="result-big" id="interestResult">¥0</div>
+<div class="result-label" id="interestLabel">利息总额</div>
+</div>
+<div class="detail-grid">
+<div class="detail-item"><div class="dv" id="totalAmount">¥0</div><div class="dl" id="totalLabel">本息合计</div></div>
+<div class="detail-item"><div class="dv" id="monthlyPay">¥0</div><div class="dl">月供/月息</div></div>
+<div class="detail-item"><div class="dv" id="totalMonth">0</div><div class="dl">总期数</div></div>
+</div>
+<div id="scheduleWrap" style="display:none;">
+<h3 style="margin-top:18px;font-size:.95em;color:#2c3e50;">📋 还款计划表 (前12期)</h3>
+<div style="overflow-x:auto;"><table class="schedule-table" id="scheduleTable"><tr><th>期数</th><th>月供</th><th>本金</th><th>利息</th><th>剩余本金</th></tr></table></div>
+</div>
+<div id="statusBar" class="status-bar info">输入参数实时计算利息</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 利息计算器</h3><p>存款贷款利息计算</p><div class="feature-chips"><span class="feature-chip">单利/复利</span><span class="feature-chip">等额本息</span><span class="feature-chip">等额本金</span><span class="feature-chip">还款计划</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>存款模式支持单利和复利计算</li><li>贷款模式支持等额本息和等额本金</li><li>还款计划表显示前12期明细</li><li>计算结果仅供参考</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var mode='deposit';
+document.querySelectorAll('.mode-tab').forEach(function(t){t.onclick=function(){document.querySelectorAll('.mode-tab').forEach(function(x){x.classList.remove('active');});t.classList.add('active');mode=t.dataset.mode;updateMode();calc();};});
+function updateMode(){
+if(mode==='deposit'){document.getElementById('compoundTypeWrap').style.display='';document.getElementById('loanTypeWrap').style.display='none';document.getElementById('scheduleWrap').style.display='none';document.getElementById('interestLabel').textContent='利息总额';document.getElementById('totalLabel').textContent='本息合计';}else{document.getElementById('compoundTypeWrap').style.display='none';document.getElementById('loanTypeWrap').style.display='';document.getElementById('scheduleWrap').style.display='';document.getElementById('interestLabel').textContent='利息总额';document.getElementById('totalLabel').textContent='还款总额';}
+}
+var inputs=document.querySelectorAll('input,select');
+inputs.forEach(function(el){el.oninput=calc;el.onchange=calc;});
+function calc(){
+var p=parseFloat(document.getElementById('principal').value)||0;
+var r=parseFloat(document.getElementById('rate').value)||0;
+var y=parseFloat(document.getElementById('years').value)||0;
+if(mode==='deposit'){
+var monthlyR=r/100/12;
+var totalMonths=y*12;
+var interest,total;
+if(document.getElementById('compoundType').value==='simple'){
+interest=p*r/100*y;total=p+interest;
+}else{
+total=p*Math.pow(1+r/100,y);interest=total-p;
+}
+document.getElementById('interestResult').textContent='¥'+interest.toFixed(2);
+document.getElementById('totalAmount').textContent='¥'+total.toFixed(2);
+document.getElementById('monthlyPay').textContent=totalMonths>0?'¥'+(interest/totalMonths).toFixed(2):'¥0';
+document.getElementById('totalMonth').textContent=totalMonths;
+}else{
+var monthlyR=r/100/12;
+var n=y*12;
+if(n<=0){document.getElementById('interestResult').textContent='¥0';document.getElementById('totalAmount').textContent='¥'+p.toFixed(2);document.getElementById('monthlyPay').textContent='¥0';document.getElementById('totalMonth').textContent='0';document.getElementById('scheduleTable').innerHTML='<tr><th>期数</th><th>月供</th><th>本金</th><th>利息</th><th>剩余本金</th></tr>';return;}
+var loanType=document.getElementById('loanType').value;
+var totalInterest,totalPay,monthlyPayment;
+var rows=[];
+if(loanType==='equal-payment'){
+if(monthlyR===0){monthlyPayment=p/n;}else{monthlyPayment=p*monthlyR*Math.pow(1+monthlyR,n)/(Math.pow(1+monthlyR,n)-1);}
+totalPay=monthlyPayment*n;totalInterest=totalPay-p;
+var balance=p;
+for(var i=1;i<=Math.min(n,12);i++){
+var interestPart=balance*monthlyR;
+var principalPart=monthlyPayment-interestPart;
+balance-=principalPart;
+rows.push([i,monthlyPayment,principalPart,interestPart,Math.max(0,balance)]);
+}
+}else{
+var monthlyPrincipal=p/n;
+totalInterest=0;var balance=p;
+for(var i=1;i<=n;i++){
+var interestPart=balance*monthlyR;
+var pay=monthlyPrincipal+interestPart;
+totalInterest+=interestPart;
+if(i<=12)rows.push([i,pay,monthlyPrincipal,interestPart,Math.max(0,balance-monthlyPrincipal)]);
+balance-=monthlyPrincipal;
+}
+totalPay=p+totalInterest;
+monthlyPayment=p*monthlyR+monthlyPrincipal;
+}
+document.getElementById('interestResult').textContent='¥'+totalInterest.toFixed(2);
+document.getElementById('totalAmount').textContent='¥'+totalPay.toFixed(2);
+document.getElementById('monthlyPay').textContent='¥'+monthlyPayment.toFixed(2);
+document.getElementById('totalMonth').textContent=n;
+var tbody='';
+rows.forEach(function(r){tbody+='<tr><td>'+r[0]+'</td><td>¥'+r[1].toFixed(2)+'</td><td>¥'+r[2].toFixed(2)+'</td><td>¥'+r[3].toFixed(2)+'</td><td>¥'+r[4].toFixed(2)+'</td></tr>';});
+document.getElementById('scheduleTable').innerHTML='<tr><th>期数</th><th>月供</th><th>本金</th><th>利息</th><th>剩余本金</th></tr>'+tbody;
+}
+}
+updateMode();calc();
+initSidebar('daily');
+</script>
+</body>
+</html>

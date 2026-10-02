@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TTF 转 WOFF2 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="TTF转WOFF2，提供TTF字体直链，一键转换为WOFF2格式，更适合Web使用。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <!-- 引入 WOFF2 WebAssembly 模块 -->
+    <script type="module">
+        
+    import woff2 from 'https://unpkg.com/woff2-wasm@1.0.0/woff2-wasm.js';
+        window.woff2 = woff2;
+        window.woff2Ready = woff2.ready;
+    </script>
+<script>
+    // 侧边栏由 sidebar.js 统一管理
+    initSidebar('text');
+</script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', -apple-system, sans-serif;
+            background: #f4f7f9;
+            margin: 0;
+            display: flex;
+            height: 100vh; overflow: hidden;
+            color: #333;
+        }
+
+        .mobile-header {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: #fff; padding: 0 16px; align-items: center;
+            justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+        }
+        .mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+        .mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+        .menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #e8845a; }
+
+        .sidebar {
+            width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+            display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+            transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+            position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item {
+            display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+            transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+        }
+        .category-item:hover, .category-item.active { background: #fdf0eb; color: #e8845a; border-left-color: #e8845a; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+        /* 全宽工具容器 */
+        .tool-container {
+            width: 100%;
+            max-width: 960px;
+            background: #fff; border-radius: 12px;
+            padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+        }
+        .tool-header { text-align: center; margin-bottom: 28px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+        .input-group {
+            display: flex; gap: 12px; margin-bottom: 12px;
+            align-items: center; flex-wrap: wrap;
+        }
+        .input-group label {
+            font-size: 0.9em; color: #64748b; white-space: nowrap; font-weight: 500;
+        }
+        input[type="url"] {
+            flex: 1; min-width: 200px; padding: 12px 15px;
+            border: 1px solid #e0e6ed; border-radius: 8px;
+            font-size: 0.95em; outline: none; transition: border-color 0.2s;
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+        input[type="url"]:focus { border-color: #4a90e2; }
+
+        .file-upload-row {
+            display: flex; align-items: center; gap: 12px; margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .file-upload-label {
+            font-size: 0.9em; color: #64748b; font-weight: 500;
+        }
+        .file-upload-btn {
+            background: transparent; color: #4a90e2; border: 1px solid #4a90e2;
+            padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 0.9em;
+            font-weight: 500; transition: all 0.2s; white-space: nowrap;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .file-upload-btn:hover { background: #4a90e2; color: white; }
+        .file-name { margin-left: 8px; color: #64748b; font-size: 0.85em; }
+        #fileInput { display: none; }
+
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em;
+            font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap;
+        }
+        .btn-primary { background: #e8845a; color: white; }
+        .btn-primary:hover:not(:disabled) { background: #d4734a; }
+        .btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .btn-outline { background: transparent; color: #e8845a; border: 1px solid #e8845a; }
+        .btn-outline:hover { background: #e8845a; color: white; }
+        .btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+        .btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+
+        .loader {
+            display: none; margin: 20px auto;
+            border: 3px solid #f3f3f3; border-top: 3px solid #4a90e2;
+            border-radius: 50%; width: 24px; height: 24px;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .status-bar {
+            margin-top: 18px; min-height: 20px; font-size: 0.85em;
+            padding: 8px 12px; border-radius: 6px; text-align: center;
+        }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+
+        .result-area { display: none; margin-top: 10px; }
+        .result-box {
+            background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 10px; padding: 20px; text-align: center;
+        }
+        .result-icon { font-size: 2.5em; margin-bottom: 10px; }
+        .result-title { font-size: 1em; font-weight: 600; color: #1e293b; margin-bottom: 6px; }
+        .result-meta {
+            display: flex; justify-content: center; gap: 20px; margin-bottom: 12px; flex-wrap: wrap;
+        }
+        .meta-item { font-size: 0.8em; color: #94a3b8; }
+        .meta-item span { color: #4a90e2; font-weight: 600; }
+        .file-size-info { font-size: 0.85em; color: #475569; margin-bottom: 16px; }
+        .btn-group { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .btn-download {
+            background: #4a90e2; color: #fff; border: 1px solid #4a90e2;
+            padding: 8px 24px; border-radius: 6px; cursor: pointer; font-size: 0.9em;
+            font-weight: 600; text-decoration: none; transition: all 0.2s;
+        }
+        .btn-download:hover { background: #3a7bd5; border-color: #3a7bd5; }
+
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+        .footer a { color: #e8845a; text-decoration: none; }
+
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+
+        /* 信息卡片 */
+        .info-cards {
+            width: 100%; display: flex; flex-direction: column; gap: 18px; margin-top: 4px;
+        }
+        .info-card {
+            background: #fff; border-radius: 12px; padding: 22px 24px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06); border: 1px solid #f0f2f5;
+        }
+        .info-card h3 {
+            margin: 0 0 10px 0; font-size: 1em; color: #2c3e50; font-weight: 600;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .info-card p { margin: 0 0 10px 0; font-size: 0.82em; color: #64748b; }
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip {
+            background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace;
+        }
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a {
+            font-size: 0.85em; color: #4a90e2; text-decoration: none;
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s;
+        }
+        .tool-links a:hover { background: #e2e8f0; }
+
+        @media (max-width: 768px) {
+            body { display: block; height: auto; overflow: auto; }
+            .mobile-header { display: flex; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .close-sidebar { display: block; }
+            .main-content { display: block; }
+            .main-scroll { padding: 72px 16px 32px; gap: 20px;  }
+            .tool-container { padding: 24px 16px; border-radius: 10px; }
+            .tool-header h1 { font-size: 1.3em; }
+            .input-group { flex-direction: column; align-items: stretch; }
+            .input-group label { margin-bottom: 6px; }
+            .btn { padding: 8px 14px; font-size: 0.85em; }
+            .info-card { padding: 18px 16px; }
+            .overlay.active { display: block; }
+        }
+        @media (max-width: 380px) { .tool-header h1 { font-size: 1.1em; } }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="TTF转WOFF2,在线TTF转WOFF2,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/text/ttf-woff2-tool.html" />
+    <meta property="og:title" content="TTF 转 WOFF2" />
+    <meta property="og:description" content="TTF转WOFF2，提供TTF字体直链，一键转换为WOFF2格式，更适合Web使用。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/text/ttf-woff2-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="TTF 转 WOFF2" />
+    <meta itemprop="description" content="TTF转WOFF2，提供TTF字体直链，一键转换为WOFF2格式，更适合Web使用。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "TTF转WOFF2",
+                "item": "https://box.lynvortex.top/text/ttf-woff2-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "TTF转WOFF2",
+        "url": "https://box.lynvortex.top/text/ttf-woff2-tool.html",
+        "description": "提供TTF字体直链，一键转换为WOFF2格式，更适合Web使用",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🔤 TTF 转 WOFF2</h1>
+                <p>纯前端技术，将 TTF 字体转换为更高效的 WOFF2 格式，减小体积、加快网页加载</p>
+            </div>
+
+            <!-- URL 输入方式 -->
+            <div class="input-group">
+                <label for="urlInput">📎 字体文件直链</label>
+                <input type="url" id="urlInput" placeholder="https://example.com/font.ttf" />
+            </div>
+
+            <!-- 文件上传方式 -->
+            <div class="file-upload-row">
+                <span class="file-upload-label">📁 或上传本地字体</span>
+                <button class="file-upload-btn" id="selectFileBtn">选择文件</button>
+                <input type="file" id="fileInput" accept=".ttf" />
+                <span class="file-name" id="fileName">未选择文件</span>
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <button class="btn btn-primary" id="runBtn" style="width:100%;">🔄 开始转换</button>
+            </div>
+
+            <div id="loader" class="loader"></div>
+            <div class="status-bar info" id="statusBar">输入 TTF 直链或上传本地 .ttf 文件，点击转换按钮即可</div>
+
+            <!-- 转换结果 -->
+            <div id="resultArea" class="result-area">
+                <div class="result-box">
+                    <div class="result-icon">✅</div>
+                    <div class="result-title">转换成功</div>
+                    <div class="result-meta">
+                        <div class="meta-item">格式：<span>WOFF2</span></div>
+                        <div class="meta-item">来源：<span>TTF</span></div>
+                    </div>
+                    <div class="file-size-info" id="fileSizeInfo"></div>
+                    <div class="btn-group">
+                        <button class="btn btn-outline" id="copyBtn">📋 复制临时链接</button>
+                        <a class="btn-download" id="downloadBtn" href="#" target="_blank" rel="noopener">⬇️ 下载文件</a>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#e8845a;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#e8845a;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 转换原理</h3>
+                <p>利用 WebAssembly 技术将 WOFF2 编码器移植到浏览器，实现完全本地转换，无需上传文件到服务器。</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">WebAssembly</span>
+                    <span class="tld-chip">WOFF2</span>
+                    <span class="tld-chip">Brotli 压缩</span>
+                    <span class="tld-chip">离线可用</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li><strong>输入直链</strong>：请确保链接可直接访问且支持跨域（CORS），否则请改用本地上传</li>
+                    <li><strong>上传文件</strong>：直接选择 .ttf 文件，转换在浏览器中完成，文件不会离开你的设备</li>
+                    <li>WOFF2 格式在 <strong>所有现代浏览器</strong> 中均受支持，比 TTF 体积更小</li>
+                    <li>转换后的文件可直接用于 CSS 的 <code>@font-face</code></li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script type="module">
+
+    // UI 元素
+    const urlInput = document.getElementById('urlInput');
+    const fileInput = document.getElementById('fileInput');
+    const fileNameSpan = document.getElementById('fileName');
+    const runBtn = document.getElementById('runBtn');
+    const loader = document.getElementById('loader');
+    const statusBar = document.getElementById('statusBar');
+    const resultArea = document.getElementById('resultArea');
+    const fileSizeInfo = document.getElementById('fileSizeInfo');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const selectFileBtn = document.getElementById('selectFileBtn');
+
+    let currentBlobUrl = null;
+
+    // 文件选择触发
+    selectFileBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+        const file = fileInput.files[0];
+        if (file) {
+            fileNameSpan.textContent = file.name;
+        } else {
+            fileNameSpan.textContent = '未选择文件';
+        }
+    });
+
+    // 状态提示
+    const setStatus = function(msg, type) {
+        statusBar.textContent = msg;
+        statusBar.className = `status-bar ${type}`;
+    }
+
+    // 获取字体数据：优先使用上传的文件，其次使用 URL
+    async function getFontBytes() {
+        const file = fileInput.files[0];
+        if (file) {
+            setStatus('正在读取本地文件...', 'info');
+            const buffer = await file.arrayBuffer();
+            return { data: new Uint8Array(buffer), fileName: file.name.replace(/\.ttf$/i, '') || 'font' };
+        }
+        const url = urlInput.value.trim();
+        if (!url) {
+            throw new Error('请填写字体直链或选择本地文件');
+        }
+        if (!/^https?:\/\/.+/i.test(url)) {
+            throw new Error('请输入有效的 HTTP/HTTPS 直链');
+        }
+        setStatus('正在下载字体文件...', 'info');
+        try {
+            const response = await fetch(url, { mode: 'cors' });
+            if (!response.ok) throw new Error(`下载失败 (${response.status})`);
+            const buffer = await response.arrayBuffer();
+            const urlParts = new URL(url).pathname.split('/').pop();
+            const baseName = urlParts ? urlParts.replace(/\.ttf$/i, '') : 'font';
+            return { data: new Uint8Array(buffer), fileName: baseName };
+        } catch (err) {
+            if (err.message.includes('Failed to fetch') || err.message.includes('CORS')) {
+                throw new Error('无法直接下载此链接（可能跨域限制），请改用本地上传文件');
+            }
+            throw err;
+        }
+    }
+
+    // 转换主函数
+    async function convertFont() {
+        // 重置结果区域
+        resultArea.style.display = 'none';
+        currentBlobUrl = null;
+
+        // 清空输入框错误状态
+        try {
+            // 获取 TTF 字节
+            const { data: ttfBytes, fileName: baseFileName } = await getFontBytes();
+
+            // 加载 WOFF2 WASM 模块（如果尚未就绪）
+            if (!window.woff2) {
+                throw new Error('WOFF2 编码库加载失败，请刷新页面后重试');
+            }
+            loader.style.display = 'block';
+            runBtn.disabled = true;
+            runBtn.textContent = '转换中...';
+            setStatus('正在编码 WOFF2...', 'info');
+
+            // 等待 WASM 就绪
+            await window.woff2Ready;
+
+            // 编码为 WOFF2
+            const woff2Bytes = window.woff2.encodeTTFToWOFF2(ttfBytes);
+            if (!woff2Bytes || woff2Bytes.byteLength === 0) {
+                throw new Error('转换失败，可能不是有效的 TTF 文件');
+            }
+
+            // 生成 Blob 和临时 URL
+            const blob = new Blob([woff2Bytes], { type: 'font/woff2' });
+            currentBlobUrl = URL.createObjectURL(blob);
+
+            // 更新结果区域
+            const sizeKB = (blob.size / 1024).toFixed(1);
+            fileSizeInfo.textContent = `文件大小：${sizeKB} KB（原 TTF 体积通常更大，压缩效果明显）`;
+            downloadBtn.href = currentBlobUrl;
+            downloadBtn.download = `${baseFileName}.woff2`;
+            downloadBtn.style.pointerEvents = 'auto';
+            copyBtn.disabled = false;
+
+            resultArea.style.display = 'block';
+            setStatus('转换成功 ✓', 'success');
+        } catch (err) {
+            console.error(err);
+            setStatus(`转换失败：${err.message}`, 'error');
+            resultArea.style.display = 'none';
+        } finally {
+            loader.style.display = 'none';
+            runBtn.disabled = false;
+            runBtn.textContent = '🔄 开始转换';
+        }
+    }
+
+    // 复制临时链接
+    copyBtn.addEventListener('click', async () => {
+        if (!currentBlobUrl) {
+            setStatus('没有可复制的链接', 'error');
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(currentBlobUrl);
+            setStatus('临时链接已复制到剪贴板 ✓', 'success');
+        } catch {
+            const ta = document.createElement('textarea');
+            ta.value = currentBlobUrl;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            setStatus('临时链接已复制到剪贴板 ✓', 'success');
+        }
+    });
+
+    // 事件绑定
+    runBtn.addEventListener('click', convertFont);
+    urlInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') convertFont();
+    });
+
+    // 页面关闭前释放 blob URL
+    window.addEventListener('beforeunload', () => {
+        if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
+    });
+</script>
+</body>
+</html>

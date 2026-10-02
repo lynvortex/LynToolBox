@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>位运算计算器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线位运算计算器，AND/OR/XOR/NOT/移位运算，支持十进制/十六进制/二进制输入输出，32 位二进制可视化对照，标志位计算利器，纯前端运行。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="位运算,二进制计算,AND OR XOR,移位运算,按位与,按位或,异或,左移右移,进制转换,免费工具,在线工具,纯前端处理,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/work/bitwise-tool.html"/>
+<meta property="og:title" content="位运算计算器"/>
+<meta property="og:description" content="二进制运算一目了然。"/>
+<meta property="og:url" content="https://box.lynvortex.top/work/bitwise-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="位运算计算器"/>
+<meta itemprop="description" content="二进制运算一目了然。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"编程开发","item":"https://box.lynvortex.top/work.html"},{"@type":"ListItem","position":3,"name":"位运算计算器","item":"https://box.lynvortex.top/work/bitwise-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"位运算计算器","url":"https://box.lynvortex.top/work/bitwise-tool.html","description":"位运算计算器","applicationCategory":"编程开发","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>⚡ 位运算计算器</h1>
+        <p>AND / OR / XOR / NOT / 移位，32 位可视化</p>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>操作数 A</label>
+            <input type="text" id="aVal" value="0b10110"/>
+        </div>
+        <div class="form-item"><label>A 的进制</label>
+            <select id="aBase">
+                <option value="2">二进制 (0b/前缀可省)</option>
+                <option value="10">十进制</option>
+                <option value="16">十六进制 (0x)</option>
+            </select>
+        </div>
+        <div class="form-item"><label>操作数 B</label>
+            <input type="text" id="bVal" value="0x1F"/>
+        </div>
+        <div class="form-item"><label>B 的进制</label>
+            <select id="bBase">
+                <option value="2">二进制</option>
+                <option value="10">十进制</option>
+                <option value="16" selected>十六进制 (0x)</option>
+            </select>
+        </div>
+        <div class="form-item"><label>移位位数 B（仅移位用）</label>
+            <input type="number" id="shiftBits" value="2" min="0" max="31"/>
+        </div>
+        <div class="form-item"><label>显示位宽</label>
+            <select id="width"><option value="8">8 位</option><option value="16">16 位</option><option value="32" selected>32 位</option></select>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" data-op="and">A &amp; B</button>
+        <button class="btn btn-primary" data-op="or">A | B</button>
+        <button class="btn btn-primary" data-op="xor">A ^ B</button>
+        <button class="btn btn-primary" data-op="not">~A</button>
+        <button class="btn btn-outline" data-op="shl">A &lt;&lt; B</button>
+        <button class="btn btn-outline" data-op="shr">A &gt;&gt; B</button>
+        <button class="btn btn-outline" data-op="ushr">A &gt;&gt;&gt; B</button>
+    </div>
+    <div class="status-bar info" id="statusBar">输入操作数后点击运算符</div>
+    <div id="resultWrap" style="overflow-x:auto;"></div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>⚡ 七种运算</h3>
+        <p>按位逻辑 + 三种移位全覆盖。</p>
+        <div class="feature-chips"><span class="feature-chip">三种进制</span><span class="feature-chip">位级可视化</span><span class="feature-chip">标志位对照</span><span class="feature-chip">32 位精度</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 运算要点</h3>
+        <ul class="tips-list">
+            <li>JS 位运算按 32 位有符号整数处理，&gt;&gt; 保留符号位，&gt;&gt;&gt; 无符号右移</li>
+            <li>输入支持 0b / 0x 前缀，也可用进制选择器指定</li>
+            <li>x &amp; (x-1) 可消去最低位的 1，常用于位计数</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+function parseVal(str, base) {
+    str = str.trim().toLowerCase();
+    if (str.startsWith('0b')) { base = 2; str = str.slice(2); }
+    else if (str.startsWith('0x')) { base = 16; str = str.slice(2); }
+    if (!/^[0-9a-f]+$/.test(str)) throw new Error('非法 ' + base + ' 进制数值');
+    var v = parseInt(str, base);
+    if (isNaN(v)) throw new Error('解析失败');
+    return v | 0;
+}
+
+function bits(v, w) {
+    var s = (v >>> 0).toString(2);
+    return s.padStart(w, '0');
+}
+
+function run(op) {
+    var sb = document.getElementById('statusBar');
+    var w = parseInt(document.getElementById('width').value);
+    var a, b = null, result;
+    try {
+        a = parseVal(document.getElementById('aVal').value, document.getElementById('aBase').value);
+        if (op !== 'not') b = parseVal(document.getElementById('bVal').value, document.getElementById('bBase').value);
+    } catch (e) {
+        sb.textContent = e.message; sb.className = 'status-bar error';
+        document.getElementById('resultWrap').innerHTML = '';
+        return;
+    }
+    var sym, code;
+    switch (op) {
+        case 'and': result = a & b; sym = '&amp;'; code = a + ' & ' + b + ' = ' + result; break;
+        case 'or': result = a | b; sym = '|'; code = a + ' | ' + b + ' = ' + result; break;
+        case 'xor': result = a ^ b; sym = '^'; code = a + ' ^ ' + b + ' = ' + result; break;
+        case 'not': result = ~a; sym = '~'; code = '~' + a + ' = ' + result; break;
+        case 'shl': var sh = parseInt(document.getElementById('shiftBits').value) || 0; result = a << sh; sym = '&lt;&lt;'; code = a + ' << ' + sh + ' = ' + result; break;
+        case 'shr': var sh2 = parseInt(document.getElementById('shiftBits').value) || 0; result = a >> sh2; sym = '&gt;&gt;'; code = a + ' >> ' + sh2 + ' = ' + result; break;
+        case 'ushr': var sh3 = parseInt(document.getElementById('shiftBits').value) || 0; result = a >>> sh3; sym = '&gt;&gt;&gt;'; code = a + ' >>> ' + sh3 + ' = ' + result; break;
+    }
+
+    var bitRow = function(label, v, hl) {
+        var bs = bits(v, w);
+        var cells = bs.split('').map(function(ch, i) {
+            var on = ch === '1';
+            return '<span style="display:inline-block;width:15px;height:20px;line-height:20px;text-align:center;font-family:monospace;font-size:0.82em;margin:1px;border-radius:3px;' +
+                (on ? 'background:#4a90e2;color:#fff;' : 'background:#eef2f7;color:#b6c2d2;') + '">' + ch + '</span>';
+        }).join('');
+        return '<tr><td style="padding:6px 12px 6px 0;color:#64748b;font-weight:700;white-space:nowrap;">' + label + '</td><td>' + cells + '</td></tr>';
+    };
+
+    var html = '<table style="border-collapse:collapse;margin-bottom:14px;">';
+    html += bitRow('A = ' + a, a);
+    if (op === 'not') html += bitRow('NOT', 0xffffffff >>> (32 - w));
+    else html += bitRow('B = ' + b, b);
+    html += bitRow('结果 ' + sym, result);
+    html += '</table>';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:0.9em;margin-bottom:10px;">' +
+        '<tr>' +
+        '<td style="padding:10px;border:1px solid #e2e8f0;text-align:center;"><div style="font-weight:700;color:#4a90e2;font-size:1.25em;">' + result + '</div><div style="color:#94a3b8;font-size:0.82em;">十进制</div></td>' +
+        '<td style="padding:10px;border:1px solid #e2e8f0;text-align:center;"><div style="font-weight:700;color:#4a90e2;font-size:1.25em;">0x' + (result >>> 0).toString(16).toUpperCase() + '</div><div style="color:#94a3b8;font-size:0.82em;">十六进制</div></td>' +
+        '<td style="padding:10px;border:1px solid #e2e8f0;text-align:center;"><div style="font-weight:700;color:#4a90e2;font-size:1.25em;">0b' + bits(result, w) + '</div><div style="color:#94a3b8;font-size:0.82em;">二进制</div></td>' +
+        '<td style="padding:10px;border:1px solid #e2e8f0;text-align:center;"><div style="font-weight:700;color:#4a90e2;font-size:1.25em;">0o' + (result >>> 0).toString(8) + '</div><div style="color:#94a3b8;font-size:0.82em;">八进制</div></td>' +
+        '</tr></table>';
+    html += '<code style="font-size:0.85em;color:#475569;">' + code + '</code>';
+    document.getElementById('resultWrap').innerHTML = html;
+    sb.textContent = '运算完成：' + code.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+    sb.className = 'status-bar success';
+}
+
+document.querySelectorAll('button[data-op]').forEach(function(btn) {
+    btn.addEventListener('click', function() { run(btn.dataset.op); });
+});
+initSidebar('work');
+</script>
+</body>
+</html>

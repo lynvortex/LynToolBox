@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>二进制Hex查看器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="二进制十六进制查看器，纯前端拖入文件查看hex dump，支持偏移量、ASCII预览与搜索，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.hex-view{font-family:'Courier New',monospace;font-size:.82em;background:#1e293b;color:#e2e8f0;border-radius:10px;padding:16px;overflow-x:auto;max-height:500px;overflow-y:auto;line-height:1.6;}
+.hex-line{display:flex;gap:12px;white-space:pre;}
+.hex-offset{color:#94a3b8;min-width:80px;}
+.hex-bytes{color:#a5b4fc;}
+.hex-ascii{color:#86efac;border-left:1px solid #475569;padding-left:12px;}
+.search-row{display:flex;gap:8px;margin-bottom:12px;}
+.search-row input{flex:1;padding:8px 12px;border:1px solid #e0e6ed;border-radius:6px;font-size:.85em;font-family:'Courier New',monospace;}
+.search-row button{padding:8px 16px;border:1px solid #e0e6ed;border-radius:6px;background:#f8fafc;color:#475569;cursor:pointer;font-size:.85em;font-weight:600;}
+.file-info{background:#f8fafc;border:1px solid #e0e6ed;border-radius:8px;padding:12px;margin-bottom:12px;font-size:.82em;display:flex;gap:20px;flex-wrap:wrap;}
+.file-info span{color:#64748b;}
+.file-info b{color:#2c3e50;}
+</style>
+    <meta name="keywords" content="十六进制查看器,在线十六进制查看器,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/hex-viewer-tool.html" />
+    <meta property="og:title" content="二进制Hex查看器" />
+    <meta property="og:description" content="二进制十六进制查看器，纯前端拖入文件查看hex dump，支持偏移量、ASCII预览与搜索，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/hex-viewer-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="二进制Hex查看器" />
+    <meta itemprop="description" content="二进制十六进制查看器，纯前端拖入文件查看hex dump，支持偏移量、ASCII预览与搜索，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "十六进制查看器",
+                "item": "https://box.lynvortex.top/work/hex-viewer-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "十六进制查看器",
+        "url": "https://box.lynvortex.top/work/hex-viewer-tool.html",
+        "description": "上传文件以十六进制查看内容，支持搜索定位与ASCII对照",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🔢 二进制Hex查看器</h1><p>拖入文件查看十六进制dump，支持ASCII预览与搜索</p></div>
+<div class="upload-zone" id="dropZone">📁 拖入或点击选择文件<input type="file" id="fileInput" style="display:none;"/></div>
+<div id="editorArea" style="display:none;">
+<div class="file-info" id="fileInfo"></div>
+<div class="search-row">
+<input type="text" id="searchInput" placeholder="搜索十六进制(如 48656c)或ASCII文本..."/>
+<button id="searchBtn">🔍 搜索</button>
+</div>
+<div class="hex-view" id="hexView"></div>
+</div>
+<div id="statusBar" class="status-bar info">支持任意文件类型，最大显示前64KB</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 二进制Hex查看器</h3><p>文件十六进制dump查看</p><div class="feature-chips"><span class="feature-chip">Hex Dump</span><span class="feature-chip">ASCII预览</span><span class="feature-chip">搜索功能</span><span class="feature-chip">纯本地</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>支持任意文件格式</li><li>每行16字节，左侧偏移量右侧ASCII</li><li>可搜索十六进制或ASCII文本</li><li>大文件只显示前64KB保证性能</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var fileData=null,maxBytes=65536;
+document.getElementById('dropZone').onclick=function(){document.getElementById('fileInput').click();};
+document.getElementById('fileInput').onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){fileData=new Uint8Array(ev.target.result.slice(0,maxBytes));document.getElementById('fileInfo').innerHTML='<span>文件名：<b>'+escapeHtml(f.name)+'</b></span><span>大小：<b>'+formatSize(f.size)+'</b></span><span>类型：<b>'+escapeHtml(f.type||'未知')+'</b></span><span>显示：<b>'+formatSize(Math.min(f.size,maxBytes))+'</b></span>';render(0);document.getElementById('editorArea').style.display='block';};r.readAsArrayBuffer(f);};
+function formatSize(b){if(b<1024)return b+'B';if(b<1048576)return(b/1024).toFixed(1)+'KB';return(b/1048576).toFixed(2)+'MB';}
+function render(searchIdx){var view=document.getElementById('hexView');var html='';var len=fileData.length;for(var offset=0;offset<len;offset+=16){var hexBytes='',asciiStr='';for(var i=0;i<16;i++){if(offset+i<len){var b=fileData[offset+i];hexBytes+=b.toString(16).padStart(2,'0')+' ';asciiStr+=(b>=32&&b<127)?String.fromCharCode(b):'.';}else{hexBytes+='   ';asciiStr+=' ';}}var isMatch=searchIdx>=0&&offset>=searchIdx-16&&offset<=searchIdx+16;html+='<div class="hex-line"'+(isMatch?' style="background:#3730a3;border-radius:4px;"':'')+'><span class="hex-offset">'+offset.toString(16).padStart(8,'0')+'</span><span class="hex-bytes">'+hexBytes+'</span><span class="hex-ascii">'+asciiStr+'</span></div>';}view.innerHTML=html;}
+document.getElementById('searchBtn').onclick=function(){if(!fileData)return;var q=document.getElementById('searchInput').value.trim();if(!q)return;var isHex=/^[0-9a-fA-F]+$/.test(q.replace(/\s/g,''));var found=-1;if(isHex){var bytes=[];var clean=q.replace(/\s/g,'');for(var i=0;i<clean.length;i+=2)bytes.push(parseInt(clean.substr(i,2),16));for(var i=0;i<=fileData.length-bytes.length;i++){var match=true;for(var j=0;j<bytes.length;j++){if(fileData[i+j]!==bytes[j]){match=false;break;}}if(match){found=i;break;}}}else{var bytes=[];for(var i=0;i<q.length;i++)bytes.push(q.charCodeAt(i));for(var i=0;i<=fileData.length-bytes.length;i++){var match=true;for(var j=0;j<bytes.length;j++){if(fileData[i+j]!==bytes[j]){match=false;break;}}if(match){found=i;break;}}}if(found>=0){render(found);document.getElementById('statusBar').textContent='找到匹配，偏移量: 0x'+found.toString(16).padStart(8,'0');document.getElementById('statusBar').className='status-bar success';}else{document.getElementById('statusBar').textContent='未找到匹配';document.getElementById('statusBar').className='status-bar error';}};
+var dz=document.getElementById('dropZone');dz.ondragover=function(e){e.preventDefault();dz.style.borderColor='#4a90e2';};dz.ondragleave=function(){dz.style.borderColor='#e0e6ed';};dz.ondrop=function(e){e.preventDefault();dz.style.borderColor='#e0e6ed';var f=e.dataTransfer.files[0];if(f){document.getElementById('fileInput').files=e.dataTransfer.files;document.getElementById('fileInput').onchange({target:{files:[f]}});}};
+initSidebar('work');
+</script>
+</body>
+</html>

@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>语义化版本比较 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp" />
+<meta name="description" content="语义化版本比较工具，纯前端解析与比较SemVer版本号，支持^~等范围匹配，无依赖本地计算。" />
+<link rel="stylesheet" href="../assets/tool-common.css" />
+<script src="../assets/sidebar.js"></script>
+<style>
+  .mode-tabs { display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; }
+  .mode-tab { padding:9px 20px; border:1px solid #e0e6ed; border-radius:8px; background:#f8fafc; color:#64748b; cursor:pointer; font-size:0.88em; font-weight:600; transition:all .2s; }
+  .mode-tab.active { background:#4a90e2; color:#fff; border-color:#4a90e2; }
+  .panel { display:none; }
+  .panel.active { display:block; }
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+  @media (max-width:600px){ .form-grid{ grid-template-columns:1fr; } }
+  .form-item input { padding:10px 14px; border:1px solid #e0e6ed; border-radius:8px; font-size:0.95em; font-family:'Consolas',monospace; outline:none; transition:0.2s; background:#fff; color:#1e293b; }
+  .form-item input:focus { border-color:#4a90e2; }
+  .result-box { background:#0f172a; color:#e2e8f0; padding:16px 18px; border-radius:8px; margin-bottom:16px; font-family:'Consolas',monospace; }
+  .result-box .rlabel { font-size:0.78em; color:#94a3b8; margin-bottom:6px; }
+  .result-box .rval { font-size:1.3em; font-weight:700; word-break:break-all; }
+  .result-box .rval.ok { color:#4ade80; }
+  .result-box .rval.no { color:#fca5a5; }
+  .result-box .rdetail { font-size:0.8em; color:#94a3b8; margin-top:8px; line-height:1.6; }
+  textarea.code { width:100%; min-height:160px; padding:12px 14px; border:1px solid #e0e6ed; border-radius:8px; font-family:'Consolas','Courier New',monospace; font-size:0.9em; outline:none; resize:vertical; background:#f8fafc; color:#1e293b; line-height:1.6; }
+  textarea.code:focus { border-color:#4a90e2; background:#fff; }
+  pre.output { min-height:120px; max-height:320px; font-size:0.86em; }
+  .hint { font-size:0.78em; color:#94a3b8; margin-top:4px; }
+</style>
+    <meta name="keywords" content="语义化版本比较,在线语义化版本比较,文本处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/text/semver-tool.html" />
+    <meta property="og:title" content="语义化版本比较" />
+    <meta property="og:description" content="语义化版本比较工具，纯前端解析与比较SemVer版本号，支持^~等范围匹配，无依赖本地计算。" />
+    <meta property="og:url" content="https://box.lynvortex.top/text/semver-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="语义化版本比较" />
+    <meta itemprop="description" content="语义化版本比较工具，纯前端解析与比较SemVer版本号，支持^~等范围匹配，无依赖本地计算。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文本处理",
+                "item": "https://box.lynvortex.top/text.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "语义化版本比较",
+                "item": "https://box.lynvortex.top/text/semver-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "语义化版本比较",
+        "url": "https://box.lynvortex.top/text/semver-tool.html",
+        "description": "解析比较SemVer版本号，支持^~范围匹配与版本排序",
+        "applicationCategory": "文本处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+  <div class="tool-container">
+    <div class="tool-header">
+      <h1>🏷️ 语义化版本比较</h1>
+      <p>纯前端解析与比较 SemVer 版本号，支持 ^ ~ 等范围匹配与版本排序，无依赖本地计算</p>
+    </div>
+
+    <div class="mode-tabs" id="modeTabs">
+      <div class="mode-tab active" data-mode="compare">版本比较</div>
+      <div class="mode-tab" data-mode="range">范围匹配</div>
+      <div class="mode-tab" data-mode="sort">版本排序</div>
+    </div>
+
+    <!-- 版本比较 -->
+    <div class="panel active" id="comparePanel">
+      <div class="form-grid">
+        <div class="form-item">
+          <label>版本 A</label>
+          <input type="text" id="cmpA" value="1.2.3" autocomplete="off" spellcheck="false" />
+        </div>
+        <div class="form-item">
+          <label>版本 B</label>
+          <input type="text" id="cmpB" value="1.2.10" autocomplete="off" spellcheck="false" />
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="cmpBtn">⚖️ 比较</button>
+        <button class="btn btn-ghost" id="swapBtn">🔄 交换</button>
+      </div>
+      <div class="result-box">
+        <div class="rlabel">比较结果</div>
+        <div class="rval" id="cmpResult">—</div>
+        <div class="rdetail" id="cmpDetail"></div>
+      </div>
+    </div>
+
+    <!-- 范围匹配 -->
+    <div class="panel" id="rangePanel">
+      <div class="form-grid">
+        <div class="form-item">
+          <label>版本号</label>
+          <input type="text" id="rngVer" value="1.5.2" autocomplete="off" spellcheck="false" />
+          <div class="hint">要检测的语义化版本，例如 1.5.2-beta.1</div>
+        </div>
+        <div class="form-item">
+          <label>范围表达式</label>
+          <input type="text" id="rngExpr" value="^1.2.0" autocomplete="off" spellcheck="false" />
+          <div class="hint">支持 ^ ~ &gt; &gt;= &lt; &lt;= = 和 ||，例如 ^1.2.0、~2.0.0、&gt;=1.0.0 &lt;2.0.0</div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="rngBtn">🔍 检测匹配</button>
+      </div>
+      <div class="result-box">
+        <div class="rlabel">匹配结果</div>
+        <div class="rval" id="rngResult">—</div>
+        <div class="rdetail" id="rngDetail"></div>
+      </div>
+    </div>
+
+    <!-- 版本排序 -->
+    <div class="panel" id="sortPanel">
+      <label style="font-size:0.82em;color:#64748b;font-weight:600;margin-bottom:6px;display:block;">版本列表（每行一个版本号）</label>
+      <textarea class="code" id="sortInput" spellcheck="false" placeholder="1.0.0&#10;1.10.0&#10;1.2.0&#10;2.0.0-beta&#10;1.2.0-alpha.2"></textarea>
+      <div class="btn-row" style="margin-top:14px;">
+        <button class="btn btn-primary" id="sortAscBtn">⬆️ 升序排序</button>
+        <button class="btn btn-primary" id="sortDescBtn">⬇️ 降序排序</button>
+        <button class="btn btn-ghost" id="sortClearBtn">清空</button>
+      </div>
+      <div style="font-size:0.82em;color:#64748b;font-weight:600;margin-top:8px;margin-bottom:6px;">排序结果</div>
+      <pre class="output" id="sortOutput">—</pre>
+    </div>
+
+    <div id="statusBar" class="status-bar info">输入版本号后点击对应按钮进行计算</div>
+
+    <footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+  </div>
+
+  <div class="info-cards">
+    <div class="info-card">
+      <h3>📦 功能说明</h3>
+      <p>纯前端实现的语义化版本（SemVer）工具，遵循 semver.org 规范。支持版本号比较、范围匹配（^ ~ &gt; &gt;= &lt; &lt;= = 与 || 组合）以及多版本升序/降序排序，无任何外部依赖。</p>
+      <div class="feature-chips">
+        <span class="feature-chip">版本比较</span>
+        <span class="feature-chip">范围匹配</span>
+        <span class="feature-chip">^匹配</span>
+        <span class="feature-chip">~匹配</span>
+        <span class="feature-chip">版本排序</span>
+        <span class="feature-chip">无依赖</span>
+      </div>
+    </div>
+    <div class="info-card">
+      <h3>💡 使用须知</h3>
+      <ul class="tips-list">
+        <li>版本号格式：MAJOR.MINOR.PATCH[-prerelease][+build]，如 1.2.3-beta.1+build.7</li>
+        <li>预发布版本优先级低于正式版：1.2.3-alpha &lt; 1.2.3</li>
+        <li>^ 允许不改变最左边非零位的更新，~ 允许 patch 级别更新</li>
+        <li>范围可用空格表示 AND，|| 表示 OR，例如 &gt;=1.0.0 &lt;2.0.0 || ^3.0.0</li>
+        <li>所有计算在浏览器本地完成，不依赖任何网络请求</li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <h3>✨ 绘萤者</h3>
+      <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+      <div class="tool-links">
+        <a href="https://lynvortex.top" target="_blank">完全免费</a>
+        <a href="https://lynvortex.top" target="_blank">开源精神</a>
+        <a href="https://lynvortex.top" target="_blank">极客风范</a>
+        <a href="https://lynvortex.top" target="_blank">协作共创</a>
+      </div>
+      <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+  </div>
+</div></main>
+<script>
+initSidebar('text');
+(function () {
+  'use strict';
+
+  // 模式切换
+  document.querySelectorAll('.mode-tab').forEach(function (t) {
+    t.addEventListener('click', function () {
+      document.querySelectorAll('.mode-tab').forEach(function (x) { x.classList.remove('active'); });
+      t.classList.add('active');
+      var m = t.dataset.mode;
+      document.getElementById('comparePanel').classList.toggle('active', m === 'compare');
+      document.getElementById('rangePanel').classList.toggle('active', m === 'range');
+      document.getElementById('sortPanel').classList.toggle('active', m === 'sort');
+    });
+  });
+
+  /* ---------- SemVer 核心 ---------- */
+  function parsePartial(str) {
+    str = String(str).trim();
+    if (str === '' || str === '*' || str === 'x' || str === 'X') return { major: 0, minor: 0, patch: 0, prerelease: [], build: '', any: true, minorSpec: false, patchSpec: false };
+    if (str[0] === 'v' || str[0] === 'V') str = str.slice(1);
+    var build = '';
+    var bm = str.match(/\+([^\s+]+)$/);
+    if (bm) { build = bm[1]; str = str.slice(0, str.length - bm[0].length); }
+    var pre = [];
+    var pm = str.match(/-([^\s+]+)$/);
+    if (pm) { pre = pm[1].split('.'); str = str.slice(0, str.length - pm[0].length); }
+    var parts = str.split('.');
+    function isWild(p) { return p === 'x' || p === 'X' || p === '*'; }
+    function num(p) { return isWild(p) ? 0 : parseInt(p, 10); }
+    var major = parts[0] !== undefined ? num(parts[0]) : 0;
+    var minor = parts[1] !== undefined ? num(parts[1]) : 0;
+    var patch = parts[2] !== undefined ? num(parts[2]) : 0;
+    var any = (parts[0] !== undefined && isWild(parts[0])) || str === '';
+    var minorSpec = parts[1] !== undefined && !isWild(parts[1]);
+    var patchSpec = parts[2] !== undefined && !isWild(parts[2]);
+    return { major: major, minor: minor, patch: patch, prerelease: pre, build: build, any: any, minorSpec: minorSpec, patchSpec: patchSpec };
+  }
+  function parseSemver(str) {
+    var p = parsePartial(str);
+    if (p.any) return null;
+    if (isNaN(p.major) || isNaN(p.minor) || isNaN(p.patch)) return null;
+    if (p.major < 0 || p.minor < 0 || p.patch < 0) return null;
+    return p;
+  }
+  function cmpPre(a, b) {
+    var i = 0;
+    while (i < a.length && i < b.length) {
+      var ai = a[i], bi = b[i];
+      var aNum = /^\d+$/.test(ai), bNum = /^\d+$/.test(bi);
+      if (aNum && bNum) { var an = parseInt(ai, 10), bn = parseInt(bi, 10); if (an !== bn) return an < bn ? -1 : 1; }
+      else if (aNum && !bNum) return -1;
+      else if (!aNum && bNum) return 1;
+      else { if (ai < bi) return -1; if (ai > bi) return 1; }
+      i++;
+    }
+    if (a.length === b.length) return 0;
+    return a.length < b.length ? -1 : 1;
+  }
+  function compareSemver(a, b) {
+    if (a.major !== b.major) return a.major < b.major ? -1 : 1;
+    if (a.minor !== b.minor) return a.minor < b.minor ? -1 : 1;
+    if (a.patch !== b.patch) return a.patch < b.patch ? -1 : 1;
+    var aPre = a.prerelease || [], bPre = b.prerelease || [];
+    if (aPre.length === 0 && bPre.length === 0) return 0;
+    if (aPre.length === 0) return 1;
+    if (bPre.length === 0) return -1;
+    return cmpPre(aPre, bPre);
+  }
+  function verStr(v) {
+    var s = v.major + '.' + v.minor + '.' + v.patch;
+    if (v.prerelease && v.prerelease.length) s += '-' + v.prerelease.join('.');
+    if (v.build) s += '+' + v.build;
+    return s;
+  }
+  function expandCaret(str) {
+    var p = parsePartial(str);
+    var lower = { major: p.major, minor: p.minor, patch: p.patch, prerelease: p.prerelease };
+    var upper;
+    if (p.major > 0) upper = { major: p.major + 1, minor: 0, patch: 0, prerelease: [] };
+    else if (p.minor > 0) upper = { major: 0, minor: p.minor + 1, patch: 0, prerelease: [] };
+    else upper = { major: 0, minor: 0, patch: p.patch + 1, prerelease: [] };
+    return [{ op: '>=', ver: lower }, { op: '<', ver: upper }];
+  }
+  function expandTilde(str) {
+    var p = parsePartial(str);
+    var lower = { major: p.major, minor: p.minor, patch: p.patch, prerelease: p.prerelease };
+    var upper = p.minorSpec ? { major: p.major, minor: p.minor + 1, patch: 0, prerelease: [] } : { major: p.major + 1, minor: 0, patch: 0, prerelease: [] };
+    return [{ op: '>=', ver: lower }, { op: '<', ver: upper }];
+  }
+  function parseRange(rangeStr) {
+    var orGroups = String(rangeStr).trim().split('||').map(function (s) { return s.trim(); }).filter(function (s) { return s.length; });
+    if (orGroups.length === 0) orGroups = ['*'];
+    return orGroups.map(function (g) {
+      var tokens = g.split(/\s+/).filter(function (s) { return s.length; });
+      if (tokens.length === 0) tokens = ['*'];
+      var comps = [];
+      tokens.forEach(function (tok) {
+        if (tok === '*' || tok === 'x' || tok === 'X') { comps.push({ op: '>=', ver: { major: 0, minor: 0, patch: 0, prerelease: [] } }); return; }
+        var m = tok.match(/^(\^|~|>=|<=|>|<|=)?v?(.+)$/);
+        if (!m) return;
+        var op = m[1] || '=';
+        var verStr2 = m[2];
+        var isWild = verStr2 === '*' || verStr2 === 'x' || verStr2 === 'X';
+        var hasWild = /[xX*]/.test(verStr2);
+        if (op === '^') { comps = comps.concat(expandCaret(verStr2)); }
+        else if (op === '~') { comps = comps.concat(expandTilde(verStr2)); }
+        else if (isWild || (hasWild && (op === '=' ))) {
+          var p = parsePartial(verStr2);
+          var lower = { major: p.major, minor: p.minor, patch: p.patch, prerelease: [] };
+          var upper;
+          if (!p.minorSpec) upper = { major: p.major + 1, minor: 0, patch: 0, prerelease: [] };
+          else if (!p.patchSpec) upper = { major: p.major, minor: p.minor + 1, patch: 0, prerelease: [] };
+          else upper = { major: p.major, minor: p.minor, patch: p.patch + 1, prerelease: [] };
+          comps.push({ op: '>=', ver: lower });
+          comps.push({ op: '<', ver: upper });
+        }
+        else { comps.push({ op: op, ver: parsePartial(verStr2) }); }
+      });
+      return comps;
+    });
+  }
+  function cmpOp(v, c) {
+    var r = compareSemver(v, c.ver);
+    switch (c.op) { case '>=': return r >= 0; case '>': return r > 0; case '<=': return r <= 0; case '<': return r < 0; case '=': return r === 0; }
+    return false;
+  }
+  function satisfies(version, rangeStr) {
+    var groups = parseRange(rangeStr);
+    return groups.some(function (comps) {
+      if (version.prerelease && version.prerelease.length > 0) {
+        var hasMatchingPre = comps.some(function (c) {
+          return c.ver.prerelease && c.ver.prerelease.length > 0 && c.ver.major === version.major && c.ver.minor === version.minor && c.ver.patch === version.patch;
+        });
+        if (!hasMatchingPre) return false;
+      }
+      return comps.every(function (c) { return cmpOp(version, c); });
+    });
+  }
+
+  /* ---------- 版本比较 ---------- */
+  function doCompare() {
+    var a = parseSemver(document.getElementById('cmpA').value);
+    var b = parseSemver(document.getElementById('cmpB').value);
+    var resEl = document.getElementById('cmpResult');
+    var detEl = document.getElementById('cmpDetail');
+    if (!a) { resEl.textContent = '版本 A 格式无效'; resEl.className = 'rval no'; detEl.textContent = ''; setStatus('版本 A 不是合法的语义化版本', 'error'); return; }
+    if (!b) { resEl.textContent = '版本 B 格式无效'; resEl.className = 'rval no'; detEl.textContent = ''; setStatus('版本 B 不是合法的语义化版本', 'error'); return; }
+    var r = compareSemver(a, b);
+    if (r === 0) { resEl.innerHTML = escapeHtml(verStr(a)) + ' = ' + escapeHtml(verStr(b)); resEl.className = 'rval ok'; }
+    else if (r > 0) { resEl.innerHTML = escapeHtml(verStr(a)) + ' &gt; ' + escapeHtml(verStr(b)); resEl.className = 'rval'; }
+    else { resEl.innerHTML = escapeHtml(verStr(a)) + ' &lt; ' + escapeHtml(verStr(b)); resEl.className = 'rval'; }
+    var detail = '主版本：' + a.major + ' vs ' + b.major;
+    detail += ' ｜ 次版本：' + a.minor + ' vs ' + b.minor;
+    detail += ' ｜ 修订号：' + a.patch + ' vs ' + b.patch;
+    if (a.prerelease.length || b.prerelease.length) detail += ' ｜ 预发布：' + (a.prerelease.join('.') || '无') + ' vs ' + (b.prerelease.join('.') || '无');
+    detEl.textContent = detail;
+    setStatus('比较完成 ✓', 'success');
+  }
+  document.getElementById('cmpBtn').addEventListener('click', doCompare);
+  document.getElementById('swapBtn').addEventListener('click', function () {
+    var a = document.getElementById('cmpA'), b = document.getElementById('cmpB');
+    var t = a.value; a.value = b.value; b.value = t; doCompare();
+  });
+  ['cmpA', 'cmpB'].forEach(function (id) { document.getElementById(id).addEventListener('keydown', function (e) { if (e.key === 'Enter') doCompare(); }); });
+
+  /* ---------- 范围匹配 ---------- */
+  function doRange() {
+    var v = parseSemver(document.getElementById('rngVer').value);
+    var expr = document.getElementById('rngExpr').value.trim();
+    var resEl = document.getElementById('rngResult');
+    var detEl = document.getElementById('rngDetail');
+    if (!v) { resEl.textContent = '版本号格式无效'; resEl.className = 'rval no'; detEl.textContent = ''; setStatus('版本号不是合法的语义化版本', 'error'); return; }
+    if (!expr) { resEl.textContent = '请输入范围表达式'; resEl.className = 'rval no'; detEl.textContent = ''; setStatus('请输入范围表达式', 'error'); return; }
+    try {
+      var ok = satisfies(v, expr);
+      resEl.innerHTML = escapeHtml(verStr(v)) + (ok ? ' 满足 ' : ' 不满足 ') + escapeHtml(expr);
+      resEl.className = 'rval ' + (ok ? 'ok' : 'no');
+      var groups = parseRange(expr);
+      var detail = '解析为 ' + groups.length + ' 个 OR 分组：\n';
+      groups.forEach(function (comps, i) {
+        detail += '  分组' + (i + 1) + '：' + comps.map(function (c) { return c.op + verStr(c.ver); }).join(' 且 ') + '\n';
+      });
+      detEl.textContent = detail;
+      setStatus(ok ? '匹配成功 ✓' : '不匹配', ok ? 'success' : 'info');
+    } catch (err) {
+      resEl.textContent = '范围解析失败'; resEl.className = 'rval no'; detEl.textContent = err.message;
+      setStatus('范围表达式解析失败：' + err.message, 'error');
+    }
+  }
+  document.getElementById('rngBtn').addEventListener('click', doRange);
+  ['rngVer', 'rngExpr'].forEach(function (id) { document.getElementById(id).addEventListener('keydown', function (e) { if (e.key === 'Enter') doRange(); }); });
+
+  /* ---------- 版本排序 ---------- */
+  function doSort(desc) {
+    var lines = document.getElementById('sortInput').value.split(/\r?\n/).map(function (s) { return s.trim(); }).filter(function (s) { return s.length; });
+    if (lines.length === 0) { setStatus('请输入版本列表', 'error'); return; }
+    var parsed = [];
+    var invalid = [];
+    lines.forEach(function (l) { var v = parseSemver(l); if (v) parsed.push({ raw: l, ver: v }); else invalid.push(l); });
+    parsed.sort(function (x, y) { return desc ? compareSemver(y.ver, x.ver) : compareSemver(x.ver, y.ver); });
+    var out = parsed.map(function (p, i) { return (desc ? (parsed.length - i) : (i + 1)) + '. ' + p.raw; }).join('\n');
+    if (invalid.length) out += '\n\n⚠️ 无效版本（已忽略）：\n' + invalid.join('\n');
+    document.getElementById('sortOutput').textContent = out;
+    setStatus('排序完成 ✓（' + parsed.length + ' 个有效版本' + (invalid.length ? '，' + invalid.length + ' 个无效' : '') + '）', 'success');
+  }
+  document.getElementById('sortAscBtn').addEventListener('click', function () { doSort(false); });
+  document.getElementById('sortDescBtn').addEventListener('click', function () { doSort(true); });
+  document.getElementById('sortClearBtn').addEventListener('click', function () { document.getElementById('sortInput').value = ''; document.getElementById('sortOutput').textContent = '—'; setStatus('已清空', 'info'); });
+
+  // 初始示例
+  document.getElementById('sortInput').value = '1.0.0\n1.10.0\n1.2.0\n2.0.0-beta\n1.2.0-alpha.2\n1.2.0-alpha.10\n0.9.5';
+  doCompare();
+})();
+</script>
+</body>
+</html>

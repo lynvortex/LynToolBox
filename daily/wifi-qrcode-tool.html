@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>WiFi二维码生成 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线 WiFi 二维码生成器，输入 SSID 与密码生成扫码直连二维码，支持 WPA/WPA2/WEP/开放网络，可下载打印贴在店内或家中，纯前端生成不上传。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/qrcode.min.js"></script>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="WiFi二维码,wifi码,扫码连WiFi,无线密码二维码,WPA二维码,店铺WiFi,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/daily/wifi-qrcode-tool.html"/>
+<meta property="og:title" content="WiFi二维码生成"/>
+<meta property="og:description" content="扫码即连，告别报密码。"/>
+<meta property="og:url" content="https://box.lynvortex.top/daily/wifi-qrcode-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="WiFi二维码生成"/>
+<meta itemprop="description" content="扫码即连，告别报密码。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"日常通用","item":"https://box.lynvortex.top/daily.html"},{"@type":"ListItem","position":3,"name":"WiFi二维码生成","item":"https://box.lynvortex.top/daily/wifi-qrcode-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"WiFi二维码生成","url":"https://box.lynvortex.top/daily/wifi-qrcode-tool.html","description":"WiFi二维码生成器","applicationCategory":"日常通用","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>📶 WiFi 二维码生成</h1>
+        <p>扫码即连网络，告别口头报密码</p>
+    </div>
+    <div class="form-grid">
+        <div class="form-item" style="grid-column:1/3;"><label>网络名称 SSID</label>
+            <input type="text" id="ssid" placeholder="My-WiFi"/>
+        </div>
+        <div class="form-item"><label>加密方式</label>
+            <select id="enc">
+                <option value="WPA">WPA / WPA2 / WPA3</option>
+                <option value="WEP">WEP</option>
+                <option value="nopass">开放网络（无密码）</option>
+            </select>
+        </div>
+        <div class="form-item"><label>密码</label>
+            <input type="text" id="pwd" placeholder="WiFi 密码"/>
+        </div>
+        <div class="form-item"><label>隐藏网络</label>
+            <select id="hidden"><option value="false">否</option><option value="true">是（SSID 未广播）</option></select>
+        </div>
+        <div class="form-item"><label>二维码尺寸</label>
+            <select id="size"><option value="200">200px</option><option value="256" selected>256px</option><option value="320">320px</option><option value="420">420px</option></select>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="genBtn">⚙️ 生成二维码</button>
+        <button class="btn btn-outline" id="downloadBtn">下载 PNG</button>
+    </div>
+    <div class="status-bar info" id="statusBar">填写 SSID 后生成，扫码即可连接</div>
+    <div style="text-align:center;padding:20px;border:1px dashed #cbd5e1;border-radius:10px;background:#fafcff;">
+        <div id="qrcode" style="display:inline-block;"></div>
+        <p id="qrLabel" style="margin:12px 0 0;color:#64748b;font-weight:600;">扫码连接 WiFi</p>
+    </div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📶 扫码直连</h3>
+        <p>标准 WIFI: 协议格式，iOS/安卓原生支持。</p>
+        <div class="feature-chips"><span class="feature-chip">WPA/WEP/开放</span><span class="feature-chip">隐藏网络</span><span class="feature-chip">高清下载</span><span class="feature-chip">本地生成</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用场景</h3>
+        <ul class="tips-list">
+            <li>打印贴在店内桌面/前台，顾客扫码即连</li>
+            <li>家中访客免输密码，出租屋/民宿尤其方便</li>
+            <li>密码仅在本地浏览器中编码，不会上传服务器</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+function escWifi(s) {
+    return String(s).replace(/([\\;,:"])/g, '\\$1');
+}
+
+document.getElementById('genBtn').onclick = function() {
+    var ssid = document.getElementById('ssid').value.trim();
+    var pwd = document.getElementById('pwd').value;
+    var enc = document.getElementById('enc').value;
+    var hidden = document.getElementById('hidden').value === 'true';
+    var size = parseInt(document.getElementById('size').value);
+    var sb = document.getElementById('statusBar');
+
+    if (!ssid) { sb.textContent = '请填写网络名称 SSID'; sb.className = 'status-bar error'; return; }
+    if (enc !== 'nopass' && !pwd) { sb.textContent = '请填写 WiFi 密码'; sb.className = 'status-bar error'; return; }
+
+    var payload = 'WIFI:T:' + enc + ';S:' + escWifi(ssid) + ';';
+    if (enc !== 'nopass') payload += 'P:' + escWifi(pwd) + ';';
+    if (hidden) payload += 'H:true;';
+    payload += ';';
+
+    var box = document.getElementById('qrcode');
+    box.innerHTML = '';
+    try {
+        new QRCode(box, { text: payload, width: size, height: size, correctLevel: QRCode.CorrectLevel.M });
+        sb.textContent = '已生成：' + ssid + '（' + (enc === 'nopass' ? '开放网络' : enc) + '）';
+        sb.className = 'status-bar success';
+        document.getElementById('qrLabel').textContent = '扫码连接「' + ssid + '」';
+    } catch (e) {
+        sb.textContent = '生成失败：' + e.message;
+        sb.className = 'status-bar error';
+    }
+};
+
+document.getElementById('downloadBtn').onclick = function() {
+    var canvas = document.querySelector('#qrcode canvas, #qrcode img');
+    if (!canvas) { var sb = document.getElementById('statusBar'); sb.textContent = '请先生成二维码'; sb.className = 'status-bar error'; return; }
+    var img = canvas.tagName === 'IMG' ? canvas : canvas;
+    img.onload && img.onload();
+    var url = canvas.tagName === 'CANVAS' ? canvas.toDataURL('image/png') : canvas.src;
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'wifi-qrcode.png';
+    a.click();
+    var sb2 = document.getElementById('statusBar');
+    sb2.textContent = '已下载 wifi-qrcode.png'; sb2.className = 'status-bar success';
+};
+
+['ssid','pwd'].forEach(function(id) {
+    document.getElementById(id).addEventListener('keydown', function(e) { if (e.key === 'Enter') document.getElementById('genBtn').click(); });
+});
+initSidebar('daily');
+</script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>色盲模拟器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="色盲模拟器，纯前端Canvas模拟红绿色盲蓝色盲视觉，LMS色彩空间变换，帮助设计师检测无障碍配色，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.mode-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+.mode-tab{padding:10px 16px;border-radius:8px;border:1px solid #e0e6ed;background:#f8fafc;color:#64748b;cursor:pointer;font-size:.82em;font-weight:600;transition:.2s;}
+.mode-tab.active{background:#4a90e2;color:#fff;border-color:#4a90e2;}
+.info-note{background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:14px;font-size:.82em;color:#92400e;margin-bottom:14px;}
+</style>
+    <meta name="keywords" content="色盲模拟器,在线色盲模拟器,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/colorblind-tool.html" />
+    <meta property="og:title" content="色盲模拟器" />
+    <meta property="og:description" content="色盲模拟器，纯前端Canvas模拟红绿色盲蓝色盲视觉，LMS色彩空间变换，帮助设计师检测无障碍配色，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/colorblind-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="色盲模拟器" />
+    <meta itemprop="description" content="色盲模拟器，纯前端Canvas模拟红绿色盲蓝色盲视觉，LMS色彩空间变换，帮助设计师检测无障碍配色，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "色盲模拟器",
+                "item": "https://box.lynvortex.top/image/colorblind-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "色盲模拟器",
+        "url": "https://box.lynvortex.top/image/colorblind-tool.html",
+        "description": "模拟红绿色盲蓝色盲视觉，LMS色彩空间变换检测无障碍配色",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>👁️ 色盲模拟器</h1><p>模拟不同色觉障碍视觉，检测配色无障碍性</p></div>
+<div class="upload-zone" id="dropZone">📁 上传图片进行模拟<input type="file" id="fileInput" accept="image/*" style="display:none;"/></div>
+<div id="editorArea" style="display:none;">
+<div class="info-note">💡 全球约8%男性有色觉障碍，设计中应确保信息不仅靠颜色区分</div>
+<div class="mode-tabs">
+<div class="mode-tab active" data-mode="normal">👁️ 正常视觉</div>
+<div class="mode-tab" data-mode="protanopia">🔴 红色盲</div>
+<div class="mode-tab" data-mode="deuteranopia">🟢 绿色盲</div>
+<div class="mode-tab" data-mode="tritanopia">🔵 蓝色盲</div>
+<div class="mode-tab" data-mode="protanomaly">🔴 红色弱</div>
+<div class="mode-tab" data-mode="deuteranomaly">🟢 绿色弱</div>
+<div class="mode-tab" data-mode="tritanomaly">🔵 蓝色弱</div>
+<div class="mode-tab" data-mode="achromatopsia">⚫ 全色盲</div>
+</div>
+<div class="canvas-wrap">
+<div class="canvas-box"><canvas id="origCanvas"></canvas><div class="cl">原图</div></div>
+<div class="canvas-box"><canvas id="resultCanvas"></canvas><div class="cl" id="resultLabel">正常视觉</div></div>
+</div>
+<div class="btn-row">
+<button class="btn btn-outline" id="downloadBtn">⬇ 下载模拟图</button>
+<button class="btn btn-ghost" id="resetBtn">重新上传</button>
+</div>
+</div>
+<div id="statusBar" class="status-bar info">上传图片后选择色觉类型进行模拟</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+</footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 功能说明</h3><p>模拟8种色觉障碍，检测设计无障碍性</p><div class="feature-chips"><span class="feature-chip">红色盲</span><span class="feature-chip">绿色盲</span><span class="feature-chip">蓝色盲</span><span class="feature-chip">全色盲</span><span class="feature-chip">色弱模拟</span><span class="feature-chip">离线本地</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>基于LMS色彩空间变换矩阵实现精确模拟</li><li>红色盲(Protanopia)无法感知红色光</li><li>绿色盲(Deuteranopia)是最常见的色觉障碍</li><li>所有处理在浏览器本地完成，图片不上传</li><li>用于检测UI/图表配色是否对色觉障碍者友好</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+initSidebar('image');
+var sb=document.getElementById('statusBar'),origImg=null,mode='normal';
+var dz=document.getElementById('dropZone'),fi=document.getElementById('fileInput');
+dz.onclick=function(){fi.click();};dz.ondragover=function(e){e.preventDefault();};dz.ondrop=function(e){e.preventDefault();if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);};
+fi.onchange=function(){if(fi.files[0])loadFile(fi.files[0]);};
+function loadFile(file){var r=new FileReader();r.onload=function(e){var img=new Image();img.onload=function(){origImg=img;dz.style.display='none';document.getElementById('editorArea').style.display='block';var maxW=400,w=Math.min(origImg.width,maxW),h=origImg.height*w/origImg.width;var oc=document.getElementById('origCanvas'),rc=document.getElementById('resultCanvas');oc.width=rc.width=w;oc.height=rc.height=h;oc.getContext('2d').drawImage(origImg,0,0,w,h);process();};img.src=e.target.result;};r.readAsDataURL(file);}
+var modes={
+normal:[[1,0,0],[0,1,0],[0,0,1]],
+protanopia:[[0.567,0.433,0],[0.558,0.442,0],[0,0.242,0.758]],
+deuteranopia:[[0.625,0.375,0],[0.7,0.3,0],[0,0.3,0.7]],
+tritanopia:[[0.95,0.05,0],[0,0.433,0.567],[0,0.475,0.525]],
+protanomaly:[[0.817,0.183,0],[0.333,0.667,0],[0,0.125,0.875]],
+deuteranomaly:[[0.8,0.2,0],[0.258,0.742,0],[0,0.142,0.858]],
+tritanomaly:[[0.967,0.033,0],[0,0.733,0.267],[0,0.183,0.817]],
+achromatopsia:[[0.299,0.587,0.114],[0.299,0.587,0.114],[0.299,0.587,0.114]]
+};
+var modeNames={normal:'正常视觉',protanopia:'红色盲',deuteranopia:'绿色盲',tritanopia:'蓝色盲',protanomaly:'红色弱',deuteranomaly:'绿色弱',tritanomaly:'蓝色弱',achromatopsia:'全色盲'};
+document.querySelectorAll('.mode-tab').forEach(function(t){t.onclick=function(){document.querySelectorAll('.mode-tab').forEach(function(x){x.classList.remove('active');});t.classList.add('active');mode=t.dataset.mode;document.getElementById('resultLabel').textContent=modeNames[mode];process();};});
+function process(){
+if(!origImg)return;var rc=document.getElementById('resultCanvas'),ctx=rc.getContext('2d');ctx.drawImage(origImg,0,0,rc.width,rc.height);
+var imgData=ctx.getImageData(0,0,rc.width,rc.height),d=imgData.data,m=modes[mode];
+for(var i=0;i<d.length;i+=4){var r=d[i],g=d[i+1],b=d[i+2];d[i]=Math.min(255,Math.max(0,r*m[0][0]+g*m[0][1]+b*m[0][2]));d[i+1]=Math.min(255,Math.max(0,r*m[1][0]+g*m[1][1]+b*m[1][2]));d[i+2]=Math.min(255,Math.max(0,r*m[2][0]+g*m[2][1]+b*m[2][2]));}
+ctx.putImageData(imgData,0,0);setStatus('已切换至「'+modeNames[mode]+'」视图','success');
+}
+document.getElementById('downloadBtn').onclick=function(){var a=document.createElement('a');a.href=document.getElementById('resultCanvas').toDataURL('image/png');a.download='colorblind-'+mode+'.png';a.click();setStatus('已下载','success');};
+document.getElementById('resetBtn').onclick=function(){dz.style.display='block';document.getElementById('editorArea').style.display='none';origImg=null;fi.value='';setStatus('请重新上传','info');};
+</script>
+</body>
+</html>

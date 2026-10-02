@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>WebGL 信息 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线 WebGL 信息检测工具，查看 GPU 渲染器型号、着色器精度、最大纹理尺寸、扩展列表与实时渲染测试，游戏与 3D 开发调试必备。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<style>
+.wg-sec{border:1px solid #eef2f7;border-radius:10px;padding:16px;margin-bottom:14px;background:#fafbfc;}
+.wg-sec h4{margin:0 0 10px;font-size:0.9em;color:#4a90e2;}
+.wg-row{display:flex;justify-content:space-between;gap:12px;font-size:0.82em;padding:4px 0;border-bottom:1px dashed #e8edf3;}
+.wg-row span:first-child{color:#64748b;flex-shrink:0;}
+.wg-row span:last-child{color:#1e293b;text-align:right;word-break:break-all;font-family:Consolas,monospace;}
+.ext-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.ext-chip{background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:4px;font-size:0.72em;font-family:Consolas,monospace;}
+canvas#testCanvas{width:100%;max-width:400px;height:220px;border-radius:8px;border:1px solid #e0e6ed;display:block;margin:8px auto;}
+</style>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="WebGL检测,GPU信息,显卡型号,着色器精度,WebGL扩展,渲染测试,编程开发,免费工具,在线工具,纯前端,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/work/webgl-info-tool.html"/>
+<meta property="og:title" content="WebGL 信息"/>
+<meta property="og:description" content="GPU 型号/精度/扩展/渲染测试。"/>
+<meta property="og:url" content="https://box.lynvortex.top/work/webgl-info-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="WebGL 信息"/>
+<meta itemprop="description" content="GPU 型号/精度/扩展/渲染测试。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"编程开发","item":"https://box.lynvortex.top/work.html"},{"@type":"ListItem","position":3,"name":"WebGL 信息","item":"https://box.lynvortex.top/work/webgl-info-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"WebGL 信息","url":"https://box.lynvortex.top/work/webgl-info-tool.html","description":"WebGL信息检测工具","applicationCategory":"编程开发","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>🔮 WebGL 信息</h1>
+        <p>GPU 型号 / 着色器精度 / 扩展能力 / 实时渲染测试</p>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="runBtn">🔄 重新检测</button>
+    </div>
+    <div class="status-bar info" id="statusBar">检测中…</div>
+    <div id="result"></div>
+    <div class="wg-sec" id="renderSec">
+        <h4>🎮 实时渲染测试（旋转彩环）</h4>
+        <canvas id="testCanvas" width="400" height="220"></canvas>
+        <p style="font-size:0.78em;color:#94a3b8;margin:6px 0 0;text-align:center;" id="fpsText">FPS: —</p>
+    </div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 WebGL 信息</h3>
+        <p>读取 WebGL1/2 上下文全部关键参数并实测渲染帧率。</p>
+        <div class="feature-chips"><span class="feature-chip">GPU型号</span><span class="feature-chip">精度范围</span><span class="feature-chip">扩展列表</span><span class="feature-chip">FPS实测</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>UNMASKED 值来自 WEBGL_debug_renderer_info 扩展</li>
+            <li>部分浏览器开启反指纹保护后显示通用值（如 SwiftShader）</li>
+            <li>移动端 GPU 精度常为 mediump，桌面端多为 highp</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+function detect() {
+    var el = document.getElementById('result');
+    el.innerHTML = '';
+    var c = document.createElement('canvas');
+    var gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+    if (!gl) {
+        el.innerHTML = '<div class="wg-sec"><h4>❌ WebGL 不可用</h4><p style="font-size:0.85em;color:#64748b;">当前浏览器或驱动禁用了 WebGL。</p></div>';
+        setStatus('WebGL 不可用', 'error');
+        return;
+    }
+    var ext = gl.getExtension('WEBGL_debug_renderer_info');
+    function sec(title) {
+        var d = document.createElement('div');
+        d.className = 'wg-sec';
+        d.innerHTML = '<h4>' + title + '</h4><div class="rows"></div>';
+        el.appendChild(d);
+        return d.querySelector('.rows');
+    }
+    function rows(r, arr) {
+        r.innerHTML = arr.map(function(x) {
+            return '<div class="wg-row"><span>' + escapeHtml(x[0]) + '</span><span>' + (x[1] === undefined || x[1] === '' ? '—' : escapeHtml(x[1])) + '</span></div>';
+        }).join('');
+    }
+
+    var v = ext ? gl.getParameter(ext.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR);
+    var rr = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+    rows(sec('🏷️ GPU 标识'), [
+        ['厂商 (Vendor)', v],
+        ['渲染器 (Renderer)', rr],
+        ['遮蔽 Vendor', gl.getParameter(gl.VENDOR)],
+        ['遮蔽 Renderer', gl.getParameter(gl.RENDERER)]
+    ]);
+
+    var vp = gl.getParameter(gl.MAX_VIEWPORT_DIMS);
+    rows(sec('📏 能力上限'), [
+        ['WebGL 版本', gl.getParameter(gl.VERSION)],
+        ['着色语言', gl.getParameter(gl.SHADING_LANGUAGE_VERSION)],
+        ['最大纹理尺寸', gl.getParameter(gl.MAX_TEXTURE_SIZE) + ' px'],
+        ['最大渲染缓冲', gl.getParameter(gl.MAX_RENDERBUFFER_SIZE) + ' px'],
+        ['最大视口', vp[0] + ' × ' + vp[1]],
+        ['纹理图像单元', gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS)],
+        ['顶点属性', gl.getParameter(gl.MAX_VERTEX_ATTRIBS)],
+        ['Varying 向量', gl.getParameter(gl.MAX_VARYING_VECTORS)],
+        ['顶点 Uniform 向量', gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS)],
+        ['片元 Uniform 向量', gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS)],
+        ['WebGL2', !!c.getContext('webgl2') ? '支持' : '不支持'],
+        ['抗锯齿 (AA)', gl.getContextAttributes().antialias ? '开启' : '关闭']
+    ]);
+
+    function prec(type, shaderType) {
+        var p = gl.getShaderPrecisionFormat(shaderType, type);
+        return p ? 'range [' + p.rangeMin + ',' + p.rangeMax + '] precision ' + p.precision : '—';
+    }
+    var FRAG = gl.FRAGMENT_SHADER, VERT = gl.VERTEX_SHADER, HIGH = gl.HIGH_FLOAT, MED = gl.MEDIUM_FLOAT;
+    rows(sec('🎯 着色器精度'), [
+        ['片元 highp float', prec(HIGH, FRAG)],
+        ['片元 mediump float', prec(MED, FRAG)],
+        ['顶点 highp float', prec(HIGH, VERT)],
+        ['顶点 mediump float', prec(MED, VERT)]
+    ]);
+
+    var exts = gl.getSupportedExtensions() || [];
+    var d = document.createElement('div');
+    d.className = 'wg-sec';
+    d.innerHTML = '<h4>🧩 支持的扩展（' + exts.length + ' 个）</h4><div class="ext-chips">' + exts.map(function(e){ return '<span class="ext-chip">' + escapeHtml(e) + '</span>'; }).join('') + '</div>';
+    el.appendChild(d);
+
+    setStatus('检测完成：' + exts.length + ' 个扩展', 'success');
+    startRenderTest();
+}
+
+function startRenderTest() {
+    var canvas = document.getElementById('testCanvas');
+    var gl = canvas.getContext('webgl');
+    if (!gl) { document.getElementById('fpsText').textContent = 'WebGL 不可用'; return; }
+    var vs = 'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
+    var fs = 'precision mediump float;uniform float t;void main(){vec2 uv=gl_FragCoord.xy/vec2(400.,220.);float d=length(uv-vec2(.5,.5));vec3 col=.5+.5*cos(t+d*12.+vec3(0,2,4)+uv.xyx*3.);gl_FragColor=vec4(col,1.);}';
+    function sh(type, src) {
+        var s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+        return s;
+    }
+    var prog = gl.createProgram();
+    gl.attachShader(prog, sh(gl.VERTEX_SHADER, vs));
+    gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(prog);
+    gl.useProgram(prog);
+    var buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+    var loc = gl.getAttribLocation(prog, 'p');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    var tLoc = gl.getUniformLocation(prog, 't');
+    var frames = 0, last = performance.now(), t0 = last;
+    function frame(now) {
+        gl.uniform1f(tLoc, (now - t0) / 1000);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        frames++;
+        if (now - last > 500) {
+            document.getElementById('fpsText').textContent = 'FPS: ' + Math.round(frames * 1000 / (now - last));
+            frames = 0; last = now;
+        }
+        requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+}
+
+document.getElementById('runBtn').onclick = detect;
+detect();
+initSidebar('work');
+</script>
+</body>
+</html>

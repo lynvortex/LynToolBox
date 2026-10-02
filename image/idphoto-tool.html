@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>证件照换底色 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="证件照换底色工具，纯前端Canvas智能替换证件照背景颜色，支持红蓝白底切换与容差调节，数据本地处理不上传。"/>
+<meta name="robots" content="noindex, follow" />
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.canvas-box canvas{max-width:100%;border:1px solid #e0e6ed;border-radius:8px;background:repeating-conic-gradient(#f1f5f9 0% 25%,#fff 0% 50%) 50%/20px 20px;}
+.bg-presets{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+.bg-preset{width:48px;height:48px;border-radius:8px;cursor:pointer;border:3px solid transparent;transition:.2s;position:relative;}
+.bg-preset.active{border-color:#4a90e2;transform:scale(1.05);}
+.bg-preset.custom{background:linear-gradient(135deg,#f0f0f0,#ccc);display:flex;align-items:center;justify-content:center;font-size:1.2em;color:#64748b;}
+.slider-row{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.slider-row label{font-size:.85em;color:#64748b;font-weight:600;min-width:80px;}
+.slider-row input[type="range"]{flex:1;}
+.slider-row .sv{font-size:.82em;color:#4a90e2;font-weight:600;min-width:40px;text-align:right;}
+.upload-zone{border:2px dashed #e0e6ed;border-radius:12px;padding:30px;text-align:center;cursor:pointer;transition:.2s;margin-bottom:16px;}
+.upload-zone:hover{border-color:#4a90e2;background:#ebf5ff;}
+.upload-zone .uz-icon{font-size:2.4em;color:#94a3b8;margin-bottom:8px;}
+.upload-zone p{color:#94a3b8;font-size:.85em;margin:0;}
+</style>
+    <meta name="keywords" content="证件照换底色,在线证件照换底色,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/idphoto-tool.html" />
+    <meta property="og:title" content="证件照换底色" />
+    <meta property="og:description" content="证件照换底色工具，纯前端Canvas智能替换证件照背景颜色，支持红蓝白底切换与容差调节，数据本地处理不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/idphoto-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="证件照换底色" />
+    <meta itemprop="description" content="证件照换底色工具，纯前端Canvas智能替换证件照背景颜色，支持红蓝白底切换与容差调节，数据本地处理不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "证件照换底色",
+                "item": "https://box.lynvortex.top/image/idphoto-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "证件照换底色",
+        "url": "https://box.lynvortex.top/image/idphoto-tool.html",
+        "description": "上传证件照自动替换背景颜色，支持蓝白红底切换",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🪪 证件照换底色</h1><p>智能替换证件照背景颜色，支持红蓝白底切换</p></div>
+<div class="upload-zone" id="dropZone">
+<div class="uz-icon">📷</div>
+<p>点击或拖拽上传证件照（JPG/PNG）</p>
+<input type="file" id="fileInput" accept="image/*" style="display:none;"/>
+</div>
+<div id="editorArea" style="display:none;">
+<div class="bg-presets">
+<div class="bg-preset active" data-color="#ffffff" style="background:#ffffff;border:3px solid #e0e6ed;" title="白底"></div>
+<div class="bg-preset" data-color="#3b7dd8" style="background:#3b7dd8;" title="蓝底"></div>
+<div class="bg-preset" data-color="#d63b3b" style="background:#d63b3b;" title="红底"></div>
+<div class="bg-preset" data-color="#2d8659" style="background:#2d8659;" title="绿底"></div>
+<div class="bg-preset" data-color="#999999" style="background:#999999;" title="灰底"></div>
+<div class="bg-preset custom" title="自定义">🎨</div>
+<input type="color" id="customColor" value="#ffffff" style="width:48px;height:48px;border:none;border-radius:8px;cursor:pointer;"/>
+</div>
+<div class="canvas-wrap">
+<div class="canvas-box"><canvas id="origCanvas"></canvas><div class="cl">原图</div></div>
+<div class="canvas-box"><canvas id="resultCanvas"></canvas><div class="cl">换底效果</div></div>
+</div>
+<div class="slider-row">
+<label>容差范围</label>
+<input type="range" id="tolerance" min="10" max="120" value="50"/>
+<span class="sv" id="tolVal">50</span>
+</div>
+<div class="slider-row">
+<label>边缘羽化</label>
+<input type="range" id="feather" min="0" max="30" value="8"/>
+<span class="sv" id="feaVal">8</span>
+</div>
+<div class="btn-row">
+<button class="btn btn-primary" id="processBtn">🔄 换底</button>
+<button class="btn btn-outline" id="downloadBtn">⬇ 下载证件照</button>
+<button class="btn btn-ghost" id="resetBtn">重新上传</button>
+</div>
+</div>
+<div id="statusBar" class="status-bar info">上传证件照后自动检测背景并替换</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+</footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 功能说明</h3><p>智能检测背景区域并替换为指定颜色</p><div class="feature-chips"><span class="feature-chip">红蓝白底</span><span class="feature-chip">自定义颜色</span><span class="feature-chip">容差调节</span><span class="feature-chip">边缘羽化</span><span class="feature-chip">实时预览</span><span class="feature-chip">离线本地</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>建议使用纯色背景的证件照，效果最佳</li><li>容差越大，替换范围越广，可能影响头发边缘</li><li>羽化值控制边缘过渡自然度，建议8-15</li><li>所有图片处理在浏览器本地完成，不上传服务器</li><li>复杂背景或多色背景效果可能不理想</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+initSidebar('image');
+var sb=document.getElementById('statusBar'),origImg=null,bgColor='#ffffff';
+var dz=document.getElementById('dropZone'),fi=document.getElementById('fileInput');
+dz.onclick=function(){fi.click();};
+dz.ondragover=function(e){e.preventDefault();dz.style.borderColor='#4a90e2';};
+dz.ondragleave=function(){dz.style.borderColor='#e0e6ed';};
+dz.ondrop=function(e){e.preventDefault();if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);};
+fi.onchange=function(){if(fi.files[0])loadFile(fi.files[0]);};
+function loadFile(file){var r=new FileReader();r.onload=function(e){var img=new Image();img.onload=function(){origImg=img;dz.style.display='none';document.getElementById('editorArea').style.display='block';drawOrig();process();};img.src=e.target.result;};r.readAsDataURL(file);}
+function drawOrig(){var oc=document.getElementById('origCanvas'),rc=document.getElementById('resultCanvas');var maxW=400;var w=Math.min(origImg.width,maxW);var h=origImg.height*w/origImg.width;oc.width=w;oc.height=h;rc.width=w;rc.height=h;var ctx=oc.getContext('2d');ctx.drawImage(origImg,0,0,w,h);}
+function process(){
+if(!origImg)return;
+var oc=document.getElementById('origCanvas');var rc=document.getElementById('resultCanvas');
+var ctx=oc.getContext('2d');var rctx=rc.getContext('2d');
+rctx.drawImage(origImg,0,0,rc.width,rc.height);
+var imgData=rctx.getImageData(0,0,rc.width,rc.height);var d=imgData.data;
+var tol=parseInt(document.getElementById('tolerance').value);
+var fea=parseInt(document.getElementById('feather').value);
+var corners=[[0,0],[rc.width-1,0],[0,rc.height-1],[rc.width-1,rc.height-1]];
+var bgR=0,bgG=0,bgB=0;corners.forEach(function(c){var idx=(c[1]*rc.width+c[0])*4;bgR+=d[idx];bgG+=d[idx+1];bgB+=d[idx+2];});bgR/=4;bgG/=4;bgB/=4;
+var bgRGB=hexToRgb(bgColor);
+var visited=new Uint8Array(rc.width*rc.height);
+var queue=[];corners.forEach(function(c){queue.push([c[0],c[1]]);visited[c[1]*rc.width+c[0]]=1;});
+while(queue.length>0){var pt=queue.shift();var x=pt[0],y=pt[1];var idx=(y*rc.width+x)*4;var dr=d[idx]-bgR,dg=d[idx+1]-bgG,db=d[idx+2]-bgB;var dist=Math.sqrt(dr*dr+dg*dg+db*db);if(dist<tol){d[idx]=bgRGB.r;d[idx+1]=bgRGB.g;d[idx+2]=bgRGB.b;var dirs=[[1,0],[-1,0],[0,1],[0,-1]];for(var k=0;k<4;k++){var nx=x+dirs[k][0],ny=y+dirs[k][1];if(nx>=0&&nx<rc.width&&ny>=0&&ny<rc.height&&!visited[ny*rc.width+nx]){visited[ny*rc.width+nx]=1;queue.push([nx,ny]);}}}}
+if(fea>0){var orig=ctx.getImageData(0,0,oc.width,oc.height);var od=orig.data;var feaMap=new Float32Array(rc.width*rc.height);for(var i=0;i<visited.length;i++){if(!visited[i])feaMap[i]=1;}for(var f=0;f<fea;f++){var nm=new Float32Array(feaMap);for(var y=1;y<rc.height-1;y++)for(var x=1;x<rc.width-1;x++){var idx=y*rc.width+x;nm[idx]=(feaMap[idx-1]+feaMap[idx+1]+feaMap[idx-rc.width]+feaMap[idx+rc.width])/4;}feaMap=nm;}for(var i=0;i<d.length;i+=4){var pi=i/4;if(feaMap[pi]>0&&feaMap[pi]<1){var a=feaMap[pi];d[i]=d[i]*a+bgRGB.r*(1-a);d[i+1]=d[i+1]*a+bgRGB.g*(1-a);d[i+2]=d[i+2]*a+bgRGB.b*(1-a);}}}
+rctx.putImageData(imgData,0,0);
+setStatus('换底完成 · 背景色 '+bgColor.toUpperCase(),'success');
+}
+function hexToRgb(hex){var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return{r:r,g:g,b:b};}
+document.querySelectorAll('.bg-preset[data-color]').forEach(function(b){b.onclick=function(){document.querySelectorAll('.bg-preset').forEach(function(x){x.classList.remove('active');});b.classList.add('active');bgColor=b.dataset.color;process();};});
+document.getElementById('customColor').oninput=function(e){document.querySelectorAll('.bg-preset').forEach(function(x){x.classList.remove('active');});bgColor=e.target.value;process();};
+document.getElementById('tolerance').oninput=function(e){document.getElementById('tolVal').textContent=e.target.value;};
+document.getElementById('feather').oninput=function(e){document.getElementById('feaVal').textContent=e.target.value;};
+document.getElementById('processBtn').onclick=process;
+document.getElementById('downloadBtn').onclick=function(){var rc=document.getElementById('resultCanvas');var a=document.createElement('a');a.href=rc.toDataURL('image/png');a.download='idphoto.png';a.click();setStatus('已下载证件照','success');};
+document.getElementById('resetBtn').onclick=function(){dz.style.display='block';document.getElementById('editorArea').style.display='none';origImg=null;fi.value='';setStatus('请重新上传证件照','info');};
+</script>
+</body>
+</html>

@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>高级图片编辑器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp"/>
+    <meta name="description" content="高级图片编辑器，纯前端基于Fabric.js提供画笔、形状、文字、滤镜与图层编辑，导出PNG/JSON，数据本地处理。"/>
+    <link rel="stylesheet" href="../assets/tool-common.css"/>
+    <script src="../assets/fabric.min.js"></script>
+    <script src="../assets/sidebar.js"></script>
+    <style>
+        /* 工具特有样式 */
+        .editor-toolbar { background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 8px; padding: 12px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 12px; }
+        .tool-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .group-label { font-size: 0.76em; color: #94a3b8; font-weight: 700; min-width: 56px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .tool-btn { padding: 7px 12px; border: 1px solid #e0e6ed; background: #fff; color: #475569; border-radius: 6px; cursor: pointer; font-size: 0.84em; font-family: inherit; transition: all 0.2s; white-space: nowrap; }
+        .tool-btn:hover { border-color: #4a90e2; color: #4a90e2; }
+        .tool-btn.active { background: #4a90e2; border-color: #4a90e2; color: #fff; }
+        .tool-btn.primary { background: #4a90e2; border-color: #4a90e2; color: #fff; }
+        .tool-btn.primary:hover { background: #3a7bd5; }
+        .tool-btn.danger { color: #ef4444; border-color: #fecaca; }
+        .tool-btn.danger:hover { background: #fef2f2; border-color: #ef4444; }
+        .tool-btn input[type="color"] { width: 36px; height: 30px; padding: 0; border: 1px solid #e0e6ed; border-radius: 6px; cursor: pointer; background: #fff; }
+        .tool-btn-mini { width: 64px; padding: 7px 8px; border: 1px solid #e0e6ed; border-radius: 6px; font-size: 0.84em; font-family: inherit; background: #fff; outline: none; }
+        .tool-btn-mini:focus { border-color: #4a90e2; }
+        .inline-range { width: 120px; accent-color: #4a90e2; cursor: pointer; }
+        .inline-hint { font-size: 0.76em; color: #94a3b8; }
+
+        .canvas-wrap { border: 1px solid #e0e6ed; border-radius: 8px; background: repeating-conic-gradient(#f1f5f9 0% 25%, #fff 0% 50%) 50% / 20px 20px; padding: 10px; display: flex; justify-content: center; align-items: center; overflow: auto; min-height: 320px; }
+        .canvas-wrap .canvas-container { border-radius: 6px; box-shadow: 0 4px 18px rgba(0,0,0,0.12); }
+        #editorCanvas { display: block; }
+
+        .btn-success { background: #10b981; color: #fff; }
+        .btn-success:hover { background: #059669; }
+    </style>
+    <meta name="keywords" content="高级图片编辑器,在线高级图片编辑器,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/image-editor-tool.html" />
+    <meta property="og:title" content="高级图片编辑器" />
+    <meta property="og:description" content="高级图片编辑器，纯前端基于Fabric.js提供画笔、形状、文字、滤镜与图层编辑，导出PNG/JSON，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/image-editor-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="高级图片编辑器" />
+    <meta itemprop="description" content="高级图片编辑器，纯前端基于Fabric.js提供画笔、形状、文字、滤镜与图层编辑，导出PNG/JSON，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "高级图片编辑器",
+                "item": "https://box.lynvortex.top/image/image-editor-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "高级图片编辑器",
+        "url": "https://box.lynvortex.top/image/image-editor-tool.html",
+        "description": "Fabric.js画笔形状文字滤镜图层编辑，导出PNG/JSON",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+  <div class="tool-container">
+    <div class="tool-header"><h1>✏️ 高级图片编辑器</h1><p>基于 Fabric.js 的画笔、形状、文字、滤镜与图层编辑，支持导出 PNG / JSON</p></div>
+
+    <div class="editor-toolbar">
+      <div class="tool-group">
+        <span class="group-label">工具</span>
+        <button class="tool-btn active" data-tool="select">🖱️ 选择</button>
+        <button class="tool-btn" data-tool="brush">✏️ 画笔</button>
+        <button class="tool-btn" data-tool="rect">⬛ 矩形</button>
+        <button class="tool-btn" data-tool="circle">⭕ 圆形</button>
+        <button class="tool-btn" data-tool="text">🔤 文字</button>
+        <button class="tool-btn" id="eraserBtn">🧹 橡皮(删除选中)</button>
+        <button class="tool-btn danger" id="clearBtn">🗑️ 清空</button>
+      </div>
+      <div class="tool-group">
+        <span class="group-label">画笔/填充</span>
+        <input type="color" id="brushColor" value="#4a90e2" title="画笔/形状/文字颜色">
+        <span class="inline-hint">粗细</span>
+        <input type="number" id="brushWidth" value="4" min="1" max="60" class="tool-btn-mini" style="width:56px;">
+        <span class="inline-hint">字号</span>
+        <input type="number" id="fontSize" value="28" min="8" max="120" class="tool-btn-mini" style="width:56px;">
+      </div>
+      <div class="tool-group">
+        <span class="group-label">图层</span>
+        <button class="tool-btn" id="addImageBtn">🖼️ 添加图片到画布</button>
+        <input type="file" id="imageInput" accept="image/*" style="display:none;">
+        <button class="tool-btn" id="bringFrontBtn">⬆️ 置顶</button>
+        <button class="tool-btn" id="sendBackBtn">⬇️ 置底</button>
+      </div>
+      <div class="tool-group">
+        <span class="group-label">滤镜</span>
+        <span class="inline-hint">亮度</span>
+        <input type="range" id="brightness" min="-100" max="100" value="0" class="inline-range">
+        <span class="inline-hint" id="brightnessVal">0</span>
+        <button class="tool-btn" id="applyBrightnessBtn">应用亮度</button>
+        <button class="tool-btn" id="grayBtn">🔘 灰度</button>
+        <button class="tool-btn" id="invertBtn">🔃 反色</button>
+        <span class="inline-hint">（需先选中图片）</span>
+      </div>
+      <div class="tool-group">
+        <span class="group-label">导入导出</span>
+        <button class="tool-btn primary" id="exportPngBtn">💾 导出 PNG</button>
+        <button class="tool-btn" id="exportJsonBtn">📄 导出 JSON</button>
+        <button class="tool-btn" id="importJsonBtn">📥 导入 JSON</button>
+        <input type="file" id="jsonInput" accept=".json,application/json" style="display:none;">
+      </div>
+    </div>
+
+    <div class="canvas-wrap" id="canvasWrap">
+      <canvas id="editorCanvas"></canvas>
+    </div>
+
+    <div id="statusBar" class="status-bar info">选择工具后在画布上绘制，选中图片可应用滤镜，支持导出 PNG / JSON</div>
+
+    <footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+  </div>
+
+  <div class="info-cards">
+    <div class="info-card">
+      <h3>📦 功能说明</h3>
+      <p>基于 Fabric.js 构建纯前端图片编辑器，提供画笔、矩形、圆形、文字、图层排序、图片滤镜与 PNG/JSON 导入导出，全部本地处理。</p>
+      <div class="feature-chips">
+        <span class="feature-chip">画笔</span>
+        <span class="feature-chip">形状</span>
+        <span class="feature-chip">文字</span>
+        <span class="feature-chip">图层</span>
+        <span class="feature-chip">滤镜</span>
+        <span class="feature-chip">导出PNG</span>
+      </div>
+    </div>
+    <div class="info-card">
+      <h3>💡 使用须知</h3>
+      <ul class="tips-list">
+        <li>选择"画笔"可自由绘制，调节颜色与粗细；"矩形/圆形/文字"工具在画布点击放置。</li>
+        <li>选中对象后可拖动、缩放、旋转；按 Delete 键或点击"橡皮"删除选中对象。</li>
+        <li>"添加图片"可将本地图片置入画布作为图层，支持置顶/置底排序。</li>
+        <li>滤镜（亮度/灰度/反色）需先选中一张图片对象后应用，可叠加。</li>
+        <li>导出 JSON 可保存工程，再次"导入 JSON"恢复全部对象与图层。</li>
+        <li>所有编辑在浏览器本地完成，图片不会上传到服务器。</li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <h3>✨ 绘萤者</h3>
+      <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+      <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+      <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+  </div>
+</div></main>
+
+<script>
+(function () {
+    'use strict';
+    initSidebar('image');
+
+    if (typeof fabric === 'undefined') {
+        document.getElementById('statusBar').textContent = 'Fabric.js 库未加载，请刷新重试';
+        document.getElementById('statusBar').className = 'status-bar error';
+        return;
+    }
+
+    var setStatus = function (msg, type) {
+        var bar = document.getElementById('statusBar');
+        bar.textContent = msg;
+        bar.className = 'status-bar ' + (type || 'info');
+    };
+
+    // 根据容器宽度初始化画布尺寸
+    var wrap = document.getElementById('canvasWrap');
+    var cw = Math.min(820, Math.max(300, (wrap.clientWidth || 820) - 22));
+    var ch = Math.round(cw * 0.6);
+
+    var canvas = new fabric.Canvas('editorCanvas', {
+        backgroundColor: '#ffffff',
+        width: cw,
+        height: ch,
+        preserveObjectStacking: true
+    });
+
+    var currentTool = 'select';
+    var brushColor = '#4a90e2';
+    var brushWidth = 4;
+
+    var setTool = function (tool) {
+        currentTool = tool;
+        document.querySelectorAll('.tool-btn[data-tool]').forEach(function (b) {
+            b.classList.toggle('active', b.getAttribute('data-tool') === tool);
+        });
+        if (tool === 'brush') {
+            canvas.isDrawingMode = true;
+            canvas.freeDrawingBrush.color = brushColor;
+            canvas.freeDrawingBrush.width = brushWidth;
+            canvas.selection = true;
+        } else {
+            canvas.isDrawingMode = false;
+            canvas.selection = (tool === 'select');
+            if (tool !== 'select') canvas.defaultCursor = 'crosshair';
+            else canvas.defaultCursor = 'default';
+        }
+        var labels = { select: '选择模式：可拖动、缩放、旋转对象', brush: '画笔模式：按住鼠标自由绘制', rect: '矩形工具：点击画布放置矩形', circle: '圆形工具：点击画布放置圆形', text: '文字工具：点击画布放置文字' };
+        setStatus(labels[tool] || '请选择工具', 'info');
+    };
+
+    document.querySelectorAll('.tool-btn[data-tool]').forEach(function (btn) {
+        btn.addEventListener('click', function () { setTool(btn.getAttribute('data-tool')); });
+    });
+
+    // 画笔颜色/粗细
+    document.getElementById('brushColor').addEventListener('input', function (e) {
+        brushColor = e.target.value;
+        if (canvas.isDrawingMode && canvas.freeDrawingBrush) canvas.freeDrawingBrush.color = brushColor;
+    });
+    document.getElementById('brushWidth').addEventListener('input', function (e) {
+        brushWidth = Math.max(1, parseInt(e.target.value, 10) || 4);
+        if (canvas.isDrawingMode && canvas.freeDrawingBrush) canvas.freeDrawingBrush.width = brushWidth;
+    });
+
+    // 形状/文字放置
+    canvas.on('mouse:down', function (opt) {
+        if (currentTool === 'select' || currentTool === 'brush') return;
+        if (opt.target) return; // 点中已有对象时不放置
+        var pointer = canvas.getPointer(opt.e);
+        if (currentTool === 'rect') {
+            var rect = new fabric.Rect({
+                left: pointer.x, top: pointer.y, width: 120, height: 80,
+                fill: brushColor, stroke: '#334155', strokeWidth: 1,
+                originX: 'left', originY: 'top'
+            });
+            canvas.add(rect); canvas.setActiveObject(rect); canvas.renderAll();
+            setTool('select');
+        } else if (currentTool === 'circle') {
+            var circ = new fabric.Circle({
+                left: pointer.x, top: pointer.y, radius: 50,
+                fill: brushColor, stroke: '#334155', strokeWidth: 1,
+                originX: 'left', originY: 'top'
+            });
+            canvas.add(circ); canvas.setActiveObject(circ); canvas.renderAll();
+            setTool('select');
+        } else if (currentTool === 'text') {
+            var fs = parseInt(document.getElementById('fontSize').value, 10) || 28;
+            var txt = new fabric.IText('双击编辑文字', {
+                left: pointer.x, top: pointer.y, fontSize: fs, fill: brushColor,
+                fontFamily: 'PingFang SC, sans-serif', originX: 'left', originY: 'top'
+            });
+            canvas.add(txt); canvas.setActiveObject(txt); canvas.renderAll();
+            txt.enterEditing(); txt.selectAll();
+            setTool('select');
+        }
+    });
+
+    // 橡皮 / 删除选中
+    var deleteSelected = function () {
+        var active = canvas.getActiveObjects();
+        if (active.length === 0) { setStatus('请先选中要删除的对象', 'error'); return; }
+        active.forEach(function (o) { canvas.remove(o); });
+        canvas.discardActiveObject();
+        canvas.renderAll();
+        setStatus('已删除 ' + active.length + ' 个对象', 'success');
+    };
+    document.getElementById('eraserBtn').addEventListener('click', deleteSelected);
+
+    // 键盘删除
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+            var active = canvas.getActiveObject();
+            if (active && !(active.isEditing)) {
+                e.preventDefault();
+                deleteSelected();
+            }
+        }
+    });
+
+    // 清空
+    document.getElementById('clearBtn').addEventListener('click', function () {
+        if (!confirm('确定要清空画布吗？此操作不可撤销。')) return;
+        canvas.clear();
+        canvas.backgroundColor = '#ffffff';
+        canvas.renderAll();
+        setStatus('画布已清空', 'info');
+    });
+
+    // 添加图片
+    document.getElementById('addImageBtn').addEventListener('click', function () {
+        document.getElementById('imageInput').click();
+    });
+    document.getElementById('imageInput').addEventListener('change', function (e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) { setStatus('请选择图片文件', 'error'); return; }
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+            fabric.Image.fromURL(ev.target.result, function (img) {
+                if (!img) { setStatus('图片加载失败', 'error'); return; }
+                var maxW = canvas.width * 0.8;
+                if (img.width > maxW) img.scaleToWidth(maxW);
+                canvas.add(img);
+                canvas.centerObject(img);
+                canvas.setActiveObject(img);
+                canvas.renderAll();
+                setTool('select');
+                setStatus('图片已添加到画布', 'success');
+            });
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
+    });
+
+    // 图层排序
+    document.getElementById('bringFrontBtn').addEventListener('click', function () {
+        var o = canvas.getActiveObject();
+        if (!o) { setStatus('请先选中对象', 'error'); return; }
+        canvas.bringToFront(o); canvas.renderAll(); setStatus('已置于顶层', 'success');
+    });
+    document.getElementById('sendBackBtn').addEventListener('click', function () {
+        var o = canvas.getActiveObject();
+        if (!o) { setStatus('请先选中对象', 'error'); return; }
+        canvas.sendToBack(o); canvas.renderAll(); setStatus('已置于底层', 'success');
+    });
+
+    // 滤镜
+    var getActiveImage = function () {
+        var o = canvas.getActiveObject();
+        if (!o || o.type !== 'image') { setStatus('请先选中一张图片对象', 'error'); return null; }
+        return o;
+    };
+    document.getElementById('brightness').addEventListener('input', function (e) {
+        document.getElementById('brightnessVal').textContent = e.target.value;
+    });
+    document.getElementById('applyBrightnessBtn').addEventListener('click', function () {
+        var img = getActiveImage(); if (!img) return;
+        var val = parseInt(document.getElementById('brightness').value, 10) / 100;
+        img.filters = (img.filters || []).filter(function (f) { return !(f instanceof fabric.Image.filters.Brightness); });
+        img.filters.push(new fabric.Image.filters.Brightness({ brightness: val }));
+        img.applyFilters();
+        canvas.renderAll();
+        setStatus('亮度滤镜已应用（' + document.getElementById('brightness').value + '）', 'success');
+    });
+    document.getElementById('grayBtn').addEventListener('click', function () {
+        var img = getActiveImage(); if (!img) return;
+        img.filters = img.filters || [];
+        img.filters.push(new fabric.Image.filters.Grayscale());
+        img.applyFilters();
+        canvas.renderAll();
+        setStatus('灰度滤镜已应用', 'success');
+    });
+    document.getElementById('invertBtn').addEventListener('click', function () {
+        var img = getActiveImage(); if (!img) return;
+        img.filters = img.filters || [];
+        img.filters.push(new fabric.Image.filters.Invert());
+        img.applyFilters();
+        canvas.renderAll();
+        setStatus('反色滤镜已应用', 'success');
+    });
+
+    // 导出 PNG
+    document.getElementById('exportPngBtn').addEventListener('click', function () {
+        canvas.discardActiveObject();
+        canvas.renderAll();
+        try {
+            var dataURL = canvas.toDataURL({ format: 'png', multiplier: 1 });
+            var a = document.createElement('a');
+            a.href = dataURL;
+            a.download = 'editor_' + Date.now() + '.png';
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            setStatus('PNG 已导出', 'success');
+        } catch (err) {
+            setStatus('导出失败：' + (err && err.message ? err.message : err), 'error');
+        }
+    });
+
+    // 导出 JSON
+    document.getElementById('exportJsonBtn').addEventListener('click', function () {
+        try {
+            var json = JSON.stringify(canvas.toJSON(), null, 2);
+            var blob = new Blob([json], { type: 'application/json' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'editor_project_' + Date.now() + '.json';
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            setStatus('JSON 工程已导出', 'success');
+        } catch (err) {
+            setStatus('导出失败：' + (err && err.message ? err.message : err), 'error');
+        }
+    });
+
+    // 导入 JSON
+    document.getElementById('importJsonBtn').addEventListener('click', function () {
+        document.getElementById('jsonInput').click();
+    });
+    document.getElementById('jsonInput').addEventListener('change', function (e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+            try {
+                var json = ev.target.result;
+                canvas.loadFromJSON(json, function () {
+                    canvas.renderAll();
+                    setTool('select');
+                    setStatus('JSON 工程已导入', 'success');
+                });
+            } catch (err) {
+                setStatus('导入失败：' + (err && err.message ? err.message : err), 'error');
+            }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+    });
+
+    setTool('select');
+})();
+</script>
+</body></html>

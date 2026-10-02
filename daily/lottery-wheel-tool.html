@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>抽奖转盘 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="抽奖转盘工具，纯前端Canvas旋转转盘抽奖，自定义奖项概率权重，支持音效动画，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.main-layout{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;}
+.wheel-area{text-align:center;}
+canvas#wheel{max-width:100%;border-radius:50%;box-shadow:0 8px 30px rgba(0,0,0,.15);}
+.pointer{font-size:2.2em;margin-bottom:-15px;z-index:2;position:relative;}
+.spin-btn{margin-top:16px;padding:14px 48px;font-size:1.1em;font-weight:700;border:none;border-radius:12px;background:linear-gradient(135deg,#4a90e2,#3a7bd5);color:#fff;cursor:pointer;transition:.2s;box-shadow:0 4px 15px rgba(74,144,226,.4);}
+.spin-btn:hover{transform:scale(1.05);}
+.spin-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.config-panel{flex:1;min-width:280px;max-width:400px;}
+.config-panel h3{font-size:.95em;margin-bottom:12px;color:#2c3e50;}
+.prize-list{margin-bottom:14px;}
+.prize-item{display:flex;gap:8px;align-items:center;margin-bottom:8px;padding:8px;background:#f8fafc;border:1px solid #e0e6ed;border-radius:8px;}
+.prize-item input{flex:1;padding:6px 10px;border:1px solid #e0e6ed;border-radius:6px;font-size:.82em;}
+.prize-item .color-dot{width:24px;height:24px;border-radius:50%;flex:none;cursor:pointer;border:2px solid #fff;box-shadow:0 0 0 1px #e0e6ed;}
+.prize-item .del{cursor:pointer;color:#ef4444;font-size:1.1em;padding:4px;}
+.result-display{font-size:1.6em;font-weight:700;text-align:center;padding:16px;border-radius:10px;margin-top:14px;transition:.3s;}
+.result-display.win{background:#fef3c7;color:#92400e;}
+</style>
+    <meta name="keywords" content="抽奖转盘,在线抽奖转盘,日常通用,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/daily/lottery-wheel-tool.html" />
+    <meta property="og:title" content="抽奖转盘" />
+    <meta property="og:description" content="抽奖转盘工具，纯前端Canvas旋转转盘抽奖，自定义奖项概率权重，支持音效动画，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/daily/lottery-wheel-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="抽奖转盘" />
+    <meta itemprop="description" content="抽奖转盘工具，纯前端Canvas旋转转盘抽奖，自定义奖项概率权重，支持音效动画，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "日常通用",
+                "item": "https://box.lynvortex.top/daily.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "抽奖转盘",
+                "item": "https://box.lynvortex.top/daily/lottery-wheel-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "抽奖转盘",
+        "url": "https://box.lynvortex.top/daily/lottery-wheel-tool.html",
+        "description": "可自定义奖品的转盘抽奖工具，支持权重设置与动画效果",
+        "applicationCategory": "日常通用",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🎡 抽奖转盘</h1><p>自定义奖项转盘抽奖，支持权重概率设置</p></div>
+<div class="main-layout">
+<div class="wheel-area">
+<div class="pointer">🔽</div>
+<canvas id="wheel" width="320" height="320"></canvas>
+<div><button class="spin-btn" id="spinBtn">🎲 开始抽奖</button></div>
+<div class="result-display" id="resultDisplay">点击按钮开始抽奖</div>
+</div>
+<div class="config-panel">
+<h3>⚙️ 奖项设置</h3>
+<div class="prize-list" id="prizeList"></div>
+<button class="btn btn-outline" id="addPrizeBtn" style="font-size:.82em;padding:6px 14px;">+ 添加奖项</button>
+<h3 style="margin-top:16px;">📊 统计</h3>
+<div id="statsArea" style="font-size:.82em;color:#64748b;line-height:1.8;"></div>
+</div>
+</div>
+<div id="statusBar" class="status-bar info">设置奖项后点击转盘开始抽奖</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 抽奖转盘</h3><p>自定义转盘抽奖工具</p><div class="feature-chips"><span class="feature-chip">权重概率</span><span class="feature-chip">自定义奖项</span><span class="feature-chip">动画效果</span><span class="feature-chip">统计记录</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>点击奖项名称可直接编辑</li><li>权重越大中奖概率越高</li><li>旋转动画结束后显示中奖结果</li><li>统计区显示各奖项中奖次数</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var colors=['#ef4444','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ec4899','#14b8a6','#f97316'];
+var prizes=[
+{name:'一等奖',weight:1,color:colors[0]},
+{name:'二等奖',weight:3,color:colors[1]},
+{name:'三等奖',weight:5,color:colors[2]},
+{name:'谢谢参与',weight:10,color:colors[3]},
+{name:'再来一次',weight:5,color:colors[4]},
+{name:'幸运奖',weight:3,color:colors[5]}
+];
+var stats={};
+var currentAngle=0,spinning=false;
+var canvas=document.getElementById('wheel'),ctx=canvas.getContext('2d');
+function drawWheel(angle){
+var cx=canvas.width/2,cy=canvas.height/2,radius=cx-10;
+var total=prizes.reduce(function(s,p){return s+p.weight;},0);
+var startAngle=angle;
+ctx.clearRect(0,0,canvas.width,canvas.height);
+prizes.forEach(function(p,i){
+var arc=(p.weight/total)*Math.PI*2;
+ctx.beginPath();
+ctx.moveTo(cx,cy);
+ctx.arc(cx,cy,radius,startAngle,startAngle+arc);
+ctx.closePath();
+ctx.fillStyle=p.color;
+ctx.fill();
+ctx.strokeStyle='#fff';
+ctx.lineWidth=2;
+ctx.stroke();
+var midAngle=startAngle+arc/2;
+ctx.save();
+ctx.translate(cx,cy);
+ctx.rotate(midAngle);
+ctx.textAlign='right';
+ctx.fillStyle='#fff';
+ctx.font='bold 13px sans-serif';
+ctx.fillText(p.name,radius-15,5);
+ctx.restore();
+startAngle+=arc;
+});
+ctx.beginPath();
+ctx.arc(cx,cy,25,0,Math.PI*2);
+ctx.fillStyle='#fff';
+ctx.fill();
+ctx.strokeStyle='#4a90e2';
+ctx.lineWidth=3;
+ctx.stroke();
+}
+function renderPrizeList(){
+var html='';
+prizes.forEach(function(p,i){
+html+='<div class="prize-item">';
+html+='<div class="color-dot" style="background:'+p.color+';" data-idx="'+i+'"></div>';
+html+='<input type="text" value="'+p.name+'" data-idx="'+i+'" data-prop="name" placeholder="奖项名称"/>';
+html+='<input type="number" value="'+p.weight+'" data-idx="'+i+'" data-prop="weight" min="1" style="width:60px;flex:none;" title="权重"/>';
+html+='<span class="del" data-idx="'+i+'">✕</span>';
+html+='</div>';
+});
+document.getElementById('prizeList').innerHTML=html;
+document.querySelectorAll('.prize-item input').forEach(function(inp){
+inp.oninput=function(){var idx=parseInt(this.dataset.idx);prizes[idx][this.dataset.prop]=this.value;drawWheel(currentAngle);};
+});
+document.querySelectorAll('.prize-item .del').forEach(function(btn){
+btn.onclick=function(){var idx=parseInt(this.dataset.idx);if(prizes.length>2){prizes.splice(idx,1);renderPrizeList();drawWheel(currentAngle);}};
+});
+document.querySelectorAll('.prize-item .color-dot').forEach(function(dot){
+dot.onclick=function(){var idx=parseInt(this.dataset.idx);prizes[idx].color=colors[(colors.indexOf(prizes[idx].color)+1)%colors.length];renderPrizeList();drawWheel(currentAngle);};
+});
+}
+document.getElementById('addPrizeBtn').onclick=function(){
+prizes.push({name:'新奖项',weight:1,color:colors[prizes.length%colors.length]});
+renderPrizeList();drawWheel(currentAngle);
+};
+document.getElementById('spinBtn').onclick=function(){
+if(spinning)return;spinning=true;
+document.getElementById('spinBtn').disabled=true;
+document.getElementById('resultDisplay').textContent='旋转中...';
+document.getElementById('resultDisplay').className='result-display';
+var total=prizes.reduce(function(s,p){return s+parseFloat(p.weight);},0);
+var rand=Math.random()*total;
+var winIdx=0,acc=0;
+for(var i=0;i<prizes.length;i++){acc+=parseFloat(prizes[i].weight);if(rand<acc){winIdx=i;break;}}
+var targetAngle=0,acc2=0;
+for(var j=0;j<winIdx;j++)acc2+=(parseFloat(prizes[j].weight)/total)*Math.PI*2;
+var sectorAngle=(parseFloat(prizes[winIdx].weight)/total)*Math.PI*2;
+targetAngle=-(acc2+sectorAngle/2);
+var spins=5*Math.PI*2;
+var finalAngle=currentAngle+spins+(targetAngle-(currentAngle%(Math.PI*2)));
+var duration=4000,startTime=null,startAngle=currentAngle;
+function animate(ts){
+if(!startTime)startTime=ts;
+var progress=Math.min((ts-startTime)/duration,1);
+var eased=1-Math.pow(1-progress,3);
+currentAngle=startAngle+(finalAngle-startAngle)*eased;
+if(progress<1){
+drawWheel(currentAngle);
+requestAnimationFrame(animate);
+}else{
+currentAngle=finalAngle;
+drawWheel(finalAngle);
+spinning=false;
+document.getElementById('spinBtn').disabled=false;
+var winName=prizes[winIdx].name;
+document.getElementById('resultDisplay').textContent='🎉 恭喜抽中: '+winName;
+document.getElementById('resultDisplay').className='result-display win';
+stats[winName]=(stats[winName]||0)+1;
+updateStats();
+}
+}
+requestAnimationFrame(animate);
+};
+function updateStats(){
+var html='总抽奖次数: '+Object.values(stats).reduce(function(a,b){return a+b;},0)+'<br/>';
+Object.keys(stats).forEach(function(k){html+=k+': '+stats[k]+'次<br/>';});
+document.getElementById('statsArea').innerHTML=html;
+}
+renderPrizeList();drawWheel(0);
+initSidebar('daily');
+</script>
+</body>
+</html>

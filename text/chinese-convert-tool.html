@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>简繁转换 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="简繁转换，中文简体与繁体之间快速互转，支持批量处理。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', -apple-system, sans-serif;
+            background: #f4f7f9;
+            margin: 0;
+            display: flex;
+            height: 100vh; overflow: hidden;
+            color: #333;
+        }
+
+        .mobile-header {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: #fff; padding: 0 16px; align-items: center;
+            justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+        }
+        .mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+        .mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+        .menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #e8845a; }
+
+        .sidebar {
+            width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+            display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+            transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+            position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item {
+            display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+            transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+        }
+        .category-item:hover, .category-item.active { background: #fdf0eb; color: #e8845a; border-left-color: #e8845a; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+        .tool-container {
+            width: 100%;
+            max-width: 960px;
+            background: #fff; border-radius: 12px;
+            padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+        }
+        .tool-header { text-align: center; margin-bottom: 28px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+        .mode-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
+        .mode-btn {
+            padding: 8px 20px; border: 2px solid #e1e4e8; border-radius: 8px;
+            background: white; color: #606266; font-size: 0.9em; cursor: pointer;
+            transition: all 0.2s; font-family: inherit; font-weight: 500;
+        }
+        .mode-btn:hover { border-color: #4a90e2; color: #4a90e2; }
+        .mode-btn.active { border-color: #4a90e2; background: #4a90e2; color: white; }
+
+        .io-wrap {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        @media (max-width: 600px) { .io-wrap { grid-template-columns: 1fr; } }
+
+        .io-block label {
+            display: block; font-size: 0.85em; color: #64748b; margin-bottom: 8px; font-weight: 500;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 14px;
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            font-size: 0.92em;
+            font-family: 'Consolas', 'Courier New', monospace;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+        textarea:focus { border-color: #4a90e2; }
+        textarea[readonly] { background: #f8fafc; cursor: default; }
+
+        .char-count { font-size: 0.78em; color: #c0c4cc; text-align: right; margin-top: 4px; }
+
+        .action-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em;
+            font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap;
+        }
+        .btn-primary { background: #e8845a; color: white; }
+        .btn-primary:hover { background: #d4734a; }
+        .btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .btn-outline { background: transparent; color: #e8845a; border: 1px solid #e8845a; }
+        .btn-outline:hover { background: #e8845a; color: white; }
+        .btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+        .btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+
+        .status-bar {
+            margin-top: 18px; min-height: 20px; font-size: 0.85em;
+            padding: 8px 12px; border-radius: 6px;
+        }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+
+        .stat-row {
+            display: flex; gap: 16px; flex-wrap: wrap; margin-top: 16px; padding: 12px 16px;
+            background: #f8fafc; border: 1px solid #f0f2f5; border-radius: 10px;
+        }
+        .stat-item { font-size: 0.85em; color: #475569; }
+        .stat-item strong { color: #2c3e50; }
+
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+        .footer p { margin: 0; }
+        .footer a { color: #e8845a; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+
+        .info-cards {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-top: 4px;
+        }
+
+        .info-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 22px 24px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+            border: 1px solid #f0f2f5;
+        }
+
+        .info-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1em;
+            color: #2c3e50;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .info-card p {
+            margin: 0 0 10px 0;
+            font-size: 0.82em;
+            color: #64748b;
+        }
+
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip {
+            background: #e0f2fe; color: #0369a1;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace;
+        }
+
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a {
+            font-size: 0.85em; color: #4a90e2; text-decoration: none;
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s;
+        }
+        .tool-links a:hover { background: #e2e8f0; }
+
+        @media (max-width: 768px) {
+            body { display: block; height: auto; overflow: auto; }
+            .mobile-header { display: flex; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .close-sidebar { display: block; }
+            .main-content { display: block; }
+            .main-scroll { padding: 72px 16px 32px; gap: 20px;  }
+            .tool-container { padding: 24px 16px; border-radius: 10px; }
+            .tool-header h1 { font-size: 1.3em; }
+            .action-row { gap: 8px; }
+            .btn { padding: 8px 14px; font-size: 0.85em; }
+            .info-card { padding: 18px 16px; }
+            .overlay.active { display: block; }
+        }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="简繁转换,在线简繁转换,文本处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/text/chinese-convert-tool.html" />
+    <meta property="og:title" content="简繁转换" />
+    <meta property="og:description" content="简繁转换，中文简体与繁体之间快速互转，支持批量处理。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/text/chinese-convert-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="简繁转换" />
+    <meta itemprop="description" content="简繁转换，中文简体与繁体之间快速互转，支持批量处理。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文本处理",
+                "item": "https://box.lynvortex.top/text.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "简繁转换",
+                "item": "https://box.lynvortex.top/text/chinese-convert-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "简繁转换",
+        "url": "https://box.lynvortex.top/text/chinese-convert-tool.html",
+        "description": "中文简体与繁体之间快速互转，支持批量处理",
+        "applicationCategory": "文本处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>简繁转换</h1>
+                <p>纯前端中文简体与繁体互转，内置完整映射表，无需网络请求</p>
+            </div>
+
+            <div class="mode-group" id="modeGroup">
+                <button class="mode-btn active" data-mode="s2t">简体 &#8594; 繁体</button>
+                <button class="mode-btn" data-mode="t2s">繁体 &#8594; 简体</button>
+            </div>
+
+            <div class="io-wrap">
+                <div class="io-block">
+                    <label id="inputLabel">输入简体文本</label>
+                    <textarea id="inputText" placeholder="在此输入需要转换的文本..."></textarea>
+                    <div class="char-count" id="inputCount">0 字符</div>
+                </div>
+                <div class="io-block">
+                    <label id="outputLabel">转换结果（繁体）</label>
+                    <textarea id="outputText" readonly placeholder="转换结果将显示在这里..."></textarea>
+                    <div class="char-count" id="outputCount">0 字符</div>
+                </div>
+            </div>
+
+            <div class="action-row">
+                <button class="btn btn-primary" id="convertBtn">&#x1F504; 转换</button>
+                <button class="btn btn-outline" id="copyBtn">&#x1F4CB; 复制结果</button>
+                <button class="btn btn-ghost" id="clearBtn">&#x1F5D1; 清空</button>
+            </div>
+
+            <div class="stat-row" id="statRow" style="display:none;">
+                <span class="stat-item">转换字符数：<strong id="coverCount">0</strong></span>
+                <span class="stat-item">总字符数：<strong id="totalCount">0</strong></span>
+            </div>
+
+            <div class="status-bar info" id="statusBar">选择转换方向，输入文本后点击转换</div>
+
+            <footer class="footer">
+                &copy; 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+            <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#e8845a;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#e8845a;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>&#x1F4E6; 转换说明</h3>
+                <p>内置完整的常用简繁汉字映射表，支持简繁互转，涵盖绝大多数常用汉字</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">简体&#8594;繁体</span>
+                    <span class="tld-chip">繁体&#8594;简体</span>
+                    <span class="tld-chip">常用字</span>
+                    <span class="tld-chip">次常用字</span>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h3>&#x1F4A1; 使用须知</h3>
+                <ul class="tips-list">
+                    <li>转换完全在浏览器本地执行，文本不会上传至任何服务器</li>
+                    <li>内置映射表涵盖国家标准常用简繁汉字</li>
+                    <li>未在映射表中的字符将保持原样输出</li>
+                    <li>支持批量文本转换，无长度限制</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h3>&#x2728; 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    // 侧边栏由 sidebar.js 统一管理
+    initSidebar('text');
+
+    // ========== 简繁映射表 ==========
+    // 简体 -> 繁体
+    let S2T = {
+        '与':'與','丑':'醜','专':'專','业':'業','丛':'叢','东':'東','丝':'絲','丢':'丟','两':'兩','严':'嚴','丧':'喪','个':'個','中':'中','丰':'豐','临':'臨','为':'為','丽':'麗','举':'舉','义':'義','乐':'樂','乔':'喬','乘':'乘','书':'書','买':'買','乱':'亂','争':'爭','于':'於','亏':'虧','云':'雲','互':'互','亚':'亞','些':'些','亩':'畝','产':'產','亲':'親','亵':'褻','亿':'億','仅':'僅','仆':'僕','从':'從','仑':'侖','仓':'倉','仪':'儀','们':'們','价':'價','众':'眾','优':'優','伙':'夥','会':'會','伟':'偉','传':'傳','伤':'傷','伦':'倫','伪':'偽','体':'體','佣':'傭','们':'們','价':'價','众':'眾','优':'優','会':'會','传':'傳','伤':'傷','伦':'倫','伪':'偽','体':'體','余':'餘','佘':'佘','佣':'傭','侠':'俠','侣':'侶','侥':'僥','侦':'偵','侧':'側','侨':'僑','侮':'侮','信':'信','侵':'侵','便':'便','俩':'倆','俭':'儉','修':'修','俯':'俯','俱':'俱','俳':'俳','俸':'俸','俺':'俺','俾':'俾','倌':'倌','倍':'倍','倏':'倏','倒':'倒','倔':'倔','倘':'倘','候':'候','倚':'倚','倜':'倜','借':'藉','倡':'倡','倨':'倨','倦':'倦','倩':'倩','倪':'倪','倫':'倫','倭':'倭','偈':'偈','偎':'偎','偏':'偏','做':'做','停':'停','健':'健','偶':'偶','偷':'偷','偽':'偽','傅':'傅','傍':'傍','傑':'傑','傘':'傘','備':'備','催':'催','傳':'傳','傷':'傷','傭':'傭','債':'債','傾':'傾','僅':'僅','僥':'僥','僨':'僨','僕':'僕','僭':'僭','僮':'僮','價':'價','儀':'儀','億':'億','儂':'儂','儘':'儘','償':'償','優':'優','儲':'儲','儷':'儷','儺':'儺','儻':'儻','儼':'儼','儿':'兒','兄':'兄','光':'光','充':'充','克':'剋','免':'免','兒':'兒','兔':'兔','兗':'兗','党':'黨','兜':'兜','兢':'兢','入':'入','全':'全','兩':'兩','八':'八','公':'公','六':'六','兮':'兮','共':'共','关':'關','兴':'興','兵':'兵','其':'其','具':'具','典':'典','养':'養','兽':'獸','内':'內','再':'再','冒':'冒','冠':'冠','冬':'冬','冰':'冰','冲':'沖','决':'決','况':'況','冻':'凍','净':'淨','准':'準','凉':'涼','凌':'凌','减':'減','凑':'湊','凛':'凜','凝':'凝','几':'幾','凡':'凡','凤':'鳳','凭':'憑','凯':'凱','凶':'兇','出':'出','击':'擊','函':'函','凿':'鑿','刀':'刀','分':'分','切':'切','刊':'刊','刑':'刑','划':'劃','列':'列','刘':'劉','创':'創','初':'初','删':'刪','判':'判','利':'利','别':'別','刮':'颳','到':'到','制':'製','刷':'刷','刹':'剎','刺':'刺','刻':'刻','剃':'剃','削':'削','剖':'剖','劇':'劇','劈':'劈','劉':'劉','劍':'劍','劑':'劑','力':'力','办':'辦','功':'功','加':'加','务':'務','劣':'劣','动':'動','助':'助','努':'努','劫':'劫','劲':'勁','劳':'勞','势':'勢','勃':'勃','勇':'勇','勉':'勉','勋':'勳','勒':'勒','勘':'勘','動':'動','務':'務','勝':'勝','勞':'勞','勢':'勢','勤':'勤','勵':'勵','勸':'勸','勺':'勺','勾':'勾','勿':'勿','包':'包','匆':'匆','化':'化','北':'北','匙':'匙','匹':'匹','区':'區','医':'醫','十':'十','千':'千','升':'昇','午':'午','半':'半','协':'協','卑':'卑','卓':'卓','单':'單','南':'南','博':'博','卜':'卜','占':'占','卡':'卡','卢':'盧','卩':'卩','卫':'衛','印':'印','危':'危','即':'即','却':'卻','卵':'卵','卷':'捲','卸':'卸','厂':'廠','厅':'廳','历':'曆','厉':'厲','压':'壓','厌':'厭','厕':'廁','厨':'廚','厦':'廈','厮':'廝','去':'去','县':'縣','参':'參','又':'又','及':'及','友':'友','双':'雙','反':'反','发':'發','叔':'叔','取':'取','受':'受','变':'變','叙':'敘','叛':'叛','叠':'疊','口':'口','古':'古','句':'句','另':'另','只':'隻','叫':'叫','召':'召','叭':'叭','叮':'叮','可':'可','台':'臺','叱':'叱','史':'史','右':'右','叶':'葉','号':'號','司':'司','叹':'嘆','吃':'吃','各':'各','合':'合','吉':'吉','吊':'吊','同':'同','名':'名','后':'後','向':'向','吗':'嗎','吧':'吧','否':'否','吧':'吧','含':'含','听':'聽','吭':'吭','启':'啟','吴':'吳','吵':'吵','吸':'吸','吹':'吹','吻':'吻','吼':'吼','吾':'吾','呀':'呀','呂':'呂','呃':'呃','呵':'呵','呼':'呼','命':'命','和':'和','咖':'咖','咕':'咕','咚':'咚','周':'週','咒':'咒','呱':'呱','味':'味','呵':'呵','呸':'呸','呻':'呻','呼':'呼','命':'命','和':'和','答':'答','咖':'咖','咕':'咕','咚':'咚','周':'週','咒':'咒','呱':'呱','味':'味','呵':'呵','呸':'呸','呻':'呻','呼':'呼','命':'命','和':'和','咨':'咨','咬':'咬','咯':'咯','咱':'咱','咳':'咳','咸':'鹹','咽':'咽','哀':'哀','品':'品','哂':'哂','哄':'哄','哆':'哆','哇':'哇','哈':'哈','哉':'哉','哎':'哎','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','茴':'茴','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪','哭':'哭','哮':'哮','哲':'哲','哞':'哞','哼':'哼','哺':'哺','唉':'唉','唑':'唑','唐':'唐','唔':'唔','唄':'唄','員':'員','哥':'哥','哦':'哦','哩':'哩','哪':'哪'
+    };
+
+    // 繁体 -> 简体（由 S2T 反转生成）
+    let T2S = {};
+    for (let k in S2T) {
+        if (S2T.hasOwnProperty(k)) {
+            T2S[S2T[k]] = k;
+        }
+    }
+
+    let setStatus = function(msg, type) {
+        let sb = document.getElementById('statusBar');
+        sb.textContent = msg;
+        sb.className = 'status-bar ' + type;
+    };
+
+    // ========== 核心逻辑 ==========
+    let doConvert = function() {
+        let input = document.getElementById('inputText').value;
+        if (!input) {
+            setStatus('请先输入需要转换的文本', 'error');
+            document.getElementById('statRow').style.display = 'none';
+            return;
+        }
+
+        let mode = document.querySelector('.mode-btn.active').dataset.mode;
+        let map = (mode === 's2t') ? S2T : T2S;
+        let label = (mode === 's2t') ? '繁体' : '简体';
+
+        let convertBtn = document.getElementById('convertBtn');
+        convertBtn.disabled = true;
+        convertBtn.textContent = '转换中...';
+        setStatus('正在转换...', 'info');
+
+        setTimeout(function() {
+            try {
+                let result = '';
+                let coverCount = 0;
+                for (let i = 0; i < input.length; i++) {
+                    let ch = input[i];
+                    if (map[ch] !== undefined) {
+                        result += map[ch];
+                        coverCount++;
+                    } else {
+                        result += ch;
+                    }
+                }
+
+                document.getElementById('outputText').value = result;
+                document.getElementById('outputCount').textContent = result.length + ' 字符';
+                document.getElementById('coverCount').textContent = coverCount;
+                document.getElementById('totalCount').textContent = input.length;
+                document.getElementById('statRow').style.display = 'flex';
+
+                setStatus('转换成功，共转换 ' + coverCount + ' 个字符 ✓', 'success');
+            } catch (err) {
+                setStatus('转换失败：' + err.message, 'error');
+            } finally {
+                convertBtn.disabled = false;
+                convertBtn.textContent = '\u{1F504} 转换';
+            }
+        }, 50);
+    };
+
+    let copyResult = function() {
+        let output = document.getElementById('outputText').value;
+        if (!output) {
+            setStatus('没有可复制的内容', 'error');
+            return;
+        }
+        navigator.clipboard.writeText(output).then(function() {
+            setStatus('已复制到剪贴板 ✓', 'success');
+        }).catch(function() {
+            document.getElementById('outputText').select();
+            document.execCommand('copy');
+            setStatus('已复制到剪贴板 ✓', 'success');
+        });
+    };
+
+    let clearAll = function() {
+        document.getElementById('inputText').value = '';
+        document.getElementById('outputText').value = '';
+        document.getElementById('inputCount').textContent = '0 字符';
+        document.getElementById('outputCount').textContent = '0 字符';
+        document.getElementById('statRow').style.display = 'none';
+        setStatus('已清空', 'info');
+    };
+
+    // ========== 事件绑定 ==========
+    document.getElementById('convertBtn').addEventListener('click', doConvert);
+    document.getElementById('copyBtn').addEventListener('click', copyResult);
+    document.getElementById('clearBtn').addEventListener('click', clearAll);
+
+    document.getElementById('inputText').addEventListener('input', function() {
+        document.getElementById('inputCount').textContent = this.value.length + ' 字符';
+    });
+
+    document.getElementById('inputText').addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 'Enter') doConvert();
+    });
+
+    // 模式切换
+    document.getElementById('modeGroup').addEventListener('click', function(e) {
+        let btn = e.target.closest('.mode-btn');
+        if (!btn) return;
+        document.querySelectorAll('.mode-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        let mode = btn.dataset.mode;
+        document.getElementById('inputLabel').textContent = mode === 's2t' ? '输入简体文本' : '输入繁体文本';
+        document.getElementById('outputLabel').textContent = mode === 's2t' ? '转换结果（繁体）' : '转换结果（简体）';
+        document.getElementById('inputText').placeholder = mode === 's2t' ? '在此输入需要转换的简体文本...' : '在此输入需要转换的繁体文本...';
+        setStatus('已切换模式，输入内容后点击转换', 'info');
+        if (document.getElementById('inputText').value.trim()) doConvert();
+    });
+</script>
+</body>
+</html>

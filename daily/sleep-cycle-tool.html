@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>睡眠周期计算器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线睡眠周期计算器，基于 90 分钟睡眠周期理论，计算最佳入睡/起床时间，避开深睡期醒来神清气爽，支持入睡潜伏期设置，纯前端计算。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="睡眠周期,最佳睡眠时间,起床时间计算,90分钟周期,睡眠计算器,快速眼动,健康睡眠,免费工具,在线工具,纯前端处理,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/daily/sleep-cycle-tool.html"/>
+<meta property="og:title" content="睡眠周期计算器"/>
+<meta property="og:description" content="踩准周期，醒来不困。"/>
+<meta property="og:url" content="https://box.lynvortex.top/daily/sleep-cycle-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="睡眠周期计算器"/>
+<meta itemprop="description" content="踩准周期，醒来不困。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"日常通用","item":"https://box.lynvortex.top/daily.html"},{"@type":"ListItem","position":3,"name":"睡眠周期计算器","item":"https://box.lynvortex.top/daily/sleep-cycle-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"睡眠周期计算器","url":"https://box.lynvortex.top/daily/sleep-cycle-tool.html","description":"睡眠周期计算器","applicationCategory":"日常通用","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>😴 睡眠周期计算器</h1>
+        <p>踩准 90 分钟周期，醒来不犯困</p>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>计算模式</label>
+            <select id="mode">
+                <option value="wake">我要几点起 → 推荐入睡时间</option>
+                <option value="sleep">我现在睡 → 推荐起床时间</option>
+            </select>
+        </div>
+        <div class="form-item"><label id="timeLabel">起床时间</label>
+            <input type="time" id="time" value="07:00"/>
+        </div>
+        <div class="form-item"><label>入睡潜伏期（分钟）</label>
+            <select id="latency">
+                <option value="0">0（沾枕即着）</option>
+                <option value="10">10 分钟</option>
+                <option value="15" selected>15 分钟（平均）</option>
+                <option value="30">30 分钟</option>
+            </select>
+        </div>
+        <div class="form-item"><label>周期时长</label>
+            <select id="cycleLen">
+                <option value="80">80 分钟</option>
+                <option value="90" selected>90 分钟（标准）</option>
+                <option value="100">100 分钟</option>
+            </select>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="calcBtn">⚙️ 计算</button>
+        <button class="btn btn-outline" id="nowBtn">现在入睡</button>
+    </div>
+    <div class="status-bar info" id="statusBar">选择模式后计算，推荐 4-6 个周期</div>
+    <div id="resultWrap"></div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>😴 周期理论</h3>
+        <p>每个周期约 90 分钟，周期交界处醒来最清爽。</p>
+        <div class="feature-chips"><span class="feature-chip">双向推算</span><span class="feature-chip">潜伏期补偿</span><span class="feature-chip">周期可调</span><span class="feature-chip">睡眠质量提示</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 睡眠小知识</h3>
+        <ul class="tips-list">
+            <li>成人建议每天 5 个周期（7.5 小时）</li>
+            <li>固定起床时间比固定入睡时间更重要</li>
+            <li>深睡期被闹钟叫醒容易昏沉（睡眠惯性）</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+function parseHM(s) {
+    var p = s.split(':');
+    return { h: parseInt(p[0]) || 0, m: parseInt(p[1]) || 0 };
+}
+function fmt(mins) {
+    mins = ((mins % 1440) + 1440) % 1440;
+    var h = Math.floor(mins / 60), m = mins % 60;
+    return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+}
+function sleepLabel(cycles) {
+    if (cycles <= 3) return { t: '小睡/打盹', c: '#e67e22' };
+    if (cycles === 4) return { t: '偏短 · 勉强够用', c: '#f39c12' };
+    if (cycles === 5) return { t: '推荐 · 成人标准', c: '#27ae60' };
+    if (cycles === 6) return { t: '充足 · 长睡眠者', c: '#2980b9' };
+    return { t: '过久 · 可能昏沉', c: '#8e44ad' };
+}
+
+function calc() {
+    var mode = document.getElementById('mode').value;
+    var t = parseHM(document.getElementById('time').value);
+    var latency = parseInt(document.getElementById('latency').value);
+    var cyc = parseInt(document.getElementById('cycleLen').value);
+    var base = t.h * 60 + t.m;
+    var list = [];
+    for (var n = 6; n >= 3; n--) {
+        var total = n * cyc + latency;
+        if (mode === 'wake') {
+            list.push({ cycles: n, time: fmt(base - total), dur: total });
+        } else {
+            list.push({ cycles: n, time: fmt(base + total), dur: total });
+        }
+    }
+    var dir = mode === 'wake' ? '建议入睡' : '建议起床';
+    var html = '<p style="font-size:0.9em;color:#64748b;margin:0 0 12px;">' +
+        (mode === 'wake' ? '想在 ' + document.getElementById('time').value + ' 起床，以下为推荐入睡时刻（含 ' + latency + ' 分钟潜伏期）' : '现在 ' + document.getElementById('time').value + ' 上床，以下为推荐起床时刻') + '</p>';
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;">';
+    list.forEach(function(item) {
+        var lab = sleepLabel(item.cycles);
+        html += '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:16px;text-align:center;background:' + (item.cycles === 5 ? '#f0f9f1' : '#fff') + ';">' +
+            '<div style="font-size:1.6em;font-weight:700;color:#2c3e50;">' + item.time + '</div>' +
+            '<div style="font-size:0.82em;color:#94a3b8;margin-top:4px;">' + dir + ' · ' + item.cycles + ' 个周期</div>' +
+            '<div style="font-size:0.8em;margin-top:6px;"><span style="padding:2px 10px;border-radius:10px;background:' + lab.c + '22;color:' + lab.c + ';">' + lab.t + '</span></div>' +
+            '<div style="font-size:0.78em;color:#b6c2d2;margin-top:6px;">睡 ' + Math.floor(item.dur / 60) + ' 时 ' + (item.dur % 60) + ' 分</div></div>';
+    });
+    html += '</div>';
+    document.getElementById('resultWrap').innerHTML = html;
+    document.getElementById('statusBar').textContent = '计算完成，5 个周期（' + (5 * cyc + latency) + ' 分钟）为成人推荐时长';
+    document.getElementById('statusBar').className = 'status-bar success';
+}
+
+document.getElementById('mode').addEventListener('change', function() {
+    var wake = this.value === 'wake';
+    document.getElementById('timeLabel').textContent = wake ? '起床时间' : '入睡时间';
+    document.getElementById('time').value = wake ? '07:00' : (function() {
+        var d = new Date();
+        return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    })();
+    calc();
+});
+['time','latency','cycleLen'].forEach(function(id) {
+    document.getElementById(id).addEventListener('change', calc);
+});
+document.getElementById('calcBtn').onclick = calc;
+document.getElementById('nowBtn').onclick = function() {
+    document.getElementById('mode').value = 'sleep';
+    document.getElementById('timeLabel').textContent = '入睡时间';
+    var d = new Date();
+    document.getElementById('time').value = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    calc();
+};
+
+calc();
+initSidebar('daily');
+</script>
+</body>
+</html>

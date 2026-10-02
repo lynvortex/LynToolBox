@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PDF页面提取与重排 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="PDF页面管理工具，可视化预览每一页，支持删除页面、上下移动调整顺序，导出新PDF，纯前端处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<style>
+.page-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:14px;margin:18px 0;}
+.page-card{border:2px solid #e0e6ed;border-radius:8px;padding:8px;text-align:center;background:#fff;transition:.2s;position:relative;}
+.page-card.removed{opacity:.35;filter:grayscale(1);}
+.page-card canvas{max-width:100%;border:1px solid #f0f2f5;border-radius:4px;}
+.page-num{font-size:.8em;color:#64748b;margin-top:6px;}
+.page-ops{display:flex;justify-content:center;gap:4px;margin-top:6px;}
+.page-ops button{border:1px solid #e0e6ed;background:#f8fafc;border-radius:5px;cursor:pointer;padding:2px 8px;font-size:.85em;}
+.page-ops button:hover{background:#ebf5ff;border-color:#4a90e2;}
+</style>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="PDF页面提取,PDF重排,PDF删除页面,PDF页面排序,文档处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/document/pdf-pages-tool.html"/>
+<meta property="og:title" content="PDF页面提取与重排"/>
+<meta property="og:description" content="可视化预览PDF每一页，删除页面、调整顺序后导出新PDF，纯前端处理。"/>
+<meta property="og:url" content="https://box.lynvortex.top/document/pdf-pages-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="PDF页面提取与重排"/>
+<meta itemprop="description" content="可视化预览PDF每一页，删除页面、调整顺序后导出新PDF，纯前端处理。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"文档处理","item":"https://box.lynvortex.top/document.html"},{"@type":"ListItem","position":3,"name":"PDF页面提取与重排","item":"https://box.lynvortex.top/document/pdf-pages-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"PDF页面提取与重排","url":"https://box.lynvortex.top/document/pdf-pages-tool.html","description":"删除页面、调整页面顺序并导出新PDF","applicationCategory":"文档处理","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>🗂️ PDF页面提取与重排</h1>
+        <p>可视化删除页面、调整顺序，一键导出新 PDF</p>
+    </div>
+    <div class="upload-zone" id="dropZone">
+        <p style="margin:0;color:#64748b;">📄 点击选择或拖入 PDF 文件</p>
+        <input type="file" id="fileInput" accept="application/pdf" style="display:none;"/>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-outline" id="restoreBtn" style="display:none;">恢复全部页面</button>
+        <button class="btn btn-primary" id="exportBtn" style="display:none;">导出 PDF</button>
+        <span id="keepCount" style="font-size:.85em;color:#64748b;"></span>
+    </div>
+    <div class="status-bar info" id="statusBar">请先选择 PDF 文件</div>
+    <div class="page-grid" id="pageGrid"></div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 PDF页面提取与重排</h3>
+        <p>缩略图可视化操作，像整理照片一样整理 PDF 页面。</p>
+        <div class="feature-chips"><span class="feature-chip">页面预览</span><span class="feature-chip">删除页面</span><span class="feature-chip">顺序调整</span><span class="feature-chip">导出新PDF</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>点击 ✕ 删除页面，点击 ←/→ 调整顺序</li>
+            <li>导出结果按当前卡片从左到右的顺序生成</li>
+            <li>文件在浏览器本地处理，不会上传</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script src="../assets/pdf.min.js"></script>
+<script src="../assets/pdf-lib.min.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+var srcBytes = null, fileName = '', order = []; // order: 原始页码(0基)数组，表示当前顺序；removed 用 Set
+var removed = new Set();
+var dropZone = document.getElementById('dropZone'), fileInput = document.getElementById('fileInput');
+dropZone.onclick = function(){ fileInput.click(); };
+dropZone.ondragover = function(e){ e.preventDefault(); };
+dropZone.ondrop = function(e){ e.preventDefault(); if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); };
+fileInput.onchange = function(){ if (fileInput.files[0]) loadFile(fileInput.files[0]); };
+
+async function loadFile(f) {
+    fileName = f.name.replace(/\.pdf$/i, '');
+    var buf = await f.arrayBuffer();
+    srcBytes = new Uint8Array(buf);
+    try {
+        var pdf = await pdfjsLib.getDocument({ data: srcBytes.slice() }).promise;
+        order = []; removed = new Set();
+        for (var i = 0; i < pdf.numPages; i++) order.push(i);
+        document.getElementById('pageGrid').innerHTML = '';
+        setStatus('正在渲染 ' + pdf.numPages + ' 页缩略图…', 'info');
+        for (i = 0; i < pdf.numPages; i++) {
+            var page = await pdf.getPage(i + 1);
+            var vp = page.getViewport({ scale: 0.3 });
+            var canvas = document.createElement('canvas');
+            canvas.width = vp.width; canvas.height = vp.height;
+            await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+            addCard(i, canvas);
+        }
+        document.getElementById('restoreBtn').style.display = '';
+        document.getElementById('exportBtn').style.display = '';
+        updateCount();
+        setStatus('已加载 ' + pdf.numPages + ' 页，可删除或调整顺序', 'success');
+    } catch (e) { setStatus('PDF 解析失败：' + e.message, 'error'); }
+}
+
+function addCard(pageIdx, canvas) {
+    var grid = document.getElementById('pageGrid');
+    var card = document.createElement('div');
+    card.className = 'page-card';
+    card.dataset.page = pageIdx;
+    card.appendChild(canvas);
+    var num = document.createElement('div');
+    num.className = 'page-num';
+    num.textContent = '第 ' + (pageIdx + 1) + ' 页';
+    card.appendChild(num);
+    var ops = document.createElement('div');
+    ops.className = 'page-ops';
+    var btnL = document.createElement('button'); btnL.textContent = '←'; btnL.title = '前移';
+    var btnR = document.createElement('button'); btnR.textContent = '→'; btnR.title = '后移';
+    var btnX = document.createElement('button'); btnX.textContent = '✕'; btnX.title = '删除/恢复';
+    btnL.onclick = function(){ move(card, -1); };
+    btnR.onclick = function(){ move(card, 1); };
+    btnX.onclick = function(){
+        var p = +card.dataset.page;
+        if (removed.has(p)) { removed.delete(p); card.classList.remove('removed'); }
+        else { removed.add(p); card.classList.add('removed'); }
+        updateCount();
+    };
+    ops.appendChild(btnL); ops.appendChild(btnX); ops.appendChild(btnR);
+    card.appendChild(ops);
+    grid.appendChild(card);
+}
+
+function move(card, dir) {
+    if (dir < 0 && card.previousElementSibling) card.parentNode.insertBefore(card, card.previousElementSibling);
+    else if (dir > 0 && card.nextElementSibling) card.parentNode.insertBefore(card.nextElementSibling, card);
+}
+
+function updateCount() {
+    var cards = document.querySelectorAll('.page-card');
+    var keep = cards.length - removed.size;
+    document.getElementById('keepCount').textContent = '保留 ' + keep + ' / ' + cards.length + ' 页';
+}
+
+document.getElementById('restoreBtn').onclick = function(){
+    removed.clear();
+    document.querySelectorAll('.page-card').forEach(function(c){ c.classList.remove('removed'); });
+    updateCount();
+};
+
+document.getElementById('exportBtn').onclick = async function(){
+    var cards = document.querySelectorAll('.page-card');
+    var indices = [];
+    cards.forEach(function(c){
+        var p = +c.dataset.page;
+        if (!removed.has(p)) indices.push(p);
+    });
+    if (!indices.length) { setStatus('没有保留任何页面', 'error'); return; }
+    this.disabled = true;
+    setStatus('正在导出…', 'info');
+    try {
+        var src = await PDFLib.PDFDocument.load(srcBytes, { ignoreEncryption: true });
+        var out = await PDFLib.PDFDocument.create();
+        var copied = await out.copyPages(src, indices);
+        copied.forEach(function(p){ out.addPage(p); });
+        var bytes = await out.save();
+        var blob = new Blob([bytes], { type: 'application/pdf' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = fileName + '_重排.pdf';
+        a.click();
+        setStatus('已导出 ' + indices.length + ' 页', 'success');
+    } catch (e) { setStatus('导出失败：' + e.message, 'error'); }
+    this.disabled = false;
+};
+initSidebar('document');
+</script>
+</body>
+</html>

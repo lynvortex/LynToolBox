@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>节拍器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="在线节拍器，可调BPM、拍号、音色，视觉节拍指示，适合音乐练习，纯前端Web Audio实现。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+        .metro-display { text-align: center; padding: 30px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; margin-bottom: 22px; }
+        .bpm-value { font-size: 5em; font-weight: 700; font-family: 'Courier New', monospace; color: #4ade80; }
+        .bpm-label { color: #94a3b8; font-size: 0.88em; }
+        .beat-dots { display: flex; gap: 12px; justify-content: center; margin: 20px 0; }
+        .beat-dot { width: 24px; height: 24px; border-radius: 50%; background: #2c3e50; transition: all 0.1s; }
+        .beat-dot.active { background: #4ade80; box-shadow: 0 0 20px #4ade80; transform: scale(1.3); }
+        .beat-dot.downbeat.active { background: #f59e0b; box-shadow: 0 0 20px #f59e0b; }
+        .control-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+        @media (max-width: 600px) { .control-grid { grid-template-columns: 1fr; } }
+        .slider-row { margin-bottom: 18px; }
+        .slider-row input[type="range"] { width: 100%; }
+        .tempo-marks { display: flex; justify-content: space-between; font-size: 0.75em; color: #94a3b8; margin-top: 4px; }
+        .btn-row { display: flex; gap: 12px; justify-content: center; }
+        .btn-big { padding: 14px 40px; border-radius: 10px; border: none; font-size: 1.1em; font-weight: 700; cursor: pointer; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="节拍器,在线节拍器,音视频处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/media/metronome-tool.html" />
+    <meta property="og:title" content="节拍器" />
+    <meta property="og:description" content="在线节拍器，可调BPM、拍号、音色，视觉节拍指示，适合音乐练习，纯前端Web Audio实现。" />
+    <meta property="og:url" content="https://box.lynvortex.top/media/metronome-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="节拍器" />
+    <meta itemprop="description" content="在线节拍器，可调BPM、拍号、音色，视觉节拍指示，适合音乐练习，纯前端Web Audio实现。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "音视频处理",
+                "item": "https://box.lynvortex.top/media.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "节拍器",
+                "item": "https://box.lynvortex.top/media/metronome-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "节拍器",
+        "url": "https://box.lynvortex.top/media/metronome-tool.html",
+        "description": "可调BPM节拍器，支持多种拍号与音色，节拍闪烁提示",
+        "applicationCategory": "音视频处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🎵 节拍器</h1>
+                <p>可调BPM、拍号、音色，适合音乐练习</p>
+            </div>
+
+            <div class="metro-display">
+                <div class="bpm-value" id="bpmValue">120</div>
+                <div class="bpm-label">BPM · <span id="tempoName">行板 (Andante)</span></div>
+                <div class="beat-dots" id="beatDots"></div>
+            </div>
+
+            <div class="slider-row">
+                <input type="range" id="bpmSlider" min="40" max="240" value="120" step="1" />
+                <div class="tempo-marks">
+                    <span>40 Largo</span><span>60 Larghetto</span><span>80 Andante</span><span>120 Moderato</span><span>160 Allegro</span><span>200 Presto</span><span>240</span>
+                </div>
+            </div>
+
+            <div class="control-grid">
+                <div class="form-item"><label>拍号</label><select id="timeSig" style="padding:10px;border:1px solid #e0e6ed;border-radius:8px;">
+                    <option value="2">2/4</option><option value="3">3/4</option><option value="4" selected>4/4</option>
+                    <option value="6">6/8</option><option value="7">7/8</option><option value="5">5/4</option>
+                </select></div>
+                <div class="form-item"><label>音色</label><select id="soundType" style="padding:10px;border:1px solid #e0e6ed;border-radius:8px;">
+                    <option value="sine">正弦波</option><option value="square">方波</option>
+                    <option value="triangle" selected>三角波</option><option value="sawtooth">锯齿波</option>
+                </select></div>
+                <div class="form-item"><label>音量</label><input type="range" id="volume" min="0" max="100" value="50" /></div>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn-big" id="startBtn" style="background:#22c55e;color:#fff;">▶ 开始</button>
+                <button class="btn-big" id="tapBtn" style="background:#4a90e2;color:#fff;">👆 Tap节拍</button>
+            </div>
+
+            <div id="statusBar" class="status-bar info" style="margin-top:18px;">点击开始按钮启动节拍器</div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 节拍器</h3>
+                <p>可调BPM拍号音色的节拍器</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">BPM可调</span>
+                    <span class="feature-chip">多种拍号</span>
+                    <span class="feature-chip">Tap测速</span>
+                    <span class="feature-chip">视觉节拍</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>BPM范围40-240，支持滑块调节</li>
+                    <li>支持2/4、3/4、4/4、6/8等常见拍号</li>
+                    <li>Tap按钮可手动测量BPM</li>
+                    <li>基于Web Audio API，无需依赖库</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+var audioCtx=null,running=false,currentBeat=0,timer=null;
+var tempoNames=[[40,'广板(Largo)'],[60,'缓板(Larghetto)'],[72,'行板(Andante)'],[120,'中板(Moderato)'],[156,'快板(Allegro)'],[200,'急板(Presto)'],[241,'极板']];
+
+function getTempoName(bpm){
+    for(var i=0;i<tempoNames.length;i++){if(bpm<tempoNames[i][0])return tempoNames[Math.max(0,i-1)][1];}
+    return tempoNames[tempoNames.length-1][1];
+}
+
+function updateBeatDots(){
+    var beats=parseInt(document.getElementById('timeSig').value);
+    var html='';
+    for(var i=0;i<beats;i++)html+='<div class="beat-dot'+(i===0?' downbeat':'')+'" data-idx="'+i+'"></div>';
+    document.getElementById('beatDots').innerHTML=html;
+}
+updateBeatDots();
+
+function playBeat(isDownbeat){
+    if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    var osc=audioCtx.createOscillator();
+    var gain=audioCtx.createGain();
+    osc.type=document.getElementById('soundType').value;
+    osc.frequency.value=isDownbeat?880:440;
+    var vol=parseInt(document.getElementById('volume').value)/100*0.3;
+    gain.gain.setValueAtTime(vol,audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.05);
+    osc.connect(gain);gain.connect(audioCtx.destination);
+    osc.start();osc.stop(audioCtx.currentTime+0.05);
+
+    var dots=document.querySelectorAll('.beat-dot');
+    dots.forEach(function(d){d.classList.remove('active');});
+    if(dots[currentBeat])dots[currentBeat].classList.add('active');
+}
+
+function tick(){
+    var beats=parseInt(document.getElementById('timeSig').value);
+    playBeat(currentBeat===0);
+    currentBeat=(currentBeat+1)%beats;
+}
+
+document.getElementById('bpmSlider').oninput=function(){
+    document.getElementById('bpmValue').textContent=this.value;
+    document.getElementById('tempoName').textContent=getTempoName(parseInt(this.value));
+    if(running){clearInterval(timer);timer=setInterval(tick,60000/parseInt(this.value));}
+};
+
+document.getElementById('timeSig').onchange=function(){updateBeatDots();currentBeat=0;};
+
+document.getElementById('startBtn').onclick=function(){
+    if(!running){
+        if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+        if(audioCtx.state==='suspended')audioCtx.resume();
+        running=true;currentBeat=0;
+        var bpm=parseInt(document.getElementById('bpmSlider').value);
+        timer=setInterval(tick,60000/bpm);
+        this.textContent='⏸ 停止';this.style.background='#ef4444';
+        tick();
+    }else{
+        running=false;clearInterval(timer);
+        this.textContent='▶ 开始';this.style.background='#22c55e';
+        document.querySelectorAll('.beat-dot').forEach(function(d){d.classList.remove('active');});
+    }
+};
+
+var tapTimes=[];
+document.getElementById('tapBtn').onclick=function(){
+    var now=Date.now();
+    tapTimes.push(now);
+    if(tapTimes.length>5)tapTimes.shift();
+    if(tapTimes.length>=2){
+        var avg=0;
+        for(var i=1;i<tapTimes.length;i++)avg+=tapTimes[i]-tapTimes[i-1];
+        avg/=tapTimes.length-1;
+        var bpm=Math.round(60000/avg);
+        if(bpm>=40&&bpm<=240){
+            document.getElementById('bpmSlider').value=bpm;
+            document.getElementById('bpmSlider').dispatchEvent(new Event('input'));
+        }
+    }
+    if(now-tapTimes[0]>3000)tapTimes=[now];
+};
+initSidebar('media');
+</script>
+</body>
+</html>

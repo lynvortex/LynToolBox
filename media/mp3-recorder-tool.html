@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MP3录音 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="MP3录音工具，纯前端使用麦克风录音并通过lamejs实时编码为MP3，支持码率设置与下载，数据本地处理" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <script src="../assets/sidebar.js"></script>
+    <script src="../assets/lamejs.min.js"></script>
+    <style>
+        .rec-area { text-align: center; margin: 18px 0 8px; }
+        .rec-btn { width: 84px; height: 84px; border-radius: 50%; border: none; font-size: 2em; cursor: pointer; transition: 0.3s; background: #4a90e2; color: #fff; box-shadow: 0 6px 18px rgba(74,144,226,0.35); }
+        .rec-btn:hover { background: #3a7bd5; }
+        .rec-btn:disabled { background: #bdc3c7; cursor: not-allowed; box-shadow: none; }
+        .rec-btn.recording { background: #ef4444; animation: recPulse 1.2s infinite; box-shadow: 0 6px 18px rgba(239,68,68,0.4); }
+        @keyframes recPulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.08);} }
+        .rec-time { font-size: 2.4em; font-family: 'Courier New', monospace; color: #2c3e50; margin: 10px 0; letter-spacing: 2px; }
+        .rec-hint { margin-top: 10px; color: #94a3b8; font-size: 0.85em; }
+        .rec-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+        .rec-item { display: flex; align-items: center; gap: 12px; background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 8px; padding: 12px 16px; flex-wrap: wrap; }
+        .rec-item audio { flex: 1; min-width: 200px; height: 36px; }
+        .rec-item .rec-info { font-size: 0.82em; color: #64748b; min-width: 130px; }
+        .rec-item .rec-info b { color: #2c3e50; }
+        .meter-wrap { width: 100%; max-width: 360px; height: 8px; background: #e2e8f0; border-radius: 4px; margin: 10px auto 0; overflow: hidden; }
+        .meter-bar { height: 100%; width: 0%; background: linear-gradient(90deg,#22c55e,#eab308,#ef4444); transition: width 0.08s; }
+    </style>
+    <meta name="keywords" content="MP3录音,在线MP3录音,音视频处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/media/mp3-recorder-tool.html" />
+    <meta property="og:title" content="MP3录音" />
+    <meta property="og:description" content="MP3录音工具，纯前端使用麦克风录音并通过lamejs实时编码为MP3，支持码率设置与下载，数据本地处理" />
+    <meta property="og:url" content="https://box.lynvortex.top/media/mp3-recorder-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="MP3录音" />
+    <meta itemprop="description" content="MP3录音工具，纯前端使用麦克风录音并通过lamejs实时编码为MP3，支持码率设置与下载，数据本地处理" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "音视频处理",
+                "item": "https://box.lynvortex.top/media.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "MP3录音",
+                "item": "https://box.lynvortex.top/media/mp3-recorder-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "MP3录音",
+        "url": "https://box.lynvortex.top/media/mp3-recorder-tool.html",
+        "description": "使用麦克风录音并通过lamejs实时编码为MP3，支持码率设置与下载",
+        "applicationCategory": "音视频处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🎙️ MP3录音</h1>
+                <p>使用麦克风录音并通过 lamejs 实时编码为 MP3，支持码率设置，纯前端本地处理</p>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-item">
+                    <label>MP3 码率</label>
+                    <select id="bitrate">
+                        <option value="64">64 kbps（语音，体积小）</option>
+                        <option value="128" selected>128 kbps（标准）</option>
+                        <option value="192">192 kbps（高质量）</option>
+                        <option value="256">256 kbps（高保真）</option>
+                    </select>
+                </div>
+                <div class="form-item">
+                    <label>声道</label>
+                    <select id="channel">
+                        <option value="1" selected>单声道（推荐）</option>
+                        <option value="2">立体声</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="rec-area">
+                <div class="rec-time" id="recTime">00:00</div>
+                <button class="rec-btn" id="recBtn" title="开始/停止录音">🎙️</button>
+                <div class="meter-wrap"><div class="meter-bar" id="meterBar"></div></div>
+                <p class="rec-hint">点击按钮开始录音，再次点击停止并生成 MP3</p>
+            </div>
+
+            <div class="rec-list" id="recList"></div>
+
+            <div id="statusBar" class="status-bar info">准备就绪，请在 HTTPS 或 localhost 环境下点击麦克风开始录音</div>
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 功能说明</h3>
+                <p>通过浏览器 getUserMedia 采集麦克风 PCM 数据，使用 lamejs 实时编码为 MP3，支持码率与声道选择，停止后即可试听下载。</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">麦克风录音</span>
+                    <span class="feature-chip">MP3编码</span>
+                    <span class="feature-chip">码率选择</span>
+                    <span class="feature-chip">时长统计</span>
+                    <span class="feature-chip">试听下载</span>
+                    <span class="feature-chip">离线本地</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>需要授予浏览器麦克风访问权限</li>
+                    <li>必须在 HTTPS 或 localhost 环境下运行，否则无法访问麦克风</li>
+                    <li>所有录音与编码均在浏览器本地完成，不上传任何服务器</li>
+                    <li>码率越高音质越好但体积越大，语音建议 64/128 kbps</li>
+                    <li>部分浏览器可能限制采样率，工具会自动适配实际采样率</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const recBtn = document.getElementById('recBtn');
+    const recTime = document.getElementById('recTime');
+    const recList = document.getElementById('recList');
+    const meterBar = document.getElementById('meterBar');
+    const bitrateSel = document.getElementById('bitrate');
+    const channelSel = document.getElementById('channel');
+    const setStatus = (m, t) => { const s = document.getElementById('statusBar'); s.textContent = m; s.className = 'status-bar ' + (t || 'info'); };
+    const fmt = s => String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+    const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+
+    let audioCtx = null, mediaStream = null, source = null, processor = null, muteGain = null;
+    let encoder = null, mp3Data = [], recording = false, recStart = 0, recTimer = null, analyser = null, animId = null;
+    let recordings = [];
+
+    if (!isSecure) {
+        setStatus('当前非 HTTPS/localhost 环境，浏览器将拒绝访问麦克风，请通过 HTTPS 访问', 'error');
+        recBtn.disabled = true;
+    }
+    if (typeof lamejs === 'undefined') {
+        setStatus('MP3 编码库加载失败，请检查网络后刷新页面', 'error');
+        recBtn.disabled = true;
+    }
+
+    function floatTo16(input) {
+        const out = new Int16Array(input.length);
+        for (let i = 0; i < input.length; i++) {
+            let s = Math.max(-1, Math.min(1, input[i]));
+            out[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+        }
+        return out;
+    }
+
+    function stopStream() {
+        if (animId) { cancelAnimationFrame(animId); animId = null; }
+        if (processor) { try { processor.disconnect(); } catch (e) {} processor.onaudioprocess = null; processor = null; }
+        if (source) { try { source.disconnect(); } catch (e) {} source = null; }
+        if (muteGain) { try { muteGain.disconnect(); } catch (e) {} muteGain = null; }
+        if (analyser) { try { analyser.disconnect(); } catch (e) {} analyser = null; }
+        if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
+    }
+
+    recBtn.addEventListener('click', async () => {
+        if (recording) { stopRecording(); return; }
+        try {
+            mediaStream = await navigator.mediaDevices.getUserMedia({
+                audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+            });
+        } catch (e) {
+            setStatus('无法访问麦克风：' + (e.message || e.name || '权限被拒绝'), 'error');
+            return;
+        }
+
+        try {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') await audioCtx.resume();
+            const sampleRate = audioCtx.sampleRate;
+            const channels = parseInt(channelSel.value, 10);
+            const kbps = parseInt(bitrateSel.value, 10);
+            encoder = new lamejs.Mp3Encoder(channels, sampleRate, kbps);
+
+            source = audioCtx.createMediaStreamSource(mediaStream);
+            processor = audioCtx.createScriptProcessor(4096, channels, channels);
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256;
+            muteGain = audioCtx.createGain();
+            muteGain.gain.value = 0; // 静音输出，避免扬声器回授
+
+            source.connect(analyser);
+            source.connect(processor);
+            processor.connect(muteGain);
+            muteGain.connect(audioCtx.destination);
+
+            mp3Data = [];
+            recording = true;
+            recStart = Date.now();
+            recBtn.classList.add('recording');
+            recBtn.textContent = '⏹';
+            setStatus('录音中…（' + kbps + ' kbps / ' + channels + '声道 / ' + sampleRate + ' Hz）', 'info');
+
+            processor.onaudioprocess = (e) => {
+                if (!recording) return;
+                if (channels === 1) {
+                    const int16 = floatTo16(e.inputBuffer.getChannelData(0));
+                    const buf = encoder.encodeBuffer(int16);
+                    if (buf.length > 0) mp3Data.push(new Uint8Array(buf));
+                } else {
+                    const l = floatTo16(e.inputBuffer.getChannelData(0));
+                    const r = floatTo16(e.inputBuffer.getChannelData(1));
+                    const buf = encoder.encodeBuffer(l, r);
+                    if (buf.length > 0) mp3Data.push(new Uint8Array(buf));
+                }
+            };
+
+            recTimer = setInterval(() => {
+                recTime.textContent = fmt(Math.floor((Date.now() - recStart) / 1000));
+            }, 500);
+            updateMeter();
+        } catch (e) {
+            stopStream();
+            setStatus('录音初始化失败：' + (e.message || e), 'error');
+            recBtn.classList.remove('recording');
+            recBtn.textContent = '🎙️';
+        }
+    });
+
+    function updateMeter() {
+        if (!recording || !analyser) { meterBar.style.width = '0%'; return; }
+        animId = requestAnimationFrame(updateMeter);
+        const arr = new Uint8Array(analyser.frequencyBinCount);
+        analyser.getByteTimeDomainData(arr);
+        let sum = 0;
+        for (let i = 0; i < arr.length; i++) { const v = (arr[i] - 128) / 128; sum += v * v; }
+        const rms = Math.sqrt(sum / arr.length);
+        meterBar.style.width = Math.min(100, rms * 300) + '%';
+    }
+
+    function stopRecording() {
+        recording = false;
+        clearInterval(recTimer);
+        recBtn.classList.remove('recording');
+        recBtn.textContent = '🎙️';
+        meterBar.style.width = '0%';
+
+        try {
+            const end = encoder.flush();
+            if (end.length > 0) mp3Data.push(new Uint8Array(end));
+        } catch (e) {}
+
+        const dur = Math.floor((Date.now() - recStart) / 1000);
+        stopStream();
+
+        if (mp3Data.length === 0) {
+            setStatus('未捕获到音频数据，请检查麦克风权限', 'error');
+            recTime.textContent = '00:00';
+            return;
+        }
+        const blob = new Blob(mp3Data, { type: 'audio/mp3' });
+        const url = URL.createObjectURL(blob);
+        const kbps = parseInt(bitrateSel.value, 10);
+        const channels = parseInt(channelSel.value, 10);
+        recordings.push({
+            url, blob, dur, name: '录音_' + (recordings.length + 1),
+            size: blob.size, kbps, channels
+        });
+        renderList();
+        recTime.textContent = '00:00';
+        setStatus('录音完成，时长 ' + fmt(dur) + '，已生成 MP3 文件', 'success');
+    }
+
+    function renderList() {
+        if (recordings.length === 0) { recList.innerHTML = ''; return; }
+        recList.innerHTML = recordings.map((r, i) => `
+            <div class="rec-item">
+                <span class="rec-info"><b>${escapeHtml(r.name)}</b><br>${fmt(r.dur)} · ${(r.size / 1024).toFixed(1)} KB · ${r.kbps}kbps</span>
+                <audio controls src="${r.url}"></audio>
+                <button class="btn btn-outline" style="padding:6px 12px;font-size:0.8em;" onclick="downloadRec(${i})">⬇ 下载</button>
+                <button class="btn btn-ghost" style="padding:6px 12px;font-size:0.8em;" onclick="deleteRec(${i})">🗑 删除</button>
+            </div>
+        `).join('');
+    }
+    window.downloadRec = (i) => {
+        const r = recordings[i];
+        const a = document.createElement('a');
+        a.href = r.url; a.download = r.name + '.mp3'; a.click();
+    };
+    window.deleteRec = (i) => {
+        URL.revokeObjectURL(recordings[i].url);
+        recordings.splice(i, 1); renderList(); setStatus('已删除该录音', 'info');
+    };
+
+    initSidebar('media');
+</script>
+</body>
+</html>

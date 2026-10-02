@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SM2 签名加解密 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线 SM2 国密非对称加解密与签名验签工具，自动生成公私钥对，SM3withSM2 签名，GB/T 32918 标准，纯前端本地计算。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sm-crypto.js"></script>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="SM2,国密,非对称加密,数字签名,验签,公钥,私钥,GB/T 32918,文本处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/text/sm2-tool.html"/>
+<meta property="og:title" content="SM2 签名加解密"/>
+<meta property="og:description" content="SM2 密钥生成/加解密/签名验签。"/>
+<meta property="og:url" content="https://box.lynvortex.top/text/sm2-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="SM2 签名加解密"/>
+<meta itemprop="description" content="SM2 密钥生成/加解密/签名验签。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"文本处理","item":"https://box.lynvortex.top/text.html"},{"@type":"ListItem","position":3,"name":"SM2 签名加解密","item":"https://box.lynvortex.top/text/sm2-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"SM2 签名加解密","url":"https://box.lynvortex.top/text/sm2-tool.html","description":"国密SM2签名加解密工具","applicationCategory":"文本处理","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>✍️ SM2 签名加解密</h1>
+        <p>中国密码标准 SM2 椭圆曲线（GB/T 32918）· 密钥 / 加解密 / 签名</p>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="genBtn">🔑 生成密钥对</button>
+        <button class="btn btn-ghost" id="loadBtn">载入默认密钥</button>
+    </div>
+    <div class="form-grid">
+        <div class="form-item" style="grid-column:1/-1;"><label>私钥（hex，签名/解密用）</label><input type="text" id="priv" placeholder="生成或粘贴…"/></div>
+        <div class="form-item" style="grid-column:1/-1;"><label>公钥（hex，04开头130字符，验签/加密用）</label><input type="text" id="pub" placeholder="生成或粘贴…"/></div>
+        <div class="form-item" style="grid-column:1/-1;"><label>消息文本</label><textarea class="code" id="msg" placeholder="要加密或签名的文本…">SM2 国密算法测试</textarea></div>
+        <div class="form-item"><label>用户 ID（签名杂凑用，区分符）</label><input type="text" id="uid" value="1234567812345678"/></div>
+        <div class="form-item"><label>操作</label>
+            <select id="op">
+                <option value="sign">签名（SM3withSM2）</option>
+                <option value="verify">验签</option>
+                <option value="enc">公钥加密</option>
+                <option value="dec">私钥解密</option>
+            </select>
+        </div>
+        <div class="form-item" style="grid-column:1/-1;"><label>签名/密文（hex，验签或解密时粘贴到这里）</label><textarea class="code" id="sig" placeholder="签名结果或密文 hex…" style="min-height:80px;"></textarea></div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="runBtn">⚙️ 执行</button>
+        <button class="btn btn-outline" id="copyBtn">复制结果</button>
+        <button class="btn btn-ghost" id="swapBtn">结果 → 签名/密文框</button>
+    </div>
+    <div class="status-bar info" id="statusBar">先生成或载入密钥对</div>
+    <label style="font-size:0.85em;color:#64748b;font-weight:600;">结果</label>
+    <pre class="output" id="output" style="user-select:all;">（等待执行）</pre>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 SM2 签名加解密</h3>
+        <p>基于 sm2p256v1 推荐曲线，签名采用 SM3 作为杂凑（SM3withSM2）。</p>
+        <div class="feature-chips"><span class="feature-chip">密钥生成</span><span class="feature-chip">签名验签</span><span class="feature-chip">公钥加密</span><span class="feature-chip">C1C3C2</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>私钥请妥善保管，泄露即失去全部安全性</li>
+            <li>签名/验签需双方使用相同的用户 ID（默认 1234567812345678）</li>
+            <li>密文格式为 C1C3C2（新国标顺序），与 GMSSL 默认一致</li>
+            <li>演示密钥仅用于学习，生产环境请用密码机生成</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+var output = document.getElementById('output');
+
+document.getElementById('genBtn').onclick = function() {
+    setStatus('正在生成 SM2 密钥对（曲线点运算）…', 'info');
+    var btn = this; btn.disabled = true;
+    setTimeout(function() {
+        try {
+            var kp = SMCrypto.sm2.generateKeyPair();
+            document.getElementById('priv').value = kp.privateKey;
+            document.getElementById('pub').value = kp.publicKey;
+            setStatus('密钥对生成完成，请妥善保存私钥', 'success');
+        } catch (e) { setStatus('生成失败：' + e.message, 'error'); }
+        btn.disabled = false;
+    }, 30);
+};
+
+document.getElementById('loadBtn').onclick = function() {
+    document.getElementById('priv').value = '3945208f7b2144b13f36e38ac6d39f95889393692860b51a42fb81ef4df7c5b8';
+    document.getElementById('pub').value = '04' +
+        '09f9df311e5421a150dd7d161e4bc5c672179fad1833fc076bb08ff356f35020' +
+        'ccea490ce26775a52dc6ea718cc1aa600aed05fbf35e084a6632f6072da9ad13';
+    setStatus('已载入 GMT 0003 标准测试密钥（仅测试用）', 'info');
+};
+
+document.getElementById('runBtn').onclick = function() {
+    var op = document.getElementById('op').value;
+    var msg = document.getElementById('msg').value;
+    var priv = document.getElementById('priv').value.trim();
+    var pub = document.getElementById('pub').value.trim();
+    var uid = document.getElementById('uid').value || '1234567812345678';
+    var sig = document.getElementById('sig').value.trim();
+    if (!msg) { setStatus('请输入消息文本', 'error'); return; }
+    try {
+        if (op === 'sign') {
+            if (!priv) throw new Error('需要私钥');
+            var s = SMCrypto.sm2.signText(msg, priv, uid);
+            output.textContent = s;
+            setStatus('签名完成（r‖s，hex）', 'success');
+        } else if (op === 'verify') {
+            if (!pub) throw new Error('需要公钥');
+            if (!sig) throw new Error('请在下方框粘贴签名');
+            var ok = SMCrypto.sm2.verifyText(msg, sig, pub, uid);
+            output.textContent = ok ? '✅ 验签通过：签名有效' : '❌ 验签失败：签名不匹配或数据被篡改';
+            setStatus(ok ? '验签通过' : '验签失败', ok ? 'success' : 'error');
+        } else if (op === 'enc') {
+            if (!pub) throw new Error('需要公钥');
+            var c = SMCrypto.sm2.encryptText(msg, pub);
+            output.textContent = c;
+            setStatus('加密完成（C1C3C2）', 'success');
+        } else {
+            if (!priv) throw new Error('需要私钥');
+            if (!sig) throw new Error('请在下方框粘贴密文');
+            output.textContent = SMCrypto.sm2.decryptText(sig, priv);
+            setStatus('解密完成', 'success');
+        }
+    } catch (e) {
+        output.textContent = '错误：' + e.message;
+        setStatus('失败：' + e.message, 'error');
+    }
+};
+
+document.getElementById('copyBtn').onclick = function() {
+    var t = output.textContent;
+    if (t && t.indexOf('（等待') === -1) navigator.clipboard.writeText(t).then(function(){ setStatus('已复制', 'success'); });
+};
+document.getElementById('swapBtn').onclick = function() {
+    var t = output.textContent;
+    if (t && /^[0-9a-f]+$/i.test(t.trim())) {
+        document.getElementById('sig').value = t.trim();
+        setStatus('已填入签名/密文框，切换操作后可直接验签/解密', 'success');
+    } else {
+        setStatus('当前结果不是 hex 字符串', 'error');
+    }
+};
+initSidebar('text');
+</script>
+</body>
+</html>

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Web串口终端 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp" />
+<meta name="description" content="Web串口终端工具，基于Web Serial API与xterm.js，在浏览器中直接连接串口设备收发数据，支持波特率与换行设置，适用于硬件调试。" />
+<link rel="stylesheet" href="../assets/tool-common.css" />
+<script src="../assets/sidebar.js"></script>
+<link rel="stylesheet" href="../assets/xterm.min.css" />
+<script src="../assets/xterm.min.js"></script>
+<style>
+    /* 工具特有样式 */
+    .section-title { font-size: 0.95em; font-weight: 600; color: #2c3e50; margin: 18px 0 10px; padding-left: 10px; border-left: 3px solid #4a90e2; }
+    .conn-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #cbd5e1; margin-right: 6px; vertical-align: middle; }
+    .conn-dot.on { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+    .conn-dot.off { background: #cbd5e1; }
+
+    .term-wrap { background: #0f172a; border-radius: 10px; padding: 8px; border: 1px solid #1e293b; margin-top: 4px; }
+    #terminal { min-height: 340px; padding: 6px; border-radius: 6px; }
+    .send-row { display: flex; gap: 10px; margin-top: 12px; align-items: stretch; }
+    .send-row textarea { flex: 1; min-height: 44px; padding: 10px 14px; border: 1px solid #e0e6ed; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.9em; outline: none; resize: none; background: #fff; transition: 0.2s; }
+    .send-row textarea:focus { border-color: #4a90e2; }
+    .send-row .send-side { display: flex; flex-direction: column; gap: 8px; }
+    .switch-inline { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82em; color: #475569; font-weight: 500; cursor: pointer; white-space: nowrap; }
+    .inline-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .ctrl-label { font-size: 0.85em; color: #64748b; font-weight: 600; white-space: nowrap; }
+    select.mini { padding: 8px 10px; border: 1px solid #e0e6ed; border-radius: 8px; font-size: 0.85em; outline: none; background: #fff; font-family: inherit; }
+    select.mini:focus { border-color: #4a90e2; }
+    .info-tip { font-size: 0.8em; color: #94a3b8; margin-top: 8px; }
+    @media (max-width: 600px) {
+        .send-row { flex-direction: column; }
+        .send-row .send-side { flex-direction: row; flex-wrap: wrap; }
+    }
+</style>
+    <meta name="keywords" content="Web串口终端,在线Web串口终端,网络工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/network/serial-terminal-tool.html" />
+    <meta property="og:title" content="Web串口终端" />
+    <meta property="og:description" content="Web串口终端工具，基于Web Serial API与xterm.js，在浏览器中直接连接串口设备收发数据，支持波特率与换行设置，适用于硬件调试。" />
+    <meta property="og:url" content="https://box.lynvortex.top/network/serial-terminal-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="Web串口终端" />
+    <meta itemprop="description" content="Web串口终端工具，基于Web Serial API与xterm.js，在浏览器中直接连接串口设备收发数据，支持波特率与换行设置，适用于硬件调试。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "网络工具",
+                "item": "https://box.lynvortex.top/network.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Web串口终端",
+                "item": "https://box.lynvortex.top/network/serial-terminal-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Web串口终端",
+        "url": "https://box.lynvortex.top/network/serial-terminal-tool.html",
+        "description": "通过Web Serial API连接串口设备收发数据，xterm终端调试",
+        "applicationCategory": "网络工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+  <div class="tool-container">
+    <div class="tool-header">
+      <h1>🔌 Web串口终端</h1>
+      <p>通过Web Serial API连接串口设备，收发数据调试</p>
+    </div>
+
+    <div class="section-title">串口参数</div>
+    <div class="form-grid">
+      <div class="form-item">
+        <label for="baudSel">波特率</label>
+        <select id="baudSel" class="mini">
+          <option>9600</option><option>19200</option><option>38400</option>
+          <option>57600</option><option selected>115200</option>
+        </select>
+      </div>
+      <div class="form-item">
+        <label for="dataBitsSel">数据位</label>
+        <select id="dataBitsSel" class="mini">
+          <option selected>8</option><option>7</option>
+        </select>
+      </div>
+      <div class="form-item">
+        <label for="stopBitsSel">停止位</label>
+        <select id="stopBitsSel" class="mini">
+          <option selected>1</option><option>2</option>
+        </select>
+      </div>
+      <div class="form-item">
+        <label for="paritySel">校验位</label>
+        <select id="paritySel" class="mini">
+          <option value="none" selected>none</option>
+          <option value="even">even</option>
+          <option value="odd">odd</option>
+        </select>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="connectBtn">连接串口</button>
+      <button class="btn btn-outline" id="disconnectBtn" disabled>断开</button>
+      <button class="btn btn-ghost" id="clearTermBtn">清屏</button>
+      <span style="font-size:0.85em;color:#64748b;"><span id="connDot" class="conn-dot off"></span><span id="connText">未连接</span></span>
+    </div>
+    <div id="statusBar" class="status-bar info">点击「连接串口」选择设备，连接后可在终端中直接输入或使用下方输入框发送数据。</div>
+
+    <div class="term-wrap"><div id="terminal"></div></div>
+
+    <div class="send-row">
+      <textarea id="sendInput" placeholder="输入要发送的数据，回车或点击「发送」" spellcheck="false"></textarea>
+      <div class="send-side">
+        <select id="newlineSel" class="mini" title="换行符">
+          <option value="">无换行</option>
+          <option value="\n" selected>LF (\n)</option>
+          <option value="\r">CR (\r)</option>
+          <option value="\r\n">CRLF (\r\n)</option>
+        </select>
+        <label class="switch-inline"><input type="checkbox" id="echoChk" checked /> 自动回显</label>
+        <button class="btn btn-primary" id="sendBtn">发送</button>
+      </div>
+    </div>
+    <div class="info-tip">提示：终端内可直接键入字符发送（键入即发送）；下方输入框适合发送整段文本。可切换换行符与是否回显。</div>
+
+    <footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+  </div>
+
+  <div class="info-cards">
+    <div class="info-card">
+      <h3>📦 功能说明</h3>
+      <p>基于浏览器原生 Web Serial API，无需安装驱动或插件，直接在网页中选择本地串口设备，配合 xterm.js 终端进行实时收发调试，支持波特率、数据位、停止位、校验位与换行符配置。</p>
+      <div class="feature-chips">
+        <span class="feature-chip">Web Serial</span>
+        <span class="feature-chip">xterm终端</span>
+        <span class="feature-chip">波特率设置</span>
+        <span class="feature-chip">收发调试</span>
+        <span class="feature-chip">自动回显</span>
+        <span class="feature-chip">本地通信</span>
+      </div>
+    </div>
+    <div class="info-card">
+      <h3>💡 使用须知</h3>
+      <ul class="tips-list">
+        <li>仅 Chrome / Edge 等基于 Chromium 的浏览器支持 Web Serial API</li>
+        <li>页面需通过 HTTPS 或 localhost 访问，否则 API 不可用</li>
+        <li>连接时需用户手动在系统弹窗中选择并授权对应的串口设备</li>
+        <li>断开前请先点击「断开」以正确释放串口资源，避免被占用</li>
+        <li>所有数据在浏览器与本地设备间直传，不经过任何服务器</li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <h3>✨ 绘萤者</h3>
+      <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+      <div class="tool-links">
+        <a href="https://lynvortex.top" target="_blank">完全免费</a>
+        <a href="https://lynvortex.top" target="_blank">开源精神</a>
+        <a href="https://lynvortex.top" target="_blank">极客风范</a>
+        <a href="https://lynvortex.top" target="_blank">协作共创</a>
+      </div>
+      <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+  </div>
+</div></main>
+
+<script>
+initSidebar('network');
+
+(function () {
+    'use strict';
+    var $ = function (id) { return document.getElementById(id); };
+    var statusBar = $('statusBar');
+
+        statusBar.className = 'status-bar ' + type;
+        statusBar.innerHTML = msg;
+    }
+    function esc(s) { return window.escapeHtml(s); }
+
+    // 检测支持性
+    var supported = ('serial' in navigator) && (typeof navigator.serial.requestPort === 'function');
+
+    // 初始化 xterm
+    var term = null;
+    if (typeof Terminal !== 'undefined') {
+        term = new Terminal({
+            cursorBlink: true,
+            fontSize: 14,
+            fontFamily: "'Courier New', monospace",
+            theme: { background: '#0f172a', foreground: '#e2e8f0', cursor: '#93c5fd' }
+        });
+        term.open($('terminal'));
+        term.writeln('\x1b[36m绘萤工具箱 · Web 串口终端\x1b[0m');
+        if (supported) {
+            term.writeln('已检测到 Web Serial API 支持，点击「连接串口」选择设备。');
+        } else {
+            term.writeln('\x1b[31m当前浏览器不支持 Web Serial API，请使用 Chrome / Edge。\x1b[0m');
+        }
+    }
+
+    if (!supported) {
+        $('connectBtn').disabled = true;
+        setStatus('⚠️ 当前浏览器不支持 Web Serial API，请使用 Chrome / Edge 等基于 Chromium 的浏览器，并通过 HTTPS 或 localhost 访问。', 'error'));
+    }
+
+    var port = null;
+    var reader = null;
+    var writer = null;
+    var readableClosed = false;
+    var keepReading = true;
+    var decoder = new TextDecoder();
+    var encoder = new TextEncoder();
+
+    function setConn(state, text) {
+        $('connDot').className = 'conn-dot ' + state;
+        $('connText').textContent = text;
+    }
+
+    function logTerm(msg) {
+        if (term) term.writeln(msg);
+    }
+
+    /* ---------- 读取循环 ---------- */
+    async function readLoop() {
+        while (keepReading && port && port.readable) {
+            reader = port.readable.getReader();
+            try {
+                while (true) {
+                    var result = await reader.read();
+                    if (result.done) break;
+                    if (result.value) {
+                        var text = decoder.decode(result.value, { stream: true });
+                        if (term && text) term.write(text);
+                    }
+                }
+            } catch (err) {
+                if (keepReading) {
+                    setStatus('⚠️ 读取错误：' + esc(err.message, 'error')));
+                    logTerm('\x1b[31m读取错误：' + err.message + '\x1b[0m');
+                }
+            } finally {
+                try { reader.releaseLock(); } catch (e) {}
+            }
+            if (!keepReading) break;
+        }
+    }
+
+    /* ---------- 连接 ---------- */
+    async function connect() {
+        if (!supported) return;
+        try {
+            setStatus('请选择串口设备并授权…', 'info'));
+            port = await navigator.serial.requestPort();
+        } catch (err) {
+            if (err && err.name === 'NotFoundError') {
+                setStatus('⚠️ 未选择任何串口设备。', 'error'));
+            } else {
+                setStatus('⚠️ 选择串口失败：' + esc(err.message, 'error')));
+            }
+            return;
+        }
+
+        var baud = parseInt($('baudSel').value, 10);
+        var dataBits = parseInt($('dataBitsSel').value, 10);
+        var stopBits = parseInt($('stopBitsSel').value, 10);
+        var parity = $('paritySel').value;
+
+        try {
+            await port.open({ baudRate: baud, dataBits: dataBits, stopBits: stopBits, parity: parity });
+        } catch (err) {
+            setStatus('⚠️ 打开串口失败：' + esc(err.message, 'error')) + '（可能端口已被占用）');
+            logTerm('\x1b[31m打开失败：' + err.message + '\x1b[0m');
+            port = null;
+            return;
+        }
+
+        keepReading = true;
+        readLoop();
+
+        try { writer = port.writable.getWriter(); } catch (e) { writer = null; }
+
+        $('connectBtn').disabled = true;
+        $('disconnectBtn').disabled = false;
+        setConn('on', '已连接');
+        var info = baud + '-' + dataBits + parity.toUpperCase()[0] + '-' + stopBits;
+        setStatus('✓ 串口已连接（' + info + '），可在终端中输入或使用输入框发送。', 'success'));
+        logTerm('\x1b[32m已连接串口：' + info + '\x1b[0m');
+    }
+
+    /* ---------- 断开 ---------- */
+    async function disconnect() {
+        if (!port) return;
+        keepReading = false;
+        try {
+            if (reader) { await reader.cancel(); try { reader.releaseLock(); } catch (e) {} }
+        } catch (e) {}
+        try {
+            if (writer) { await writer.releaseLock(); }
+        } catch (e) {}
+        try { await port.close(); } catch (e) {}
+        port = null; reader = null; writer = null;
+        $('connectBtn').disabled = false;
+        $('disconnectBtn').disabled = true;
+        setConn('off', '未连接');
+        setStatus('已断开串口连接。', 'info'));
+        logTerm('\x1b[33m已断开连接\x1b[0m');
+    }
+
+    /* ---------- 发送 ---------- */
+    function resolveNewline(val) {
+        if (val === '\\n') return '\n';
+        if (val === '\\r') return '\r';
+        if (val === '\\r\\n') return '\r\n';
+        return '';
+    }
+
+    async function sendFromInput() {
+        if (!port || !writer) { setStatus('⚠️ 串口未连接，无法发送。', 'error')); return; }
+        var text = $('sendInput').value;
+        var nl = resolveNewline($('newlineSel').value);
+        var data = text + nl;
+        if (data === '') return;
+        try {
+            await writer.write(encoder.encode(data));
+            if ($('echoChk').checked && term) {
+                term.write('\x1b[34m' + data + '\x1b[0m');
+            }
+            $('sendInput').value = '';
+            setStatus('✓ 已发送 ' + data.length + ' 字节。', 'success'));
+        } catch (err) {
+            setStatus('⚠️ 发送失败：' + esc(err.message, 'error')));
+            logTerm('\x1b[31m发送失败：' + err.message + '\x1b[0m');
+        }
+    }
+
+    // 终端直接输入发送
+    if (term) {
+        term.onData(function (data) {
+            if (port && writer) {
+                writer.write(encoder.encode(data)).catch(function (e) {
+                    setStatus('⚠️ 发送失败：' + esc(e.message, 'error')));
+                });
+            }
+        });
+    }
+
+    /* ---------- 事件 ---------- */
+    $('connectBtn').addEventListener('click', connect);
+    $('disconnectBtn').addEventListener('click', disconnect);
+    $('sendBtn').addEventListener('click', sendFromInput);
+    $('sendInput').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendFromInput(); }
+    });
+    $('clearTermBtn').addEventListener('click', function () { if (term) term.clear(); });
+
+    // 页面卸载时尝试释放端口
+    window.addEventListener('beforeunload', function () {
+        if (port) { keepReading = false; try { port.close(); } catch (e) {} }
+    });
+})();
+</script>
+</body>
+</html>

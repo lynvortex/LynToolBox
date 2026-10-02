@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>在线画板 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="在线画板涂鸦工具，Canvas自由绘画，支持画笔/橡皮/颜色/粗细/撤销，可下载PNG，纯前端。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+        .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; padding: 12px; background: #f8fafc; border-radius: 10px; border: 1px solid #e0e6ed; }
+        .tool-group { display: flex; gap: 6px; align-items: center; padding: 0 10px; border-right: 1px solid #e2e8f0; }
+        .tool-group:last-child { border-right: none; }
+        .tbtn { width: 38px; height: 38px; border-radius: 8px; border: 1px solid #e0e6ed; background: #fff; cursor: pointer; font-size: 1.1em; display: flex; align-items: center; justify-content: center; transition: 0.15s; }
+        .tbtn:hover { background: #ebf5ff; border-color: #4a90e2; }
+        .tbtn.active { background: #4a90e2; color: #fff; border-color: #4a90e2; }
+        input[type=color] { width: 42px; height: 38px; border: 1px solid #e0e6ed; border-radius: 8px; cursor: pointer; background: #fff; padding: 2px; }
+        input[type=range] { accent-color: #4a90e2; width: 90px; }
+        .size-val { font-size: 0.8em; color: #4a90e2; font-weight: 600; min-width: 28px; }
+        .swatches { display: flex; gap: 4px; }
+        .swatch { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid #fff; box-shadow: 0 0 0 1px #cbd5e1; }
+        .swatch.active { box-shadow: 0 0 0 2px #4a90e2; }
+        .canvas-wrap { background: #fff; border: 2px solid #e0e6ed; border-radius: 12px; overflow: auto; display: flex; justify-content: center; }
+        canvas#board { background: #fff; cursor: crosshair; touch-action: none; }
+        .canvas-wrap.eraser canvas#board { cursor: cell; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="在线画板,在线在线画板,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/draw-tool.html" />
+    <meta property="og:title" content="在线画板" />
+    <meta property="og:description" content="在线画板涂鸦工具，Canvas自由绘画，支持画笔/橡皮/颜色/粗细/撤销，可下载PNG，纯前端。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/draw-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="在线画板" />
+    <meta itemprop="description" content="在线画板涂鸦工具，Canvas自由绘画，支持画笔/橡皮/颜色/粗细/撤销，可下载PNG，纯前端。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "在线画板",
+                "item": "https://box.lynvortex.top/image/draw-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "在线画板",
+        "url": "https://box.lynvortex.top/image/draw-tool.html",
+        "description": "支持画笔、形状、文字的在线绘图工具，可保存下载",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🎨 在线画板</h1>
+                <p>Canvas 自由涂鸦绘画，支持画笔/橡皮/颜色/粗细/撤销/重做，可下载 PNG</p>
+            </div>
+
+            <div class="toolbar">
+                <div class="tool-group">
+                    <button class="tbtn active" id="penBtn" title="画笔">✏️</button>
+                    <button class="tbtn" id="eraserBtn" title="橡皮">🧽</button>
+                    <button class="tbtn" id="lineBtn" title="直线">📏</button>
+                    <button class="tbtn" id="rectBtn" title="矩形">▭</button>
+                    <button class="tbtn" id="circleBtn" title="圆形">⭕</button>
+                    <button class="tbtn" id="fillBtn" title="填充">🪣</button>
+                </div>
+                <div class="tool-group">
+                    <input type="color" id="colorInput" value="#4a90e2" />
+                    <div class="swatches" id="swatches"></div>
+                </div>
+                <div class="tool-group">
+                    <input type="range" id="sizeInput" min="1" max="60" value="4" />
+                    <span class="size-val" id="sizeVal">4</span>
+                </div>
+                <div class="tool-group">
+                    <button class="tbtn" id="undoBtn" title="撤销">↶</button>
+                    <button class="tbtn" id="redoBtn" title="重做">↷</button>
+                    <button class="tbtn" id="clearBtn" title="清空">🗑️</button>
+                    <button class="tbtn" id="downloadBtn" title="下载PNG">💾</button>
+                </div>
+            </div>
+
+            <div class="canvas-wrap" id="canvasWrap">
+                <canvas id="board" width="900" height="520"></canvas>
+            </div>
+
+            <div id="statusBar" class="status-bar info">选择工具与颜色，在画布上自由绘画</div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 在线画板</h3>
+                <p>在浏览器中自由绘制图画，支持多种笔刷和颜色</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">Canvas API</span>
+                    <span class="feature-chip">多种笔刷</span>
+                    <span class="feature-chip">撤销重做</span>
+                    <span class="feature-chip">离线可用</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>基于 Canvas API 实现，纯前端绘制</li>
+                    <li>支持多种笔刷大小和颜色选择</li>
+                    <li>支持撤销和重做操作</li>
+                    <li>可导出为 PNG 图片保存</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const canvas = document.getElementById('board');
+    const ctx = canvas.getContext('2d');
+    const wrap = document.getElementById('canvasWrap');
+    const colorInput = document.getElementById('colorInput');
+    const sizeInput = document.getElementById('sizeInput');
+    const sizeVal = document.getElementById('sizeVal');
+    const statusBar = document.getElementById('statusBar');
+    const setStatus = (m, t) => { statusBar.textContent = m; statusBar.className = 'status-bar ' + (t || 'info'); };
+
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+
+    let tool = 'pen', drawing = false, startX = 0, startY = 0;
+    let snapshot = null;
+    const history = [], redoStack = [];
+    const MAX_HIST = 30;
+    const saveState = () => { history.push(canvas.toDataURL()); if (history.length > MAX_HIST) history.shift(); redoStack.length = 0; };
+    saveState();
+
+    const SWATCH_COLORS = ['#000000','#ffffff','#ef4444','#f59e0b','#16a34a','#4a90e2','#8b5cf6','#ec4899'];
+    const swatches = document.getElementById('swatches');
+    swatches.innerHTML = SWATCH_COLORS.map((c, i) => `<div class="swatch${i === 5 ? ' active' : ''}" data-color="${c}" style="background:${c};"></div>`).join('');
+    swatches.addEventListener('click', (e) => {
+        const s = e.target.closest('.swatch'); if (!s) return;
+        swatches.querySelectorAll('.swatch').forEach(x => x.classList.remove('active'));
+        s.classList.add('active'); colorInput.value = s.dataset.color;
+    });
+    colorInput.addEventListener('input', () => swatches.querySelectorAll('.swatch').forEach(x => x.classList.remove('active')));
+
+    const setTool = (t) => {
+        tool = t;
+        document.querySelectorAll('.tbtn').forEach(b => b.classList.remove('active'));
+        const map = { pen: 'penBtn', eraser: 'eraserBtn', line: 'lineBtn', rect: 'rectBtn', circle: 'circleBtn', fill: 'fillBtn' };
+        document.getElementById(map[t]).classList.add('active');
+        wrap.classList.toggle('eraser', t === 'eraser');
+    };
+    document.getElementById('penBtn').onclick = () => setTool('pen');
+    document.getElementById('eraserBtn').onclick = () => setTool('eraser');
+    document.getElementById('lineBtn').onclick = () => setTool('line');
+    document.getElementById('rectBtn').onclick = () => setTool('rect');
+    document.getElementById('circleBtn').onclick = () => setTool('circle');
+    document.getElementById('fillBtn').onclick = () => setTool('fill');
+
+    sizeInput.addEventListener('input', () => sizeVal.textContent = sizeInput.value);
+
+    const pos = (e) => {
+        const r = canvas.getBoundingClientRect();
+        const sx = canvas.width / r.width, sy = canvas.height / r.height;
+        const cx = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+        const cy = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+        return { x: cx * sx, y: cy * sy };
+    };
+
+    const start = (e) => {
+        e.preventDefault();
+        const p = pos(e); startX = p.x; startY = p.y; drawing = true;
+        if (tool === 'fill') { floodFill(Math.round(p.x), Math.round(p.y), hexToRgb(colorInput.value)); drawing = false; saveState(); return; }
+        ctx.beginPath(); ctx.moveTo(p.x, p.y);
+        if (['line', 'rect', 'circle'].includes(tool)) snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    };
+    const move = (e) => {
+        if (!drawing) return; e.preventDefault();
+        const p = pos(e);
+        ctx.lineWidth = sizeInput.value;
+        ctx.strokeStyle = tool === 'eraser' ? '#ffffff' : colorInput.value;
+        ctx.fillStyle = colorInput.value;
+        if (tool === 'pen' || tool === 'eraser') {
+            ctx.lineTo(p.x, p.y); ctx.stroke();
+        } else if (snapshot) {
+            ctx.putImageData(snapshot, 0, 0);
+            ctx.beginPath();
+            if (tool === 'line') { ctx.moveTo(startX, startY); ctx.lineTo(p.x, p.y); ctx.stroke(); }
+            else if (tool === 'rect') { ctx.strokeRect(startX, startY, p.x - startX, p.y - startY); }
+            else if (tool === 'circle') { const rx = Math.abs(p.x - startX) / 2, ry = Math.abs(p.y - startY) / 2; ctx.ellipse((startX + p.x) / 2, (startY + p.y) / 2, rx, ry, 0, 0, Math.PI * 2); ctx.stroke(); }
+        }
+    };
+    const end = () => { if (drawing) { drawing = false; saveState(); } };
+
+    canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', move); window.addEventListener('mouseup', end);
+    canvas.addEventListener('touchstart', start); canvas.addEventListener('touchmove', move); canvas.addEventListener('touchend', end);
+
+    function hexToRgb(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255, 255]; }
+    function floodFill(x, y, fill) {
+        const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const d = img.data, w = canvas.width, h = canvas.height;
+        const i0 = (y * w + x) * 4;
+        const target = [d[i0], d[i0 + 1], d[i0 + 2], d[i0 + 3]];
+        if (target[0] === fill[0] && target[1] === fill[1] && target[2] === fill[2]) return;
+        const stack = [[x, y]];
+        while (stack.length) {
+            const [cx, cy] = stack.pop();
+            if (cx < 0 || cy < 0 || cx >= w || cy >= h) continue;
+            const i = (cy * w + cx) * 4;
+            if (d[i] !== target[0] || d[i + 1] !== target[1] || d[i + 2] !== target[2] || d[i + 3] !== target[3]) continue;
+            d[i] = fill[0]; d[i + 1] = fill[1]; d[i + 2] = fill[2]; d[i + 3] = 255;
+            stack.push([cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]);
+        }
+        ctx.putImageData(img, 0, 0);
+    }
+
+    const restore = (url) => { const img = new Image(); img.onload = () => { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.drawImage(img, 0, 0); }; img.src = url; };
+    document.getElementById('undoBtn').onclick = () => { if (history.length > 1) { redoStack.push(history.pop()); restore(history[history.length - 1]); setStatus('已撤销', 'info'); } };
+    document.getElementById('redoBtn').onclick = () => { if (redoStack.length) { const u = redoStack.pop(); history.push(u); restore(u); setStatus('已重做', 'info'); } };
+    document.getElementById('clearBtn').onclick = () => { if (confirm('确认清空画布？')) { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height); saveState(); setStatus('已清空', 'info'); } };
+    document.getElementById('downloadBtn').onclick = () => { const a = document.createElement('a'); a.href = canvas.toDataURL('image/png'); a.download = 'drawing.png'; a.click(); setStatus('已下载 drawing.png ✓', 'success'); };
+
+    initSidebar('image');
+</script>
+</body>
+</html>

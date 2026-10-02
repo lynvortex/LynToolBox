@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>图片转ASCII艺术 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="图片转ASCII艺术工具，将图片像素映射为字符画，支持宽度和对比度调节，纯前端Canvas处理。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+        .drop-zone { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 28px 20px; text-align: center; color: #94a3b8; cursor: pointer; margin-bottom: 16px; transition: 0.2s; }
+        .drop-zone:hover, .drop-zone.dragover { border-color: #4a90e2; color: #4a90e2; background: #f0f7ff; }
+        .drop-zone .dz-icon { font-size: 2.2em; }
+        .opt-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+        @media (max-width: 600px) { .opt-row { grid-template-columns: 1fr 1fr; } }
+        .opt-row .opt label { font-size: 0.8em; color: #64748b; font-weight: 600; display: block; margin-bottom: 4px; }
+        .opt-row select, .opt-row input[type=range] { width: 100%; padding: 6px 8px; border: 1px solid #e0e6ed; border-radius: 6px; font-size: 0.85em; }
+        input[type=range] { accent-color: #4a90e2; padding: 0; }
+        .opt-val { font-size: 0.78em; color: #4a90e2; font-weight: 600; }
+        .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 768px) { .preview-grid { grid-template-columns: 1fr; } }
+        .prev-card { background: #fff; border: 1px solid #e1e4e8; border-radius: 10px; padding: 12px; }
+        .prev-card label { font-size: 0.8em; color: #64748b; font-weight: 600; margin-bottom: 8px; display: block; }
+        #srcPreview { max-width: 100%; max-height: 320px; border-radius: 8px; display: block; margin: 0 auto; }
+        .ascii-out { background: #0f172a; color: #e2e8f0; border-radius: 8px; padding: 12px; font-family: 'Courier New', monospace; font-size: 0.6em; line-height: 1; overflow: auto; white-space: pre; max-height: 320px; min-height: 200px; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="图片转ASCII,在线图片转ASCII,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/img-ascii-tool.html" />
+    <meta property="og:title" content="图片转ASCII艺术" />
+    <meta property="og:description" content="图片转ASCII艺术工具，将图片像素映射为字符画，支持宽度和对比度调节，纯前端Canvas处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/img-ascii-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="图片转ASCII艺术" />
+    <meta itemprop="description" content="图片转ASCII艺术工具，将图片像素映射为字符画，支持宽度和对比度调节，纯前端Canvas处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "图片转ASCII",
+                "item": "https://box.lynvortex.top/image/img-ascii-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "图片转ASCII",
+        "url": "https://box.lynvortex.top/image/img-ascii-tool.html",
+        "description": "将图片转换为ASCII字符画，支持调整分辨率和字符集",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🖼️ 图片转 ASCII 艺术</h1>
+                <p>将图片像素映射为字符画，可调宽度/对比度/字符集，纯前端 Canvas 处理</p>
+            </div>
+
+            <div class="drop-zone" id="dropZone">
+                <div class="dz-icon">🖼️</div>
+                <div>点击或拖拽上传图片</div>
+                <input type="file" id="fileInput" accept="image/*" style="display:none;" />
+            </div>
+
+            <div class="opt-row">
+                <div class="opt"><label>输出宽度 <span class="opt-val" id="widthVal">120</span></label><input type="range" id="widthInput" min="40" max="240" value="120" /></div>
+                <div class="opt"><label>对比度 <span class="opt-val" id="contrastVal">100%</span></label><input type="range" id="contrastInput" min="50" max="200" value="100" /></div>
+                <div class="opt"><label>亮度 <span class="opt-val" id="brightVal">100%</span></label><input type="range" id="brightInput" min="50" max="150" value="100" /></div>
+                <div class="opt"><label>字符集</label>
+                    <select id="charsetSel">
+                        <option value=" .:-=+*#%@" selected>标准 10 级</option>
+                        <option value=" .'`,:;i!lI><~+_-?][}{1)(|/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$">精细 70 级</option>
+                        <option value=" .oO0@">简约 5 级</option>
+                        <option value=" ░▒▓█">方块 5 级</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn-outline" id="invertBtn">🌗 反色</button>
+                <button class="btn btn-outline" id="colorBtn">🎨 彩色：关</button>
+                <button class="btn btn-ghost" id="copyBtn">📋 复制文本</button>
+                <button class="btn btn-ghost" id="downloadBtn">💾 下载 TXT</button>
+            </div>
+
+            <div class="preview-grid">
+                <div class="prev-card"><label>原图预览</label><img id="srcPreview" style="display:none;" /></div>
+                <div class="prev-card"><label>ASCII 输出</label><div class="ascii-out" id="asciiOut">上传图片后自动生成...</div></div>
+            </div>
+
+            <div id="statusBar" class="status-bar info">上传图片后自动生成 ASCII 字符画</div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 图片转 ASCII</h3>
+                <p>将图片转换为 ASCII 字符艺术画</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">ASCII Art</span>
+                    <span class="feature-chip">Canvas API</span>
+                    <span class="feature-chip">灰度映射</span>
+                    <span class="feature-chip">离线可用</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>使用 Canvas API 读取图片像素数据</li>
+                    <li>通过灰度值映射到 ASCII 字符</li>
+                    <li>支持调节字符密度和对比度</li>
+                    <li>生成结果可复制为文本</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const srcPreview = document.getElementById('srcPreview');
+    const asciiOut = document.getElementById('asciiOut');
+    const statusBar = document.getElementById('statusBar');
+    const setStatus = (m, t) => { statusBar.textContent = m; statusBar.className = 'status-bar ' + (t || 'info'); };
+    let curImg = null, invert = false, color = false;
+
+    ['widthInput', 'contrastInput', 'brightInput'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+            document.getElementById('widthVal').textContent = document.getElementById('widthInput').value;
+            document.getElementById('contrastVal').textContent = document.getElementById('contrastInput').value + '%';
+            document.getElementById('brightVal').textContent = document.getElementById('brightInput').value + '%';
+            if (curImg) render();
+        });
+    });
+    document.getElementById('charsetSel').addEventListener('change', () => { if (curImg) render(); });
+
+    const handleFile = (f) => {
+        if (!f) return;
+        const r = new FileReader();
+        r.onload = (e) => { srcPreview.src = e.target.result; srcPreview.style.display = 'block'; const img = new Image(); img.onload = () => { curImg = img; render(); setStatus('已加载图片，生成完成 ✓', 'success'); }; img.src = e.target.result; };
+        r.readAsDataURL(f);
+    };
+    dropZone.onclick = () => fileInput.click();
+    fileInput.onchange = (e) => handleFile(e.target.files[0]);
+    ['dragenter', 'dragover'].forEach(ev => dropZone.addEventListener(ev, (e) => { e.preventDefault(); dropZone.classList.add('dragover'); }));
+    ['dragleave', 'drop'].forEach(ev => dropZone.addEventListener(ev, (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); }));
+    dropZone.addEventListener('drop', (e) => { if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+
+    function render() {
+        if (!curImg) return;
+        const width = parseInt(document.getElementById('widthInput').value, 10);
+        const charset = document.getElementById('charsetSel').value;
+        const contrast = parseInt(document.getElementById('contrastInput').value, 10) / 100;
+        const bright = parseInt(document.getElementById('brightInput').value, 10) / 100;
+        const aspect = curImg.height / curImg.width;
+        const height = Math.round(width * aspect * 0.5); // 字符高宽比补偿
+        const c = document.createElement('canvas');
+        c.width = width; c.height = height;
+        const cx = c.getContext('2d');
+        cx.drawImage(curImg, 0, 0, width, height);
+        const data = cx.getImageData(0, 0, width, height).data;
+        const chars = charset;
+        let out = '';
+        const colorSpans = [];
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const i = (y * width + x) * 4;
+                let r = data[i], g = data[i + 1], b = data[i + 2];
+                let lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                lum = (lum - 0.5) * contrast + 0.5;
+                lum = lum * bright;
+                if (invert) lum = 1 - lum;
+                lum = Math.max(0, Math.min(1, lum));
+                const idx = Math.floor(lum * (chars.length - 1));
+                const ch = chars[idx];
+                if (color) {
+                    out += `<span style="color:rgb(${r},${g},${b})">${escapeHtml(ch)}</span>`;
+                } else {
+                    out += ch;
+                }
+            }
+            out += '\n';
+        }
+        asciiOut.innerHTML = out;
+        asciiOut.style.fontSize = (Math.max(4, Math.min(10, 600 / width))) + 'px';
+    }
+
+    document.getElementById('invertBtn').onclick = (e) => { invert = !invert; e.target.textContent = '🌗 反色：' + (invert ? '开' : '关'); if (curImg) render(); };
+    document.getElementById('colorBtn').onclick = (e) => { color = !color; e.target.textContent = '🎨 彩色：' + (color ? '开' : '关'); if (curImg) render(); };
+    document.getElementById('copyBtn').onclick = () => {
+        const t = asciiOut.textContent;
+        navigator.clipboard.writeText(t).then(() => setStatus('已复制 ✓', 'success')).catch(() => { const ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); setStatus('已复制 ✓', 'success'); });
+    };
+    document.getElementById('downloadBtn').onclick = () => {
+        const t = asciiOut.textContent;
+        const blob = new Blob([t], { type: 'text/plain' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'ascii-art.txt'; a.click(); URL.revokeObjectURL(a.href);
+        setStatus('已下载 ascii-art.txt ✓', 'success');
+    };
+
+    initSidebar('image');
+</script>
+</body>
+</html>

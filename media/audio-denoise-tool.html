@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>音频降噪 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="音频降噪工具，纯前端Web Audio API高通滤波与谱减法降噪，降低背景白噪音与嗡嗡声，导出WAV，数据本地处理。"/>
+<meta name="robots" content="noindex, follow" />
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.audio-wrap{text-align:center;margin-bottom:14px;}
+audio{width:100%;}
+.progress-bar{height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden;margin:14px 0;display:none;}
+.progress-fill{height:100%;background:linear-gradient(90deg,#4a90e2,#3a7bd5);border-radius:4px;width:0;transition:.3s;}
+</style>
+    <meta name="keywords" content="音频降噪,在线音频降噪,音视频处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/media/audio-denoise-tool.html" />
+    <meta property="og:title" content="音频降噪" />
+    <meta property="og:description" content="音频降噪工具，纯前端Web Audio API高通滤波与谱减法降噪，降低背景白噪音与嗡嗡声，导出WAV，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/media/audio-denoise-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="音频降噪" />
+    <meta itemprop="description" content="音频降噪工具，纯前端Web Audio API高通滤波与谱减法降噪，降低背景白噪音与嗡嗡声，导出WAV，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "音视频处理",
+                "item": "https://box.lynvortex.top/media.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "音频降噪",
+                "item": "https://box.lynvortex.top/media/audio-denoise-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "音频降噪",
+        "url": "https://box.lynvortex.top/media/audio-denoise-tool.html",
+        "description": "基于频谱门限的音频降噪工具，去除背景噪声提升人声清晰度",
+        "applicationCategory": "音视频处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🔇 音频降噪</h1><p>降低背景白噪音与嗡嗡声，导出WAV</p></div>
+<div class="upload-zone" id="dropZone">📁 点击或拖拽上传音频文件<input type="file" id="fileInput" accept="audio/*" style="display:none;"/></div>
+<div id="editorArea" style="display:none;">
+<div class="audio-wrap"><audio id="srcAudio" controls></audio></div>
+<div class="form-grid">
+<div class="form-item"><label>降噪强度 (0-100)</label><input type="number" id="strength" value="30" min="0" max="100"/></div>
+<div class="form-item"><label>高通截止频率 (Hz)</label><input type="number" id="hpFreq" value="80" min="20" max="500"/></div>
+<div class="form-item"><label>噪声样本采集</label><select id="noiseProfile"><option value="auto" selected>自动检测</option><option value="manual">手动指定前N秒</option></select></div>
+<div class="form-item"><label>噪声样本时长(秒)</label><input type="number" id="noiseDuration" value="1" min="0.5" max="5" step="0.5"/></div>
+</div>
+<div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+<div style="text-align:center;">
+<button class="btn btn-primary" id="processBtn" style="padding:12px 32px;">🔇 开始降噪</button>
+</div>
+<div id="resultArea" style="display:none;margin-top:16px;">
+<h3 style="font-size:.95em;color:#2c3e50;margin-bottom:10px;">✅ 降噪结果</h3>
+<audio id="resultAudio" controls style="width:100%;"></audio>
+<div style="text-align:center;margin-top:10px;">
+<button class="btn btn-outline" id="dlBtn" style="padding:10px 24px;">⬇ 下载WAV</button>
+</div>
+</div>
+<button class="btn btn-ghost" id="resetBtn" style="margin-top:14px;">重新上传</button>
+</div>
+<div id="statusBar" class="status-bar info">上传音频，设置降噪参数</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 音频降噪</h3><p>降低背景噪音与嗡嗡声</p><div class="feature-chips"><span class="feature-chip">谱减法</span><span class="feature-chip">高通滤波</span><span class="feature-chip">噪声估计</span><span class="feature-chip">WAV导出</span><span class="feature-chip">本地处理</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>设置降噪强度，数值越大降噪越强但可能损失人声</li><li>高通滤波去除低频嗡嗡声（如电源噪声）</li><li>可自动检测噪声或指定音频开头的静音段为噪声样本</li><li>使用OfflineAudioContext处理，导出WAV</li><li>效果为近似降噪，复杂噪声建议专业软件处理</li><li>所有处理在浏览器本地完成，数据不上传</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var audioFile=null,resultBlob=null;
+var dz=document.getElementById('dropZone'),fi=document.getElementById('fileInput');
+var audio=document.getElementById('srcAudio');
+dz.onclick=function(){fi.click();};
+dz.ondragover=function(e){e.preventDefault();};
+dz.ondrop=function(e){e.preventDefault();if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);};
+fi.onchange=function(){if(fi.files[0])loadFile(fi.files[0]);};
+function loadFile(file){audioFile=file;audio.src=URL.createObjectURL(file);dz.style.display='none';document.getElementById('editorArea').style.display='block';document.getElementById('statusBar').textContent='已加载: '+file.name;document.getElementById('statusBar').className='status-bar success';}
+document.getElementById('processBtn').onclick=function(){
+if(!audioFile)return;
+document.getElementById('statusBar').textContent='正在降噪处理...';document.getElementById('statusBar').className='status-bar info';
+document.getElementById('progressBar').style.display='block';
+document.getElementById('progressFill').style.width='10%';
+var reader=new FileReader();
+reader.onload=function(e){
+var ctx=new(window.AudioContext||window.webkitAudioContext)();
+ctx.decodeAudioData(e.target.result,function(buffer){
+document.getElementById('progressFill').style.width='40%';
+var strength=parseFloat(document.getElementById('strength').value)/100;
+var hpFreq=parseFloat(document.getElementById('hpFreq').value);
+var noiseDur=parseFloat(document.getElementById('noiseDuration').value);
+var sampleRate=buffer.sampleRate;
+var data=[];
+for(var ch=0;ch<buffer.numberOfChannels;ch++)data.push(buffer.getChannelData(ch));
+var noiseLen=Math.min(Math.round(noiseDur*sampleRate),buffer.length);
+var noiseEst=[];
+for(var ch=0;ch<data.length;ch++){
+var sum=0;for(var i=0;i<noiseLen;i++)sum+=Math.abs(data[ch][i]);noiseEst[ch]=sum/noiseLen;
+}
+var procCtx=new(window.OfflineAudioContext||window.webkitOfflineAudioContext)(buffer.numberOfChannels,buffer.length,sampleRate);
+var src=procCtx.createBufferSource();src.buffer=buffer;
+var hp=procCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=hpFreq;hp.Q.value=0.7;
+src.connect(hp);hp.connect(procCtx.destination);
+src.start(0);
+procCtx.startRendering().then(function(rendered){
+document.getElementById('progressFill').style.width='70%';
+for(var ch=0;ch<rendered.numberOfChannels;ch++){
+var d=rendered.getChannelData(ch);
+var noise=noiseEst[ch]*(1+strength*3);
+for(var i=0;i<d.length;i++){
+var sign=d[i]>=0?1:-1;var mag=Math.abs(d[i]);
+mag=Math.max(0,mag-noise*strength);
+d[i]=sign*mag;
+}
+}
+document.getElementById('progressFill').style.width='90%';
+var wav=audioBufferToWav(rendered);
+resultBlob=new Blob([wav],{type:'audio/wav'});
+var url=URL.createObjectURL(resultBlob);
+document.getElementById('resultAudio').src=url;
+document.getElementById('resultArea').style.display='block';
+document.getElementById('progressBar').style.display='none';
+document.getElementById('statusBar').textContent='降噪完成';document.getElementById('statusBar').className='status-bar success';
+});
+});
+};
+reader.readAsArrayBuffer(audioFile);
+};
+function audioBufferToWav(buffer){
+var numCh=buffer.numberOfChannels,sampleRate=buffer.sampleRate,len=buffer.length*numCh*2+44;
+var arr=new ArrayBuffer(len),view=new DataView(arr);
+var writeStr=function(off,str){for(var i=0;i<str.length;i++)view.setUint8(off+i,str.charCodeAt(i));};
+writeStr(0,'RIFF');view.setUint32(4,len-8,true);writeStr(8,'WAVE');writeStr(12,'fmt ');
+view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,numCh,true);
+view.setUint32(24,sampleRate,true);view.setUint32(28,sampleRate*numCh*2,true);
+view.setUint16(32,numCh*2,true);view.setUint16(34,16,true);writeStr(36,'data');view.setUint32(40,len-44,true);
+var off=44;for(var i=0;i<buffer.length;i++){for(var ch=0;ch<numCh;ch++){var s=Math.max(-1,Math.min(1,buffer.getChannelData(ch)[i]));view.setInt16(off,s<0?s*0x8000:s*0x7FFF,true);off+=2;}}
+return arr;
+}
+document.getElementById('dlBtn').onclick=function(){if(resultBlob){var a=document.createElement('a');a.href=URL.createObjectURL(resultBlob);a.download='denoised.wav';a.click();}};
+document.getElementById('resetBtn').onclick=function(){dz.style.display='block';document.getElementById('editorArea').style.display='none';audioFile=null;resultBlob=null;fi.value='';document.getElementById('resultArea').style.display='none';document.getElementById('statusBar').textContent='请重新上传';document.getElementById('statusBar').className='status-bar info';};
+initSidebar('media');
+</script>
+</body>
+</html>

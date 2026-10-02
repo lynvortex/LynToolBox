@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>图片直方图分析 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="图片直方图分析工具，纯前端Canvas统计RGB通道像素分布，可视化亮度直方图，辅助调色与曝光分析，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.channel-tabs{display:flex;gap:8px;justify-content:center;margin-bottom:12px;}
+.channel-tab{padding:8px 16px;border-radius:6px;border:1px solid #e0e6ed;background:#f8fafc;color:#64748b;cursor:pointer;font-size:.82em;font-weight:600;}
+.channel-tab.active{background:#4a90e2;color:#fff;border-color:#4a90e2;}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px;margin-top:14px;}
+.stat-item{background:#f8fafc;border:1px solid #e0e6ed;border-radius:8px;padding:12px;text-align:center;}
+.stat-item .sv{font-size:1.3em;font-weight:700;color:#2c3e50;font-family:'Courier New',monospace;}
+.stat-item .sl{font-size:.75em;color:#94a3b8;margin-top:4px;}
+</style>
+    <meta name="keywords" content="图片直方图分析,在线图片直方图分析,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/histogram-tool.html" />
+    <meta property="og:title" content="图片直方图分析" />
+    <meta property="og:description" content="图片直方图分析工具，纯前端Canvas统计RGB通道像素分布，可视化亮度直方图，辅助调色与曝光分析，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/histogram-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="图片直方图分析" />
+    <meta itemprop="description" content="图片直方图分析工具，纯前端Canvas统计RGB通道像素分布，可视化亮度直方图，辅助调色与曝光分析，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "图片直方图分析",
+                "item": "https://box.lynvortex.top/image/histogram-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "图片直方图分析",
+        "url": "https://box.lynvortex.top/image/histogram-tool.html",
+        "description": "Canvas统计RGB通道像素分布，可视化亮度直方图，辅助调色与曝光分析",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>📊 图片直方图分析</h1><p>可视化RGB通道像素分布，辅助调色与曝光分析</p></div>
+<div class="upload-zone" id="dropZone">📁 上传图片进行分析<input type="file" id="fileInput" accept="image/*" style="display:none;"/></div>
+<div id="resultArea" style="display:none;">
+<div class="canvas-wrap"><div class="canvas-box"><canvas id="imgCanvas"></canvas><div class="cl">原图预览</div></div></div>
+<div class="channel-tabs">
+<div class="channel-tab active" data-ch="rgb">RGB</div>
+<div class="channel-tab" data-ch="r">红(R)</div>
+<div class="channel-tab" data-ch="g">绿(G)</div>
+<div class="channel-tab" data-ch="b">蓝(B)</div>
+<div class="channel-tab" data-ch="lum">亮度</div>
+</div>
+<div class="canvas-wrap"><div class="canvas-box"><canvas id="histCanvas" width="512" height="200"></canvas><div class="cl">直方图</div></div></div>
+<div class="stat-grid" id="statGrid"></div>
+</div>
+<div id="statusBar" class="status-bar info">上传图片后自动统计RGB通道像素分布</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 图片直方图分析</h3><p>RGB通道像素分布可视化</p><div class="feature-chips"><span class="feature-chip">RGB直方图</span><span class="feature-chip">亮度统计</span><span class="feature-chip">均值中位数</span><span class="feature-chip">离线可用</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>支持JPG/PNG/WEBP等常见格式</li><li>大图自动缩放采样以保证性能</li><li>可切换查看R/G/B单通道或亮度分布</li><li>显示均值、中位数、标准差等统计量</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var imgData=null,channels={r:[],g:[],b:[],lum:[]};
+document.getElementById('dropZone').onclick=function(){document.getElementById('fileInput').click();};
+document.getElementById('fileInput').onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){var img=new Image();img.onload=function(){var c=document.getElementById('imgCanvas');var maxW=400,scale=Math.min(1,maxW/img.width);c.width=img.width*scale;c.height=img.height*scale;var ctx=c.getContext('2d');ctx.drawImage(img,0,0,c.width,c.height);imgData=ctx.getImageData(0,0,c.width,c.height);analyze();document.getElementById('resultArea').style.display='block';};img.src=ev.target.result;};r.readAsDataURL(f);};
+function analyze(){var data=imgData.data;var hR=new Array(256).fill(0),hG=new Array(256).fill(0),hB=new Array(256).fill(0),hL=new Array(256).fill(0);for(var i=0;i<data.length;i+=4){hR[data[i]]++;hG[data[i+1]]++;hB[data[i+2]]++;var lum=Math.round(0.299*data[i]+0.587*data[i+1]+0.114*data[i+2]);hL[lum]++;}channels={r:hR,g:hG,b:hB,lum:hL};drawHist('rgb');calcStats();}
+function drawHist(ch){var c=document.getElementById('histCanvas');var ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,c.width,c.height);var colors={r:'#ef4444',g:'#22c55e',b:'#3b82f6',lum:'#64748b'};var bins=256,barW=c.width/bins;var maxVal=0;if(ch==='rgb'){for(var i=0;i<256;i++){maxVal=Math.max(maxVal,channels.r[i],channels.g[i],channels.b[i]);}}else{for(var i=0;i<256;i++){maxVal=Math.max(maxVal,channels[ch][i]);}}maxVal=maxVal||1;if(ch==='rgb'){ctx.globalCompositeOperation='screen';['r','g','b'].forEach(function(k){ctx.fillStyle=colors[k];for(var i=0;i<256;i++){var h=(channels[k][i]/maxVal)*c.height;ctx.fillRect(i*barW,c.height-h,barW+0.5,h);}});ctx.globalCompositeOperation='source-over';}else{ctx.fillStyle=colors[ch];for(var i=0;i<256;i++){var h=(channels[ch][i]/maxVal)*c.height;ctx.fillRect(i*barW,c.height-h,barW+0.5,h);}}ctx.strokeStyle='#e0e6ed';for(var i=0;i<=4;i++){var y=c.height*i/4;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(c.width,y);ctx.stroke();}}
+function calcStats(){var stats=[];['r','g','b','lum'].forEach(function(k){var sum=0,count=0,median=[],data=channels[k];for(var i=0;i<256;i++){sum+=i*data[i];count+=data[i];if(data[i]>0)for(var j=0;j<data[i];j++)median.push(i);}var mean=count?sum/count:0;median.sort(function(a,b){return a-b;});var med=median.length?median[Math.floor(median.length/2)]:0;var variance=0;for(var i=0;i<256;i++){var d=i-mean;variance+=d*d*data[i];}variance=count?variance/count:0;var std=Math.sqrt(variance);var names={r:'红(R)',g:'绿(G)',b:'蓝(B)',lum:'亮度'};stats.push({name:names[k],mean:Math.round(mean),median:med,std:Math.round(std)});});var html=stats.map(function(s){return '<div class="stat-item"><div class="sv" style="color:'+(s.name.includes('红')?'#ef4444':s.name.includes('绿')?'#22c55e':s.name.includes('蓝')?'#3b82f6':'#64748b')+'">'+s.mean+'</div><div class="sl">'+s.name+' 均值</div><div style="font-size:.72em;color:#94a3b8;margin-top:4px;">中位:'+s.median+' σ:'+s.std+'</div></div>';}).join('');document.getElementById('statGrid').innerHTML=html;}
+document.querySelectorAll('.channel-tab').forEach(function(t){t.onclick=function(){document.querySelectorAll('.channel-tab').forEach(function(x){x.classList.remove('active');});t.classList.add('active');drawHist(t.dataset.ch);};});
+var dz=document.getElementById('dropZone');dz.ondragover=function(e){e.preventDefault();dz.style.borderColor='#4a90e2';};dz.ondragleave=function(){dz.style.borderColor='#e0e6ed';};dz.ondrop=function(e){e.preventDefault();dz.style.borderColor='#e0e6ed';var f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/')){document.getElementById('fileInput').files=e.dataTransfer.files;document.getElementById('fileInput').onchange({target:{files:[f]}});}};
+initSidebar('image');
+</script>
+</body>
+</html>

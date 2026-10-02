@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JSON转Excel导出 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="将JSON数据一键导出为Excel表格，支持嵌套对象展开和数组处理，纯浏览器本地处理" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+
+        .j2e-area { display: flex; flex-direction: column; gap: 16px; }
+        textarea.code { min-height: 200px; }
+        .j2e-preview { overflow: auto; max-height: 300px; margin-top: 12px; }
+        .j2e-preview table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+        .j2e-preview th, .j2e-preview td { border: 1px solid #e0e6ed; padding: 6px 10px; text-align: left; }
+        .j2e-preview th { background: #f1f5f9; }
+    
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <meta name="keywords" content="JSON转Excel导出,在线JSON转Excel导出,文档处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/document/json-to-excel-tool.html" />
+    <meta property="og:title" content="JSON转Excel导出" />
+    <meta property="og:description" content="将JSON数据一键导出为Excel表格，支持嵌套对象展开和数组处理，纯浏览器本地处理" />
+    <meta property="og:url" content="https://box.lynvortex.top/document/json-to-excel-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="JSON转Excel导出" />
+    <meta itemprop="description" content="将JSON数据一键导出为Excel表格，支持嵌套对象展开和数组处理，纯浏览器本地处理" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文档处理",
+                "item": "https://box.lynvortex.top/document.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "JSON转Excel导出",
+                "item": "https://box.lynvortex.top/document/json-to-excel-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "JSON转Excel导出",
+        "url": "https://box.lynvortex.top/document/json-to-excel-tool.html",
+        "description": "将JSON数据一键导出为Excel表格，支持嵌套对象展开",
+        "applicationCategory": "文档处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>📋 JSON转Excel导出</h1>
+                <p>将JSON数据一键导出为Excel表格，支持嵌套对象展开和数组处理，纯浏览器本地处理</p>
+            </div>
+
+            <div class="form-item" style="margin-bottom:12px;">
+                <label>粘贴JSON数据</label>
+                <textarea class="code" id="j2eInput" placeholder='[{"name":"张三","age":25,"city":"北京"},{"name":"李四","age":30,"city":"上海"}]'></textarea>
+            </div>
+            <div class="form-grid">
+                <div class="form-item"><label>工作表名称</label><input type="text" id="j2eSheet" value="Sheet1" /></div>
+                <div class="form-item"><label>展开嵌套对象</label><select id="j2eFlatten"><option value="1" selected>是</option><option value="0">否</option></select></div>
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-primary" id="j2eParse">👁 预览</button>
+                <button class="btn btn-outline" id="j2eExport">⬇ 导出XLSX</button>
+                <button class="btn btn-ghost" id="j2eSample">📝 示例数据</button>
+            </div>
+            <div class="j2e-preview" id="j2ePreview"></div>
+    
+            <div id="statusBar" class="status-bar info">准备就绪，请按提示操作</div>
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 JSON转Excel导出</h3>
+                <p>将JSON数组数据转换为Excel表格，支持嵌套对象展开</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">SheetJS</span>
+                    <span class="feature-chip">嵌套展开</span>
+                    <span class="feature-chip">预览</span>
+                    <span class="feature-chip">XLSX导出</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>输入JSON数组格式数据，每个对象为一行</li>
+                    <li>开启"展开嵌套对象"可将嵌套属性平铺为列（如address.city）</li>
+                    <li>点击预览查看转换后的表格效果</li>
+                    <li>导出为标准XLSX格式，可在Excel/WPS中打开</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+
+    const setStatus = (m,t) => { const s=document.getElementById('statusBar'); s.textContent=m; s.className='status-bar '+(t||'info'); };
+    let parsedData = null;
+
+    function flatten(obj, prefix) {
+        const result = {};
+        for (const key in obj) {
+            const newKey = prefix ? prefix + '.' + key : key;
+            if (obj[key] !== null && typeof obj[key] === 'object' && !Array.isArray(obj[key])) {
+                Object.assign(result, flatten(obj[key], newKey));
+            } else {
+                result[newKey] = Array.isArray(obj[key]) ? JSON.stringify(obj[key]) : obj[key];
+            }
+        }
+        return result;
+    }
+
+    document.getElementById('j2eSample').addEventListener('click', () => {
+        document.getElementById('j2eInput').value = JSON.stringify([
+            { "id": 1, "name": "张三", "age": 25, "city": "北京", "tags": ["vip","active"] },
+            { "id": 2, "name": "李四", "age": 30, "city": "上海", "tags": ["active"] },
+            { "id": 3, "name": "王五", "age": 28, "city": "广州", "address": { "province": "广东", "city": "广州" } }
+        ], null, 2);
+    });
+
+    document.getElementById('j2eParse').addEventListener('click', () => {
+        const text = document.getElementById('j2eInput').value.trim();
+        if (!text) { setStatus('请输入JSON数据', 'error'); return; }
+        try {
+            let json = JSON.parse(text);
+            if (!Array.isArray(json)) json = [json];
+            const doFlatten = document.getElementById('j2eFlatten').value === '1';
+            if (doFlatten) json = json.map(o => flatten(o, ''));
+            parsedData = json;
+
+            const cols = [...new Set(json.flatMap(o => Object.keys(o)))];
+            let html = '<table><thead><tr>';
+            cols.forEach(c => html += `<th>${escapeHtml(c)}</th>`);
+            html += '</tr></thead><tbody>';
+            json.forEach(row => {
+                html += '<tr>';
+                cols.forEach(c => html += `<td>${escapeHtml(row[c] !== undefined ? row[c] : '')}</td>`);
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+            document.getElementById('j2ePreview').innerHTML = html;
+            setStatus('解析成功，共 ' + json.length + ' 行 ' + cols.length + ' 列', 'success');
+        } catch (e) { setStatus('JSON解析失败: ' + e.message, 'error'); }
+    });
+
+    document.getElementById('j2eExport').addEventListener('click', () => {
+        const text = document.getElementById('j2eInput').value.trim();
+        if (!text) { setStatus('请先输入并预览JSON数据', 'error'); return; }
+        try {
+            let json = JSON.parse(text);
+            if (!Array.isArray(json)) json = [json];
+            const doFlatten = document.getElementById('j2eFlatten').value === '1';
+            if (doFlatten) json = json.map(o => flatten(o, ''));
+            const cols = [...new Set(json.flatMap(o => Object.keys(o)))];
+            const aoa = [cols, ...json.map(row => cols.map(c => row[c] !== undefined ? row[c] : ''))];
+            const ws = XLSX.utils.aoa_to_sheet(aoa);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, document.getElementById('j2eSheet').value || 'Sheet1');
+            XLSX.writeFile(wb, 'export.xlsx');
+            setStatus('XLSX导出完成，共 ' + json.length + ' 行', 'success');
+        } catch (e) { setStatus('导出失败: ' + e.message, 'error'); }
+    });
+    
+    initSidebar('document');
+</script>
+</body>
+</html>

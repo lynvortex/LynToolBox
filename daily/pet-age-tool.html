@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>宠物年龄换算 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线宠物年龄换算器，猫狗年龄换算人类年龄，狗按体型分级精准计算，附逐年对照表与生命阶段判断，铲屎官必备，纯前端计算。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="宠物年龄,猫年龄换算,狗年龄换算,人类年龄,宠物岁数,铲屎官,猫咪年龄,狗狗年龄,免费工具,在线工具,纯前端处理,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/daily/pet-age-tool.html"/>
+<meta property="og:title" content="宠物年龄换算"/>
+<meta property="og:description" content="猫狗岁数换算人类年龄。"/>
+<meta property="og:url" content="https://box.lynvortex.top/daily/pet-age-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="宠物年龄换算"/>
+<meta itemprop="description" content="猫狗岁数换算人类年龄。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"日常通用","item":"https://box.lynvortex.top/daily.html"},{"@type":"ListItem","position":3,"name":"宠物年龄换算","item":"https://box.lynvortex.top/daily/pet-age-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"宠物年龄换算","url":"https://box.lynvortex.top/daily/pet-age-tool.html","description":"宠物年龄换算器","applicationCategory":"日常通用","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>🐾 宠物年龄换算</h1>
+        <p>猫狗真实年龄换算成人类相当年龄</p>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>宠物类型</label>
+            <select id="species">
+                <option value="cat">🐱 猫</option>
+                <option value="dog">🐶 狗</option>
+            </select>
+        </div>
+        <div class="form-item"><label>实际年龄</label>
+            <div style="display:flex;gap:8px;">
+                <input type="number" id="years" value="3" min="0" max="30" style="flex:1;"/>
+                <input type="number" id="months" value="0" min="0" max="11" style="flex:1;" title="月"/>
+            </div>
+            <span class="hint">左：岁，右：月</span>
+        </div>
+        <div class="form-item"><label>体型（仅狗）</label>
+            <select id="dogSize">
+                <option value="small">小型（≤10kg，泰迪/柯基）</option>
+                <option value="medium">中型（10-25kg，边牧/柴犬）</option>
+                <option value="large">大型（25-45kg，金毛/拉布拉多）</option>
+                <option value="giant">巨型（&gt;45kg，藏獒/大丹）</option>
+            </select>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="calcBtn">⚙️ 换算</button>
+    </div>
+    <div class="status-bar info" id="statusBar">填写宠物年龄后换算</div>
+    <div id="resultWrap"></div>
+    <p style="font-size:0.8em;color:#94a3b8;margin:20px 0 8px;">逐年对照表</p>
+    <div id="tableWrap" style="overflow-x:auto;"></div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>🐾 精准分段</h3>
+        <p>幼年成长快、成年放缓的非线性模型。</p>
+        <div class="feature-chips"><span class="feature-chip">猫/狗双模式</span><span class="feature-chip">狗按体型分级</span><span class="feature-chip">生命阶段判定</span><span class="feature-chip">逐年对照表</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 冷知识</h3>
+        <ul class="tips-list">
+            <li>1 岁猫 ≈ 人类 15 岁，2 岁猫 ≈ 24 岁，之后每年约 +4</li>
+            <li>狗体型越大衰老越快，巨型犬寿命常不足 10 年</li>
+            <li>室内猫平均寿命 13-17 年，绝育可延长 1-2 年</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+function catHuman(y) {
+    if (y <= 0) return y * 15 / 1;
+    if (y <= 1) return y * 15;
+    if (y <= 2) return 15 + (y - 1) * 9;
+    return 24 + (y - 2) * 4;
+}
+function dogHuman(y, size) {
+    var rates = {
+        small:  [15, 9, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
+        medium: [15, 9, 6, 5, 5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5],
+        large:  [15, 9, 7, 6, 5.5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+        giant:  [15, 9, 8, 7, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5]
+    };
+    var r = rates[size], total = 0;
+    for (var i = 0; i < Math.min(y, r.length); i++) total += r[i];
+    if (y > r.length) total += (y - r.length) * (size === 'small' ? 4 : size === 'giant' ? 6.5 : 5);
+    return total;
+}
+function stage(pet, y) {
+    if (pet === 'cat') {
+        if (y < 1) return { n: '幼猫期', d: '快速成长，需要幼猫粮与高能量', c: '#f39c12' };
+        if (y < 7) return { n: '成年期', d: '体格稳定，注意体重管理', c: '#27ae60' };
+        if (y < 11) return { n: '熟龄期', d: '代谢放缓，建议定期体检', c: '#2980b9' };
+        return { n: '老年期', d: '关注肾脏与关节健康', c: '#8e44ad' };
+    }
+    if (y < 1) return { n: '幼犬期', d: '社交与训练黄金窗口', c: '#f39c12' };
+    if (y < 5) return { n: '成年期', d: '精力旺盛，保证运动量', c: '#27ae60' };
+    if (y < 9) return { n: '熟龄期', d: '大型犬此时已步入中年', c: '#2980b9' };
+    return { n: '老年期', d: '心脏关节退化风险升高', c: '#8e44ad' };
+}
+
+function calc() {
+    var y = Math.max(0, parseFloat(document.getElementById('years').value) || 0);
+    var m = Math.max(0, parseFloat(document.getElementById('months').value) || 0);
+    var totalY = y + m / 12;
+    var species = document.getElementById('species').value;
+    var dogSize = document.getElementById('dogSize').value;
+    var human = species === 'cat' ? catHuman(totalY) : dogHuman(totalY, dogSize);
+    var st = stage(species, totalY);
+
+    document.getElementById('resultWrap').innerHTML =
+        '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:stretch;">' +
+        '<div style="flex:1;min-width:220px;background:linear-gradient(135deg,#f0f7ff,#fff);border:1px solid #d6e6f7;border-radius:12px;padding:22px;text-align:center;">' +
+        '<div style="font-size:0.85em;color:#64748b;">相当于人类</div>' +
+        '<div style="font-size:2.6em;font-weight:800;color:#4a90e2;">' + Math.round(human) + ' <span style="font-size:0.45em;">岁</span></div>' +
+        '<div style="color:#94a3b8;font-size:0.85em;">宠物 ' + y + ' 岁' + (m ? ' ' + m + ' 个月' : '') + ' · ' + (species === 'cat' ? '猫' : '狗') + (species === 'dog' ? '（' + { small: '小型', medium: '中型', large: '大型', giant: '巨型' }[dogSize] + '）' : '') + '</div></div>' +
+        '<div style="flex:1;min-width:220px;border:1px solid #e2e8f0;border-radius:12px;padding:22px;">' +
+        '<div style="font-weight:700;color:' + st.c + ';font-size:1.1em;">' + st.n + '</div>' +
+        '<p style="color:#64748b;font-size:0.88em;margin:8px 0 0;">' + st.d + '</p>' +
+        '<p style="color:#94a3b8;font-size:0.8em;margin:10px 0 0;">换算为通用模型，个体差异与品种、健康状态相关</p></div></div>';
+
+    var maxYear = species === 'cat' ? 20 : (dogSize === 'giant' ? 14 : dogSize === 'large' ? 15 : 18);
+    var html = '<table style="width:100%;border-collapse:collapse;font-size:0.85em;"><tr style="background:#f1f5f9;"><th style="padding:7px;border:1px solid #e2e8f0;">宠物年龄</th>';
+    var yearsArr = [];
+    for (var i = 1; i <= Math.min(16, maxYear); i++) yearsArr.push(i);
+    html += yearsArr.map(function(v) { return '<th style="padding:7px;border:1px solid #e2e8f0;">' + v + '岁</th>'; }).join('') + '</tr><tr>';
+    html += '<td style="padding:7px;border:1px solid #e2e8f0;font-weight:700;">人类相当</td>';
+    html += yearsArr.map(function(v) {
+        var hv = species === 'cat' ? catHuman(v) : dogHuman(v, dogSize);
+        var hot = Math.abs(v - totalY) < 1;
+        return '<td style="padding:7px;border:1px solid #e2e8f0;text-align:center;' + (hot ? 'background:#f0f9f1;color:#27ae60;font-weight:700;' : '') + '">' + Math.round(hv) + '</td>';
+    }).join('') + '</tr></table>';
+    document.getElementById('tableWrap').innerHTML = html;
+
+    document.getElementById('statusBar').textContent = '换算完成：约等于人类 ' + Math.round(human) + ' 岁（' + st.n + '）';
+    document.getElementById('statusBar').className = 'status-bar success';
+}
+
+document.getElementById('species').addEventListener('change', function() {
+    document.getElementById('dogSize').disabled = this.value === 'cat';
+    calc();
+});
+['years','months','dogSize'].forEach(function(id) {
+    document.getElementById(id).addEventListener('input', calc);
+    document.getElementById(id).addEventListener('change', calc);
+});
+document.getElementById('calcBtn').onclick = calc;
+document.getElementById('dogSize').disabled = document.getElementById('species').value === 'cat';
+calc();
+initSidebar('daily');
+</script>
+</body>
+</html>

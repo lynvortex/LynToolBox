@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>随机头像生成器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="随机头像生成器，纯前端Canvas生成几何图形/像素风/文字头像，可调风格颜色，导出PNG，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.style-tabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:16px;}
+.style-tab{padding:10px 16px;border-radius:8px;border:1px solid #e0e6ed;background:#f8fafc;color:#64748b;cursor:pointer;font-size:.82em;font-weight:600;transition:.2s;}
+.style-tab.active{background:#4a90e2;color:#fff;border-color:#4a90e2;}
+.canvas-wrap{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;margin-bottom:16px;}
+.canvas-box canvas{border-radius:12px;border:1px solid #e0e6ed;}
+.ctrl-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:400px;margin:0 auto 16px;}
+@media(max-width:600px){.ctrl-grid{grid-template-columns:1fr;}}
+.ctrl-grid label{font-size:.82em;color:#64748b;font-weight:600;}
+.ctrl-grid input,.ctrl-grid select{padding:8px 12px;border:1px solid #e0e6ed;border-radius:6px;font-size:.88em;outline:none;}
+.size-presets{display:flex;gap:8px;justify-content:center;margin-bottom:12px;}
+.size-preset{padding:6px 12px;border-radius:6px;border:1px solid #e0e6ed;background:#f8fafc;color:#64748b;cursor:pointer;font-size:.8em;font-weight:600;}
+.size-preset.active{background:#4a90e2;color:#fff;border-color:#4a90e2;}
+</style>
+    <meta name="keywords" content="头像生成器,在线头像生成器,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/avatar-gen-tool.html" />
+    <meta property="og:title" content="随机头像生成器" />
+    <meta property="og:description" content="随机头像生成器，纯前端Canvas生成几何图形/像素风/文字头像，可调风格颜色，导出PNG，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/avatar-gen-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="随机头像生成器" />
+    <meta itemprop="description" content="随机头像生成器，纯前端Canvas生成几何图形/像素风/文字头像，可调风格颜色，导出PNG，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "头像生成器",
+                "item": "https://box.lynvortex.top/image/avatar-gen-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "头像生成器",
+        "url": "https://box.lynvortex.top/image/avatar-gen-tool.html",
+        "description": "生成随机风格头像，支持几何图形、字母头像、像素风等多种样式",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🎭 随机头像生成器</h1><p>几何/像素/文字风格头像，一键随机生成</p></div>
+<div class="style-tabs">
+<div class="style-tab active" data-style="geometric">几何图形</div>
+<div class="style-tab" data-style="pixel">像素风</div>
+<div class="style-tab" data-style="letter">文字字母</div>
+<div class="style-tab" data-style="gradient">渐变圆环</div>
+</div>
+<div class="size-presets">
+<div class="size-preset active" data-size="128">128px</div>
+<div class="size-preset" data-size="256">256px</div>
+<div class="size-preset" data-size="512">512px</div>
+</div>
+<div class="ctrl-grid">
+<div><label>种子文字（可选）</label><input type="text" id="seedInput" placeholder="输入文字作为种子"/></div>
+<div><label>主色调</label><input type="color" id="colorPick" value="#4a90e2" style="width:100%;height:36px;border:1px solid #e0e6ed;border-radius:6px;"/></div>
+</div>
+<div style="text-align:center;margin-bottom:16px;">
+<button class="btn btn-primary" id="genBtn" style="padding:10px 28px;">🎲 随机生成</button>
+<button class="btn" id="downloadBtn" style="padding:10px 16px;margin-left:8px;border:1px solid #4a90e2;border-radius:8px;background:#fff;color:#4a90e2;cursor:pointer;font-size:.85em;font-weight:600;">⬇ 下载PNG</button>
+</div>
+<div class="canvas-wrap"><div class="canvas-box"><canvas id="avatarCanvas" width="256" height="256"></canvas><div class="cl">头像预览</div></div></div>
+<div id="statusBar" class="status-bar info">点击随机生成或输入文字作为种子</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 随机头像生成器</h3><p>多风格头像一键生成</p><div class="feature-chips"><span class="feature-chip">几何图形</span><span class="feature-chip">像素风</span><span class="feature-chip">文字字母</span><span class="feature-chip">渐变圆环</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>四种风格：几何拼块/像素方块/字母色块/渐变圆环</li><li>输入种子文字可生成确定性头像</li><li>支持128/256/512px三种尺寸</li><li>可选主色调控制配色方案</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var style='geometric',size=256;
+document.querySelectorAll('.style-tab').forEach(function(t){t.onclick=function(){document.querySelectorAll('.style-tab').forEach(function(x){x.classList.remove('active');});t.classList.add('active');style=t.dataset.style;generate();};});
+document.querySelectorAll('.size-preset').forEach(function(t){t.onclick=function(){document.querySelectorAll('.size-preset').forEach(function(x){x.classList.remove('active');});t.classList.add('active');size=parseInt(t.dataset.size);var c=document.getElementById('avatarCanvas');c.width=size;c.height=size;generate();};});
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function hashStr(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function generate(){var seed=document.getElementById('seedInput').value;var c=document.getElementById('avatarCanvas');var ctx=c.getContext('2d');var rng=mulberry32(seed?hashStr(seed):Math.floor(Math.random()*1e9));var baseColor=document.getElementById('colorPick').value;ctx.clearRect(0,0,c.width,c.height);if(style==='geometric'){var cols=['#'+baseColor.slice(1),hslShift(baseColor,30),hslShift(baseColor,-30),hslShift(baseColor,180),hslShift(baseColor,120)];var gridSize=5;var cellSize=c.width/gridSize;for(var y=0;y<gridSize;y++){for(var x=0;x<Math.ceil(gridSize/2);x++){var col=cols[Math.floor(rng()*cols.length)];ctx.fillStyle=col;ctx.fillRect(x*cellSize,y*cellSize,cellSize,cellSize);ctx.fillRect((gridSize-1-x)*cellSize,y*cellSize,cellSize,cellSize);}}}else if(style==='pixel'){var cols=['#'+baseColor.slice(1),hslShift(baseColor,30),hslShift(baseColor,60),hslShift(baseColor,-30),'#fff'];var gridSize=8;var cellSize=c.width/gridSize;for(var y=0;y<gridSize;y++){for(var x=0;x<gridSize/2;x++){if(rng()>0.4){var col=cols[Math.floor(rng()*cols.length)];ctx.fillStyle=col;ctx.fillRect(x*cellSize,y*cellSize,cellSize,cellSize);ctx.fillRect((gridSize-1-x)*cellSize,y*cellSize,cellSize,cellSize);}}}}else if(style==='letter'){var grad=ctx.createLinearGradient(0,0,c.width,c.height);grad.addColorStop(0,baseColor);grad.addColorStop(1,hslShift(baseColor,60));ctx.fillStyle=grad;ctx.fillRect(0,0,c.width,c.height);var letter=seed?seed[0].toUpperCase():String.fromCharCode(65+Math.floor(rng()*26));ctx.fillStyle='#fff';ctx.font='bold '+Math.floor(c.width*0.55)+'px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(letter,c.width/2,c.height/2);}else if(style==='gradient'){var rings=5;for(var i=rings;i>0;i--){ctx.beginPath();ctx.arc(c.width/2,c.height/2,c.width/2*i/rings,0,Math.PI*2);ctx.fillStyle=hslShift(baseColor,i*30);ctx.fill();}ctx.beginPath();ctx.arc(c.width/2,c.height/2,c.width/2,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=c.width*0.04;ctx.stroke();}document.getElementById('statusBar').textContent='头像生成完成！';}
+function hslShift(hex,deg){var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);r/=255;g/=255;b/=255;var max=Math.max(r,g,b),min=Math.min(r,g,b);var h,s,l=(max+min)/2;if(max===min){h=s=0;}else{var d=max-min;s=l>0.5?d/(2-max-min):d/(max+min);switch(max){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break;}h/=6;}h=(h+deg/360)%1;var c1=2*l-1,c2=s*(1-Math.abs(c1));var r1,v1,b1;if(s===0){r1=v1=b1=l;}else{var q=l<0.5?l*(1+s):l+s-l*s;var p=2*l-q;var h2=h*6;var t=h2<1?h2:h2>2&&h2<3?h2-2:h2>4?h2-4:0;var f=h2<0?0:h2>6?1:h2<1?h2:h2<3?1:h2<4?h2-3:0;r1=p+c2*(Math.abs(h2-3)-1>=0?-1:1);r1=p+c2*(h2<1?h2:h2>2&&h2<3?1:h2>4&&h2<5?h2-4:h2>5?1:0);v1=p+c2*(h2>1&&h2<2?1:h2>3&&h2<4?1:0);b1=p+c2*(h2>2&&h2<3?h2-2:h2>5&&h2<6?1:0);}return'rgb('+Math.round(r1*255)+','+Math.round(v1*255)+','+Math.round(b1*255)+')';}
+document.getElementById('genBtn').onclick=generate;
+document.getElementById('downloadBtn').onclick=function(){var c=document.getElementById('avatarCanvas');c.toBlob(function(blob){var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='avatar.png';a.click();});};
+generate();
+initSidebar('image');
+</script>
+</body>
+</html>

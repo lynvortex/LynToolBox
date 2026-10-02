@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>大数高精度计算 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="大数高精度计算器，纯前端使用bignumber.js进行任意精度加减乘除、取模、幂、开方运算，无浮点误差，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<script src="../assets/bignumber.min.js"></script>
+<style>
+#operandB:disabled{background:#f1f5f9;color:#cbd5e1;cursor:not-allowed;}
+.result-label{font-size:0.82em;color:#64748b;font-weight:600;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;}
+.digit-count{font-size:0.78em;color:#94a3b8;font-weight:400;font-family:'Courier New',monospace;}
+.section-title{font-size:0.92em;font-weight:700;color:#2c3e50;margin:22px 0 12px;padding-bottom:8px;border-bottom:2px solid #ebf5ff;display:flex;align-items:center;gap:6px;}
+.ext-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:600px){.ext-grid{grid-template-columns:1fr;}}
+.ext-card{background:#f8fafc;border:1px solid #e0e6ed;border-radius:8px;padding:14px;}
+.ext-card label{font-size:0.82em;color:#64748b;font-weight:600;}
+.ext-card input{width:100%;padding:9px 12px;border:1px solid #e0e6ed;border-radius:8px;font-size:0.88em;font-family:'Courier New',monospace;margin-top:6px;outline:none;transition:0.2s;}
+.ext-card input:focus{border-color:#4a90e2;}
+.ext-card .ext-btn{margin-top:10px;width:100%;}
+.ext-result{margin-top:10px;font-size:0.78em;color:#475569;word-break:break-all;line-height:1.5;}
+.pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:0.74em;font-weight:600;}
+.pill.prime{background:#dcfce7;color:#16a34a;}
+.pill.composite{background:#fee2e2;color:#ef4444;}
+.pill.neutral{background:#f1f5f9;color:#64748b;}
+.copy-mini{padding:3px 10px;font-size:0.74em;background:#fff;color:#4a90e2;border:1px solid #bfdbfe;border-radius:6px;cursor:pointer;font-family:inherit;}
+.copy-mini:hover{background:#4a90e2;color:#fff;}
+</style>
+    <meta name="keywords" content="大数高精度计算,在线大数高精度计算,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/bignum-tool.html" />
+    <meta property="og:title" content="大数高精度计算" />
+    <meta property="og:description" content="大数高精度计算器，纯前端使用bignumber.js进行任意精度加减乘除、取模、幂、开方运算，无浮点误差，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/bignum-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="大数高精度计算" />
+    <meta itemprop="description" content="大数高精度计算器，纯前端使用bignumber.js进行任意精度加减乘除、取模、幂、开方运算，无浮点误差，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "大数高精度计算",
+                "item": "https://box.lynvortex.top/work/bignum-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "大数高精度计算",
+        "url": "https://box.lynvortex.top/work/bignum-tool.html",
+        "description": "bignumber.js任意精度加减乘除幂开方，无浮点误差",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+  <div class="tool-container">
+    <div class="tool-header"><h1>🔢 大数高精度计算</h1><p>纯前端使用 bignumber.js 进行任意精度加减乘除、取模、幂、开方运算，无浮点误差，数据完全本地化</p></div>
+
+    <div class="form-grid">
+      <div class="form-item">
+        <label>操作数 A</label>
+        <input type="text" id="operandA" spellcheck="false" placeholder="如 12345678901234567890 或 0.1"/>
+      </div>
+      <div class="form-item">
+        <label>操作数 B</label>
+        <input type="text" id="operandB" spellcheck="false" placeholder="如 98765432109876543210 或 0.2"/>
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-item">
+        <label>运算</label>
+        <select id="opSelect">
+          <option value="plus">加法（A + B）</option>
+          <option value="minus">减法（A − B）</option>
+          <option value="times">乘法（A × B）</option>
+          <option value="div">除法（A ÷ B）</option>
+          <option value="mod">取模（A mod B）</option>
+          <option value="pow">幂运算（A^B）</option>
+          <option value="sqrt">开方（√A）</option>
+        </select>
+      </div>
+      <div class="form-item">
+        <label>精度（小数位）</label>
+        <input type="number" id="precisionInput" value="20" min="0" max="1000" placeholder="除法/开方结果保留小数位"/>
+        <div class="hint" style="font-size:0.78em;color:#94a3b8;margin-top:4px;">影响除法与开方的舍入位数，0-1000</div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="calcBtn">计算</button>
+      <button class="btn btn-outline" id="exampleBtn" style="font-size:0.82em;">加载示例</button>
+      <button class="btn btn-ghost" id="clearBtn">清空</button>
+    </div>
+
+    <div id="statusBar" class="status-bar info">输入操作数并选择运算后点击计算</div>
+
+    <div class="result-label"><span>计算结果</span><span id="resultMeta" class="digit-count"></span></div>
+    <pre class="output" id="resultOutput">（结果将显示于此）</pre>
+
+    <div class="section-title">🧮 扩展功能</div>
+    <div class="ext-grid">
+      <div class="ext-card">
+        <label>大数阶乘（N!）</label>
+        <input type="text" id="factInput" placeholder="输入非负整数，如 100" spellcheck="false"/>
+        <button class="btn btn-primary ext-btn" id="factBtn">计算阶乘</button>
+        <div class="ext-result" id="factResult">输入整数后点击计算，结果支持任意精度。</div>
+      </div>
+      <div class="ext-card">
+        <label>素数判定（Miller-Rabin）</label>
+        <input type="text" id="primeInput" placeholder="输入整数，如 170141183460469231731687303715884105727" spellcheck="false"/>
+        <button class="btn btn-primary ext-btn" id="primeBtn">判定素数</button>
+        <div class="ext-result" id="primeResult">输入整数后点击判定，支持超大整数。</div>
+      </div>
+    </div>
+
+    <footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+  </div>
+  <div class="info-cards">
+    <div class="info-card"><h3>📦 功能说明</h3><p>基于 bignumber.js v9 在浏览器本地进行任意精度数值运算，彻底规避 JavaScript 浮点误差（如 0.1+0.2），支持加减乘除、取模、幂、开方，并提供大数阶乘与 Miller-Rabin 素数判定扩展。</p><div class="feature-chips"><span class="feature-chip">任意精度</span><span class="feature-chip">加减乘除</span><span class="feature-chip">取模幂运算</span><span class="feature-chip">无浮点误差</span><span class="feature-chip">格式化输出</span><span class="feature-chip">离线本地</span></div></div>
+    <div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>除法与开方结果按设定的精度位数舍入（默认 20 位，四舍五入）。</li><li>幂运算指数需为整数，过大指数可能产生极长结果，请合理使用。</li><li>阶乘建议 N ≤ 10000，过大会导致计算缓慢。</li><li>素数判定采用 Miller-Rabin 概率性算法，对超大整数高效可靠。</li><li>所有运算在浏览器本地完成，<strong>数据不上传</strong>。</li></ul></div>
+    <div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+      <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+      <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+  </div>
+</div></main>
+<script>
+(function(){
+  'use strict';
+  if(typeof BigNumber==='undefined'){
+    document.getElementById('statusBar').textContent='bignumber.js 库未加载，请刷新页面重试';
+    return;
+  }
+  var operandA=document.getElementById('operandA');
+  var operandB=document.getElementById('operandB');
+  var opSelect=document.getElementById('opSelect');
+  var precisionInput=document.getElementById('precisionInput');
+  var calcBtn=document.getElementById('calcBtn');
+  var exampleBtn=document.getElementById('exampleBtn');
+  var clearBtn=document.getElementById('clearBtn');
+  var statusBar=document.getElementById('statusBar');
+  var resultOutput=document.getElementById('resultOutput');
+  var resultMeta=document.getElementById('resultMeta');
+  var factInput=document.getElementById('factInput');
+  var factBtn=document.getElementById('factBtn');
+  var factResult=document.getElementById('factResult');
+  var primeInput=document.getElementById('primeInput');
+  var primeBtn=document.getElementById('primeBtn');
+  var primeResult=document.getElementById('primeResult');
+
+  var ROUND_HALF_UP=(BigNumber.ROUND_HALF_UP!=null)?BigNumber.ROUND_HALF_UP:1;
+
+  function applyPrecision(){
+    var dp=parseInt(precisionInput.value,10);
+    if(isNaN(dp)||dp<0)dp=20;
+    if(dp>1000)dp=1000;
+    try{BigNumber.config({DECIMAL_PLACES:dp,ROUNDING_MODE:ROUND_HALF_UP});}
+    catch(e){try{BigNumber.set({DECIMAL_PLACES:dp,ROUNDING_MODE:ROUND_HALF_UP});}catch(e2){}}
+    return dp;
+  }
+
+  function makeBN(val,label){
+    if(val.trim()==='')throw new Error(label+' 不能为空');
+    var bn;
+    try{bn=new BigNumber(val);}
+    catch(e){throw new Error(label+' 不是合法数值：'+e.message);}
+    if(!bn.isFinite()){throw new Error(label+' 不是有限数值');}
+    return bn;
+  }
+
+  function countDigits(str){
+    var s=String(str).replace(/^-/,'').replace(/\./,'');
+    return s.length;
+  }
+
+  function doCalc(){
+    applyPrecision();
+    var op=opSelect.value;
+    var a;
+    try{a=makeBN(operandA.value,'操作数 A');}
+    catch(e){setStatus(e.message,'error');return;}
+
+    var result;
+    try{
+      if(op==='sqrt'){
+        if(a.isNegative())throw new Error('开方操作数不能为负数');
+        result=a.sqrt();
+      }else{
+        var b=makeBN(operandB.value,'操作数 B');
+        if(op==='plus')result=a.plus(b);
+        else if(op==='minus')result=a.minus(b);
+        else if(op==='times')result=a.times(b);
+        else if(op==='div'){
+          if(b.isZero())throw new Error('除数不能为 0');
+          result=a.div(b);
+        }
+        else if(op==='mod'){
+          if(b.isZero())throw new Error('取模的除数不能为 0');
+          result=a.modulo(b);
+        }
+        else if(op==='pow'){
+          if(!b.isInteger())throw new Error('幂运算指数需为整数');
+          if(b.isNegative()&&a.isZero())throw new Error('0 的负指数无意义');
+          result=a.pow(b);
+        }
+        else throw new Error('未知运算');
+      }
+    }catch(e){setStatus('计算失败：'+e.message,'error');return;}
+
+    var rawStr=result.toFixed();
+    var fmtStr;
+    try{fmtStr=result.toFormat();}catch(e){fmtStr=rawStr;}
+    resultOutput.textContent=fmtStr;
+    resultMeta.textContent='共 '+countDigits(rawStr)+' 位 · 精度 '+precisionInput.value+' 位';
+    setStatus('计算完成 ✓','success');
+  }
+
+  // ---------- 阶乘 ----------
+  function factorial(n){
+    if(!n.isInteger()||n.isNegative())throw new Error('阶乘需为非负整数');
+    var limit=10000;
+    if(n.isGreaterThan(new BigNumber(limit)))throw new Error('阶乘数过大，建议 N ≤ '+limit);
+    var r=new BigNumber(1);
+    var i=new BigNumber(2);
+    var one=new BigNumber(1);
+    while(i.isLessThanOrEqualTo(n)){
+      r=r.times(i);
+      i=i.plus(one);
+    }
+    return r;
+  }
+  factBtn.addEventListener('click',function(){
+    var raw=factInput.value.trim();
+    if(!raw){factResult.innerHTML='<span style="color:#ef4444;">请输入非负整数</span>';return;}
+    try{
+      var n=new BigNumber(raw);
+      var r=factorial(n);
+      var fmt;
+      try{fmt=r.toFormat();}catch(e){fmt=r.toFixed();}
+      factResult.innerHTML='<span style="color:#16a34a;">'+escapeHtml(n.toFixed())+'! =</span> <button class="copy-mini" data-copy="'+escapeHtml(r.toFixed())+'">复制</button><br><span style="font-family:Courier New,monospace;word-break:break-all;display:inline-block;margin-top:4px;font-size:0.82em;">'+escapeHtml(fmt)+'</span><br><span style="color:#94a3b8;">共 '+countDigits(r.toFixed())+' 位</span>';
+    }catch(e){factResult.innerHTML='<span style="color:#ef4444;">'+escapeHtml(e.message)+'</span>';}
+  });
+
+  // ---------- 素数判定（Miller-Rabin）----------
+  function modPow(base,exp,mod){
+    var result=new BigNumber(1);
+    base=base.modulo(mod);
+    var zero=new BigNumber(0),two=new BigNumber(2),one=new BigNumber(1);
+    while(exp.isGreaterThan(zero)){
+      if(exp.modulo(two).isEqualTo(one)){result=result.times(base).modulo(mod);}
+      exp=exp.idiv(two);
+      if(exp.isGreaterThan(zero)){base=base.times(base).modulo(mod);}
+    }
+    return result;
+  }
+  function isPrimeBN(n){
+    if(!n.isInteger())return {prime:false,reason:'非整数，无法判定',cls:'neutral'};
+    if(n.isNegative())return {prime:false,reason:'负数不是素数',cls:'composite'};
+    if(n.isLessThan(2))return {prime:false,reason:'小于 2，不是素数',cls:'composite'};
+    var two=new BigNumber(2),three=new BigNumber(3);
+    if(n.isEqualTo(two)||n.isEqualTo(three))return {prime:true,reason:'小素数',cls:'prime'};
+    if(n.modulo(two).isEqualTo(0))return {prime:false,reason:'能被 2 整除',cls:'composite'};
+    var smallPrimes=[3,5,7,11,13,17,19,23,29,31,37];
+    for(var i=0;i<smallPrimes.length;i++){
+      var p=new BigNumber(smallPrimes[i]);
+      if(n.isEqualTo(p))return {prime:true,reason:'小素数',cls:'prime'};
+      if(n.modulo(p).isEqualTo(0))return {prime:false,reason:'能被 '+smallPrimes[i]+' 整除',cls:'composite'};
+    }
+    // Miller-Rabin
+    var d=n.minus(1),r=0;
+    var one=new BigNumber(1),zero=new BigNumber(0);
+    while(d.modulo(two).isEqualTo(zero)){d=d.idiv(two);r++;}
+    var bases=[2,3,5,7,11,13,17,19,23,29,31,37];
+    for(var b=0;b<bases.length;b++){
+      var a=new BigNumber(bases[b]);
+      if(n.isEqualTo(a))continue;
+      var x=modPow(a,d,n);
+      if(x.isEqualTo(one)||x.isEqualTo(n.minus(1)))continue;
+      var composite=true;
+      for(var k=0;k<r-1;k++){
+        x=x.times(x).modulo(n);
+        if(x.isEqualTo(n.minus(1))){composite=false;break;}
+      }
+      if(composite)return {prime:false,reason:'Miller-Rabin 判定为合数（基数 '+bases[b]+'）',cls:'composite'};
+    }
+    return {prime:true,reason:'Miller-Rabin 概率性判定为素数（12 个基数）',cls:'prime'};
+  }
+  primeBtn.addEventListener('click',function(){
+    var raw=primeInput.value.trim();
+    if(!raw){primeResult.innerHTML='<span style="color:#ef4444;">请输入整数</span>';return;}
+    try{
+      var n=new BigNumber(raw);
+      var res=isPrimeBN(n);
+      primeResult.innerHTML='<span class="pill '+res.cls+'">'+(res.prime?'素数':'合数')+'</span> '+escapeHtml(n.toFixed())+' <button class="copy-mini" data-copy="'+escapeHtml(n.toFixed())+'">复制</button><br><span style="color:#64748b;">'+escapeHtml(res.reason)+'</span>';
+    }catch(e){primeResult.innerHTML='<span style="color:#ef4444;">解析失败：'+escapeHtml(e.message)+'</span>';}
+  });
+
+  // 复制委托
+  document.addEventListener('click',function(e){
+    var btn=e.target.closest('.copy-mini');if(!btn)return;
+    var text=btn.getAttribute('data-copy');
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){setStatus('已复制到剪贴板 ✓','success');}).catch(fallback);
+    }else{fallback();}
+    function fallback(){
+      var ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+      document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}
+      document.body.removeChild(ta);setStatus('已复制到剪贴板 ✓','success');
+    }
+  });
+
+  opSelect.addEventListener('change',function(){
+    if(opSelect.value==='sqrt'){operandB.disabled=true;operandB.placeholder='开方仅使用操作数 A';}
+    else{operandB.disabled=false;operandB.placeholder='如 98765432109876543210 或 0.2';}
+  });
+
+  exampleBtn.addEventListener('click',function(){
+    operandA.value='0.1';operandB.value='0.2';opSelect.value='plus';precisionInput.value='20';
+    operandB.disabled=false;
+    doCalc();
+  });
+  clearBtn.addEventListener('click',function(){
+    operandA.value='';operandB.value='';precisionInput.value='20';opSelect.value='plus';operandB.disabled=false;
+    resultOutput.textContent='（结果将显示于此）';resultMeta.textContent='';
+    factResult.textContent='输入整数后点击计算，结果支持任意精度。';
+    primeResult.textContent='输入整数后点击判定，支持超大整数。';
+    setStatus('已清空，输入操作数后选择运算','info');
+  });
+  calcBtn.addEventListener('click',doCalc);
+  operandA.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();doCalc();}});
+  operandB.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();doCalc();}});
+
+  applyPrecision();
+  setStatus('输入操作数并选择运算后点击计算','info');
+})();
+initSidebar('work');
+</script>
+</body></html>

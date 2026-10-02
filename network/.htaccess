@@ -1,0 +1,37 @@
+RewriteEngine On
+
+# 工具路径简写：/network/工具名 → /network/工具名.html
+RewriteRule ^dns-tool$ dns-tool.html [L]
+RewriteRule ^host-port-tool$ host-port-tool.html [L]
+RewriteRule ^host-tcp-tool$ host-tcp-tool.html [L]
+RewriteRule ^html-congdingxiang-tool$ html-congdingxiang-tool.html [L]
+RewriteRule ^html-icp-tool$ html-icp-tool.html [L]
+RewriteRule ^html-ssl-tool$ html-ssl-tool.html [L]
+RewriteRule ^http-status-tool$ http-status-tool.html [L]
+RewriteRule ^ip-tool$ ip-tool.html [L]
+RewriteRule ^mime-tool$ mime-tool.html [L]
+RewriteRule ^phone-tool$ phone-tool.html [L]
+RewriteRule ^ping-tool$ ping-tool.html [L]
+RewriteRule ^subnet-calc-tool$ subnet-calc-tool.html [L]
+RewriteRule ^timestamp-tool$ timestamp-tool.html [L]
+RewriteRule ^ua-parse-tool$ ua-parse-tool.html [L]
+RewriteRule ^url-encode-tool$ url-encode-tool.html [L]
+RewriteRule ^whois-state-tool$ whois-state-tool.html [L]
+RewriteRule ^ipv6-subnet-tool$ ipv6-subnet-tool.html [L]
+
+# 2026-08 新增工具
+RewriteRule ^cors-check-tool$ cors-check-tool.html [L]
+RewriteRule ^webrtc-p2p-tool$ webrtc-p2p-tool.html [L]
+
+# 补全简写规则
+RewriteRule ^ip-validate-tool$ ip-validate-tool.html [L]
+RewriteRule ^mqtt-tool$ mqtt-tool.html [L]
+RewriteRule ^serial-terminal-tool$ serial-terminal-tool.html [L]
+RewriteRule ^dns-doh-tool$ dns-doh-tool.html [L]
+RewriteRule ^http-test-tool$ http-test-tool.html [L]
+RewriteRule ^source-view-tool$ source-view-tool.html [L]
+RewriteRule ^websocket-tool$ websocket-tool.html [L]
+RewriteRule ^crypto-check-tool$ crypto-check-tool.html [L]
+RewriteRule ^mac-lookup-tool$ mac-lookup-tool.html [L]
+RewriteRule ^http-header-tool$ http-header-tool.html [L]
+RewriteRule ^cookie-viewer-tool$ cookie-viewer-tool.html [L]

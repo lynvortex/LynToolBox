@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>图表生成器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线图表生成器，纯前端使用Chart.js生成柱状图、折线图、饼图、雷达图等，支持导出PNG，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<script src="../assets/chart.umd.min.js"></script>
+<style>
+.chart-wrap{position:relative;width:100%;height:380px;background:#fff;border:1px solid #e0e6ed;border-radius:8px;padding:10px;margin-bottom:16px;}
+.chart-wrap.empty{display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:0.85em;background:#f8fafc;}
+.full-item{margin-bottom:20px;}
+.full-item label{display:block;font-size:0.85em;color:#64748b;font-weight:600;margin-bottom:6px;}
+.type-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px;}
+.type-btn{padding:10px 4px;border:1px solid #e0e6ed;border-radius:8px;background:#fff;cursor:pointer;font-size:0.8em;color:#64748b;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:4px;font-family:inherit;}
+.type-btn .ic{font-size:1.2em;}
+.type-btn:hover{border-color:#4a90e2;color:#4a90e2;}
+.type-btn.active{border-color:#4a90e2;background:#ebf5ff;color:#4a90e2;font-weight:600;}
+@media(max-width:600px){.type-grid{grid-template-columns:repeat(3,1fr);}.chart-wrap{height:300px;}}
+.hint-code{font-size:0.78em;color:#94a3b8;margin-top:4px;font-family:'Courier New',monospace;}
+</style>
+    <meta name="keywords" content="图表生成器,在线图表生成器,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/chart-tool.html" />
+    <meta property="og:title" content="图表生成器" />
+    <meta property="og:description" content="在线图表生成器，纯前端使用Chart.js生成柱状图、折线图、饼图、雷达图等，支持导出PNG，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/chart-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="图表生成器" />
+    <meta itemprop="description" content="在线图表生成器，纯前端使用Chart.js生成柱状图、折线图、饼图、雷达图等，支持导出PNG，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "图表生成器",
+                "item": "https://box.lynvortex.top/work/chart-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "图表生成器",
+        "url": "https://box.lynvortex.top/work/chart-tool.html",
+        "description": "Chart.js生成柱状/折线/饼图/雷达图，导出PNG",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+  <div class="tool-container">
+    <div class="tool-header"><h1>📊 图表生成器</h1><p>纯前端使用 Chart.js 生成多种图表，实时预览并导出 PNG，数据完全本地化</p></div>
+
+    <div class="type-grid" id="typeGrid">
+      <button class="type-btn active" data-type="bar"><span class="ic">📊</span>柱状图</button>
+      <button class="type-btn" data-type="line"><span class="ic">📈</span>折线图</button>
+      <button class="type-btn" data-type="pie"><span class="ic">🥧</span>饼图</button>
+      <button class="type-btn" data-type="doughnut"><span class="ic">🍩</span>环形图</button>
+      <button class="type-btn" data-type="radar"><span class="ic">🕸️</span>雷达图</button>
+      <button class="type-btn" data-type="polarArea"><span class="ic">🎯</span>极坐标</button>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-item">
+        <label>图表标题</label>
+        <input type="text" id="titleInput" placeholder="可选，留空则不显示标题"/>
+      </div>
+      <div class="form-item">
+        <label>配色方案</label>
+        <select id="paletteSelect">
+          <option value="default">默认蓝</option>
+          <option value="vibrant">活力多彩</option>
+          <option value="pastel">柔粉马卡龙</option>
+          <option value="ocean">海洋渐变</option>
+          <option value="sunset">日落暖调</option>
+          <option value="forest">森林绿</option>
+          <option value="mono">单色蓝阶</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="full-item">
+      <label>数据（JSON 格式）</label>
+      <textarea class="code-area" id="dataInput" spellcheck="false" placeholder='{"labels":["一月","二月","三月","四月","五月","六月"],"datasets":[{"label":"销售额","data":[12,19,8,15,22,18]},{"label":"利润","data":[5,8,3,6,10,7]}]}'></textarea>
+      <div class="hint-code">格式：{"labels":[...], "datasets":[{"label":"名称","data":[...]}]}</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="renderBtn">渲染图表</button>
+      <button class="btn btn-outline" id="exportBtn">导出 PNG</button>
+      <button class="btn btn-ghost" id="exampleBtn">加载示例</button>
+      <button class="btn btn-ghost" id="clearBtn">清空</button>
+    </div>
+
+    <div id="statusBar" class="status-bar info">选择图表类型，输入数据后点击渲染图表</div>
+
+    <div class="chart-wrap empty" id="chartWrap"><span>图表预览区（渲染后显示）</span></div>
+
+    <footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+  </div>
+  <div class="info-cards">
+    <div class="info-card"><h3>📦 功能说明</h3><p>基于 Chart.js v4 在浏览器本地绘制常见数据图表，支持多数据集、多种配色与实时预览，可一键导出为 PNG 图片。</p><div class="feature-chips"><span class="feature-chip">柱状图</span><span class="feature-chip">折线图</span><span class="feature-chip">饼图</span><span class="feature-chip">雷达图</span><span class="feature-chip">导出PNG</span><span class="feature-chip">离线本地</span></div></div>
+    <div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>数据需为合法 JSON，包含 <strong>labels</strong>（标签数组）与 <strong>datasets</strong>（数据集数组）。</li><li>每个数据集需包含 <strong>label</strong>（名称）与 <strong>data</strong>（数值数组），数组长度尽量与 labels 一致。</li><li>饼图/环形图/极坐标图以单个数据集的各分项占比展示，颜色按数据点分配。</li><li>修改类型、标题、配色会自动重新渲染；导出 PNG 背景为白色。</li><li>所有计算与渲染均在浏览器本地完成，<strong>数据不上传</strong>。</li></ul></div>
+    <div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+      <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+      <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+  </div>
+</div></main>
+<script>
+(function(){
+  'use strict';
+  if(typeof Chart==='undefined'){document.getElementById('statusBar').textContent='Chart.js 库未加载，请刷新页面重试';return;}
+  Chart.defaults.font.family="'PingFang SC', -apple-system, sans-serif";
+
+  var typeGrid=document.getElementById('typeGrid');
+  var titleInput=document.getElementById('titleInput');
+  var paletteSelect=document.getElementById('paletteSelect');
+  var dataInput=document.getElementById('dataInput');
+  var renderBtn=document.getElementById('renderBtn');
+  var exportBtn=document.getElementById('exportBtn');
+  var exampleBtn=document.getElementById('exampleBtn');
+  var clearBtn=document.getElementById('clearBtn');
+  var statusBar=document.getElementById('statusBar');
+  var chartWrap=document.getElementById('chartWrap');
+
+  var PALETTES={
+    default:['#4a90e2','#50c878','#f5a623','#e74c3c','#9b59b6','#1abc9c','#34495e','#f39c12'],
+    vibrant:['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#8DD17E','#E7E9ED'],
+    pastel:['#A8DADC','#FFB7B2','#B5EAD7','#C7CEEA','#FFDAC1','#E2F0CB','#F3C6D5','#D4F0F0'],
+    ocean:['#003f5c','#2f4b7c','#665191','#a05195','#d45087','#f95d6a','#ff7c43','#ffa600'],
+    sunset:['#ff6e54','#ff9e54','#ffba54','#8676ff','#6a5acd','#5578d3','#42a4e2','#2ec4b6'],
+    forest:['#2d6a4f','#52b788','#74c69d','#95d5b2','#b7e4c7','#40916c','#1b4332','#081c15'],
+    mono:['#4a90e2','#6ba5e8','#8dbfef','#aecff5','#cfe2fb','#3a7bd5','#2c6bbd','#1f5aa3']
+  };
+  var currentType='bar';
+  var chartInstance=null;
+
+  function hexToRgba(hex,alpha){
+    var h=hex.replace('#','');
+    if(h.length===3){h=h.split('').map(function(c){return c+c;}).join('');}
+    var r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16);
+    return 'rgba('+r+','+g+','+b+','+alpha+')';
+  }
+
+  function buildConfig(type,title,data,paletteName){
+    var colors=PALETTES[paletteName]||PALETTES.default;
+    var labels=data.labels||[];
+    var datasets=(data.datasets||[]).map(function(ds,i){
+      var c=colors[i%colors.length];
+      var bg,bd,fill=false,tension=0;
+      if(type==='pie'||type==='doughnut'||type==='polarArea'){
+        bg=(ds.data||[]).map(function(_,j){return colors[j%colors.length];});
+        bd='#ffffff';
+      }else if(type==='line'){
+        bg=hexToRgba(c,0.15);bd=c;fill=true;tension=0.35;
+      }else if(type==='radar'){
+        bg=hexToRgba(c,0.2);bd=c;fill=true;
+      }else{
+        bg=hexToRgba(c,0.75);bd=c;
+      }
+      var obj={label:ds.label||('数据集'+(i+1)),data:ds.data||[],backgroundColor:bg,borderColor:bd,borderWidth:2,fill:fill};
+      if(type==='line'){obj.tension=tension;obj.pointRadius=3;obj.pointHoverRadius=5;}
+      return obj;
+    });
+    var scales={};
+    if(type==='radar'||type==='polarArea'){scales={r:{beginAtZero:true}};}
+    else if(type==='bar'||type==='line'){scales={y:{beginAtZero:true}};}
+    return {
+      type:type,
+      data:{labels:labels,datasets:datasets},
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{title:{display:!!title,text:title},legend:{position:(type==='pie'||type==='doughnut'||type==='polarArea')?'right':'top'}},
+        scales:scales
+      }
+    };
+  }
+
+  function renderChart(silent){
+    var raw=dataInput.value.trim();
+    if(!raw){if(!silent)setStatus('请输入数据 JSON','error');return false;}
+    var data;
+    try{data=JSON.parse(raw);}
+    catch(e){if(!silent)setStatus('数据 JSON 解析失败：'+e.message,'error');return false;}
+    if(!data.datasets||!Array.isArray(data.datasets)||data.datasets.length===0){if(!silent)setStatus('数据需包含至少一个 datasets 数据集','error');return false;}
+    try{
+      if(chartInstance){chartInstance.destroy();chartInstance=null;}
+      chartWrap.classList.remove('empty');
+      chartWrap.innerHTML='<canvas id="chartCanvas"></canvas>';
+      var ctx=document.getElementById('chartCanvas').getContext('2d');
+      var cfg=buildConfig(currentType,titleInput.value.trim(),data,paletteSelect.value);
+      chartInstance=new Chart(ctx,cfg);
+      if(!silent)setStatus('图表渲染成功 ✓  共 '+data.datasets.length+' 个数据集','success');
+      return true;
+    }catch(e){
+      if(chartInstance){chartInstance.destroy();chartInstance=null;}
+      if(!silent)setStatus('图表渲染失败：'+e.message,'error');
+      return false;
+    }
+  }
+
+  function exportPNG(){
+    if(!chartInstance){setStatus('请先渲染图表再导出','error');return;}
+    try{
+      var src=chartInstance.canvas;
+      var tmp=document.createElement('canvas');
+      tmp.width=src.width;tmp.height=src.height;
+      var tctx=tmp.getContext('2d');
+      tctx.fillStyle='#ffffff';
+      tctx.fillRect(0,0,tmp.width,tmp.height);
+      tctx.drawImage(src,0,0);
+      var url=tmp.toDataURL('image/png');
+      var a=document.createElement('a');
+      a.href=url;
+      a.download='chart-'+currentType+'-'+Date.now()+'.png';
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+      setStatus('PNG 已导出 ✓','success');
+    }catch(e){setStatus('导出失败：'+e.message,'error');}
+  }
+
+  function loadExample(){
+    dataInput.value=JSON.stringify({labels:['一月','二月','三月','四月','五月','六月'],datasets:[{label:'销售额',data:[12,19,8,15,22,18]},{label:'利润',data:[5,8,3,6,10,7]}]},null,2);
+    titleInput.value='上半年经营数据';
+    paletteSelect.value='default';
+    renderChart(false);
+  }
+
+  function clearAll(){
+    dataInput.value='';titleInput.value='';
+    if(chartInstance){chartInstance.destroy();chartInstance=null;}
+    chartWrap.classList.add('empty');
+    chartWrap.innerHTML='<span>图表预览区（渲染后显示）</span>';
+    setStatus('已清空，选择图表类型后输入数据','info');
+  }
+
+  typeGrid.addEventListener('click',function(e){
+    var btn=e.target.closest('.type-btn');if(!btn)return;
+    var items=typeGrid.querySelectorAll('.type-btn');
+    for(var i=0;i<items.length;i++){items[i].classList.remove('active');}
+    btn.classList.add('active');
+    currentType=btn.getAttribute('data-type');
+    if(dataInput.value.trim()){renderChart(true);}
+  });
+  titleInput.addEventListener('input',function(){if(dataInput.value.trim())renderChart(true);});
+  paletteSelect.addEventListener('change',function(){if(dataInput.value.trim())renderChart(true);});
+  var debounceTimer=null;
+  dataInput.addEventListener('input',function(){
+    clearTimeout(debounceTimer);
+    debounceTimer=setTimeout(function(){renderChart(true);},400);
+  });
+
+  renderBtn.addEventListener('click',function(){renderChart(false);});
+  exportBtn.addEventListener('click',exportPNG);
+  exampleBtn.addEventListener('click',loadExample);
+  clearBtn.addEventListener('click',clearAll);
+
+  setStatus('选择图表类型，输入数据后点击渲染图表','info');
+})();
+initSidebar('work');
+</script>
+</body></html>

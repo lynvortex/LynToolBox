@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HTML/CSS/JS 在线运行 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="HTML/CSS/JS 在线运行沙盒，实时预览前端代码效果，支持 console 输出捕获，纯前端 iframe 沙盒隔离。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+        .editor-tabs { display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap; }
+        .editor-tab { padding: 8px 18px; border: 1px solid #e0e6ed; border-bottom: none; border-radius: 8px 8px 0 0; background: #f8fafc; color: #64748b; cursor: pointer; font-size: 0.85em; font-weight: 600; }
+        .editor-tab.active { background: #4a90e2; color: #fff; border-color: #4a90e2; }
+        .editor-pane { display: none; }
+        .editor-pane.active { display: block; }
+        .split-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        @media (max-width: 768px) { .split-row { grid-template-columns: 1fr; } }
+        .pane-card { background: #fff; border: 1px solid #e1e4e8; border-radius: 0 10px 10px 10px; overflow: hidden; }
+        .pane-head { padding: 8px 12px; background: #f8fafc; border-bottom: 1px solid #e1e4e8; font-size: 0.8em; color: #64748b; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+        .pane-head .ph-btn { font-size: 0.92em; color: #4a90e2; cursor: pointer; background: none; border: none; }
+        textarea.ed { width: 100%; min-height: 300px; border: none; padding: 12px 14px; font-family: 'Courier New', monospace; font-size: 0.85em; outline: none; resize: vertical; color: #1e293b; }
+        .preview-frame { width: 100%; min-height: 300px; border: none; background: #fff; }
+        .console-area { background: #0f172a; color: #e2e8f0; border-radius: 8px; padding: 12px 14px; font-family: 'Courier New', monospace; font-size: 0.82em; min-height: 120px; max-height: 220px; overflow: auto; white-space: pre-wrap; word-break: break-all; }
+        .console-line { padding: 2px 0; border-bottom: 1px solid #1e293b; }
+        .console-line.err { color: #fca5a5; }
+        .console-line.info { color: #93c5fd; }
+        .console-line.warn { color: #fcd34d; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="HTML/CSS/JS沙盒,在线HTML/CSS/JS沙盒,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/code-run-tool.html" />
+    <meta property="og:title" content="HTML/CSS/JS 在线运行" />
+    <meta property="og:description" content="HTML/CSS/JS 在线运行沙盒，实时预览前端代码效果，支持 console 输出捕获，纯前端 iframe 沙盒隔离。" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/code-run-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="HTML/CSS/JS 在线运行" />
+    <meta itemprop="description" content="HTML/CSS/JS 在线运行沙盒，实时预览前端代码效果，支持 console 输出捕获，纯前端 iframe 沙盒隔离。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "HTML/CSS/JS沙盒",
+                "item": "https://box.lynvortex.top/work/code-run-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "HTML/CSS/JS沙盒",
+        "url": "https://box.lynvortex.top/work/code-run-tool.html",
+        "description": "在线编写运行HTML/CSS/JS代码，实时预览效果，支持全屏",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>▶️ HTML/CSS/JS 在线运行</h1>
+                <p>实时编辑并预览前端代码，捕获 console 输出，iframe 沙盒隔离，纯前端运行</p>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn-primary" id="runBtn">▶ 运行</button>
+                <button class="btn btn-outline" id="autoRunBtn">⚡ 自动运行：关</button>
+                <button class="btn btn-ghost" id="resetBtn">↺ 恢复示例</button>
+                <button class="btn btn-ghost" id="clearConsoleBtn">🧹 清空控制台</button>
+            </div>
+
+            <div class="split-row">
+                <div>
+                    <div class="editor-tabs">
+                        <div class="editor-tab active" data-pane="html">HTML</div>
+                        <div class="editor-tab" data-pane="css">CSS</div>
+                        <div class="editor-tab" data-pane="js">JS</div>
+                    </div>
+                    <div class="pane-card">
+                        <div class="pane-head"><span id="paneLabel">HTML</span></div>
+                        <textarea class="ed" id="htmlPane" spellcheck="false"></textarea>
+                        <textarea class="ed" id="cssPane" spellcheck="false" style="display:none;"></textarea>
+                        <textarea class="ed" id="jsPane" spellcheck="false" style="display:none;"></textarea>
+                    </div>
+                </div>
+                <div>
+                    <div class="pane-card">
+                        <div class="pane-head"><span>预览结果</span><button class="ph-btn" id="openNewBtn">新窗口打开 ↗</button></div>
+                        <iframe class="preview-frame" id="preview" sandbox="allow-scripts allow-modals allow-popups"></iframe>
+                    </div>
+                    <div class="pane-card" style="margin-top:14px;">
+                        <div class="pane-head"><span>控制台输出</span></div>
+                        <div class="console-area" id="consoleArea"><div class="console-line" style="color:#94a3b8;">运行代码后，console.log / error / warn 输出将显示在此处...</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 在线代码沙箱</h3>
+                <p>在浏览器中实时运行 HTML/CSS/JS 代码并预览效果</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">HTML</span>
+                    <span class="feature-chip">CSS</span>
+                    <span class="feature-chip">JavaScript</span>
+                    <span class="feature-chip">iframe沙箱</span>
+                    <span class="feature-chip">实时预览</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>使用 iframe 沙箱隔离运行环境，安全可靠</li>
+                    <li>支持实时编辑和预览</li>
+                    <li>代码仅在浏览器本地执行，不上传服务器</li>
+                    <li>适合快速原型验证和代码调试</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const SAMPLE = {
+        html: '<div class="card">\n  <h2>Hello 绘萤者</h2>\n  <p>点击下方按钮试试：</p>\n  <button onclick="greet()">点我</button>\n  <p id="out"></p>\n</div>',
+        css: 'body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#f0f4ff;}\n.card{background:#fff;padding:28px 32px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.08);text-align:center;}\nh2{color:#4a90e2;margin:0 0 8px;}\nbutton{background:#4a90e2;color:#fff;border:none;padding:10px 22px;border-radius:8px;font-size:15px;cursor:pointer;}\nbutton:hover{background:#3a7bd5;}\n#out{color:#16a34a;font-weight:600;margin-top:14px;}',
+        js: 'function greet(){\n  const n=new Date().toLocaleTimeString("zh-CN");\n  document.getElementById("out").textContent="点击时间："+n;\n  console.log("greet called at", n);\n  console.warn("这是一条警告示例");\n}\nconsole.info("页面已加载，代码运行成功 ✓");'
+    };
+
+    const htmlPane = document.getElementById('htmlPane');
+    const cssPane = document.getElementById('cssPane');
+    const jsPane = document.getElementById('jsPane');
+    const preview = document.getElementById('preview');
+    const consoleArea = document.getElementById('consoleArea');
+    const paneLabel = document.getElementById('paneLabel');
+    let autoRun = false;
+    let runTimer = null;
+
+    const loadSample = () => { htmlPane.value = SAMPLE.html; cssPane.value = SAMPLE.css; jsPane.value = SAMPLE.js; };
+    loadSample();
+
+    document.querySelectorAll('.editor-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.editor-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            const pane = tab.dataset.pane;
+            htmlPane.style.display = pane === 'html' ? 'block' : 'none';
+            cssPane.style.display = pane === 'css' ? 'block' : 'none';
+            jsPane.style.display = pane === 'js' ? 'block' : 'none';
+            paneLabel.textContent = pane.toUpperCase();
+        });
+    });
+
+    const log = (args, type) => {
+        const line = document.createElement('div');
+        line.className = 'console-line ' + (type || '');
+        const text = args.map(a => {
+            try { return typeof a === 'object' ? JSON.stringify(a) : String(a); } catch (e) { return String(a); }
+        }).join(' ');
+        line.textContent = (type === 'err' ? '✗ ' : type === 'warn' ? '⚠ ' : type === 'info' ? 'ℹ ' : '› ') + text;
+        if (consoleArea.firstChild && consoleArea.firstChild.style && consoleArea.firstChild.style.color === 'rgb(148, 163, 184)') consoleArea.innerHTML = '';
+        consoleArea.appendChild(line);
+        consoleArea.scrollTop = consoleArea.scrollHeight;
+    };
+
+    const buildDoc = () => {
+        const consoleHook = `<script>
+            (function(){
+                const send=(args,type)=>parent.postMessage({__console:true,type:type||'log',args:args.map(a=>{try{if(typeof a==='object')return JSON.stringify(a);return String(a);}catch(e){return String(a);}})},'*');
+                ['log','info','warn','error','debug'].forEach(m=>{const o=console[m];console[m]=function(){send([].slice.call(arguments),m);o.apply(console,arguments);};});
+                window.onerror=(msg,src,line,col)=>{send([msg+' (line '+line+':'+col+')'],'error');};
+            })();
+        <\/script>`;
+        return '<!DOCTYPE html><html><head><meta charset="utf-8"><style>' + cssPane.value + '</style></head><body>' + htmlPane.value + consoleHook + '<script>' + jsPane.value + '<\/script></body></html>';
+    };
+
+    const run = () => {
+        preview.srcdoc = buildDoc();
+    };
+
+    window.addEventListener('message', (e) => {
+        if (e.data && e.data.__console) {
+            const t = e.data.type === 'error' ? 'err' : e.data.type === 'warn' ? 'warn' : e.data.type === 'info' || e.data.type === 'debug' ? 'info' : '';
+            log(e.data.args, t);
+        }
+    });
+
+    document.getElementById('runBtn').addEventListener('click', run);
+    document.getElementById('clearConsoleBtn').addEventListener('click', () => { consoleArea.innerHTML = '<div class="console-line" style="color:#94a3b8;">控制台已清空...</div>'; });
+    document.getElementById('resetBtn').addEventListener('click', () => { loadSample(); run(); });
+    document.getElementById('autoRunBtn').addEventListener('click', (e) => {
+        autoRun = !autoRun;
+        e.target.textContent = '⚡ 自动运行：' + (autoRun ? '开' : '关');
+        e.target.classList.toggle('btn-primary', autoRun);
+        e.target.classList.toggle('btn-outline', !autoRun);
+    });
+    document.getElementById('openNewBtn').addEventListener('click', () => {
+        const w = window.open('', '_blank');
+        if (w) { w.document.open(); w.document.write(buildDoc()); w.document.close(); }
+    });
+
+    [htmlPane, cssPane, jsPane].forEach(ed => ed.addEventListener('input', () => {
+        if (!autoRun) return;
+        clearTimeout(runTimer);
+        runTimer = setTimeout(run, 500);
+    }));
+
+    run();
+    initSidebar('work');
+</script>
+</body>
+</html>

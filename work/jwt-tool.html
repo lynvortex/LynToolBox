@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JWT 在线解码 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="JWT在线解码，JWT Token 在线解码与验证，查看 Header/Payload 详情。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', -apple-system, sans-serif;
+            background: #f4f7f9;
+            margin: 0;
+            display: flex;
+            height: 100vh; overflow: hidden;
+            color: #333;
+        }
+        .mobile-header {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: #fff; padding: 0 20px; align-items: center;
+            justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+        }
+        .mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+        .mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+        .menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #4a90e2; }
+        .sidebar {
+            width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+            display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+            transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+            position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item {
+            display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+            transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+        }
+        .category-item:hover, .category-item.active { background: #ebf5ff; color: #4a90e2; border-left-color: #4a90e2; }
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+        .tool-container {
+            width: 100%;
+            max-width: 960px;
+            background: #fff; border-radius: 12px;
+            padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+        }
+        .tool-header { text-align: center; margin-bottom: 28px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+        .form-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 20px; }
+        .form-item { display: flex; flex-direction: column; gap: 6px; }
+        .form-item label { font-size: 0.85em; color: #64748b; font-weight: 600; }
+        .form-item textarea {
+            padding: 10px 14px; border: 1px solid #e0e6ed; border-radius: 8px;
+            font-size: 0.9em; outline: none; transition: 0.2s; background: #fff;
+            font-family: 'Courier New', monospace; font-size: 0.85em;
+            min-height: 80px; resize: vertical;
+        }
+        .form-item textarea:focus { border-color: #4a90e2; }
+        .hint { font-size: 0.78em; color: #94a3b8; margin-top: 4px; }
+        .btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; align-items: center; }
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em;
+            font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap;
+        }
+        .btn-primary { background: #4a90e2; color: white; }
+        .btn-primary:hover { background: #3a7bd5; }
+        .btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .btn-outline { background: transparent; color: #4a90e2; border: 1px solid #4a90e2; }
+        .btn-outline:hover { background: #4a90e2; color: white; }
+        .btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+        .btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+        .btn-success { background: #22c55e; color: white; }
+        .btn-success:hover { background: #16a34a; }
+        .status-bar {
+            min-height: 20px; font-size: 0.85em;
+            padding: 8px 12px; border-radius: 6px; margin-bottom: 16px;
+        }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+        .result-box {
+            display: none;
+        }
+        .jwt-section {
+            background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 8px;
+            padding: 14px 16px; margin-bottom: 14px;
+        }
+        .jwt-section:last-child { margin-bottom: 0; }
+        .jwt-section-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 8px; flex-wrap: wrap; gap: 6px;
+        }
+        .jwt-section-title {
+            font-size: 0.82em; font-weight: 700; color: #475569;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .jwt-section-title .badge {
+            display: inline-block; padding: 1px 8px; border-radius: 10px;
+            font-size: 0.75em; font-weight: 600; color: #fff;
+        }
+        .badge-header { background: #4a90e2; }
+        .badge-payload { background: #22c55e; }
+        .badge-signature { background: #f59e0b; }
+        .jwt-section-body {
+            font-family: 'Courier New', monospace; font-size: 0.85em;
+            color: #1e293b; word-break: break-all; line-height: 1.6;
+            white-space: pre-wrap;
+            background: #fff; border: 1px solid #eaeef3; border-radius: 6px;
+            padding: 12px; max-height: 300px; overflow-y: auto;
+        }
+        .jwt-section-actions { display: flex; gap: 6px; }
+        .jwt-section-actions .btn {
+            padding: 4px 10px; font-size: 0.75em; border-radius: 5px;
+        }
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+        .footer p { margin: 0; }
+        .footer a { color: #4a90e2; text-decoration: none; }
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+        .info-cards {
+            width: 100%;
+            max-width: 960px;
+            display: flex; flex-direction: column; gap: 18px; margin-top: 4px;
+        }
+        .info-card {
+            background: #fff; border-radius: 12px; padding: 22px 24px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06); border: 1px solid #f0f2f5;
+        }
+        .info-card h3 {
+            margin: 0 0 10px 0; font-size: 1em; color: #2c3e50; font-weight: 600;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .info-card p { margin: 0 0 10px 0; font-size: 0.82em; color: #64748b; }
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip {
+            background: #e0f2fe; color: #0369a1;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace;
+        }
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a {
+            font-size: 0.85em; color: #4a90e2; text-decoration: none;
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s;
+        }
+        .tool-links a:hover { background: #e2e8f0; }
+        @media (max-width: 768px) {
+            body { display: block; height: auto; overflow: auto; }
+            .mobile-header { display: flex; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .close-sidebar { display: block; }
+            .main-content { display: block; }
+            .main-scroll { padding: 72px 16px 32px; gap: 20px;  }
+            .tool-container { padding: 24px 16px; border-radius: 10px; }
+            .tool-header h1 { font-size: 1.3em; }
+            .overlay.active { display: block; }
+        }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="JWT在线解码,在线JWT在线解码,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/jwt-tool.html" />
+    <meta property="og:title" content="JWT 在线解码" />
+    <meta property="og:description" content="JWT在线解码，JWT Token 在线解码与验证，查看 Header/Payload 详情。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/jwt-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="JWT 在线解码" />
+    <meta itemprop="description" content="JWT在线解码，JWT Token 在线解码与验证，查看 Header/Payload 详情。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "JWT在线解码",
+                "item": "https://box.lynvortex.top/work/jwt-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "JWT在线解码",
+        "url": "https://box.lynvortex.top/work/jwt-tool.html",
+        "description": "JWT Token 在线解码与验证，查看 Header/Payload 详情",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>JWT 在线解码</h1>
+                <p>纯前端解码 JWT Token，查看 Header、Payload、Signature，数据完全本地化</p>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-item">
+                    <label>JWT Token</label>
+                    <textarea id="jwtInput" placeholder="粘贴 JWT Token 字符串（格式：header.payload.signature）…"></textarea>
+                    <div class="hint">支持标准 JWT 格式（三段式，以 . 分隔）</div>
+                </div>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn-primary" id="decodeBtn">解码</button>
+                <button class="btn btn-ghost" id="clearBtn">清空</button>
+                <button class="btn btn-outline" id="exampleBtn" style="font-size:0.82em;">加载示例</button>
+            </div>
+
+            <div id="statusBar" class="status-bar info">输入 JWT Token 后点击解码</div>
+
+            <div id="resultBox" class="result-box">
+                <div class="jwt-section" id="headerSection">
+                    <div class="jwt-section-header">
+                        <div class="jwt-section-title">
+                            <span class="badge badge-header">Header</span>
+                            <span id="headerAlg" style="font-size:0.85em;color:#94a3b8;font-weight:400;"></span>
+                        </div>
+                        <div class="jwt-section-actions">
+                            <button class="btn btn-outline" data-copy="header" style="padding:4px 10px;font-size:0.75em;">复制</button>
+                        </div>
+                    </div>
+                    <div class="jwt-section-body" id="headerBody"></div>
+                </div>
+
+                <div class="jwt-section" id="payloadSection">
+                    <div class="jwt-section-header">
+                        <div class="jwt-section-title">
+                            <span class="badge badge-payload">Payload</span>
+                            <span id="payloadInfo" style="font-size:0.85em;color:#94a3b8;font-weight:400;"></span>
+                        </div>
+                        <div class="jwt-section-actions">
+                            <button class="btn btn-outline" data-copy="payload" style="padding:4px 10px;font-size:0.75em;">复制</button>
+                        </div>
+                    </div>
+                    <div class="jwt-section-body" id="payloadBody"></div>
+                </div>
+
+                <div class="jwt-section" id="sigSection">
+                    <div class="jwt-section-header">
+                        <div class="jwt-section-title">
+                            <span class="badge badge-signature">Signature</span>
+                            <span id="sigInfo" style="font-size:0.85em;color:#94a3b8;font-weight:400;"></span>
+                        </div>
+                        <div class="jwt-section-actions">
+                            <button class="btn btn-outline" data-copy="signature" style="padding:4px 10px;font-size:0.75em;">复制</button>
+                        </div>
+                    </div>
+                    <div class="jwt-section-body" id="sigBody"></div>
+                </div>
+            </div>
+
+            <footer class="footer">
+                &copy; 2026 绘萤者-Lynvortex &middot; 美梦多彩 理想自由
+            <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>JWT 结构说明</h3>
+                <p>JSON Web Token 由三部分构成：Header（头部）.Payload（载荷）.Signature（签名）</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">Header</span>
+                    <span class="tld-chip">Payload</span>
+                    <span class="tld-chip">Signature</span>
+                    <span class="tld-chip">Base64URL</span>
+                    <span class="tld-chip">纯前端</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>使用须知</h3>
+                <ul class="tips-list">
+                    <li><strong>Header</strong>：包含令牌类型（typ）和签名算法（alg）等信息</li>
+                    <li><strong>Payload</strong>：包含声明（claims），如 iss（签发者）、sub（主题）、exp（过期时间）等</li>
+                    <li><strong>Signature</strong>：用于验证令牌未被篡改，本工具仅解码显示，不验证签名有效性</li>
+                    <li>所有解码在浏览器本地完成，<strong>Token 不会发送到任何服务器</strong></li>
+                    <li>支持复制各部分内容，方便调试和开发</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+(function() {
+    'use strict';
+
+    // ---- DOM refs ----
+    const jwtInput      = document.getElementById('jwtInput');
+    const decodeBtn     = document.getElementById('decodeBtn');
+    const clearBtn      = document.getElementById('clearBtn');
+    const exampleBtn    = document.getElementById('exampleBtn');
+    const statusBar     = document.getElementById('statusBar');
+    const resultBox     = document.getElementById('resultBox');
+    const headerBody    = document.getElementById('headerBody');
+    const headerAlg     = document.getElementById('headerAlg');
+    const payloadBody   = document.getElementById('payloadBody');
+    const payloadInfo   = document.getElementById('payloadInfo');
+    const sigBody       = document.getElementById('sigBody');
+    const sigInfo       = document.getElementById('sigInfo');
+
+    // ---- helpers ----
+    const setStatus = function(msg, type) {
+        statusBar.textContent = msg;
+        statusBar.className = 'status-bar ' + type;
+    };
+
+    // ---- Base64URL decode ----
+    const base64UrlDecode = function(str) {
+        // Replace URL-safe chars
+        let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+        // Pad with = to make length multiple of 4
+        while (base64.length % 4 !== 0) {
+            base64 += '=';
+        }
+        try {
+            let decoded = atob(base64);
+            return decoded;
+        } catch (e) {
+            throw new Error('Base64URL 解码失败: ' + e.message);
+        }
+    };
+
+    // ---- JSON pretty print ----
+    const formatJson = function(jsonStr) {
+        try {
+            let obj = JSON.parse(jsonStr);
+            return JSON.stringify(obj, null, 2);
+        } catch (e) {
+            return jsonStr;
+        }
+    };
+
+    // ---- Timestamp display helper ----
+    const formatTimestamp = function(ts) {
+        if (typeof ts === 'number' && ts > 1000000000 && ts < 9999999999) {
+            try {
+                let d = new Date(ts * 1000);
+                return ' (' + d.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }) + ')';
+            } catch (e) {
+                return '';
+            }
+        }
+        return '';
+    };
+
+    // ---- Decode JWT ----
+    const doDecode = function() {
+        let token = jwtInput.value.trim();
+        if (!token) {
+            setStatus('请输入 JWT Token', 'error');
+            return;
+        }
+
+        // Check for Bearer prefix
+        if (token.toUpperCase().startsWith('BEARER ')) {
+            token = token.slice(7).trim();
+        }
+
+        let parts = token.split('.');
+        if (parts.length !== 3) {
+            setStatus('无效的 JWT Token：格式应为 header.payload.signature（三段式，以 . 分隔）', 'error');
+            return;
+        }
+
+        let headerEncoded = parts[0];
+        let payloadEncoded = parts[1];
+        let signatureEncoded = parts[2];
+
+        try {
+            // Decode header
+            let headerDecoded = base64UrlDecode(headerEncoded);
+            let headerFormatted = formatJson(headerDecoded);
+            headerBody.textContent = headerFormatted;
+
+            // Extract algorithm
+            try {
+                let headerObj = JSON.parse(headerDecoded);
+                let alg = headerObj.alg || '未知';
+                let typ = headerObj.typ || '';
+                headerAlg.textContent = '算法: ' + escapeHtml(alg) + (typ ? ' | 类型: ' + escapeHtml(typ) : '');
+            } catch (e) {
+                headerAlg.textContent = '';
+            }
+
+            // Decode payload
+            let payloadDecoded = base64UrlDecode(payloadEncoded);
+            let payloadFormatted = formatJson(payloadDecoded);
+            payloadBody.textContent = payloadFormatted;
+
+            // Extract payload info
+            try {
+                let payloadObj = JSON.parse(payloadDecoded);
+                let infoParts = [];
+                if (payloadObj.sub) infoParts.push('sub: ' + escapeHtml(String(payloadObj.sub)));
+                if (payloadObj.iss) infoParts.push('iss: ' + escapeHtml(String(payloadObj.iss)));
+                if (payloadObj.aud) {
+                    let aud = Array.isArray(payloadObj.aud) ? payloadObj.aud.join(', ') : payloadObj.aud;
+                    infoParts.push('aud: ' + escapeHtml(String(aud)));
+                }
+                if (payloadObj.exp) {
+                    infoParts.push('exp' + formatTimestamp(payloadObj.exp));
+                }
+                if (payloadObj.iat) {
+                    infoParts.push('iat' + formatTimestamp(payloadObj.iat));
+                }
+                payloadInfo.textContent = infoParts.length > 0 ? infoParts.join(' | ') : '';
+            } catch (e) {
+                payloadInfo.textContent = '';
+            }
+
+            // Decode signature (hex)
+            try {
+                let sigDecoded = base64UrlDecode(signatureEncoded);
+                let sigHex = Array.from(sigDecoded, function(c) {
+                    return c.charCodeAt(0).toString(16).padStart(2, '0');
+                }).join('');
+                sigBody.textContent = sigHex;
+                sigInfo.textContent = '原始字节: ' + sigDecoded.length + ' 字节';
+            } catch (e) {
+                // If signature is not valid base64, show raw
+                sigBody.textContent = signatureEncoded;
+                sigInfo.textContent = '（原始 Base64URL 编码）';
+            }
+
+            resultBox.style.display = 'block';
+            setStatus('解码成功 ✓', 'success');
+
+        } catch (err) {
+            setStatus('解码失败: ' + err.message, 'error');
+        }
+    };
+
+    // ---- clear ----
+    const clearAll = function() {
+        jwtInput.value = '';
+        resultBox.style.display = 'none';
+        headerBody.textContent = '';
+        headerAlg.textContent = '';
+        payloadBody.textContent = '';
+        payloadInfo.textContent = '';
+        sigBody.textContent = '';
+        sigInfo.textContent = '';
+        setStatus('已清空，输入 JWT Token 后点击解码', 'info');
+    };
+
+    const loadExample = function() {
+        let exampleToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjk5OTk5OTk5OTksInJvbGUiOiJhZG1pbiJ9.1dZ8V8x7G5cK2X5pY3V8Z2x7G5cK2X5pY3V8Z2x7G5c';
+        jwtInput.value = exampleToken;
+        setStatus('已加载示例 Token，点击解码查看', 'info');
+    };
+
+    // ---- copy handlers ----
+    const copyToClipboard = function(text, successMsg) {
+        navigator.clipboard.writeText(text).then(function() {
+            setStatus(successMsg, 'success');
+        }).catch(function() {
+            let ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            setStatus(successMsg, 'success');
+        });
+    };
+
+    // ---- events ----
+    decodeBtn.addEventListener('click', doDecode);
+    clearBtn.addEventListener('click', clearAll);
+    exampleBtn.addEventListener('click', loadExample);
+
+    // Copy buttons via event delegation
+    resultBox.addEventListener('click', function(e) {
+        let btn = e.target.closest('[data-copy]');
+        if (!btn) return;
+        let target = btn.getAttribute('data-copy');
+        let text = '';
+        let label = '';
+        if (target === 'header') {
+            text = headerBody.textContent;
+            label = 'Header';
+        } else if (target === 'payload') {
+            text = payloadBody.textContent;
+            label = 'Payload';
+        } else if (target === 'signature') {
+            text = sigBody.textContent;
+            label = 'Signature';
+        }
+        if (text) {
+            copyToClipboard(text, label + ' 已复制到剪贴板 ✓');
+        } else {
+            setStatus('没有可复制的内容', 'error');
+        }
+    });
+
+    // ---- Enter key shortcut ----
+    jwtInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            doDecode();
+        }
+    });
+
+    // ---- init ----
+    resultBox.style.display = 'none';
+    setStatus('输入 JWT Token 后点击解码', 'info');
+})();
+
+// 初始化共享侧边栏
+initSidebar('work');
+</script>
+</body>
+</html>

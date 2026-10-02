@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>图片转素描油画 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="图片转素描油画工具，纯前端Canvas将照片转为铅笔素描、油画或水彩效果，支持强度调节，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.mode-tabs{display:flex;gap:8px;margin-bottom:16px;}
+.mode-tab{padding:10px 20px;border-radius:8px;border:1px solid #e0e6ed;background:#f8fafc;color:#64748b;cursor:pointer;font-size:.88em;font-weight:600;transition:.2s;}
+.mode-tab.active{background:#4a90e2;color:#fff;border-color:#4a90e2;}
+.slider-row{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.slider-row label{font-size:.85em;color:#64748b;font-weight:600;min-width:80px;}
+.slider-row input[type="range"]{flex:1;}
+.slider-row .sv{font-size:.82em;color:#4a90e2;font-weight:600;min-width:40px;text-align:right;}
+.upload-zone:hover{border-color:#4a90e2;background:#ebf5ff;}
+</style>
+    <meta name="keywords" content="图片转素描油画,在线图片转素描油画,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/sketch-tool.html" />
+    <meta property="og:title" content="图片转素描油画" />
+    <meta property="og:description" content="图片转素描油画工具，纯前端Canvas将照片转为铅笔素描、油画或水彩效果，支持强度调节，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/sketch-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="图片转素描油画" />
+    <meta itemprop="description" content="图片转素描油画工具，纯前端Canvas将照片转为铅笔素描、油画或水彩效果，支持强度调节，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "图片转素描油画",
+                "item": "https://box.lynvortex.top/image/sketch-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "图片转素描油画",
+        "url": "https://box.lynvortex.top/image/sketch-tool.html",
+        "description": "将照片转换为素描、油画、水彩等艺术风格效果",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🎨 图片转素描/油画</h1><p>将照片转为铅笔素描、油画或水彩艺术效果</p></div>
+<div class="upload-zone" id="dropZone">📁 点击或拖拽上传图片<input type="file" id="fileInput" accept="image/*" style="display:none;"/></div>
+<div id="editorArea" style="display:none;">
+<div class="mode-tabs">
+<div class="mode-tab active" data-mode="sketch">✏️ 铅笔素描</div>
+<div class="mode-tab" data-mode="oil">🖌️ 油画</div>
+<div class="mode-tab" data-mode="watercolor">💧 水彩</div>
+<div class="mode-tab" data-mode="edge">📐 边缘检测</div>
+</div>
+<div class="canvas-wrap">
+<div class="canvas-box"><canvas id="origCanvas"></canvas><div class="cl">原图</div></div>
+<div class="canvas-box"><canvas id="resultCanvas"></canvas><div class="cl">效果</div></div>
+</div>
+<div class="slider-row"><label>效果强度</label><input type="range" id="intensity" min="1" max="100" value="50"/><span class="sv" id="intVal">50</span></div>
+<div class="btn-row">
+<button class="btn btn-primary" id="processBtn">🔄 生成效果</button>
+<button class="btn btn-outline" id="downloadBtn">⬇ 下载图片</button>
+<button class="btn btn-ghost" id="resetBtn">重新上传</button>
+</div>
+</div>
+<div id="statusBar" class="status-bar info">上传图片后选择效果模式，调节强度生成</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+</footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 功能说明</h3><p>多种艺术滤镜，将照片转为艺术风格</p><div class="feature-chips"><span class="feature-chip">铅笔素描</span><span class="feature-chip">油画效果</span><span class="feature-chip">水彩效果</span><span class="feature-chip">边缘检测</span><span class="feature-chip">强度调节</span><span class="feature-chip">离线本地</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>素描模式通过灰度反色与模糊叠加实现铅笔效果</li><li>油画模式通过色彩量化和边缘增强实现</li><li>水彩模式通过柔和模糊与饱和度增强实现</li><li>所有图片处理在浏览器本地完成，不上传</li><li>建议使用清晰的照片以获得更好效果</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+initSidebar('image');
+var sb=document.getElementById('statusBar'),origImg=null,mode='sketch';
+var dz=document.getElementById('dropZone'),fi=document.getElementById('fileInput');
+dz.onclick=function(){fi.click();};dz.ondragover=function(e){e.preventDefault();};dz.ondrop=function(e){e.preventDefault();if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);};
+fi.onchange=function(){if(fi.files[0])loadFile(fi.files[0]);};
+function loadFile(file){var r=new FileReader();r.onload=function(e){var img=new Image();img.onload=function(){origImg=img;dz.style.display='none';document.getElementById('editorArea').style.display='block';drawOrig();process();};img.src=e.target.result;};r.readAsDataURL(file);}
+function drawOrig(){var oc=document.getElementById('origCanvas'),rc=document.getElementById('resultCanvas');var maxW=400;var w=Math.min(origImg.width,maxW);var h=origImg.height*w/origImg.width;oc.width=w;oc.height=h;rc.width=w;rc.height=h;oc.getContext('2d').drawImage(origImg,0,0,w,h);}
+document.querySelectorAll('.mode-tab').forEach(function(t){t.onclick=function(){document.querySelectorAll('.mode-tab').forEach(function(x){x.classList.remove('active');});t.classList.add('active');mode=t.dataset.mode;process();};});
+document.getElementById('intensity').oninput=function(e){document.getElementById('intVal').textContent=e.target.value;};
+function process(){
+if(!origImg)return;var rc=document.getElementById('resultCanvas'),ctx=rc.getContext('2d');ctx.drawImage(origImg,0,0,rc.width,rc.height);
+var imgData=ctx.getImageData(0,0,rc.width,rc.height),d=imgData.data,inten=parseInt(document.getElementById('intensity').value);
+if(mode==='sketch'){var gray=[];for(var i=0;i<d.length;i+=4)gray.push(0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]);var inv=gray.map(function(g){return 255-g;});var blur=boxBlur(inv,rc.width,rc.height,3);for(var i=0;i<d.length;i+=4){var v=Math.min(255,Math.floor(gray[i/4]*255/blur[i/4]));d[i]=d[i+1]=d[i+2]=v;}}
+else if(mode==='oil'){var levels=Math.max(4,30-Math.floor(inten/4));var radius=2;for(var y=0;y<rc.height;y++)for(var x=0;x<rc.width;x++){var hist=new Array(levels+1).fill(0);var avgR=new Array(levels+1).fill(0),avgG=new Array(levels+1).fill(0),avgB=new Array(levels+1).fill(0);for(var dy=-radius;dy<=radius;dy++)for(var dx=-radius;dx<=radius;dx++){var nx=x+dx,ny=y+dy;if(nx<0||nx>=rc.width||ny<0||ny>=rc.height)continue;var idx=(ny*rc.width+nx)*4;var lum=Math.floor((0.299*d[idx]+0.587*d[idx+1]+0.114*d[idx+2])/255*levels);hist[lum]++;avgR[lum]+=d[idx];avgG[lum]+=d[idx+1];avgB[lum]+=d[idx+2];}var max=0,maxI=0;for(var k=0;k<=levels;k++)if(hist[k]>max){max=hist[k];maxI=k;}var idx=(y*rc.width+x)*4;d[idx]=avgR[maxI]/max;d[idx+1]=avgG[maxI]/max;d[idx+2]=avgB[maxI]/max;}}
+else if(mode==='watercolor'){var blur=boxBlurImg(d,rc.width,rc.height,4+Math.floor(inten/10));for(var i=0;i<d.length;i+=4){var r=blur[i],g=blur[i+1],b=blur[i+2];var sat=1+inten/50;d[i]=Math.min(255,r+(r-128)*sat);d[i+1]=Math.min(255,g+(g-128)*sat);d[i+2]=Math.min(255,b+(b-128)*sat);}}
+else if(mode==='edge'){var gray=[];for(var i=0;i<d.length;i+=4)gray.push(0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]);var threshold=255-inten*2;for(var y=1;y<rc.height-1;y++)for(var x=1;x<rc.width-1;x++){var idx=(y*rc.width+x)*4;var gx=-gray[(y-1)*rc.width+(x-1)]+gray[(y-1)*rc.width+(x+1)]-2*gray[y*rc.width+(x-1)]+2*gray[y*rc.width+(x+1)]-gray[(y+1)*rc.width+(x-1)]+gray[(y+1)*rc.width+(x+1)];var gy=-gray[(y-1)*rc.width+(x-1)]-2*gray[(y-1)*rc.width+x]-gray[(y-1)*rc.width+(x+1)]+gray[(y+1)*rc.width+(x-1)]+2*gray[(y+1)*rc.width+x]+gray[(y+1)*rc.width+(x+1)];var mag=Math.sqrt(gx*gx+gy*gy);mag=mag>threshold?255:0;d[idx]=d[idx+1]=d[idx+2]=mag;}}
+ctx.putImageData(imgData,0,0);setStatus(mode==='sketch'?'素描效果':mode==='oil'?'油画效果':mode==='watercolor'?'水彩效果':'边缘检测 生成完成','success');
+}
+function boxBlur(arr,w,h,r){var out=new Float32Array(arr.length);for(var y=0;y<h;y++)for(var x=0;x<w;x++){var sum=0,cnt=0;for(var dy=-r;dy<=r;dy++)for(var dx=-r;dx<=r;dx++){var nx=x+dx,ny=y+dy;if(nx<0||nx>=w||ny<0||ny>=h)continue;sum+=arr[ny*w+nx];cnt++;}out[y*w+x]=sum/cnt;}return out;}
+function boxBlurImg(d,w,h,r){var out=new Uint8ClampedArray(d.length);for(var y=0;y<h;y++)for(var x=0;x<w;x++){var sr=0,sg=0,sb=0,cnt=0;for(var dy=-r;dy<=r;dy++)for(var dx=-r;dx<=r;dx++){var nx=x+dx,ny=y+dy;if(nx<0||nx>=w||ny<0||ny>=h)continue;var idx=(ny*w+nx)*4;sr+=d[idx];sg+=d[idx+1];sb+=d[idx+2];cnt++;}var oi=(y*w+x)*4;out[oi]=sr/cnt;out[oi+1]=sg/cnt;out[oi+2]=sb/cnt;out[oi+3]=255;}return out;}
+document.getElementById('processBtn').onclick=process;
+document.getElementById('downloadBtn').onclick=function(){var rc=document.getElementById('resultCanvas');var a=document.createElement('a');a.href=rc.toDataURL('image/png');a.download='art-effect.png';a.click();setStatus('已下载','success');};
+document.getElementById('resetBtn').onclick=function(){dz.style.display='block';document.getElementById('editorArea').style.display='none';origImg=null;fi.value='';setStatus('请重新上传','info');};
+</script>
+</body>
+</html>

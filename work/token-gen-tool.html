@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>密钥令牌生成器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="批量生成API Key、Secret、随机令牌等安全密钥，支持自定义长度和字符集" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+
+        .tk-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+        .tk-item { display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 8px; padding: 10px 14px; }
+        .tk-text { font-family: 'Courier New', monospace; font-size: 0.9em; color: #1e293b; flex: 1; word-break: break-all; }
+        .tk-copy { padding: 4px 12px; font-size: 0.8em; background: #f1f5f9; color: #475569; border-radius: 6px; border: 1px solid #e0e6ed; cursor: pointer; }
+        .tk-copy:hover { background: #e2e8f0; }
+    
+    </style>
+    <script src="../assets/sidebar.js"></script>
+
+    <meta name="keywords" content="密钥令牌生成器,在线密钥令牌生成器,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/token-gen-tool.html" />
+    <meta property="og:title" content="密钥令牌生成器" />
+    <meta property="og:description" content="批量生成API Key、Secret、随机令牌等安全密钥，支持自定义长度和字符集" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/token-gen-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="密钥令牌生成器" />
+    <meta itemprop="description" content="批量生成API Key、Secret、随机令牌等安全密钥，支持自定义长度和字符集" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "密钥令牌生成器",
+                "item": "https://box.lynvortex.top/work/token-gen-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "密钥令牌生成器",
+        "url": "https://box.lynvortex.top/work/token-gen-tool.html",
+        "description": "批量生成API Key、Secret等安全密钥，支持自定义字符集",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🔑 密钥令牌生成器</h1>
+                <p>批量生成API Key、Secret、随机令牌等安全密钥，支持自定义长度和字符集</p>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-item"><label>生成数量</label><select id="tkCount"><option value="1">1</option><option value="5">5</option><option value="10" selected>10</option><option value="20">20</option></select></div>
+                <div class="form-item"><label>密钥长度</label><select id="tkLen"><option value="16">16位</option><option value="32" selected>32位</option><option value="64">64位</option><option value="128">128位</option></select></div>
+            </div>
+            <div class="form-grid">
+                <div class="form-item"><label>字符集</label><select id="tkCharset"><option value="alnum">字母+数字</option><option value="hex">十六进制</option><option value="base64">Base64字符</option><option value="all">字母+数字+符号</option><option value="custom">自定义</option></select></div>
+                <div class="form-item"><label>前缀(可选)</label><input type="text" id="tkPrefix" placeholder="如 sk_" /></div>
+            </div>
+            <div class="form-item" id="tkCustomArea" style="display:none;margin-bottom:16px;">
+                <label>自定义字符集</label>
+                <input type="text" id="tkCustom" value="ABCDEF0123456789" />
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-primary" id="tkGen">⚡ 生成密钥</button>
+                <button class="btn btn-outline" id="tkCopyAll">📋 复制全部</button>
+            </div>
+            <div class="tk-list" id="tkList"></div>
+    
+            <div id="statusBar" class="status-bar info">准备就绪，请按提示操作</div>
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 密钥令牌生成器</h3>
+                <p>使用crypto.getRandomValues生成密码学安全的随机密钥</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">Crypto安全随机</span>
+                    <span class="feature-chip">多字符集</span>
+                    <span class="feature-chip">批量生成</span>
+                    <span class="feature-chip">前缀支持</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>使用crypto.getRandomValues生成密码学安全的随机数</li>
+                    <li>支持字母数字、十六进制、Base64、含符号等多种字符集</li>
+                    <li>可设置前缀（如sk_）用于API Key格式</li>
+                    <li>适用于API密钥、加密令牌、随机串等场景</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+
+    const setStatus = (m,t) => { const s=document.getElementById('statusBar'); s.textContent=m; s.className='status-bar '+(t||'info'); };
+    const charsets = { alnum: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', hex: '0123456789abcdef', base64: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/', all: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+' };
+
+    document.getElementById('tkCharset').addEventListener('change', e => {
+        document.getElementById('tkCustomArea').style.display = e.target.value === 'custom' ? 'flex' : 'none';
+    });
+
+    function generateToken(len, charset) {
+        const arr = new Uint32Array(len);
+        crypto.getRandomValues(arr);
+        let result = '';
+        for (let i = 0; i < len; i++) result += charset[arr[i] % charset.length];
+        return result;
+    }
+
+    document.getElementById('tkGen').addEventListener('click', () => {
+        const count = +document.getElementById('tkCount').value;
+        const len = +document.getElementById('tkLen').value;
+        const csType = document.getElementById('tkCharset').value;
+        const prefix = document.getElementById('tkPrefix').value;
+        const charset = csType === 'custom' ? document.getElementById('tkCustom').value : charsets[csType];
+        if (!charset) { setStatus('字符集不能为空', 'error'); return; }
+        const tokens = [];
+        for (let i = 0; i < count; i++) tokens.push(prefix + generateToken(len, charset));
+        renderTokens(tokens);
+        setStatus('已生成 ' + count + ' 个密钥，长度 ' + (len + prefix.length), 'success');
+    });
+
+    function renderTokens(tokens) {
+        document.getElementById('tkList').innerHTML = tokens.map((t, i) => `
+            <div class="tk-item"><span class="tk-text">${escapeHtml(t)}</span><button class="tk-copy" data-token="${escapeHtml(t)}">复制</button></div>
+        `).join('');
+        document.querySelectorAll('.tk-copy').forEach(b => b.addEventListener('click', () => {
+            navigator.clipboard.writeText(b.dataset.token).then(() => { b.textContent = '已复制'; setTimeout(() => b.textContent = '复制', 1500); });
+        }));
+    }
+
+    document.getElementById('tkCopyAll').addEventListener('click', () => {
+        const texts = Array.from(document.querySelectorAll('.tk-text')).map(e => e.textContent).join('\n');
+        if (!texts) { setStatus('请先生成密钥', 'error'); return; }
+        navigator.clipboard.writeText(texts).then(() => setStatus('全部密钥已复制', 'success'));
+    });
+    
+    initSidebar('work');
+</script>
+</body>
+</html>

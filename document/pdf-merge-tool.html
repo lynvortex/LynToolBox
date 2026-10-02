@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PDF合并分割 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="上传多个PDF文件合并为一个，或将PDF按页拆分为多个文件，纯浏览器本地处理" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+
+        .pm-files { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+        .pm-file { display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 8px; padding: 10px 14px; font-size: 0.88em; }
+        .pm-file .pm-name { flex: 1; }
+        .pm-file .pm-up, .pm-file .pm-down { cursor: pointer; padding: 4px 8px; border-radius: 4px; background: #e2e8f0; }
+        .pm-file .pm-del { cursor: pointer; color: #ef4444; padding: 4px 8px; }
+        .pm-mode { display: flex; gap: 8px; margin-bottom: 16px; justify-content: center; }
+        .pm-mode-btn { padding: 10px 22px; border-radius: 10px; border: 1px solid #e0e6ed; background: #f8fafc; cursor: pointer; font-size: 0.92em; font-weight: 600; transition: 0.2s; }
+        .pm-mode-btn.active { background: #4a90e2; color: #fff; border-color: #4a90e2; }
+        .pm-split { display: none; }
+    
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <meta name="keywords" content="PDF合并分割,在线PDF合并分割,文档处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/document/pdf-merge-tool.html" />
+    <meta property="og:title" content="PDF合并分割" />
+    <meta property="og:description" content="上传多个PDF文件合并为一个，或将PDF按页拆分为多个文件，纯浏览器本地处理" />
+    <meta property="og:url" content="https://box.lynvortex.top/document/pdf-merge-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="PDF合并分割" />
+    <meta itemprop="description" content="上传多个PDF文件合并为一个，或将PDF按页拆分为多个文件，纯浏览器本地处理" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文档处理",
+                "item": "https://box.lynvortex.top/document.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "PDF合并分割",
+                "item": "https://box.lynvortex.top/document/pdf-merge-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "PDF合并分割",
+        "url": "https://box.lynvortex.top/document/pdf-merge-tool.html",
+        "description": "多个PDF合并为一个，或按页码范围拆分为多个文件",
+        "applicationCategory": "文档处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>📄 PDF合并分割</h1>
+                <p>上传多个PDF文件合并为一个，或将PDF按页拆分为多个文件，纯浏览器本地处理</p>
+            </div>
+
+            <div class="pm-mode">
+                <div class="pm-mode-btn active" data-mode="merge">📎 合并PDF</div>
+                <div class="pm-mode-btn" data-mode="split">✂️ 分割PDF</div>
+            </div>
+
+            <div id="pmMergeArea">
+                <div class="form-item" style="margin-bottom:12px;">
+                    <label>选择PDF文件（可多选）</label>
+                    <input type="file" id="pmMergeFile" accept="application/pdf" multiple />
+                </div>
+                <div class="pm-files" id="pmMergeList"></div>
+                <div class="btn-row">
+                    <button class="btn btn-primary" id="pmMergeBtn" disabled>📎 合并PDF</button>
+                </div>
+            </div>
+
+            <div id="pmSplitArea" class="pm-split">
+                <div class="form-item" style="margin-bottom:12px;">
+                    <label>选择PDF文件</label>
+                    <input type="file" id="pmSplitFile" accept="application/pdf" />
+                </div>
+                <div class="form-grid">
+                    <div class="form-item"><label>分割方式</label><select id="pmSplitMode"><option value="each">每页一个PDF</option><option value="range">按页码范围</option></select></div>
+                    <div class="form-item" id="pmRangeArea" style="display:none;"><label>页码范围（如1-3,5,7-9）</label><input type="text" id="pmRange" placeholder="1-3,5,7-9" /></div>
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-primary" id="pmSplitBtn" disabled>✂️ 分割PDF</button>
+                </div>
+            </div>
+    
+            <div id="statusBar" class="status-bar info">准备就绪，请按提示操作</div>
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 PDF合并分割</h3>
+                <p>基于pdf-lib实现PDF合并与按页分割，支持自定义页码范围</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">pdf-lib</span>
+                    <span class="feature-chip">多文件合并</span>
+                    <span class="feature-chip">按页拆分</span>
+                    <span class="feature-chip">本地处理</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>合并模式：选择多个PDF文件，可拖动调整顺序后合并</li>
+                    <li>分割模式：每页一个PDF或按页码范围（如1-3,5,7-9）分割</li>
+                    <li>所有PDF处理在浏览器本地完成，不上传服务器</li>
+                    <li>需要浏览器支持pdf-lib库（CDN加载）</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+
+    const { PDFDocument } = PDFLib;
+    const setStatus = (m,t) => { const s=document.getElementById('statusBar'); s.textContent=m; s.className='status-bar '+(t||'info'); };
+    let mergeFiles = [];
+
+    document.querySelectorAll('.pm-mode-btn').forEach(b => b.addEventListener('click', () => {
+        document.querySelectorAll('.pm-mode-btn').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        document.getElementById('pmMergeArea').style.display = b.dataset.mode === 'merge' ? 'block' : 'none';
+        document.getElementById('pmSplitArea').style.display = b.dataset.mode === 'split' ? 'block' : 'none';
+    }));
+
+    document.getElementById('pmSplitMode').addEventListener('change', e => {
+        document.getElementById('pmRangeArea').style.display = e.target.value === 'range' ? 'flex' : 'none';
+    });
+
+    // Merge
+    document.getElementById('pmMergeFile').addEventListener('change', e => {
+        mergeFiles = Array.from(e.target.files);
+        renderMergeList();
+        document.getElementById('pmMergeBtn').disabled = mergeFiles.length < 2;
+    });
+
+    function renderMergeList() {
+        document.getElementById('pmMergeList').innerHTML = mergeFiles.map((f, i) => `
+            <div class="pm-file"><span class="pm-name">${f.name} (${(f.size/1048576).toFixed(2)} MB)</span>
+            <span class="pm-up" onclick="moveMerge(${i},-1)">↑</span><span class="pm-down" onclick="moveMerge(${i},1)">↓</span><span class="pm-del" onclick="delMerge(${i})">🗑</span></div>
+        `).join('');
+    }
+    window.moveMerge = (i, d) => { const j=i+d; if(j<0||j>=mergeFiles.length)return; [mergeFiles[i],mergeFiles[j]]=[mergeFiles[j],mergeFiles[i]]; renderMergeList(); };
+    window.delMerge = i => { mergeFiles.splice(i,1); renderMergeList(); document.getElementById('pmMergeBtn').disabled = mergeFiles.length < 2; };
+
+    document.getElementById('pmMergeBtn').addEventListener('click', async () => {
+        if (mergeFiles.length < 2) return;
+        setStatus('正在合并PDF...', 'info');
+        try {
+            const out = await PDFDocument.create();
+            for (const f of mergeFiles) {
+                const bytes = await f.arrayBuffer();
+                const doc = await PDFDocument.load(bytes);
+                const pages = await out.copyPages(doc, doc.getPageIndices());
+                pages.forEach(p => out.addPage(p));
+            }
+            const result = await out.save();
+            dl(new Blob([result], { type: 'application/pdf' }), 'merged.pdf');
+            setStatus('合并完成，共 ' + out.getPageCount() + ' 页', 'success');
+        } catch (e) { setStatus('合并失败: ' + e.message, 'error'); }
+    });
+
+    // Split
+    document.getElementById('pmSplitFile').addEventListener('change', e => {
+        document.getElementById('pmSplitBtn').disabled = !e.target.files[0];
+    });
+
+    document.getElementById('pmSplitBtn').addEventListener('click', async () => {
+        const file = document.getElementById('pmSplitFile').files[0];
+        if (!file) return;
+        setStatus('正在分割PDF...', 'info');
+        try {
+            const bytes = await file.arrayBuffer();
+            const doc = await PDFDocument.load(bytes);
+            const total = doc.getPageCount();
+            const mode = document.getElementById('pmSplitMode').value;
+
+            if (mode === 'each') {
+                for (let i = 0; i < total; i++) {
+                    const out = await PDFDocument.create();
+                    const [p] = await out.copyPages(doc, [i]);
+                    out.addPage(p);
+                    const result = await out.save();
+                    dl(new Blob([result], { type: 'application/pdf' }), `page-${i+1}.pdf`);
+                }
+                setStatus('分割完成，共生成 ' + total + ' 个PDF文件', 'success');
+            } else {
+                const ranges = parseRanges(document.getElementById('pmRange').value, total);
+                for (let r = 0; r < ranges.length; r++) {
+                    const out = await PDFDocument.create();
+                    const indices = ranges[r].map(n => n - 1);
+                    const pages = await out.copyPages(doc, indices);
+                    pages.forEach(p => out.addPage(p));
+                    const result = await out.save();
+                    dl(new Blob([result], { type: 'application/pdf' }), `split-${r+1}.pdf`);
+                }
+                setStatus('分割完成，共生成 ' + ranges.length + ' 个PDF文件', 'success');
+            }
+        } catch (e) { setStatus('分割失败: ' + e.message, 'error'); }
+    });
+
+    function parseRanges(str, max) {
+        const groups = str.split(',').map(s => s.trim()).filter(Boolean);
+        return groups.map(g => {
+            const m = g.match(/^(\d+)-(\d+)$/);
+            if (m) { const a=+m[1],b=+m[2]; return Array.from({length:b-a+1},(_,i)=>a+i); }
+            return [+g];
+        }).filter(g => g.every(n => n >= 1 && n <= max));
+    }
+    function dl(blob, name) { const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); }
+    
+    initSidebar('document');
+</script>
+</body>
+</html>

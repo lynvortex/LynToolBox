@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>TIFF解码转换工具 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp"/>
+    <meta name="description" content="TIFF图片解码转换工具，纯前端使用UTIF.js解码TIFF文件，转换为PNG/JPG预览下载，数据本地处理。"/>
+    <link rel="stylesheet" href="../assets/tool-common.css"/>
+    <script src="../assets/utif.min.js"></script>
+    <script src="../assets/sidebar.js"></script>
+    <style>
+        /* 工具特有样式 */
+        .upload-area { border: 2px dashed #e0e6ed; border-radius: 8px; padding: 28px; text-align: center; margin-bottom: 20px; transition: all 0.2s; cursor: pointer; background: #f8fafc; }
+        .upload-area:hover { border-color: #4a90e2; background: #ebf5ff; }
+        .upload-area.dragover { border-color: #4a90e2; background: #dbeafe; }
+        .upload-icon { font-size: 2.6em; margin-bottom: 8px; color: #cbd5e1; }
+        .upload-text { color: #64748b; font-size: 0.9em; }
+        .upload-hint { color: #94a3b8; font-size: 0.8em; margin-top: 6px; }
+        .upload-input { display: none; }
+
+        .info-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+        .info-pill { background: #f1f5f9; color: #334155; padding: 6px 12px; border-radius: 16px; font-size: 0.82em; font-weight: 500; }
+
+        .page-list { display: none; margin-bottom: 16px; }
+        .page-list-title { font-size: 0.95em; font-weight: 600; color: #2c3e50; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+        .page-list-title .hint { font-size: 0.8em; color: #94a3b8; font-weight: 400; }
+        .page-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+        .page-card { border: 1px solid #e0e6ed; border-radius: 8px; overflow: hidden; background: #fff; display: flex; flex-direction: column; }
+        .page-card .page-thumb-wrap { background: repeating-conic-gradient(#f1f5f9 0% 25%, #fff 0% 50%) 50% / 20px 20px; display: flex; align-items: center; justify-content: center; padding: 8px; min-height: 140px; }
+        .page-card .page-thumb-wrap img { max-width: 100%; max-height: 200px; object-fit: contain; display: block; }
+        .page-card .page-meta { padding: 10px 12px; font-size: 0.8em; color: #475569; }
+        .page-card .page-no { font-weight: 600; color: #2c3e50; display: block; margin-bottom: 4px; }
+        .page-card .page-dim { color: #64748b; font-size: 0.92em; }
+        .page-card .page-actions { display: flex; gap: 6px; padding: 0 12px 12px; }
+        .page-card .page-actions button { flex: 1; padding: 7px 8px; border: 1px solid #4a90e2; background: #fff; color: #4a90e2; border-radius: 6px; cursor: pointer; font-size: 0.82em; font-family: inherit; transition: all 0.2s; }
+        .page-card .page-actions button:hover { background: #4a90e2; color: #fff; }
+
+        .btn-success { background: #10b981; color: #fff; }
+        .btn-success:hover { background: #059669; }
+        .btn-secondary { background: #f0f2f5; color: #606266; }
+        .btn-secondary:hover { background: #e1e4e8; }
+        .progress-bar { display: none; height: 8px; background: #f0f2f5; border-radius: 4px; overflow: hidden; margin-bottom: 16px; }
+        .progress-bar .progress-fill { height: 100%; background: linear-gradient(90deg, #4a90e2, #3a7bd5); width: 0%; transition: width 0.2s; }
+    </style>
+    <meta name="keywords" content="TIFF解码转换,在线TIFF解码转换,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/tiff-tool.html" />
+    <meta property="og:title" content="TIFF解码转换工具" />
+    <meta property="og:description" content="TIFF图片解码转换工具，纯前端使用UTIF.js解码TIFF文件，转换为PNG/JPG预览下载，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/tiff-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="TIFF解码转换工具" />
+    <meta itemprop="description" content="TIFF图片解码转换工具，纯前端使用UTIF.js解码TIFF文件，转换为PNG/JPG预览下载，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "TIFF解码转换",
+                "item": "https://box.lynvortex.top/image/tiff-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "TIFF解码转换",
+        "url": "https://box.lynvortex.top/image/tiff-tool.html",
+        "description": "UTIF解码TIFF文件，转换为PNG/JPG预览下载",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+  <div class="tool-container">
+    <div class="tool-header"><h1>🖼️ TIFF 解码转换工具</h1><p>使用 UTIF.js 解码 TIFF 文件，多页逐页预览并导出为 PNG / JPG</p></div>
+
+    <div class="upload-area" id="uploadArea">
+      <div class="upload-icon">🖼️</div>
+      <div class="upload-text">点击或拖拽 TIFF 文件到此处</div>
+      <div class="upload-hint">支持单页 / 多页 TIFF（.tif / .tiff），解码后可导出为 PNG 或 JPG</div>
+      <input type="file" id="fileInput" class="upload-input" accept="image/tiff,.tif,.tiff">
+    </div>
+
+    <div class="info-row" id="infoRow" style="display:none;">
+      <span class="info-pill" id="infoName">-</span>
+      <span class="info-pill" id="infoSize">-</span>
+      <span class="info-pill" id="infoPages">-</span>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="decodeBtn" onclick="decodeTiff()">🖼️ 开始解码</button>
+      <button class="btn btn-success" id="downloadAllPngBtn" onclick="downloadAll('png')" style="display:none;">📦 下载全部 PNG</button>
+      <button class="btn btn-success" id="downloadAllJpgBtn" onclick="downloadAll('jpg')" style="display:none;">📦 下载全部 JPG</button>
+      <button class="btn btn-secondary" onclick="resetAll()">🔄 清空</button>
+    </div>
+
+    <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+
+    <div class="page-list" id="pageList">
+      <div class="page-list-title">
+        <span>解码结果（<span id="pageCount">0</span> 页）</span>
+        <span class="hint">每页可单独导出 PNG 或 JPG</span>
+      </div>
+      <div class="page-grid" id="pageGrid"></div>
+    </div>
+
+    <div id="statusBar" class="status-bar info">请上传 TIFF 文件开始解码转换</div>
+
+    <footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+  </div>
+
+  <div class="info-cards">
+    <div class="info-card">
+      <h3>📦 功能说明</h3>
+      <p>基于 UTIF.js 纯前端解码 TIFF 文件，支持单页与多页 TIFF，逐页渲染预览并可导出为 PNG 或 JPG，所有数据本地处理。</p>
+      <div class="feature-chips">
+        <span class="feature-chip">TIFF解码</span>
+        <span class="feature-chip">多页支持</span>
+        <span class="feature-chip">PNG导出</span>
+        <span class="feature-chip">JPG导出</span>
+        <span class="feature-chip">预览</span>
+        <span class="feature-chip">离线本地</span>
+      </div>
+    </div>
+    <div class="info-card">
+      <h3>💡 使用须知</h3>
+      <ul class="tips-list">
+        <li>支持标准 TIFF（.tif / .tiff），含单页与多页文档。</li>
+        <li>解码后逐页显示尺寸信息，可单独导出 PNG（无损）或 JPG（体积更小）。</li>
+        <li>JPG 导出不支持透明通道，透明区域将以白色填充。</li>
+        <li>超大尺寸 TIFF 解码可能较慢或受浏览器内存限制，请耐心等待。</li>
+        <li>所有处理在浏览器本地完成，文件不会上传到服务器。</li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <h3>✨ 绘萤者</h3>
+      <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+      <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+      <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+  </div>
+</div></main>
+
+<script>
+(function () {
+    'use strict';
+    initSidebar('image');
+
+    var setStatus = function (msg, type) {
+        var bar = document.getElementById('statusBar');
+        bar.textContent = msg;
+        bar.className = 'status-bar ' + (type || 'info');
+    };
+
+    var formatSize = function (bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / 1024 / 1024).toFixed(2) + ' MB';
+    };
+
+    var tiffFile = null;
+    var tiffBuffer = null;
+    var pages = []; // { dataUrl, jpgUrl, width, height }
+
+    var uploadArea = document.getElementById('uploadArea');
+    var fileInput = document.getElementById('fileInput');
+    uploadArea.addEventListener('click', function () { fileInput.click(); });
+    uploadArea.addEventListener('dragover', function (e) { e.preventDefault(); uploadArea.classList.add('dragover'); });
+    uploadArea.addEventListener('dragleave', function () { uploadArea.classList.remove('dragover'); });
+    uploadArea.addEventListener('drop', function (e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', function () {
+        if (fileInput.files && fileInput.files[0]) handleFile(fileInput.files[0]);
+        fileInput.value = '';
+    });
+
+    var handleFile = function (file) {
+        var isTiff = file.type === 'image/tiff' || /\.tiff?$/i.test(file.name);
+        if (!isTiff) { setStatus('请上传 TIFF 格式文件（.tif / .tiff）', 'error'); return; }
+        tiffFile = file;
+        document.getElementById('infoRow').style.display = 'flex';
+        document.getElementById('infoName').textContent = '📄 ' + file.name;
+        document.getElementById('infoSize').textContent = '📦 ' + formatSize(file.size);
+        document.getElementById('infoPages').textContent = '页数：待解码';
+        resetResults();
+        setStatus('已选择文件：' + file.name + '（' + formatSize(file.size) + '），点击"开始解码"', 'info');
+    };
+
+    var resetResults = function () {
+        pages.forEach(function (p) { if (p.jpgUrl) URL.revokeObjectURL(p.jpgUrl); });
+        pages = [];
+        document.getElementById('pageList').style.display = 'none';
+        document.getElementById('pageGrid').innerHTML = '';
+        document.getElementById('downloadAllPngBtn').style.display = 'none';
+        document.getElementById('downloadAllJpgBtn').style.display = 'none';
+    };
+
+    window.decodeTiff = function () {
+        if (!tiffFile) { setStatus('请先上传 TIFF 文件', 'error'); return; }
+        if (typeof UTIF === 'undefined') { setStatus('UTIF.js 库未加载，请刷新重试', 'error'); return; }
+        var btn = document.getElementById('decodeBtn');
+        btn.disabled = true; btn.textContent = '解码中...';
+        var prog = document.getElementById('progressBar');
+        var fill = document.getElementById('progressFill');
+        prog.style.display = 'block'; fill.style.width = '10%';
+        resetResults();
+
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            try {
+                tiffBuffer = e.target.result;
+                fill.style.width = '30%';
+                var ifds = UTIF.decode(tiffBuffer);
+                // 过滤出真正的图像页（有宽度信息）
+                var imageIfds = ifds.filter(function (ifd) { return ifd['t256'] != null; });
+                if (imageIfds.length === 0) { throw new Error('未找到可解码的图像页'); }
+                fill.style.width = '45%';
+                setStatus('解码到 ' + imageIfds.length + ' 页，正在逐页渲染...', 'info');
+
+                var total = imageIfds.length;
+                for (var i = 0; i < total; i++) {
+                    UTIF.decodeImage(tiffBuffer, imageIfds[i], ifds);
+                    var rgba = UTIF.toRGBA8(imageIfds[i]); // Uint8Array
+                    var w = imageIfds[i].width, h = imageIfds[i].height;
+                    if (!w || !h) { w = imageIfds[i]['t256'][0]; h = imageIfds[i]['t257'][0]; }
+                    var canvas = document.createElement('canvas');
+                    canvas.width = w; canvas.height = h;
+                    var cx = canvas.getContext('2d');
+                    var id = cx.createImageData(w, h);
+                    id.data.set(rgba);
+                    cx.putImageData(id, 0, 0);
+                    var dataUrl = canvas.toDataURL('image/png');
+                    var jpgUrl = null;
+                    try { jpgUrl = canvas.toDataURL('image/jpeg', 0.92); } catch (err2) { jpgUrl = dataUrl; }
+                    pages.push({ dataUrl: dataUrl, jpgUrl: jpgUrl, width: w, height: h });
+                    fill.style.width = (45 + ((i + 1) / total) * 55) + '%';
+                }
+                renderPages();
+                document.getElementById('infoPages').textContent = '页数：' + pages.length;
+                document.getElementById('downloadAllPngBtn').style.display = 'inline-block';
+                document.getElementById('downloadAllJpgBtn').style.display = 'inline-block';
+                fill.style.width = '100%';
+                btn.disabled = false; btn.textContent = '🖼️ 开始解码';
+                setTimeout(function () { prog.style.display = 'none'; }, 600);
+                setStatus('解码完成，共 ' + pages.length + ' 页，可逐页导出或批量下载', 'success');
+            } catch (err) {
+                btn.disabled = false; btn.textContent = '🖼️ 开始解码';
+                prog.style.display = 'none';
+                setStatus('解码失败：' + (err && err.message ? err.message : err), 'error');
+            }
+        };
+        reader.onerror = function () {
+            btn.disabled = false; btn.textContent = '🖼️ 开始解码';
+            prog.style.display = 'none';
+            setStatus('文件读取失败', 'error');
+        };
+        reader.readAsArrayBuffer(tiffFile);
+    };
+
+    var renderPages = function () {
+        var list = document.getElementById('pageList');
+        var grid = document.getElementById('pageGrid');
+        document.getElementById('pageCount').textContent = pages.length;
+        if (pages.length === 0) { list.style.display = 'none'; return; }
+        list.style.display = 'block';
+        var html = '';
+        pages.forEach(function (p, idx) {
+            html += '<div class="page-card">' +
+                '<div class="page-thumb-wrap"><img src="' + escapeHtml(p.dataUrl) + '" alt="第' + (idx + 1) + '页"></div>' +
+                '<div class="page-meta"><span class="page-no">第 ' + (idx + 1) + ' 页</span>' +
+                '<span class="page-dim">' + p.width + ' × ' + p.height + ' px</span></div>' +
+                '<div class="page-actions">' +
+                '<button onclick="downloadPage(' + idx + ',\'png\')">💾 PNG</button>' +
+                '<button onclick="downloadPage(' + idx + ',\'jpg\')">💾 JPG</button>' +
+                '</div></div>';
+        });
+        grid.innerHTML = html;
+    };
+
+    window.downloadPage = function (idx, fmt) {
+        if (!pages[idx]) return;
+        var p = pages[idx];
+        var a = document.createElement('a');
+        if (fmt === 'jpg') { a.href = p.jpgUrl; a.download = 'tiff_page_' + (idx + 1) + '.jpg'; }
+        else { a.href = p.dataUrl; a.download = 'tiff_page_' + (idx + 1) + '.png'; }
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setStatus('开始下载第 ' + (idx + 1) + ' 页（' + fmt.toUpperCase() + '）', 'success');
+    };
+
+    window.downloadAll = function (fmt) {
+        if (pages.length === 0) return;
+        setStatus('开始下载全部 ' + pages.length + ' 页（' + fmt.toUpperCase() + '，间隔 400ms）...', 'info');
+        pages.forEach(function (p, idx) {
+            setTimeout(function () {
+                var a = document.createElement('a');
+                if (fmt === 'jpg') { a.href = p.jpgUrl; a.download = 'tiff_page_' + (idx + 1) + '.jpg'; }
+                else { a.href = p.dataUrl; a.download = 'tiff_page_' + (idx + 1) + '.png'; }
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            }, idx * 400);
+        });
+    };
+
+    window.resetAll = function () {
+        tiffFile = null; tiffBuffer = null;
+        resetResults();
+        document.getElementById('infoRow').style.display = 'none';
+        document.getElementById('progressBar').style.display = 'none';
+        setStatus('请上传 TIFF 文件开始解码转换', 'info');
+    };
+})();
+</script>
+</body></html>

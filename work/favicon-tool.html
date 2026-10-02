@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Favicon生成器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="上传图片或输入文字生成多尺寸favicon图标，支持导出ICO和PNG格式，纯前端Canvas处理" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+
+        .fav-preview { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin: 20px 0; }
+        .fav-item { text-align: center; }
+        .fav-item canvas { border: 1px solid #e0e6ed; border-radius: 6px; display: block; margin: 0 auto 6px; image-rendering: pixelated; }
+        .fav-item span { font-size: 0.78em; color: #94a3b8; }
+    
+    </style>
+    <script src="../assets/sidebar.js"></script>
+
+    <meta name="keywords" content="Favicon生成器,在线Favicon生成器,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/favicon-tool.html" />
+    <meta property="og:title" content="Favicon生成器" />
+    <meta property="og:description" content="上传图片或输入文字生成多尺寸favicon图标，支持导出ICO和PNG格式，纯前端Canvas处理" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/favicon-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="Favicon生成器" />
+    <meta itemprop="description" content="上传图片或输入文字生成多尺寸favicon图标，支持导出ICO和PNG格式，纯前端Canvas处理" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Favicon生成器",
+                "item": "https://box.lynvortex.top/work/favicon-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Favicon生成器",
+        "url": "https://box.lynvortex.top/work/favicon-tool.html",
+        "description": "上传图片或输入文字生成多尺寸favicon图标，导出ICO/PNG",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>⭐ Favicon生成器</h1>
+                <p>上传图片或输入文字生成多尺寸favicon图标，支持导出ICO和PNG格式，纯前端Canvas处理</p>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-item"><label>生成方式</label><select id="favMode"><option value="image">上传图片</option><option value="text">文字生成</option></select></div>
+                <div class="form-item"><label>背景色</label><input type="color" id="favBg" value="#4a90e2" /></div>
+            </div>
+            <div class="form-item" id="favFileArea" style="margin-bottom:16px;">
+                <label>选择图片</label>
+                <input type="file" id="favFile" accept="image/*" />
+            </div>
+            <div class="form-grid" id="favTextArea" style="display:none;">
+                <div class="form-item"><label>文字内容（1-2字符）</label><input type="text" id="favText" value="A" maxlength="2" /></div>
+                <div class="form-item"><label>文字颜色</label><input type="color" id="favFg" value="#ffffff" /></div>
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-primary" id="favGen">🎨 生成预览</button>
+                <button class="btn btn-outline" id="favDlPng">⬇ 下载PNG(32px)</button>
+                <button class="btn btn-outline" id="favDlIco">⬇ 下载ICO(多尺寸)</button>
+            </div>
+            <div class="fav-preview" id="favPreview"></div>
+    
+            <div id="statusBar" class="status-bar info">准备就绪，请按提示操作</div>
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 Favicon生成器</h3>
+                <p>通过Canvas生成多尺寸favicon图标，支持图片裁剪和文字生成</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">Canvas绘制</span>
+                    <span class="feature-chip">多尺寸</span>
+                    <span class="feature-chip">ICO/PNG导出</span>
+                    <span class="feature-chip">本地处理</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>可选择上传图片裁剪生成，或输入文字直接生成</li>
+                    <li>预览展示16/32/48/64/128五种尺寸效果</li>
+                    <li>PNG导出32px尺寸，ICO导出含16/32/48三尺寸</li>
+                    <li>ICO格式兼容所有主流浏览器</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+
+    const setStatus = (m,t) => { const s=document.getElementById('statusBar'); s.textContent=m; s.className='status-bar '+(t||'info'); };
+    const sizes = [16, 32, 48, 64, 128];
+    let lastImg = null;
+
+    document.getElementById('favMode').addEventListener('change', e => {
+        document.getElementById('favFileArea').style.display = e.target.value === 'image' ? 'flex' : 'none';
+        document.getElementById('favTextArea').style.display = e.target.value === 'text' ? 'grid' : 'none';
+    });
+
+    document.getElementById('favFile').addEventListener('change', e => {
+        const file = e.target.files[0]; if (!file) return;
+        const img = new Image();
+        img.onload = () => { lastImg = img; generate(); };
+        img.src = URL.createObjectURL(file);
+    });
+
+    document.getElementById('favGen').addEventListener('click', () => generate());
+
+    function generate() {
+        const mode = document.getElementById('favMode').value;
+        const bg = document.getElementById('favBg').value;
+        const preview = document.getElementById('favPreview');
+        preview.innerHTML = '';
+        sizes.forEach(size => {
+            const canvas = document.createElement('canvas');
+            canvas.width = size; canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = bg; ctx.fillRect(0, 0, size, size);
+            if (mode === 'image' && lastImg) {
+                const ratio = Math.min(size / lastImg.width, size / lastImg.height);
+                const w = lastImg.width * ratio, h = lastImg.height * ratio;
+                ctx.drawImage(lastImg, (size-w)/2, (size-h)/2, w, h);
+            } else {
+                const text = document.getElementById('favText').value || 'A';
+                ctx.fillStyle = document.getElementById('favFg').value;
+                ctx.font = `bold ${size * 0.6}px sans-serif`;
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(text, size/2, size/2 + size*0.05);
+            }
+            const item = document.createElement('div');
+            item.className = 'fav-item';
+            const dispCanvas = document.createElement('canvas');
+            dispCanvas.width = 64; dispCanvas.height = 64;
+            dispCanvas.getContext('2d').drawImage(canvas, 0, 0, 64, 64);
+            item.appendChild(dispCanvas);
+            const label = document.createElement('span');
+            label.textContent = size + 'px';
+            item.appendChild(label);
+            preview.appendChild(item);
+        });
+        lastCanvas = sizes.map(s => { const c = document.createElement('canvas'); c.width = s; c.height = s; const cx = c.getContext('2d'); cx.fillStyle = bg; cx.fillRect(0,0,s,s); if (mode==='image'&&lastImg){const r=Math.min(s/lastImg.width,s/lastImg.height);cx.drawImage(lastImg,(s-lastImg.width*r)/2,(s-lastImg.height*r)/2,lastImg.width*r,lastImg.height*r);} else {cx.fillStyle=document.getElementById('favFg').value;cx.font=`bold ${s*0.6}px sans-serif`;cx.textAlign='center';cx.textBaseline='middle';cx.fillText(document.getElementById('favText').value||'A',s/2,s/2+s*0.05);} return c; });
+        setStatus('预览已生成', 'success');
+    }
+    let lastCanvas = null;
+
+    document.getElementById('favDlPng').addEventListener('click', () => {
+        if (!lastCanvas) { generate(); }
+        if (!lastCanvas) return;
+        const c = lastCanvas[1]; // 32px
+        const a = document.createElement('a');
+        a.href = c.toDataURL('image/png');
+        a.download = 'favicon-32.png'; a.click();
+        setStatus('PNG已下载', 'success');
+    });
+
+    document.getElementById('favDlIco').addEventListener('click', () => {
+        if (!lastCanvas) { generate(); }
+        if (!lastCanvas) return;
+        // Build ICO file
+        const icoSizes = [16, 32, 48];
+        const pngs = icoSizes.map((s, i) => lastCanvas[i].toDataURL('image/png'));
+        const blobs = pngs.map(p => dataURLToUint8(p));
+        let offset = 6 + icoSizes.length * 16;
+        const header = new Uint8Array(6);
+        const dv = new DataView(header.buffer);
+        dv.setUint16(0, 0, true); dv.setUint16(2, 1, true); dv.setUint16(4, icoSizes.length, true);
+        let parts = [header];
+        icoSizes.forEach((s, i) => {
+            const entry = new Uint8Array(16);
+            const edv = new DataView(entry.buffer);
+            edv.setUint8(0, s === 256 ? 0 : s); edv.setUint8(1, s === 256 ? 0 : s);
+            edv.setUint8(2, 0); edv.setUint8(3, 0);
+            edv.setUint16(4, 1, true); edv.setUint16(6, 32, true);
+            edv.setUint32(8, blobs[i].length, true); edv.setUint32(12, offset, true);
+            offset += blobs[i].length;
+            parts.push(entry);
+        });
+        parts = parts.concat(blobs);
+        const blob = new Blob(parts, { type: 'image/x-icon' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = 'favicon.ico'; a.click();
+        setStatus('ICO已下载（含16/32/48三尺寸）', 'success');
+    });
+
+    function dataURLToUint8(url) {
+        const b64 = url.split(',')[1];
+        const bin = atob(b64);
+        const arr = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+        return arr;
+    }
+    
+    initSidebar('work');
+</script>
+</body>
+</html>

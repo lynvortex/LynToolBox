@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>离线版 &amp; 源代码 - 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="./logo.webp" />
+    <meta name="description" content="绘萤工具箱离线版下载与源代码：命令行版单文件 exe，无需浏览器离线使用；网页版与命令行版源码开源于 GitHub。">
+    <script src="assets/sidebar.js"></script>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --primary-dark: #3a7bd5;
+            --primary-soft: #ebf5ff;
+            --text-main: #2c3e50;
+            --text-sub: #606266;
+            --text-light: #909399;
+            --line: #e1e4e8;
+            --bg: #f0f2f5;
+            --card-line: #ebeef5;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: var(--bg);
+        }
+
+        .mobile-header {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 60px;
+            padding: 0 20px;
+            background: #fff;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            z-index: 1000;
+        }
+
+        .mobile-brand { font-size: 1.2em; font-weight: 700; color: var(--text-main); }
+        .mobile-brand img { height: 24px; vertical-align: middle; margin-right: 8px; }
+        .menu-toggle { border: none; background: none; font-size: 24px; cursor: pointer; color: var(--primary); }
+
+        .sidebar {
+            width: 260px;
+            background: #fff;
+            border-right: 1px solid var(--line);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+        }
+
+        .brand-header {
+            padding: 30px 25px;
+            border-bottom: 1px solid #f0f2f5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.25em; font-weight: 700; color: var(--text-main); letter-spacing: 1px; }
+        .close-sidebar { display: none; border: none; background: none; font-size: 24px; cursor: pointer; color: var(--text-light); }
+
+        .category-list { padding: 20px 0; flex: 1; }
+        .category-item {
+            display: block;
+            padding: 15px 25px;
+            text-decoration: none;
+            color: var(--text-sub);
+            border-left: 4px solid transparent;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        .category-item:hover, .category-item.active {
+            background: var(--primary-soft);
+            color: var(--primary);
+            border-left-color: var(--primary);
+        }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+        .main-scroll {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            min-height: 0;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .page-desc { color: var(--text-light); margin: 0 0 30px; }
+
+        .hero {
+            background: #fff;
+            border: 1px solid var(--card-line);
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 28px;
+        }
+        .hero h2 { margin: 0 0 12px; font-size: 1.3em; color: var(--text-main); }
+        .hero p { margin: 0 0 8px; color: var(--text-sub); font-size: 0.92em; line-height: 1.7; }
+        .hero .hero-tag { display: inline-block; font-size: 0.75em; color: var(--primary); background: var(--primary-soft); border-radius: 10px; padding: 2px 10px; margin-bottom: 14px; }
+
+        .btn-row { margin-top: 18px; display: flex; gap: 14px; flex-wrap: wrap; }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 2px 10px rgba(74,144,226,0.25); }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-outline { color: var(--primary); border: 1px solid var(--primary); background: transparent; }
+        .btn-outline:hover { background: var(--primary-soft); }
+
+        .section-title { font-size: 1.1em; color: var(--text-main); margin: 0 0 16px; }
+
+        .card-grid {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            margin-bottom: 28px;
+        }
+
+        .repo-card {
+            background: #fff;
+            border: 1px solid var(--card-line);
+            border-radius: 10px;
+            padding: 22px 24px;
+            text-decoration: none;
+            color: inherit;
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+            display: block;
+        }
+        .repo-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.07); border-color: var(--primary); }
+        .repo-card h3 { margin: 0 0 8px; font-size: 1em; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+        .repo-card p { margin: 0 0 12px; font-size: 0.84em; color: var(--text-light); line-height: 1.6; }
+        .repo-card .repo-link { font-size: 0.8em; color: var(--primary); word-break: break-all; }
+
+        .usage-list { margin: 0; padding-left: 20px; color: var(--text-sub); font-size: 0.9em; line-height: 1.9; }
+        .usage-list code {
+            background: var(--primary-soft);
+            color: var(--primary-dark);
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 0.92em;
+        }
+
+        .footer {
+            flex-shrink: 0;
+            padding: 18px 40px;
+            text-align: center;
+            background: #fff;
+            border-top: 1px solid var(--line);
+            color: var(--text-light);
+            font-size: 0.85em;
+        }
+        .footer a { color: var(--primary); text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+
+        @media (max-width: 768px) {
+            body { display: block; height: auto; overflow: auto; }
+            .main-content { display: block; }
+            .mobile-header { display: flex; }
+            .sidebar { position: fixed; top: 0; left: 0; bottom: 0; transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .close-sidebar { display: block; }
+            .overlay.active { display: block; }
+            .brand-header { padding: 20px; }
+            .main-scroll { padding: 80px 20px 20px; }
+            .footer { padding: 15px 20px; }
+        }
+    </style>
+    <meta name="keywords" content="绘萤工具箱离线版,命令行工具,CLI,离线使用,开源,源代码,GitHub,LynToolBox" />
+    <link rel="canonical" href="https://box.lynvortex.top/offline.html" />
+    <meta property="og:title" content="离线版 &amp; 源代码" />
+    <meta property="og:description" content="绘萤工具箱离线版下载与源代码：命令行版单文件 exe，无需浏览器离线使用；网页版与命令行版源码开源于 GitHub。" />
+    <meta property="og:url" content="https://box.lynvortex.top/offline.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="离线版 &amp; 源代码" />
+    <meta itemprop="description" content="绘萤工具箱离线版下载与源代码：命令行版单文件 exe，无需浏览器离线使用；网页版与命令行版源码开源于 GitHub。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "首页",
+            "item": "https://box.lynvortex.top/"
+        },
+        {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "离线版 & 源代码",
+            "item": "https://box.lynvortex.top/offline.html"
+        }
+    ]
+}
+    </script>
+</head>
+<body>
+
+    <main class="main-content">
+        <div class="main-scroll">
+            <p class="page-desc">无需浏览器也能用：下载命令行离线版，或前往 GitHub 获取本项目全部源代码。</p>
+
+            <section class="hero">
+                <span class="hero-tag">📦 离线版</span>
+                <h2>绘萤工具箱 · 命令行版（LynToolBox-cli）</h2>
+                <p>精选工具箱中的编程开发与开发者实用功能，打包为<b>单文件 exe</b>，在命令提示符（CMD/PowerShell/Terminal）中直接运行。</p>
+                <p>无需安装任何运行环境，不依赖浏览器，断网可用，数据全部留在本机。</p>
+                <div class="btn-row">
+                    <a class="btn btn-primary" href="https://github.com/lynvortex/LynToolBox-cli/releases/latest" target="_blank" rel="noopener">⬇️ 下载最新 exe（Windows）</a>
+                    <a class="btn btn-outline" href="https://github.com/lynvortex/LynToolBox-cli/releases" target="_blank" rel="noopener">📋 查看全部版本</a>
+                </div>
+            </section>
+
+            <section>
+                <h2 class="section-title">🚀 使用方法</h2>
+                <div class="hero">
+                    <ul class="usage-list">
+                        <li>从 <a href="https://github.com/lynvortex/LynToolBox-cli/releases/latest" target="_blank" rel="noopener">Releases 页面</a> 下载 <code>lyntoolbox-cli.exe</code>，放到任意目录；</li>
+                        <li>打开命令提示符，切换到该目录，运行 <code>lyntoolbox-cli.exe --help</code> 查看全部可用命令；</li>
+                        <li>也可将 exe 所在目录加入 <code>PATH</code> 环境变量，在任意位置直接调用。</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2 class="section-title">🧩 源代码</h2>
+                <div class="card-grid">
+                    <a class="repo-card" href="https://github.com/lynvortex/LynToolBox" target="_blank" rel="noopener">
+                        <h3>🌐 网页版源码</h3>
+                        <p>绘萤工具箱网页版（本站）全部页面与工具源代码，纯前端实现，数据不上传。</p>
+                        <span class="repo-link">github.com/lynvortex/LynToolBox</span>
+                    </a>
+                    <a class="repo-card" href="https://github.com/lynvortex/LynToolBox-cli" target="_blank" rel="noopener">
+                        <h3>⌨️ 命令行版源码</h3>
+                        <p>离线命令行版源代码，各工具按单文件组织，使用最适合该功能的高级语言实现。</p>
+                        <span class="repo-link">github.com/lynvortex/LynToolBox-cli</span>
+                    </a>
+                </div>
+            </section>
+        </div>
+
+        <footer class="footer">
+            © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+            <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+
+        </footer>
+    </main>
+
+    <script>
+        initSidebar('offline');
+    </script>
+</body>
+</html>

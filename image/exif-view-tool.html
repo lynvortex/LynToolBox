@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EXIF信息查看工具-绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="EXIF信息查看工具，上传图片查看EXIF元数据（相机型号、光圈、快门、ISO、GPS等）。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <script src="../assets/exifr.min.js"></script>
+    <script src="../assets/sidebar.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'PingFang SC', -apple-system, sans-serif; background: #f4f7f9; margin: 0; display: flex; height: 100vh; overflow: hidden; color: #333; }
+
+        .mobile-header { display: none; position: fixed; top: 0; left: 0; right: 0; height: 60px; background: #fff; padding: 0 20px; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.05); z-index: 1000; }
+        .mobile-brand { font-size: 1.2em; font-weight: bold; color: #2c3e50; }
+        .menu-toggle { font-size: 24px; cursor: pointer; background: none; border: none; color: #4ae2b7; }
+
+        .sidebar { width: 240px; background: #fff; border-right: 1px solid #e1e4e8; display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02); transition: transform 0.3s; z-index: 1001; flex-shrink: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item { display: block; padding: 14px 22px; color: #606266; text-decoration: none; transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em; }
+        .category-item:hover, .category-item.active { background: #e6faf4; color: #4ae2b7; border-left-color: #4ae2b7; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+        .tool-container { width: 100%; max-width: 960px; background: #fff; border-radius: 12px; padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06); }
+        .tool-header { text-align: center; margin-bottom: 28px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+        .upload-area { border: 2px dashed #e0e6ed; border-radius: 8px; padding: 36px; text-align: center; margin-bottom: 20px; transition: all 0.2s; cursor: pointer; background: #f8fafc; }
+        .upload-area:hover { border-color: #4ae2b7; background: #e6faf4; }
+        .upload-area.dragover { border-color: #4ae2b7; background: #d1f7ec; }
+        .upload-icon { font-size: 3em; margin-bottom: 10px; color: #cbd5e1; }
+        .upload-text { color: #64748b; font-size: 0.95em; }
+        .upload-hint { color: #94a3b8; font-size: 0.82em; margin-top: 8px; }
+        #fileInput { display: none; }
+
+        .preview-row { display: none; align-items: center; gap: 16px; margin-bottom: 20px; padding: 14px; background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 8px; flex-wrap: wrap; }
+        .preview-thumb { max-width: 140px; max-height: 140px; border-radius: 8px; border: 1px solid #e0e6ed; }
+        .preview-info { flex: 1; min-width: 180px; }
+        .preview-name { font-size: 0.92em; color: #334155; word-break: break-all; font-weight: 500; }
+        .preview-meta { font-size: 0.8em; color: #94a3b8; margin-top: 4px; }
+
+        .action-row { display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em; font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap; }
+        .btn-primary { background: #4ae2b7; color: white; }
+        .btn-primary:hover { background: #3ac9a0; }
+        .btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .btn-secondary { background: #f0f2f5; color: #606266; }
+        .btn-secondary:hover { background: #e1e4e8; }
+        .btn-outline { background: transparent; color: #4ae2b7; border: 1px solid #4ae2b7; }
+        .btn-outline:hover { background: #4ae2b7; color: white; }
+
+        .status-bar { min-height: 20px; font-size: 0.85em; padding: 8px 12px; border-radius: 6px; margin-bottom: 16px; }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+
+        .exif-result { display: none; margin-top: 8px; }
+        .exif-summary { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+        .summary-chip { background: #e0f2fe; color: #0369a1; padding: 6px 12px; border-radius: 8px; font-size: 0.82em; font-weight: 500; }
+        .summary-chip b { color: #0c4a6e; margin-left: 4px; }
+
+        .exif-section-title { font-size: 0.95em; font-weight: 600; color: #2c3e50; margin: 18px 0 10px 0; padding-bottom: 6px; border-bottom: 1px solid #f0f2f5; }
+        .exif-table-wrap { overflow-x: auto; border: 1px solid #e0e6ed; border-radius: 8px; }
+        .exif-table { width: 100%; border-collapse: collapse; font-size: 0.88em; }
+        .exif-table th, .exif-table td { padding: 9px 14px; text-align: left; border-bottom: 1px solid #f0f2f5; }
+        .exif-table th { background: #f8fafc; color: #64748b; font-weight: 600; white-space: nowrap; width: 40%; }
+        .exif-table td { color: #334155; word-break: break-all; }
+        .exif-table tr:last-child th, .exif-table tr:last-child td { border-bottom: none; }
+        .exif-table tr:hover td { background: #f8fafc; }
+        .exif-table td.mono { font-family: 'Consolas', 'Monaco', monospace; font-size: 0.9em; }
+
+        .empty-result { display: none; padding: 30px; text-align: center; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #b91c1c; font-size: 0.92em; }
+
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+
+        .info-cards { width: 100%; display: flex; flex-direction: column; gap: 18px; margin-top: 4px; }
+        .info-card { background: #fff; border-radius: 12px; padding: 22px 24px; box-shadow: 0 4px 25px rgba(0,0,0,0.06); border: 1px solid #f0f2f5; }
+        .info-card h3 { margin: 0 0 10px 0; font-size: 1em; color: #2c3e50; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+        .info-card p { margin: 0 0 10px 0; font-size: 0.82em; color: #64748b; }
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip { background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 12px; font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace; }
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a { font-size: 0.85em; color: #4ae2b7; text-decoration: none; padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s; }
+        .tool-links a:hover { background: #e2e8f0; }
+
+        @media (max-width: 768px) {
+            body { display: block; height: auto; overflow: auto; }
+            .mobile-header { display: flex; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .close-sidebar { display: block; }
+            .main-content { display: block; }
+            .main-scroll { padding: 72px 16px 32px; gap: 20px; }
+            .tool-container { padding: 24px 16px; border-radius: 10px; }
+            .tool-header h1 { font-size: 1.3em; }
+            .overlay.active { display: block; }
+        }
+        @media (max-width: 380px) { .tool-header h1 { font-size: 1.1em; } }
+
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+    </style>
+    <meta name="keywords" content="EXIF信息查看,在线EXIF信息查看,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/exif-view-tool.html" />
+    <meta property="og:title" content="EXIF信息查看工具" />
+    <meta property="og:description" content="EXIF信息查看工具，上传图片查看EXIF元数据（相机型号、光圈、快门、ISO、GPS等）。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/exif-view-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="EXIF信息查看工具" />
+    <meta itemprop="description" content="EXIF信息查看工具，上传图片查看EXIF元数据（相机型号、光圈、快门、ISO、GPS等）。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "EXIF信息查看",
+                "item": "https://box.lynvortex.top/image/exif-view-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "EXIF信息查看",
+        "url": "https://box.lynvortex.top/image/exif-view-tool.html",
+        "description": "查看照片EXIF元数据，包括相机、光圈、GPS等",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+    <main class="main-content">
+        <div class="main-scroll">
+
+            <div class="tool-container">
+                <div class="tool-header">
+                    <h1>🔍 EXIF 信息查看工具</h1>
+                    <p>上传图片查看 EXIF 元数据（相机型号、光圈、快门、ISO、GPS 等），纯前端解析</p>
+                </div>
+
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📷</div>
+                    <div class="upload-text">点击或拖拽图片到此处</div>
+                    <div class="upload-hint">支持 JPG、TIFF、HEIC 等含 EXIF 的格式</div>
+                    <input type="file" id="fileInput" accept="image/*">
+                </div>
+
+                <div class="preview-row" id="previewRow">
+                    <img class="preview-thumb" id="previewThumb" src="" alt="预览">
+                    <div class="preview-info">
+                        <div class="preview-name" id="previewName"></div>
+                        <div class="preview-meta" id="previewMeta"></div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="resetAll()">🔄 重新上传</button>
+                </div>
+
+                <div class="action-row">
+                    <button class="btn btn-primary" id="parseBtn" onclick="parseExif()">🔍 解析 EXIF</button>
+                    <button class="btn btn-outline" id="exportBtn" onclick="exportJson()" style="display:none;">💾 导出 JSON</button>
+                    <button class="btn btn-secondary" onclick="resetAll()">🔄 清除</button>
+                </div>
+
+                <div class="status-bar info" id="statusBar">请上传图片查看 EXIF 元数据</div>
+
+                <div class="empty-result" id="emptyResult">
+                    ⚠️ 该图片未检测到 EXIF 元数据<br>
+                    <span style="font-size:0.85em; color:#94a3b8;">可能是经过压缩、裁剪或从社交平台导出的图片，EXIF 已被剥离</span>
+                </div>
+
+                <div class="exif-result" id="exifResult">
+                    <div class="exif-summary" id="exifSummary"></div>
+                    <div id="exifBody"></div>
+                </div>
+
+                <footer class="footer">
+                    &copy; 2026 绘萤者-Lynvortex &middot; 美梦多彩 理想自由
+                    <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4ae2b7;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4ae2b7;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+                </footer>
+            </div>
+
+            <div class="info-cards">
+                <div class="info-card">
+                    <h3>🔍 EXIF 信息说明</h3>
+                    <p>EXIF（Exchangeable Image File Format）记录了图片的拍摄参数、设备信息、GPS 定位等元数据</p>
+                    <div class="tld-chips">
+                        <span class="tld-chip">相机型号</span>
+                        <span class="tld-chip">光圈快门</span>
+                        <span class="tld-chip">ISO</span>
+                        <span class="tld-chip">GPS定位</span>
+                        <span class="tld-chip">exifr库</span>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <h3>💡 使用须知</h3>
+                    <ul class="tips-list">
+                        <li>支持拖拽上传或点击上传图片，自动调用 exifr 库解析</li>
+                        <li>以表格形式展示所有 EXIF 字段，并按类别分组</li>
+                        <li>常见字段：相机品牌型号、镜头、光圈(FNumber)、曝光时间、ISO、焦距、GPS 坐标等</li>
+                        <li>如果图片无 EXIF 数据（如网络图片、截图），会给出明确提示</li>
+                        <li>所有解析在浏览器本地完成，图片不会上传到任何服务器</li>
+                    </ul>
+                </div>
+                <div class="info-card">
+                    <h3>✨ 绘萤者</h3>
+                    <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                    <div class="tool-links">
+                        <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                        <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                        <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                        <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                    </div>
+                    <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                        绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        let currentFile = null;
+        let currentExif = null;
+        let currentDataUrl = null;
+
+        const formatSize = function(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+            return (bytes / 1024 / 1024).toFixed(2) + ' MB';
+        };
+
+        const setStatus = function(msg, type) {
+            type = type || 'info';
+            const bar = document.getElementById('statusBar');
+            bar.textContent = msg;
+            bar.className = 'status-bar ' + type;
+        };
+
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+
+        uploadArea.addEventListener('click', function() { fileInput.click(); });
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', function() {
+            uploadArea.classList.remove('dragover');
+        });
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) handleFile(file);
+        });
+        fileInput.addEventListener('change', function() {
+            if (fileInput.files && fileInput.files[0]) handleFile(fileInput.files[0]);
+            fileInput.value = '';
+        });
+
+        const handleFile = function(file) {
+            if (!file.type.startsWith('image/')) {
+                setStatus('请上传图片文件', 'error');
+                return;
+            }
+            currentFile = file;
+            currentExif = null;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentDataUrl = e.target.result;
+                document.getElementById('previewThumb').src = currentDataUrl;
+                document.getElementById('previewName').textContent = file.name;
+                document.getElementById('previewMeta').textContent = formatSize(file.size) + ' · ' + (file.type || '未知类型');
+                document.getElementById('previewRow').style.display = 'flex';
+                document.getElementById('exifResult').style.display = 'none';
+                document.getElementById('emptyResult').style.display = 'none';
+                document.getElementById('exportBtn').style.display = 'none';
+                setStatus('图片已加载，点击"解析 EXIF"开始查看', 'info');
+            };
+            reader.readAsDataURL(file);
+        };
+
+        // 格式化 EXIF 值
+        const formatValue = function(key, val) {
+            if (val === null || val === undefined) return '';
+            if (val instanceof Date) {
+                const pad = function(n) { return n < 10 ? '0' + n : n; };
+                return val.getFullYear() + '-' + pad(val.getMonth() + 1) + '-' + pad(val.getDate()) + ' ' +
+                       pad(val.getHours()) + ':' + pad(val.getMinutes()) + ':' + pad(val.getSeconds());
+            }
+            // GPS 经纬度
+            if ((key === 'latitude' || key === 'GPSLatitude' || key === 'longitude' || key === 'GPSLongitude') && Array.isArray(val)) {
+                const deg = val[0] || 0;
+                const min = val[1] || 0;
+                const sec = val[2] || 0;
+                const dec = deg + min / 60 + sec / 3600;
+                return dec.toFixed(6) + '° (' + deg + '° ' + min + "' " + sec + '"' + ')';
+            }
+            // 分数形式（光圈、曝光等）
+            if (Array.isArray(val)) {
+                return val.join(', ');
+            }
+            if (typeof val === 'object') {
+                try { return JSON.stringify(val); } catch (e) { return String(val); }
+            }
+            return String(val);
+        };
+
+        // 关键字段分组
+        const KEY_GROUPS = [
+            { title: '📷 拍摄设备', keys: ['Make', 'Model', 'LensModel', 'LensMake', 'LensSpecification', 'Software', 'BodySerialNumber'] },
+            { title: '⚖️ 拍摄参数', keys: ['FNumber', 'ExposureTime', 'ExposureProgram', 'ISO', 'PhotographicSensitivity', 'FocalLength', 'FocalLengthIn35mmFormat', 'ApertureValue', 'ShutterSpeedValue', 'ExposureBiasValue', 'ExposureMode', 'MeteringMode', 'WhiteBalance', 'Flash', 'SceneCaptureType', 'Contrast', 'Saturation', 'Sharpness'] },
+            { title: '🌍 GPS 定位', keys: ['latitude', 'longitude', 'GPSLatitude', 'GPSLongitude', 'GPSLatitudeRef', 'GPSLongitudeRef', 'GPSAltitude', 'GPSAltitudeRef', 'GPSProcessingMethod', 'GPSDateStamp', 'GPSTimeStamp'] },
+            { title: '📅 时间信息', keys: ['DateTimeOriginal', 'CreateDate', 'ModifyDate', 'DateTimeDigitized', 'OffsetTime', 'OffsetTimeOriginal'] },
+            { title: '🖼️ 图片信息', keys: ['ImageWidth', 'ImageHeight', 'BitsPerSample', 'Compression', 'ColorSpace', 'Orientation', 'ResolutionUnit', 'XResolution', 'YResolution', 'ResolutionX', 'ResolutionY'] },
+            { title: '🏷️ 其他字段', keys: null }
+        ];
+
+        const SUMMARY_KEYS = [
+            { key: 'Model', label: '相机' },
+            { key: 'LensModel', label: '镜头' },
+            { key: 'FNumber', label: '光圈' },
+            { key: 'ExposureTime', label: '快门' },
+            { key: 'ISO', label: 'ISO' },
+            { key: 'FocalLength', label: '焦距' },
+            { key: 'DateTimeOriginal', label: '拍摄时间' },
+            { key: 'latitude', label: '纬度' },
+            { key: 'longitude', label: '经度' }
+        ];
+
+        const parseExif = function() {
+            if (!currentFile) {
+                setStatus('请先上传图片', 'error');
+                return;
+            }
+            if (typeof exifr === 'undefined') {
+                setStatus('exifr 库未加载，请检查网络或刷新页面', 'error');
+                return;
+            }
+            const btn = document.getElementById('parseBtn');
+            btn.disabled = true;
+            btn.textContent = '解析中...';
+            setStatus('正在解析 EXIF 数据...', 'info');
+            document.getElementById('exifResult').style.display = 'none';
+            document.getElementById('emptyResult').style.display = 'none';
+
+            exifr.parse(currentFile, { gps: true, tiff: true, exif: true, ifd0: true, ifd1: true, interop: true, xmp: true }).then(function(data) {
+                currentExif = data;
+                btn.disabled = false;
+                btn.textContent = '🔍 解析 EXIF';
+                if (!data || Object.keys(data).length === 0) {
+                    document.getElementById('emptyResult').style.display = 'block';
+                    setStatus('未检测到 EXIF 数据', 'error');
+                    return;
+                }
+                renderExif(data);
+                document.getElementById('exportBtn').style.display = 'inline-block';
+                setStatus('解析完成，共 ' + Object.keys(data).length + ' 个字段', 'success');
+            }).catch(function(err) {
+                btn.disabled = false;
+                btn.textContent = '🔍 解析 EXIF';
+                document.getElementById('emptyResult').style.display = 'block';
+                setStatus('解析失败：' + (err && err.message ? err.message : err), 'error');
+            });
+        };
+
+        const renderExif = function(data) {
+            // 概要
+            let summaryHtml = '';
+            SUMMARY_KEYS.forEach(function(s) {
+                if (data[s.key] !== undefined && data[s.key] !== null && data[s.key] !== '') {
+                    summaryHtml += '<span class="summary-chip">' + window.escapeHtml(s.label) + '<b>' + window.escapeHtml(formatValue(s.key, data[s.key])) + '</b></span>';
+                }
+            });
+            document.getElementById('exifSummary').innerHTML = summaryHtml;
+
+            // 分组表格
+            const allKeys = Object.keys(data);
+            const used = {};
+            let bodyHtml = '';
+            KEY_GROUPS.forEach(function(group) {
+                let rows = '';
+                if (group.keys) {
+                    group.keys.forEach(function(k) {
+                        if (data[k] !== undefined && data[k] !== null && data[k] !== '') {
+                            rows += '<tr><th>' + window.escapeHtml(k) + '</th><td class="mono">' + window.escapeHtml(formatValue(k, data[k])) + '</td></tr>';
+                            used[k] = true;
+                        }
+                    });
+                } else {
+                    // 其他字段
+                    allKeys.forEach(function(k) {
+                        if (!used[k] && data[k] !== undefined && data[k] !== null && data[k] !== '') {
+                            rows += '<tr><th>' + window.escapeHtml(k) + '</th><td class="mono">' + window.escapeHtml(formatValue(k, data[k])) + '</td></tr>';
+                            used[k] = true;
+                        }
+                    });
+                }
+                if (rows) {
+                    bodyHtml += '<div class="exif-section-title">' + group.title + '</div>';
+                    bodyHtml += '<div class="exif-table-wrap"><table class="exif-table"><tbody>' + rows + '</tbody></table></div>';
+                }
+            });
+            document.getElementById('exifBody').innerHTML = bodyHtml;
+            document.getElementById('exifResult').style.display = 'block';
+        };
+
+        const exportJson = function() {
+            if (!currentExif) {
+                setStatus('没有可导出的数据', 'error');
+                return;
+            }
+            // 格式化为可读 JSON
+            const clean = {};
+            Object.keys(currentExif).forEach(function(k) {
+                clean[k] = currentExif[k];
+            });
+            const blob = new Blob([JSON.stringify(clean, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const baseName = currentFile ? currentFile.name.replace(/\.[^.]+$/, '') : 'image';
+            a.download = baseName + '_exif.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+            setStatus('已导出 EXIF 数据为 JSON 文件', 'success');
+        };
+
+        const resetAll = function() {
+            currentFile = null;
+            currentExif = null;
+            currentDataUrl = null;
+            document.getElementById('previewRow').style.display = 'none';
+            document.getElementById('previewThumb').src = '';
+            document.getElementById('exifResult').style.display = 'none';
+            document.getElementById('emptyResult').style.display = 'none';
+            document.getElementById('exportBtn').style.display = 'none';
+            document.getElementById('exifSummary').innerHTML = '';
+            document.getElementById('exifBody').innerHTML = '';
+            setStatus('已清除，请重新上传图片', 'info');
+        };
+
+        // 初始化共享侧边栏
+        initSidebar('image');
+    </script>
+</body>
+</html>

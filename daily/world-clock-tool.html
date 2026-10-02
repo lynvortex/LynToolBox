@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>世界时钟 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="世界时钟，实时显示全球主要城市时间，支持时区转换，纯前端无依赖。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+        .clock-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px; }
+        .clock-card { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: #fff; border-radius: 14px; padding: 20px; text-align: center; position: relative; overflow: hidden; }
+        .clock-card::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(74,144,226,0.1) 0%, transparent 60%); }
+        .clock-city { font-size: 0.95em; font-weight: 600; opacity: 0.8; margin-bottom: 6px; }
+        .clock-time { font-size: 2em; font-weight: 700; font-family: 'Courier New', monospace; letter-spacing: 1px; }
+        .clock-date { font-size: 0.78em; opacity: 0.6; margin-top: 4px; }
+        .clock-tz { font-size: 0.72em; opacity: 0.5; margin-top: 2px; }
+        .convert-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: end; margin-bottom: 18px; }
+        @media (max-width: 600px) { .convert-row { grid-template-columns: 1fr; } }
+        .convert-arrow { text-align: center; font-size: 1.5em; color: #4a90e2; padding-bottom: 12px; }
+        select { padding: 10px 14px; border: 1px solid #e0e6ed; border-radius: 8px; font-size: 0.95em; width: 100%; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="世界时钟,在线世界时钟,日常通用,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/daily/world-clock-tool.html" />
+    <meta property="og:title" content="世界时钟" />
+    <meta property="og:description" content="世界时钟，实时显示全球主要城市时间，支持时区转换，纯前端无依赖。" />
+    <meta property="og:url" content="https://box.lynvortex.top/daily/world-clock-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="世界时钟" />
+    <meta itemprop="description" content="世界时钟，实时显示全球主要城市时间，支持时区转换，纯前端无依赖。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "日常通用",
+                "item": "https://box.lynvortex.top/daily.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "世界时钟",
+                "item": "https://box.lynvortex.top/daily/world-clock-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "世界时钟",
+        "url": "https://box.lynvortex.top/daily/world-clock-tool.html",
+        "description": "全球主要城市实时时钟与时区转换，支持自定义城市",
+        "applicationCategory": "日常通用",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🌍 世界时钟</h1>
+                <p>实时显示全球主要城市时间，支持时区转换</p>
+            </div>
+
+            <div class="clock-grid" id="clockGrid"></div>
+
+            <h3 style="margin:24px 0 14px;color:#2c3e50;">🕐 时区转换</h3>
+            <div class="convert-row">
+                <div class="form-item">
+                    <label>源时区</label>
+                    <select id="fromTz"></select>
+                    <input type="datetime-local" id="fromTime" style="margin-top:8px;width:100%;padding:10px;border:1px solid #e0e6ed;border-radius:8px;" />
+                </div>
+                <div class="convert-arrow">→</div>
+                <div class="form-item">
+                    <label>目标时区</label>
+                    <select id="toTz"></select>
+                    <div id="toTime" style="margin-top:8px;padding:10px;background:#f8fafc;border:1px solid #e0e6ed;border-radius:8px;font-family:'Courier New',monospace;font-size:1.1em;min-height:42px;"></div>
+                </div>
+            </div>
+            <button class="btn btn-primary" id="convertBtn" style="width:100%;padding:12px;">转换时间</button>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 世界时钟</h3>
+                <p>全球城市时间实时显示</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">多时区</span>
+                    <span class="feature-chip">实时更新</span>
+                    <span class="feature-chip">时区转换</span>
+                    <span class="feature-chip">离线可用</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>实时显示全球20+主要城市时间</li>
+                    <li>支持任意两个时区间的时间转换</li>
+                    <li>基于Intl API自动处理夏令时</li>
+                    <li>纯前端计算，无需网络</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+var cities=[
+    {city:'北京',tz:'Asia/Shanghai'},{city:'东京',tz:'Asia/Tokyo'},{city:'首尔',tz:'Asia/Seoul'},
+    {city:'新加坡',tz:'Asia/Singapore'},{city:'迪拜',tz:'Asia/Dubai'},{city:'孟买',tz:'Asia/Kolkata'},
+    {city:'莫斯科',tz:'Europe/Moscow'},{city:'伦敦',tz:'Europe/London'},{city:'巴黎',tz:'Europe/Paris'},
+    {city:'柏林',tz:'Europe/Berlin'},{city:'纽约',tz:'America/New_York'},{city:'芝加哥',tz:'America/Chicago'},
+    {city:'洛杉矶',tz:'America/Los_Angeles'},{city:'多伦多',tz:'America/Toronto'},{city:'圣保罗',tz:'America/Sao_Paulo'},
+    {city:'悉尼',tz:'Australia/Sydney'},{city:'奥克兰',tz:'Pacific/Auckland'},{city:'开罗',tz:'Africa/Cairo'}
+];
+
+var grid=document.getElementById('clockGrid');
+cities.forEach(function(c){
+    var card=document.createElement('div');
+    card.className='clock-card';
+    card.innerHTML='<div class="clock-city">'+c.city+'</div><div class="clock-time" id="t-'+c.tz.replace(/[/_]/g,'-')+'">--:--:--</div><div class="clock-date" id="d-'+c.tz.replace(/[/_]/g,'-')+'">----</div><div class="clock-tz">'+c.tz+'</div>';
+    grid.appendChild(card);
+});
+
+function updateClocks(){
+    var now=new Date();
+    cities.forEach(function(c){
+        var id=c.tz.replace(/[/_]/g,'-');
+        try{
+            var timeStr=now.toLocaleTimeString('zh-CN',{timeZone:c.tz,hour12:false});
+            var dateStr=now.toLocaleDateString('zh-CN',{timeZone:c.tz,month:'short',day:'numeric',weekday:'short'});
+            document.getElementById('t-'+id).textContent=timeStr;
+            document.getElementById('d-'+id).textContent=dateStr;
+        }catch(e){}
+    });
+}
+updateClocks();
+setInterval(updateClocks,1000);
+
+var fromSel=document.getElementById('fromTz'),toSel=document.getElementById('toTz');
+cities.forEach(function(c){
+    fromSel.add(new Option(c.city+' ('+c.tz+')',c.tz));
+    toSel.add(new Option(c.city+' ('+c.tz+')',c.tz));
+});
+fromSel.value='Asia/Shanghai';toSel.value='America/New_York';
+
+var now=new Date();
+document.getElementById('fromTime').value=now.toISOString().slice(0,16);
+
+document.getElementById('convertBtn').onclick=function(){
+    var fromTz=fromSel.value,toTz=toSel.value;
+    var timeStr=document.getElementById('fromTime').value;
+    if(!timeStr)return;
+    var dt=new Date(timeStr);
+    var fromFmt=new Intl.DateTimeFormat('zh-CN',{timeZone:fromTz,dateStyle:'short',timeStyle:'medium',hour12:false});
+    var toFmt=new Intl.DateTimeFormat('zh-CN',{timeZone:toTz,dateStyle:'short',timeStyle:'medium',hour12:false});
+    document.getElementById('toTime').textContent=toFmt.format(dt);
+};
+document.getElementById('convertBtn').click();
+initSidebar('daily');
+</script>
+</body>
+</html>

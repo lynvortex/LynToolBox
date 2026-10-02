@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Markdown表格生成器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线 Markdown 表格生成器，粘贴 Excel/TSV/CSV 数据或在线编辑单元格，设置列对齐方式，一键生成规范 Markdown 表格，支持表格反向解析，纯前端处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="Markdown表格,表格生成器,MD表格,Excel转Markdown,TSV转Markdown,CSV转Markdown,文档写作,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/work/markdown-table-tool.html"/>
+<meta property="og:title" content="Markdown表格生成器"/>
+<meta property="og:description" content="粘贴即生成，对齐随心配。"/>
+<meta property="og:url" content="https://box.lynvortex.top/work/markdown-table-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="Markdown表格生成器"/>
+<meta itemprop="description" content="粘贴即生成，对齐随心配。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"编程开发","item":"https://box.lynvortex.top/work.html"},{"@type":"ListItem","position":3,"name":"Markdown表格生成器","item":"https://box.lynvortex.top/work/markdown-table-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"Markdown表格生成器","url":"https://box.lynvortex.top/work/markdown-table-tool.html","description":"Markdown表格生成器","applicationCategory":"编程开发","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>📋 Markdown 表格生成器</h1>
+        <p>粘贴数据或在线编辑，对齐方式随心配</p>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>首行为表头</label>
+            <select id="hasHeader"><option value="yes">是（加粗分隔行）</option><option value="no">否</option></select>
+        </div>
+        <div class="form-item"><label>单元格转义 |</label>
+            <select id="escape"><option value="yes">转义为 \|</option><option value="no">不处理</option></select>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="genBtn">⚙️ 生成表格</button>
+        <button class="btn btn-outline" id="copyBtn">复制 Markdown</button>
+        <button class="btn btn-outline" id="addRowBtn">+ 加行</button>
+        <button class="btn btn-outline" id="addColBtn">+ 加列</button>
+        <button class="btn btn-ghost" id="parseBtn">从 Markdown 解析</button>
+    </div>
+    <div class="status-bar info" id="statusBar">在下方网格中编辑，或直接粘贴 TSV/CSV 数据</div>
+    <div id="gridWrap" style="overflow-x:auto;margin-bottom:20px;"></div>
+    <p style="font-size:0.8em;color:#94a3b8;margin:8px 0;">↓ Markdown 输出</p>
+    <textarea class="code" id="output" style="min-height:160px;" readonly></textarea>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📋 双向转换</h3>
+        <p>网格编辑生成，Markdown 反向解析。</p>
+        <div class="feature-chips"><span class="feature-chip">粘贴 TSV/CSV</span><span class="feature-chip">列对齐设置</span><span class="feature-chip">管道符转义</span><span class="feature-chip">行列增删</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用技巧</h3>
+        <ul class="tips-list">
+            <li>从 Excel/WPS 直接复制单元格区域，粘贴到网格即可</li>
+            <li>点击列头部的对齐按钮切换 左 / 中 / 右</li>
+            <li>单元格内含 | 会自动转义，不影响表格结构</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+var data = [
+    ['工具', '类型', '评分'],
+    ['绘萤工具箱', '在线工具', '5'],
+    ['Markdown', '标记语言', '4.5']
+];
+var aligns = ['left', 'center', 'right'];
+
+function esc(v) {
+    v = String(v == null ? '' : v);
+    return document.getElementById('escape').value === 'yes' ? v.replace(/\|/g, '\\|') : v;
+}
+
+function renderGrid() {
+    var wrap = document.getElementById('gridWrap');
+    var html = '<table id="grid" style="border-collapse:collapse;font-size:0.88em;min-width:100%;">';
+    html += '<tr><td style="border:none;"></td>';
+    for (var c = 0; c < data[0].length; c++) {
+        var al = aligns[c] || 'left';
+        html += '<td style="border:none;padding:4px;text-align:center;"><button class="btn btn-ghost" style="padding:4px 10px;font-size:0.85em;" onclick="cycleAlign(' + c + ')">' + (al === 'left' ? '⬅ 左' : al === 'center' ? '⬌ 中' : '➡ 右') + '</button></td>';
+    }
+    html += '</tr>';
+    for (var r = 0; r < data.length; r++) {
+        html += '<tr>';
+        html += '<td style="border:none;padding:4px;color:#94a3b8;font-size:0.8em;text-align:center;">' + (r === 0 && document.getElementById('hasHeader').value === 'yes' ? '表头' : r) + '</td>';
+        for (var c2 = 0; c2 < data[r].length; c2++) {
+            html += '<td><input data-r="' + r + '" data-c="' + c2 + '" value="' + String(data[r][c2]).replace(/"/g, '&quot;') + '" style="min-width:110px;padding:7px 9px;border:1px solid #e0e6ed;border-radius:6px;font-size:0.9em;"/></td>';
+        }
+        html += '<td style="border:none;padding:4px;"><button class="btn btn-ghost" style="padding:2px 8px;" onclick="delRow(' + r + ')">✕</button></td>';
+        html += '</tr>';
+    }
+    html += '</table>';
+    wrap.innerHTML = html;
+    wrap.querySelectorAll('input[data-r]').forEach(function(inp) {
+        inp.addEventListener('input', function() {
+            data[+inp.dataset.r][+inp.dataset.c] = inp.value;
+            generate(false);
+        });
+    });
+}
+
+function generate(notice) {
+    if (!data.length || !data[0].length) return;
+    var hasHeader = document.getElementById('hasHeader').value === 'yes';
+    var maxCols = Math.max.apply(null, data.map(function(row) { return row.length; }));
+    var widths = [];
+    for (var c = 0; c < maxCols; c++) {
+        var w = 0;
+        for (var r = 0; r < data.length; r++) {
+            var v = esc((data[r][c] || ''));
+            w = Math.max(w, String(v).length * 2 - String(v).replace(/[^\x00-\xff]/g, '').length);
+        }
+        widths.push(Math.max(w, 3));
+    }
+    var lines = [];
+    var padCell = function(v, i) {
+        v = String(v);
+        var visual = v.length * 2 - v.replace(/[^\x00-\xff]/g, '').length;
+        var total = widths[i];
+        var al = aligns[i] || 'left';
+        if (al === 'center') {
+            var l = Math.floor((total - visual) / 2), rr = total - visual - l;
+            return ' '.repeat(Math.max(0, l)) + v + ' '.repeat(Math.max(0, rr));
+        }
+        if (al === 'right') return ' '.repeat(Math.max(0, total - visual)) + v;
+        return v + ' '.repeat(Math.max(0, total - visual));
+    };
+    var rowLine = function(row) {
+        var cells = [];
+        for (var i = 0; i < maxCols; i++) cells.push(padCell(esc(row[i] || ''), i));
+        return '| ' + cells.join(' | ') + ' |';
+    };
+    lines.push(rowLine(data[0]));
+    var seps = [];
+    for (var i2 = 0; i2 < maxCols; i2++) {
+        var al2 = aligns[i2] || 'left';
+        seps.push(al2 === 'center' ? ':' + '-'.repeat(Math.max(1, widths[i2])) + ':' : al2 === 'right' ? '-'.repeat(Math.max(1, widths[i2])) + ':' : '-'.repeat(Math.max(1, widths[i2])) + (i2 === 0 ? ':' : ''));
+    }
+    if (hasHeader) {
+        lines.push('| ' + seps.join(' | ') + ' |');
+        for (var r2 = 1; r2 < data.length; r2++) lines.push(rowLine(data[r2]));
+    } else {
+        lines.push('| ' + seps.map(function(s) { return s.replace(/^:|:$/g, function(m, off, str) { return off === 0 && str.indexOf(':') === 0 ? ':' : ''; }) || '-'.repeat(3); }).join(' | ') + ' |');
+        for (var r3 = 0; r3 < data.length; r3++) lines.push(rowLine(data[r3]));
+    }
+    document.getElementById('output').value = lines.join('\n');
+    if (notice !== false) {
+        var sb = document.getElementById('statusBar');
+        sb.textContent = '已生成 ' + data.length + ' 行 × ' + maxCols + ' 列的 Markdown 表格';
+        sb.className = 'status-bar success';
+    }
+}
+
+window.cycleAlign = function(c) {
+    aligns[c] = aligns[c] === 'left' ? 'center' : aligns[c] === 'center' ? 'right' : 'left';
+    renderGrid(); generate(false);
+};
+window.delRow = function(r) {
+    if (data.length <= 1) return;
+    data.splice(r, 1);
+    renderGrid(); generate();
+};
+
+document.getElementById('genBtn').onclick = function() { generate(); };
+document.getElementById('addRowBtn').onclick = function() {
+    data.push(new Array(data[0].length).fill(''));
+    renderGrid(); generate();
+};
+document.getElementById('addColBtn').onclick = function() {
+    data.forEach(function(row) { row.push(''); });
+    aligns.push('left');
+    renderGrid(); generate();
+};
+document.getElementById('copyBtn').onclick = function() {
+    var t = document.getElementById('output').value;
+    if (t) navigator.clipboard.writeText(t).then(function() {
+        var sb = document.getElementById('statusBar');
+        sb.textContent = 'Markdown 已复制'; sb.className = 'status-bar success';
+    });
+};
+document.getElementById('parseBtn').onclick = function() {
+    var md = prompt('粘贴 Markdown 表格代码：');
+    if (!md) return;
+    var rows = md.trim().split('\n').filter(function(l) { return l.trim().indexOf('|') === 0; });
+    var parsed = [];
+    rows.forEach(function(line) {
+        if (/^\|[\s:|-]+\|?$/.test(line.trim())) return;
+        var cells = line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(function(c) { return c.trim().replace(/\\\|/g, '|'); });
+        parsed.push(cells);
+    });
+    if (!parsed.length) {
+        var sb = document.getElementById('statusBar');
+        sb.textContent = '未解析出表格行'; sb.className = 'status-bar error';
+        return;
+    }
+    data = parsed;
+    aligns = new Array(parsed[0].length).fill('left');
+    renderGrid(); generate();
+};
+
+var gridArea = document.getElementById('gridWrap');
+gridArea.addEventListener('paste', function(e) {
+    var text = (e.clipboardData || window.clipboardData).getData('text');
+    if (!text || text.indexOf('\t') === -1 && (text.split('\n').length < 2 || text.indexOf(',') === -1)) return;
+    e.preventDefault();
+    var lines = text.replace(/\r/g, '').split('\n').filter(function(l) { return l !== ''; });
+    var hasTab = text.indexOf('\t') !== -1;
+    data = lines.map(function(l) { return hasTab ? l.split('\t') : parseCsvLine(l); });
+    var cols = Math.max.apply(null, data.map(function(r) { return r.length; }));
+    aligns = new Array(cols).fill('left');
+    renderGrid(); generate();
+});
+
+function parseCsvLine(line) {
+    var out = [], cur = '', inQ = false;
+    for (var i = 0; i < line.length; i++) {
+        var ch = line[i];
+        if (inQ) {
+            if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+            else if (ch === '"') inQ = false;
+            else cur += ch;
+        } else {
+            if (ch === '"') inQ = true;
+            else if (ch === ',') { out.push(cur); cur = ''; }
+            else cur += ch;
+        }
+    }
+    out.push(cur);
+    return out;
+}
+
+renderGrid(); generate(false);
+initSidebar('work');
+</script>
+</body>
+</html>

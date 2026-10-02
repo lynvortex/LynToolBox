@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>正则表达式生成 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="正则表达式生成，输入文本样本，辅助生成正则表达式。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', -apple-system, sans-serif;
+            background: #f4f7f9;
+            margin: 0;
+            display: flex;
+            height: 100vh; overflow: hidden;
+            color: #333;
+        }
+        .mobile-header {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: #fff; padding: 0 20px; align-items: center;
+            justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+        }
+        .mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+        .mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+        .menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #4a90e2; }
+        .sidebar {
+            width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+            display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+            transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+            position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item {
+            display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+            transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+        }
+        .category-item:hover, .category-item.active { background: #ebf5ff; color: #4a90e2; border-left-color: #4a90e2; }
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+        .tool-container {
+            width: 100%;
+            max-width: 960px;
+            background: #fff; border-radius: 12px;
+            padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+        }
+        .tool-header { text-align: center; margin-bottom: 28px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 0.85em; color: #64748b; margin-bottom: 6px; font-weight: 500; }
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 14px;
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            font-size: 0.92em;
+            font-family: 'Consolas', 'Courier New', monospace;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+        textarea:focus { border-color: #4a90e2; }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            font-size: 0.92em;
+            outline: none;
+            transition: border-color 0.2s;
+            font-family: 'Consolas', 'Courier New', monospace;
+            color: #1e293b;
+        }
+        input[type="text"]:focus { border-color: #4a90e2; }
+        .action-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em;
+            font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap;
+        }
+        .btn-primary { background: #4a90e2; color: white; }
+        .btn-primary:hover { background: #3a7bd5; }
+        .btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .btn-success { background: #34d399; color: white; }
+        .btn-success:hover { background: #2bb981; }
+        .btn-outline { background: transparent; color: #4a90e2; border: 1px solid #4a90e2; }
+        .btn-outline:hover { background: #4a90e2; color: white; }
+        .btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+        .btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+        .status-bar {
+            min-height: 20px; font-size: 0.85em;
+            padding: 8px 12px; border-radius: 6px; margin-bottom: 16px;
+        }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+        .result-area { display: none; }
+        .regex-display {
+            background: #1e293b; color: #67e8f9; border-radius: 8px;
+            padding: 14px 16px; font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 1em; margin-bottom: 16px; word-break: break-all;
+        }
+        .highlight-box {
+            background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 8px;
+            padding: 14px; font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.9em; line-height: 1.8; white-space: pre-wrap; max-height: 200px; overflow-y: auto;
+            margin-bottom: 16px;
+        }
+        .highlight-box .hl-match { background: #fde68a; color: #1e293b; border-radius: 2px; }
+        .match-count { font-size: 0.85em; color: #64748b; margin-bottom: 12px; }
+        .match-count strong { color: #1e293b; }
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+        .footer p { margin: 0; }
+        .footer a { color: #4a90e2; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+        .info-cards {
+            width: 100%;
+            max-width: 960px;
+            display: flex; flex-direction: column; gap: 18px; margin-top: 4px;
+        }
+        .info-card {
+            background: #fff; border-radius: 12px; padding: 22px 24px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06); border: 1px solid #f0f2f5;
+        }
+        .info-card h3 {
+            margin: 0 0 10px 0; font-size: 1em; color: #2c3e50; font-weight: 600;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .info-card p { margin: 0 0 10px 0; font-size: 0.82em; color: #64748b; }
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip {
+            background: #e0f2fe; color: #0369a1;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace;
+        }
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a {
+            font-size: 0.85em; color: #4a90e2; text-decoration: none;
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s;
+        }
+        .tool-links a:hover { background: #e2e8f0; }
+        @media (max-width: 768px) {
+            body { display: block; height: auto; overflow: auto; }
+            .mobile-header { display: flex; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .close-sidebar { display: block; }
+            .main-content { display: block; }
+            .main-scroll { padding: 72px 16px 32px; gap: 20px;  }
+            .tool-container { padding: 24px 16px; border-radius: 10px; }
+            .tool-header h1 { font-size: 1.3em; }
+            .info-card { padding: 18px 16px; }
+            .overlay.active { display: block; }
+        }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="正则表达式生成,在线正则表达式生成,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/regex-gen-tool.html" />
+    <meta property="og:title" content="正则表达式生成" />
+    <meta property="og:description" content="正则表达式生成，输入文本样本，辅助生成正则表达式。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/regex-gen-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="正则表达式生成" />
+    <meta itemprop="description" content="正则表达式生成，输入文本样本，辅助生成正则表达式。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "正则表达式生成",
+                "item": "https://box.lynvortex.top/work/regex-gen-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "正则表达式生成",
+        "url": "https://box.lynvortex.top/work/regex-gen-tool.html",
+        "description": "输入文本样本，辅助生成正则表达式",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>正则表达式生成</h1>
+                <p>输入文本样本，高亮选择要匹配的文本，辅助生成正则表达式</p>
+            </div>
+
+            <div class="form-group">
+                <label>文本样本</label>
+                <textarea id="inputText" placeholder="在此输入文本样本，然后在下方的文本中选择要匹配的内容...">联系方式：
+邮箱: user@example.com
+电话: 138-1234-5678
+网址: https://example.com
+
+数据：
+ID: 1001, 价格: 29.99
+ID: 1002, 价格: 49.50</textarea>
+            </div>
+
+            <div class="form-group">
+                <label>选择要匹配的文本（高亮部分）</label>
+                <div class="highlight-box" id="sampleDisplay"></div>
+            </div>
+
+            <div class="form-group">
+                <label>或手动输入要匹配的文本</label>
+                <input type="text" id="matchText" placeholder="选中文本会自动填入，也可以手动输入" />
+            </div>
+
+            <div class="action-row">
+                <button class="btn btn-success" id="genBtn">生成正则</button>
+                <button class="btn btn-primary" id="testBtn">测试匹配</button>
+                <button class="btn btn-ghost" id="clearBtn">清空</button>
+            </div>
+
+            <div class="status-bar info" id="statusBar">输入文本样本，选择要匹配的文本后点击生成正则</div>
+
+            <div class="result-area" id="resultArea">
+                <div class="form-group">
+                    <label>生成的正则表达式</label>
+                    <div class="regex-display" id="regexDisplay">/待生成/</div>
+                </div>
+
+                <div class="form-group">
+                    <label>测试文本</label>
+                    <textarea id="testInput" placeholder="在此粘贴测试文本进行匹配测试..."></textarea>
+                </div>
+
+                <div class="action-row">
+                    <button class="btn btn-outline" id="copyRegexBtn">复制正则</button>
+                    <button class="btn btn-primary" id="runTestBtn">测试</button>
+                </div>
+
+                <div class="status-bar" id="testStatus" style="margin-top:8px;"></div>
+
+                <div class="highlight-box" id="testResult"></div>
+                <div class="match-count" id="matchCount">匹配 <strong>0</strong> 处</div>
+            </div>
+
+            <footer class="footer">
+                &copy; 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+            <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>功能说明</h3>
+                <p>辅助生成正则表达式，支持测试匹配</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">文本选择</span>
+                    <span class="tld-chip">自动生成</span>
+                    <span class="tld-chip">匹配测试</span>
+                    <span class="tld-chip">高亮显示</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>使用须知</h3>
+                <ul class="tips-list">
+                    <li>在文本样本中点击选择要匹配的文本，自动生成对应正则表达式</li>
+                    <li>生成的正则会对特殊字符进行转义处理</li>
+                    <li>可在测试文本区域粘贴内容进行匹配测试</li>
+                    <li>所有处理在浏览器本地执行，数据不会上传</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    initSidebar('work');
+
+    let setStatus = function(msg, type) {
+        let sb = document.getElementById('statusBar');
+        sb.textContent = msg;
+        sb.className = 'status-bar ' + type;
+    };
+
+    let selectedText = '';
+
+    // 渲染可选择的文本样本
+    let renderSample = function() {
+        let text = document.getElementById('inputText').value;
+        let display = document.getElementById('sampleDisplay');
+        display.innerHTML = escapeHtml(text).split('\n').map(function(line) {
+            return '<div>' + line + '</div>';
+        }).join('');
+        selectedText = '';
+        document.getElementById('matchText').value = '';
+    };
+
+    // 文本样本点击选择
+    document.getElementById('sampleDisplay').addEventListener('mouseup', function() {
+        let selection = window.getSelection();
+        let text = selection ? selection.toString().trim() : '';
+        if (text) {
+            selectedText = text;
+            document.getElementById('matchText').value = text;
+        }
+    });
+
+    document.getElementById('inputText').addEventListener('input', renderSample);
+
+    // 转义正则特殊字符
+    let escapeRegex = function(str) {
+        return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    };
+
+    // 生成正则
+    let generateRegex = function() {
+        let text = document.getElementById('matchText').value.trim();
+        if (!text) {
+            setStatus('请先选择或输入要匹配的文本', 'error');
+            return;
+        }
+        let escaped = escapeRegex(text);
+        document.getElementById('regexDisplay').textContent = '/' + escaped + '/g';
+        document.getElementById('resultArea').style.display = 'block';
+        document.getElementById('testInput').value = document.getElementById('inputText').value;
+        setStatus('正则表达式已生成', 'success');
+    };
+
+    // 测试匹配
+    let testRegex = function() {
+        let regexStr = document.getElementById('regexDisplay').textContent;
+        let testText = document.getElementById('testInput').value;
+
+        if (!regexStr || regexStr === '/待生成/') {
+            setStatus('请先生成正则表达式', 'error');
+            return;
+        }
+
+        if (!testText) {
+            setStatus('请输入测试文本', 'error');
+            return;
+        }
+
+        try {
+            // 提取正则模式和标志
+            let match = regexStr.match(/^\/(.*)\/([gim]*)$/);
+            if (!match) {
+                setStatus('正则表达式格式错误', 'error');
+                return;
+            }
+            let pattern = match[1];
+            let flags = match[2] || 'g';
+
+            let regex = new RegExp(pattern, flags);
+            let matches = [];
+            let result;
+            while ((result = regex.exec(testText)) !== null) {
+                matches.push({ index: result.index, length: result[0].length, text: result[0] });
+                if (!flags.includes('g')) break;
+            }
+
+            let testResult = document.getElementById('testResult');
+            let matchCount = document.getElementById('matchCount');
+
+            if (matches.length === 0) {
+                testResult.innerHTML = escapeHtml(testText);
+                matchCount.innerHTML = '匹配 <strong>0</strong> 处';
+                document.getElementById('testStatus').textContent = '未找到匹配';
+                document.getElementById('testStatus').className = 'status-bar info';
+            } else {
+                // 高亮显示匹配
+                let escaped = escapeHtml(testText);
+                let sorted = matches.sort(function(a, b) { return a.index - b.index; });
+                let html = '';
+                let lastIndex = 0;
+                for (let i = 0; i < sorted.length; i++) {
+                    let m = sorted[i];
+                    // 处理重叠匹配
+                    if (m.index < lastIndex) continue;
+                    html += escaped.substring(lastIndex, m.index);
+                    html += '<span class="hl-match">' + escaped.substr(m.index, m.length) + '</span>';
+                    lastIndex = m.index + m.length;
+                }
+                html += escaped.substring(lastIndex);
+                testResult.innerHTML = html;
+                matchCount.innerHTML = '匹配 <strong>' + sorted.length + '</strong> 处';
+                document.getElementById('testStatus').textContent = '匹配成功';
+                document.getElementById('testStatus').className = 'status-bar success';
+            }
+        } catch (err) {
+            document.getElementById('testStatus').textContent = '正则错误：' + err.message;
+            document.getElementById('testStatus').className = 'status-bar error';
+        }
+    };
+
+    let copyRegex = function() {
+        let text = document.getElementById('regexDisplay').textContent;
+        if (!text || text === '/待生成/') { setStatus('没有可复制的内容', 'error'); return; }
+        navigator.clipboard.writeText(text).then(function() {
+            setStatus('正则表达式已复制到剪贴板', 'success');
+        }).catch(function() {
+            let ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            setStatus('正则表达式已复制到剪贴板', 'success');
+        });
+    };
+
+    let clearAll = function() {
+        document.getElementById('inputText').value = '';
+        document.getElementById('matchText').value = '';
+        document.getElementById('testInput').value = '';
+        document.getElementById('regexDisplay').textContent = '/待生成/';
+        document.getElementById('resultArea').style.display = 'none';
+        document.getElementById('testResult').innerHTML = '';
+        document.getElementById('matchCount').innerHTML = '匹配 <strong>0</strong> 处';
+        renderSample();
+        setStatus('已清空', 'info');
+    };
+
+    document.getElementById('genBtn').addEventListener('click', generateRegex);
+    document.getElementById('testBtn').addEventListener('click', function() {
+        generateRegex();
+        setTimeout(testRegex, 50);
+    });
+    document.getElementById('copyRegexBtn').addEventListener('click', copyRegex);
+    document.getElementById('runTestBtn').addEventListener('click', testRegex);
+    document.getElementById('clearBtn').addEventListener('click', clearAll);
+
+    // 初始渲染
+    renderSample();
+</script>
+</body>
+</html>

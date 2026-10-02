@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>阅读时间计算器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线阅读时间计算器，输入文章字数估算阅读、朗读、演讲所需时长，支持中英文速度自定义，写作与排版必备，纯前端计算。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="阅读时间,阅读时长计算,朗读时间,演讲时长,字数统计,阅读速度,写作工具,免费工具,在线工具,纯前端处理,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/daily/reading-time-tool.html"/>
+<meta property="og:title" content="阅读时间计算器"/>
+<meta property="og:description" content="字数一秒变时长。"/>
+<meta property="og:url" content="https://box.lynvortex.top/daily/reading-time-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="阅读时间计算器"/>
+<meta itemprop="description" content="字数一秒变时长。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"日常通用","item":"https://box.lynvortex.top/daily.html"},{"@type":"ListItem","position":3,"name":"阅读时间计算器","item":"https://box.lynvortex.top/daily/reading-time-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"阅读时间计算器","url":"https://box.lynvortex.top/daily/reading-time-tool.html","description":"阅读时间计算器","applicationCategory":"日常通用","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>⏱️ 阅读时间计算器</h1>
+        <p>文章字数一秒换算成阅读与演讲时长</p>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>中文阅读速度（字/分钟）</label>
+            <input type="number" id="cnRead" value="400" min="50"/>
+            <span class="hint">平均 300-500，速读可达 1000+</span>
+        </div>
+        <div class="form-item"><label>英文阅读速度（词/分钟）</label>
+            <input type="number" id="enRead" value="225" min="30"/>
+            <span class="hint">英语母语平均 200-250 wpm</span>
+        </div>
+        <div class="form-item"><label>演讲语速（字/分钟）</label>
+            <input type="number" id="speakCn" value="200" min="50"/>
+            <span class="hint">演讲推荐 180-240 字/分</span>
+        </div>
+        <div class="form-item"><label>朗读语速（字/分钟）</label>
+            <input type="number" id="readAloud" value="240" min="50"/>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="calcBtn">⚙️ 计算时长</button>
+    </div>
+    <div class="status-bar info" id="statusBar">粘贴文章自动统计字数并计算时长</div>
+    <textarea class="code" id="text" style="min-height:170px;" placeholder="粘贴或输入文章内容，自动统计中英文字数…"></textarea>
+    <div id="statWrap" style="display:flex;gap:12px;flex-wrap:wrap;margin:14px 0;"></div>
+    <div id="resultWrap" style="overflow-x:auto;"></div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>⏱️ 四种场景</h3>
+        <p>默读、演讲、朗读、听力语速全覆盖。</p>
+        <div class="feature-chips"><span class="feature-chip">中英分计</span><span class="feature-chip">速度自定义</span><span class="feature-chip">实时统计</span><span class="feature-chip">字数密度</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 速度参考</h3>
+        <ul class="tips-list">
+            <li>中文默读 300-500 字/分，公众号常用 400 估算</li>
+            <li>TED 演讲约 130-150 英文词/分，从容清晰</li>
+            <li>有声书朗读约 240 字/分，比演讲稍快</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+function analyze(text) {
+    var cn = (text.match(/[\u4e00-\u9fa5]/g) || []).length;
+    var enWords = (text.replace(/[\u4e00-\u9fa5]/g, ' ').match(/[a-zA-Z]+(?:[''-][a-zA-Z]+)*/g) || []).length;
+    var digits = (text.match(/\d+/g) || []).length;
+    var punct = (text.match(/[，。、；：？！""''（）《》,.!?;:()]/g) || []).length;
+    var totalChars = text.replace(/\s/g, '').length;
+    return { cn: cn, en: enWords, digits: digits, punct: punct, total: totalChars };
+}
+
+function fmtDur(mins) {
+    if (mins < 1) return Math.round(mins * 60) + ' 秒';
+    var h = Math.floor(mins / 60), m = Math.round(mins % 60);
+    if (h > 0) return h + ' 时 ' + m + ' 分';
+    return m + ' 分钟';
+}
+
+function statChip(label, val) {
+    return '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 16px;text-align:center;"><div style="font-weight:700;color:#4a90e2;">' + val + '</div><div style="font-size:0.75em;color:#94a3b8;">' + label + '</div></div>';
+}
+
+function calc() {
+    var text = document.getElementById('text').value;
+    var s = analyze(text);
+    document.getElementById('statWrap').innerHTML =
+        statChip('总字符', s.total) + statChip('中文', s.cn) + statChip('英文词', s.en) + statChip('数字串', s.digits) + statChip('标点', s.punct);
+
+    var cnRead = +document.getElementById('cnRead').value || 400;
+    var enRead = +document.getElementById('enRead').value || 225;
+    var speakCn = +document.getElementById('speakCn').value || 200;
+    var readAloud = +document.getElementById('readAloud').value || 240;
+
+    var effCn = s.cn + s.digits;
+    var silentMins = effCn / cnRead + s.en / enRead;
+    var speakMins = (effCn + s.en) / speakCn;
+    var aloudMins = (effCn + s.en) / readAloud;
+    var listenMins = effCn / (cnRead * 0.75) + s.en / (enRead * 0.75);
+
+    var rows = [
+        ['📖 默读（网页浏览）', silentMins, '中文 ' + cnRead + ' 字/分 + 英文 ' + enRead + ' 词/分'],
+        ['🎤 演讲（脱稿报告）', speakMins, '统一按 ' + speakCn + ' 字/分'],
+        ['🎙️ 朗读（有声书）', aloudMins, '统一按 ' + readAloud + ' 字/分'],
+        ['🎧 听力（倍速播放）', listenMins, '按朗读 0.75 倍语速起步']
+    ];
+    var html = '<table style="width:100%;border-collapse:collapse;font-size:0.9em;">';
+    html += '<tr style="background:#f1f5f9;"><th style="padding:10px;border:1px solid #e2e8f0;text-align:left;">场景</th><th style="padding:10px;border:1px solid #e2e8f0;">预计时长</th><th style="padding:10px;border:1px solid #e2e8f0;text-align:left;">说明</th></tr>';
+    rows.forEach(function(r) {
+        html += '<tr><td style="padding:10px;border:1px solid #e2e8f0;font-weight:600;">' + r[0] + '</td><td style="padding:10px;border:1px solid #e2e8f0;text-align:center;color:#4a90e2;font-weight:700;">' + fmtDur(r[1]) + '</td><td style="padding:10px;border:1px solid #e2e8f0;color:#94a3b8;font-size:0.88em;">' + r[2] + '</td></tr>';
+    });
+    html += '</table>';
+    if (!text.trim()) {
+        document.getElementById('resultWrap').innerHTML = '<p style="color:#94a3b8;font-size:0.88em;">粘贴文章内容后显示各场景预计时长</p>';
+        document.getElementById('statusBar').textContent = '等待输入文章内容'; document.getElementById('statusBar').className = 'status-bar info';
+    } else {
+        document.getElementById('resultWrap').innerHTML = html;
+        document.getElementById('statusBar').textContent = '共 ' + s.total + ' 字符（中文 ' + s.cn + ' / 英文词 ' + s.en + '），默读约 ' + fmtDur(silentMins);
+        document.getElementById('statusBar').className = 'status-bar success';
+    }
+}
+
+document.getElementById('text').addEventListener('input', calc);
+['cnRead','enRead','speakCn','readAloud'].forEach(function(id) {
+    document.getElementById(id).addEventListener('input', calc);
+});
+document.getElementById('calcBtn').onclick = calc;
+calc();
+initSidebar('daily');
+</script>
+</body>
+</html>

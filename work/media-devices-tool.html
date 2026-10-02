@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>媒体设备 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线媒体设备检测工具，枚举摄像头、麦克风、扬声器设备列表，授权后显示设备名称，支持实时预览与音轨能力检测。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<style>
+.md-list{display:flex;flex-direction:column;gap:10px;}
+.md-item{border:1px solid #eef2f7;border-radius:10px;padding:14px 16px;background:#fafbfc;display:flex;gap:12px;align-items:flex-start;}
+.md-icon{font-size:1.6em;flex-shrink:0;}
+.md-info{flex:1;min-width:0;}
+.md-name{font-size:0.9em;font-weight:600;color:#1e293b;word-break:break-all;}
+.md-meta{font-size:0.75em;color:#94a3b8;font-family:Consolas,monospace;word-break:break-all;}
+video#cam{width:100%;max-width:460px;border-radius:10px;background:#000;margin:10px auto;display:none;}
+</style>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="媒体设备,摄像头检测,麦克风检测,enumerateDevices,设备枚举,摄像头预览,编程开发,免费工具,在线工具,纯前端,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/work/media-devices-tool.html"/>
+<meta property="og:title" content="媒体设备"/>
+<meta property="og:description" content="枚举摄像头/麦克风/扬声器，可实时预览。"/>
+<meta property="og:url" content="https://box.lynvortex.top/work/media-devices-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="媒体设备"/>
+<meta itemprop="description" content="枚举摄像头/麦克风/扬声器，可实时预览。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"编程开发","item":"https://box.lynvortex.top/work.html"},{"@type":"ListItem","position":3,"name":"媒体设备","item":"https://box.lynvortex.top/work/media-devices-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"媒体设备","url":"https://box.lynvortex.top/work/media-devices-tool.html","description":"媒体设备枚举检测工具","applicationCategory":"编程开发","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>📹 媒体设备</h1>
+        <p>枚举摄像头 / 麦克风 / 扬声器，授权后显示设备名</p>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="authBtn">🔑 授权并显示设备名</button>
+        <button class="btn btn-outline" id="camBtn">📷 摄像头预览</button>
+        <button class="btn btn-ghost" id="stopBtn">停止预览</button>
+    </div>
+    <div class="status-bar info" id="statusBar">未授权时设备名显示为空（浏览器隐私保护）</div>
+    <div class="md-list" id="list"></div>
+    <video id="cam" autoplay playsinline muted></video>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 媒体设备</h3>
+        <p>MediaDevices.enumerateDevices + getUserMedia 授权链路。</p>
+        <div class="feature-chips"><span class="feature-chip">摄像头</span><span class="feature-chip">麦克风</span><span class="feature-chip">扬声器</span><span class="feature-chip">实时预览</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>需要 HTTPS 或 localhost 环境才能调用授权</li>
+            <li>预览仅本地渲染，画面不会上传</li>
+            <li>浏览器会记住授权，可在地址栏锁图标中撤销</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+var stream = null;
+var ICONS = { videoinput: '📷', audioinput: '🎤', audiooutput: '🔊' };
+var LABELS = { videoinput: '摄像头', audioinput: '麦克风', audiooutput: '扬声器/输出' };
+
+function render(list) {
+    var el = document.getElementById('list');
+    el.innerHTML = '';
+    if (!list.length) {
+        el.innerHTML = '<p style="color:#94a3b8;font-size:0.85em;">未发现媒体设备</p>';
+        return;
+    }
+    list.forEach(function(d, i) {
+        var div = document.createElement('div');
+        div.className = 'md-item';
+        var name = d.label || (LABELS[d.kind] || d.kind) + ' #' + (i + 1) + '（未授权，名称隐藏）';
+        div.innerHTML = '<div class="md-icon">' + (ICONS[d.kind] || '🖥️') + '</div>' +
+            '<div class="md-info">' +
+            '<div class="md-name">' + escapeHtml(name) + '</div>' +
+            '<div class="md-meta">kind: ' + d.kind + ' · deviceId: ' + (d.deviceId || '—').slice(0, 24) + ' · groupId: ' + (d.groupId || '—').slice(0, 12) + '</div>' +
+            '</div>';
+        el.appendChild(div);
+    });
+}
+
+function enumDevices() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+        setStatus('此浏览器不支持 MediaDevices API', 'error');
+        return;
+    }
+    navigator.mediaDevices.enumerateDevices().then(function(list) {
+        render(list);
+        var named = list.filter(function(d){ return d.label; }).length;
+        setStatus('共发现 ' + list.length + ' 个设备' + (named ? '（含 ' + named + ' 个已授权显示名称）' : '（点击上方按钮授权显示名称）'), 'success');
+    }).catch(function(e) {
+        setStatus('枚举失败：' + e.message, 'error');
+    });
+}
+
+document.getElementById('authBtn').onclick = function() {
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function(s) {
+        s.getTracks().forEach(function(t){ t.stop(); });
+        enumDevices();
+        setStatus('授权成功，已显示设备名称', 'success');
+    }).catch(function(e) {
+        setStatus('授权被拒绝或失败：' + e.message + '（仍显示匿名设备列表）', 'error');
+        enumDevices();
+    });
+};
+
+document.getElementById('camBtn').onclick = function() {
+    navigator.mediaDevices.getUserMedia({ video: true }).then(function(s) {
+        stream = s;
+        var v = document.getElementById('cam');
+        v.srcObject = s;
+        v.style.display = 'block';
+        var track = s.getVideoTracks()[0];
+        var settings = track.getSettings ? track.getSettings() : {};
+        setStatus('预览中：' + (settings.width || '?') + '×' + (settings.height || '?') + ' @ ' + (settings.frameRate || '?') + 'fps · ' + escapeHtml(track.label || '摄像头'), 'success');
+        enumDevices();
+    }).catch(function(e) {
+        setStatus('无法访问摄像头：' + e.message, 'error');
+    });
+};
+
+document.getElementById('stopBtn').onclick = function() {
+    if (stream) { stream.getTracks().forEach(function(t){ t.stop(); }); stream = null; }
+    var v = document.getElementById('cam');
+    v.srcObject = null;
+    v.style.display = 'none';
+    setStatus('已停止预览', 'info');
+};
+
+enumDevices();
+initSidebar('work');
+</script>
+</body>
+</html>

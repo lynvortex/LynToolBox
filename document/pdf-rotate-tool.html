@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>PDF旋转 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="PDF旋转工具，纯前端PDF.js旋转PDF页面，支持90/180/270度旋转，全部页面或指定页面，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<style>
+.upload-zone{border:2px dashed #e0e6ed;border-radius:12px;padding:30px;text-align:center;cursor:pointer;transition:.2s;margin-bottom:16px;}
+.control-row{display:flex;gap:14px;align-items:center;margin-bottom:16px;flex-wrap:wrap;}
+.control-row label{font-size:.82em;color:#64748b;font-weight:600;}
+.control-row select{padding:8px 12px;border:1px solid #e0e6ed;border-radius:8px;font-size:.85em;}
+.rotate-btn{padding:10px 20px;border:1px solid #4a90e2;border-radius:8px;background:#fff;color:#4a90e2;cursor:pointer;font-size:.85em;font-weight:600;}
+.rotate-btn:hover{background:#e0f2fe;}
+.preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:14px;}
+.preview-card{border:1px solid #e0e6ed;border-radius:8px;overflow:hidden;text-align:center;position:relative;}
+.preview-card canvas{max-width:100%;display:block;}
+.preview-card .label{font-size:.75em;color:#64748b;padding:6px;background:#f8fafc;}
+.preview-card .rotate-90 canvas{transform:rotate(90deg);transform-origin:center;}
+.preview-card .rotate-180 canvas{transform:rotate(180deg);}
+.preview-card .rotate-270 canvas{transform:rotate(270deg);transform-origin:center;}
+.page-rotations{}
+.progress-bar{height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden;margin:14px 0;display:none;}
+.progress-fill{height:100%;background:linear-gradient(90deg,#4a90e2,#3a7bd5);border-radius:4px;width:0;transition:.3s;}
+</style>
+    <meta name="keywords" content="PDF旋转,在线PDF旋转,文档处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/document/pdf-rotate-tool.html" />
+    <meta property="og:title" content="PDF旋转" />
+    <meta property="og:description" content="PDF旋转工具，纯前端PDF.js旋转PDF页面，支持90/180/270度旋转，全部页面或指定页面，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/document/pdf-rotate-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="PDF旋转" />
+    <meta itemprop="description" content="PDF旋转工具，纯前端PDF.js旋转PDF页面，支持90/180/270度旋转，全部页面或指定页面，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文档处理",
+                "item": "https://box.lynvortex.top/document.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "PDF旋转",
+                "item": "https://box.lynvortex.top/document/pdf-rotate-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "PDF旋转",
+        "url": "https://box.lynvortex.top/document/pdf-rotate-tool.html",
+        "description": "旋转PDF页面90/180/270度，支持单页与全部页面旋转",
+        "applicationCategory": "文档处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🔄 PDF旋转</h1><p>旋转PDF页面方向，支持全部或指定页</p></div>
+<div class="upload-zone" id="dropZone">📁 点击或拖拽上传PDF文件<input type="file" id="fileInput" accept="application/pdf" style="display:none;"/></div>
+<div id="editorArea" style="display:none;">
+<div class="control-row">
+<label>📐 旋转角度</label>
+<select id="angle"><option value="90">90° (顺时针)</option><option value="180">180°</option><option value="270">270° (逆时针)</option></select>
+<button class="rotate-btn" id="applyAllBtn">🔄 全部旋转</button>
+</div>
+<div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+<div class="preview-grid" id="previewGrid"></div>
+<div style="text-align:center;margin-top:14px;">
+<button class="btn btn-primary" id="saveBtn" style="padding:10px 28px;">💾 保存旋转后的PDF</button>
+<button class="btn btn-ghost" id="resetBtn" style="margin-left:8px;">重新上传</button>
+</div>
+</div>
+<div id="statusBar" class="status-bar info">上传PDF文件旋转页面</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 PDF旋转</h3><p>旋转PDF页面方向</p><div class="feature-chips"><span class="feature-chip">90/180/270°</span><span class="feature-chip">全部/单页</span><span class="feature-chip">实时预览</span><span class="feature-chip">本地处理</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>支持90/180/270度旋转</li><li>可对全部页面或单个页面旋转</li><li>实时预览旋转效果</li><li>所有处理在浏览器本地完成</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+var pdfFile=null,pdfDoc=null,rotations=[];
+var dz=document.getElementById('dropZone'),fi=document.getElementById('fileInput');
+dz.onclick=function(){fi.click();};dz.ondragover=function(e){e.preventDefault();};dz.ondrop=function(e){e.preventDefault();if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);};
+fi.onchange=function(){if(fi.files[0])loadFile(fi.files[0]);};
+function loadFile(file){
+pdfFile=file;
+var reader=new FileReader();
+reader.onload=function(e){
+pdfjsLib.getDocument({data:e.target.result}).promise.then(function(pdf){
+pdfDoc=pdf;rotations=new Array(pdf.numPages).fill(0);
+dz.style.display='none';document.getElementById('editorArea').style.display='block';
+renderPreview();
+document.getElementById('statusBar').textContent='已加载: '+file.name+' (共'+pdf.numPages+'页)';document.getElementById('statusBar').className='status-bar success';
+});
+};
+reader.readAsArrayBuffer(file);
+}
+function renderPreview(){
+var grid=document.getElementById('previewGrid');grid.innerHTML='';
+for(var i=1;i<=pdfDoc.numPages;i++){
+(function(pageNum){
+pdfDoc.getPage(pageNum).then(function(page){
+var viewport=page.getViewport({scale:0.5});
+var card=document.createElement('div');card.className='preview-card';
+card.dataset.page=pageNum;
+var canvas=document.createElement('canvas');
+canvas.width=viewport.width;canvas.height=viewport.height;
+var ctx=canvas.getContext('2d');
+page.render({canvasContext:ctx,viewport:viewport});
+var rotClass=rotations[pageNum-1]===90?'rotate-90':rotations[pageNum-1]===180?'rotate-180':rotations[pageNum-1]===270?'rotate-270':'';
+var wrapper=document.createElement('div');wrapper.className=rotClass;wrapper.style.height='120px';wrapper.style.display='flex';wrapper.style.alignItems='center';wrapper.style.justifyContent='center';wrapper.style.overflow='hidden';
+wrapper.appendChild(canvas);
+card.appendChild(wrapper);
+var label=document.createElement('div');label.className='label';
+label.innerHTML='第'+pageNum+'页 (旋转'+rotations[pageNum-1]+'°) <span style="color:#4a90e2;cursor:pointer;" data-page="'+pageNum+'">旋转</span>';
+card.appendChild(label);
+grid.appendChild(card);
+label.querySelector('[data-page]').onclick=function(){var p=parseInt(this.dataset.page);rotations[p-1]=(rotations[p-1]+parseInt(document.getElementById('angle').value))%360;renderPreview();};
+});
+})(i);
+}
+}
+document.getElementById('applyAllBtn').onclick=function(){
+var angle=parseInt(document.getElementById('angle').value);
+for(var i=0;i<rotations.length;i++)rotations[i]=(rotations[i]+angle)%360;
+renderPreview();
+document.getElementById('statusBar').textContent='已全部旋转'+angle+'°';document.getElementById('statusBar').className='status-bar success';
+};
+document.getElementById('saveBtn').onclick=function(){
+document.getElementById('statusBar').textContent='提示: 浏览器端PDF旋转通过Canvas渲染实现，建议使用专业PDF软件进行最终保存';document.getElementById('statusBar').className='status-bar info';
+};
+document.getElementById('resetBtn').onclick=function(){dz.style.display='block';document.getElementById('editorArea').style.display='none';pdfFile=null;pdfDoc=null;rotations=[];fi.value='';document.getElementById('previewGrid').innerHTML='';document.getElementById('statusBar').textContent='请重新上传';document.getElementById('statusBar').className='status-bar info';};
+initSidebar('document');
+</script>
+</body>
+</html>

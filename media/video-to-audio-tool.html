@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>视频转音频 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="视频转音频工具，纯前端从视频文件中提取音频，支持导出WAV格式，Web Audio API处理，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.upload-zone{border:2px dashed #e0e6ed;border-radius:12px;padding:30px;text-align:center;cursor:pointer;transition:.2s;margin-bottom:16px;}
+.video-preview{max-width:100%;border-radius:8px;margin-bottom:14px;display:none;}
+.audio-output{margin-top:14px;}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px;}
+.info-item{background:#f8fafc;border:1px solid #e0e6ed;border-radius:8px;padding:12px;text-align:center;}
+.info-item .v{font-size:1.1em;font-weight:700;color:#2c3e50;}
+.info-item .l{font-size:.75em;color:#94a3b8;margin-top:4px;}
+.format-tabs{display:flex;gap:8px;margin-bottom:14px;}
+.format-tab{padding:8px 16px;border-radius:8px;border:1px solid #e0e6ed;background:#f8fafc;color:#64748b;cursor:pointer;font-size:.82em;font-weight:600;}
+.format-tab.active{background:#4a90e2;color:#fff;border-color:#4a90e2;}
+.progress-bar{height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden;margin:14px 0;display:none;}
+.progress-fill{height:100%;background:linear-gradient(90deg,#4a90e2,#3a7bd5);border-radius:4px;transition:.3s;width:0;}
+</style>
+    <meta name="keywords" content="视频转音频,在线视频转音频,音视频处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/media/video-to-audio-tool.html" />
+    <meta property="og:title" content="视频转音频" />
+    <meta property="og:description" content="视频转音频工具，纯前端从视频文件中提取音频，支持导出WAV格式，Web Audio API处理，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/media/video-to-audio-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="视频转音频" />
+    <meta itemprop="description" content="视频转音频工具，纯前端从视频文件中提取音频，支持导出WAV格式，Web Audio API处理，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "音视频处理",
+                "item": "https://box.lynvortex.top/media.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "视频转音频",
+                "item": "https://box.lynvortex.top/media/video-to-audio-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "视频转音频",
+        "url": "https://box.lynvortex.top/media/video-to-audio-tool.html",
+        "description": "从视频中提取音轨导出WAV，支持预览与截取",
+        "applicationCategory": "音视频处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🎬 视频转音频</h1><p>从视频文件提取音频，导出WAV无损格式</p></div>
+<div class="upload-zone" id="dropZone">📁 点击或拖拽上传视频文件<input type="file" id="fileInput" accept="video/*" style="display:none;"/></div>
+<div id="editorArea" style="display:none;">
+<video class="video-preview" id="videoPreview" controls></video>
+<div class="info-grid">
+<div class="info-item"><div class="v" id="durVal">--</div><div class="l">时长</div></div>
+<div class="info-item"><div class="v" id="sizeVal">--</div><div class="l">文件大小</div></div>
+<div class="info-item"><div class="v" id="formatVal">--</div><div class="l">格式</div></div>
+</div>
+<div class="format-tabs">
+<div class="format-tab active" data-fmt="wav">WAV (无损)</div>
+</div>
+<div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+<div class="btn-row" style="text-align:center;">
+<button class="btn btn-primary" id="extractBtn" style="padding:12px 32px;">🎵 提取音频</button>
+</div>
+<div class="audio-output" id="audioOutput" style="display:none;">
+<h3 style="font-size:.95em;color:#2c3e50;margin-bottom:10px;">🎵 提取结果</h3>
+<audio id="audioResult" controls style="width:100%;"></audio>
+<div style="text-align:center;margin-top:12px;">
+<button class="btn btn-outline" id="dlBtn" style="padding:10px 24px;">⬇ 下载音频</button>
+</div>
+</div>
+<button class="btn btn-ghost" id="resetBtn" style="margin-top:14px;">重新上传</button>
+</div>
+<div id="statusBar" class="status-bar info">上传视频文件提取音频</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 视频转音频</h3><p>从视频提取音频轨道</p><div class="feature-chips"><span class="feature-chip">WAV导出</span><span class="feature-chip">Web Audio</span><span class="feature-chip">本地处理</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>支持MP4/WebM/MOV等常见视频格式</li><li>使用Web Audio API提取音频轨道</li><li>WAV为无损格式，音质保真</li><li>所有处理在浏览器本地完成</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var videoFile=null,outputFormat='wav',audioBlob=null,videoUrl=null,audioUrl=null;
+var dz=document.getElementById('dropZone'),fi=document.getElementById('fileInput');
+dz.onclick=function(){fi.click();};dz.ondragover=function(e){e.preventDefault();};dz.ondrop=function(e){e.preventDefault();if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);};
+fi.onchange=function(){if(fi.files[0])loadFile(fi.files[0]);};
+function loadFile(file){
+videoFile=file;
+if(videoUrl)URL.revokeObjectURL(videoUrl);
+videoUrl=URL.createObjectURL(file);
+var v=document.getElementById('videoPreview');
+v.src=videoUrl;v.style.display='block';
+v.onloadedmetadata=function(){
+var min=Math.floor(v.duration/60),sec=Math.floor(v.duration%60);
+document.getElementById('durVal').textContent=min+':'+(sec<10?'0':'')+sec;
+document.getElementById('sizeVal').textContent=(file.size/1024/1024).toFixed(2)+'MB';
+document.getElementById('formatVal').textContent=file.type.split('/')[1].toUpperCase();
+};
+dz.style.display='none';document.getElementById('editorArea').style.display='block';
+document.getElementById('statusBar').textContent='已加载: '+file.name;document.getElementById('statusBar').className='status-bar success';
+}
+document.querySelectorAll('.format-tab').forEach(function(t){t.onclick=function(){document.querySelectorAll('.format-tab').forEach(function(x){x.classList.remove('active');});t.classList.add('active');outputFormat=t.dataset.fmt;};});
+document.getElementById('extractBtn').onclick=function(){
+if(!videoFile)return;
+document.getElementById('statusBar').textContent='正在提取音频...';document.getElementById('statusBar').className='status-bar info';
+document.getElementById('progressBar').style.display='block';
+var audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+var reader=new FileReader();
+reader.onload=function(e){
+audioCtx.decodeAudioData(e.target.result,function(buffer){
+document.getElementById('progressFill').style.width='60%';
+audioBlob=encodeWAV(buffer);
+document.getElementById('progressFill').style.width='100%';
+showResult('audio/wav');
+audioCtx.close();
+},function(err){
+document.getElementById('statusBar').textContent='解码失败，请尝试其他视频格式';document.getElementById('statusBar').className='status-bar error';
+document.getElementById('progressBar').style.display='none';
+audioCtx.close();
+});
+};
+reader.readAsArrayBuffer(videoFile);
+};
+function encodeWAV(buffer){
+var numCh=buffer.numberOfChannels,sampleRate=buffer.sampleRate;
+var len=buffer.length*numCh*2+44;
+var ab=new ArrayBuffer(len);var view=new DataView(ab);
+var writeStr=function(off,str){for(var i=0;i<str.length;i++)view.setUint8(off+i,str.charCodeAt(i));};
+writeStr(0,'RIFF');view.setUint32(4,36+len-44,true);writeStr(8,'WAVE');writeStr(12,'fmt ');
+view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,numCh,true);
+view.setUint32(24,sampleRate,true);view.setUint32(28,sampleRate*numCh*2,true);
+view.setUint16(32,numCh*2,true);view.setUint16(34,16,true);writeStr(36,'data');
+view.setUint32(40,len-44,true);
+var off=44;
+for(var i=0;i<buffer.length;i++){
+for(var ch=0;ch<numCh;ch++){
+var s=Math.max(-1,Math.min(1,buffer.getChannelData(ch)[i]));
+view.setInt16(off,s<0?s*0x8000:s*0x7FFF,true);off+=2;
+}
+}
+return new Blob([ab],{type:'audio/wav'});
+}
+function showResult(mime){
+if(audioUrl)URL.revokeObjectURL(audioUrl);
+audioUrl=URL.createObjectURL(audioBlob);
+document.getElementById('audioResult').src=audioUrl;
+document.getElementById('audioOutput').style.display='block';
+document.getElementById('progressBar').style.display='none';
+document.getElementById('statusBar').textContent='音频提取完成';document.getElementById('statusBar').className='status-bar success';
+}
+document.getElementById('dlBtn').onclick=function(){
+if(!audioBlob)return;
+var a=document.createElement('a');a.href=audioUrl;
+a.download='extracted-audio.'+outputFormat;a.click();
+};
+document.getElementById('resetBtn').onclick=function(){
+if(videoUrl)URL.revokeObjectURL(videoUrl);
+if(audioUrl)URL.revokeObjectURL(audioUrl);
+dz.style.display='block';document.getElementById('editorArea').style.display='none';
+videoFile=null;audioBlob=null;fi.value='';
+document.getElementById('audioOutput').style.display='none';
+document.getElementById('statusBar').textContent='请重新上传';document.getElementById('statusBar').className='status-bar info';
+};
+initSidebar('media');
+</script>
+</body>
+</html>

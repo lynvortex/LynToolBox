@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR文字识别-绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="OCR文字识别，上传图片，自动提取其中的文字内容，支持中英文，完全本地处理。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'PingFang SC', -apple-system, sans-serif; background: #f4f7f9; margin: 0; display: flex; height: 100vh; overflow: hidden; color: #333; }
+
+        .mobile-header {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 60px;
+            background: #fff;
+            padding: 0 20px;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            z-index: 1000;
+        }
+        .mobile-brand { font-size: 1.2em; font-weight: bold; color: #2c3e50; }
+        .menu-toggle { font-size: 24px; cursor: pointer; background: none; border: none; color: #4ae2b7; }
+
+        .sidebar { width: 240px; background: #fff; border-right: 1px solid #e1e4e8; display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02); transition: transform 0.3s; z-index: 1001; flex-shrink: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item { display: block; padding: 14px 22px; color: #606266; text-decoration: none; transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em; }
+        .category-item:hover, .category-item.active { background: #e6faf4; color: #4ae2b7; border-left-color: #4ae2b7; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+        .tool-container { width: 100%; max-width: 960px; background: #fff; border-radius: 12px; padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06); }
+        .tool-header { text-align: center; margin-bottom: 28px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+        .upload-area {
+            border: 2px dashed #e0e6ed;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.2s;
+            cursor: pointer;
+            background: #f8fafc;
+        }
+        .upload-area:hover { border-color: #4ae2b7; background: #e6faf4; }
+        .upload-area.dragover { border-color: #4ae2b7; background: #d1f7ec; }
+        .upload-icon { font-size: 3em; margin-bottom: 10px; color: #cbd5e1; }
+        .upload-text { color: #64748b; font-size: 0.9em; }
+        .upload-hint { color: #94a3b8; font-size: 0.8em; margin-top: 8px; }
+        #fileInput { display: none; }
+
+        .preview-section { display: none; margin-bottom: 20px; }
+
+        .preview-img-wrap {
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            padding: 12px;
+            background: #f8fafc;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .preview-img-wrap img {
+            max-width: 100%;
+            max-height: 260px;
+            border-radius: 6px;
+            object-fit: contain;
+            background: #fff;
+        }
+        .preview-meta {
+            font-size: 0.8em;
+            color: #94a3b8;
+            margin-top: 8px;
+        }
+
+        .lang-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .lang-row label { font-size: 0.85em; color: #64748b; font-weight: 500; white-space: nowrap; }
+        .lang-select {
+            padding: 8px 12px;
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-family: inherit;
+            outline: none;
+            background: #fff;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .lang-select:focus { border-color: #4ae2b7; }
+
+        .progress-wrap {
+            display: none;
+            margin-bottom: 16px;
+        }
+        .progress-label {
+            font-size: 0.82em;
+            color: #64748b;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .progress-bar-bg {
+            background: #f0f2f5;
+            border-radius: 99px;
+            height: 8px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4ae2b7, #4ae2b7);
+            border-radius: 99px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .result-box {
+            display: none;
+            margin-bottom: 16px;
+        }
+        .result-label {
+            font-size: 0.85em;
+            color: #64748b;
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .result-textarea {
+            width: 100%;
+            min-height: 160px;
+            padding: 12px;
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-family: inherit;
+            resize: vertical;
+            outline: none;
+            line-height: 1.7;
+            color: #334155;
+            transition: border-color 0.2s;
+        }
+        .result-textarea:focus { border-color: #4ae2b7; }
+
+        .action-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em; font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap; }
+        .btn-primary { background: #4ae2b7; color: white; }
+        .btn-primary:hover { background: #3ac9a0; }
+        .btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+.btn-outline { background: transparent; color: #4ae2b7; border: 1px solid #4ae2b7; }
+.btn-outline:hover { background: #4ae2b7; color: white; }
+.btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+.btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+        .btn-secondary { background: #f0f2f5; color: #606266; }
+        .btn-secondary:hover { background: #e1e4e8; }
+        .btn-copy { background: #f0f2f5; color: #606266; padding: 4px 12px; font-size: 0.8em; border-radius: 6px; }
+        .btn-copy:hover { background: #e1e4e8; }
+
+        .status-bar { min-height: 20px; font-size: 0.85em; padding: 8px 12px; border-radius: 6px; margin-bottom: 16px; }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+        .status-bar.loading { color: #3ac9a0; background: #e6faf4; }
+
+        .tip-box {
+            background: #fefce8;
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.82em;
+            color: #92400e;
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+
+        .info-cards {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-top: 4px;
+        }
+        .info-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 22px 24px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+            border: 1px solid #f0f2f5;
+        }
+        .info-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1em;
+            color: #2c3e50;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .info-card p {
+            margin: 0 0 10px 0;
+            font-size: 0.82em;
+            color: #64748b;
+        }
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip {
+            background: #e0f2fe; color: #0369a1;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace;
+        }
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a {
+            font-size: 0.85em; color: #4ae2b7; text-decoration: none;
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s;
+        }
+        .tool-links a:hover { background: #e2e8f0; }
+
+    @media (max-width: 768px) {
+    body { display: block; height: auto; overflow: auto; }
+    .mobile-header { display: flex; }
+    .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+    .sidebar.active { transform: translateX(0); }
+    .close-sidebar { display: block; }
+    .main-content { display: block; }
+    .main-scroll { padding: 72px 16px 32px; gap: 20px;  }
+    .tool-container { padding: 24px 16px; border-radius: 10px; }
+    .tool-header h1 { font-size: 1.3em; }
+    .overlay.active { display: block; }
+}
+@media (max-width: 380px) { .tool-header h1 { font-size: 1.1em; } }
+
+.overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="OCR文字识别,在线OCR文字识别,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/ocr-tool.html" />
+    <meta property="og:title" content="OCR文字识别" />
+    <meta property="og:description" content="OCR文字识别，上传图片，自动提取其中的文字内容，支持中英文，完全本地处理。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/ocr-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="OCR文字识别" />
+    <meta itemprop="description" content="OCR文字识别，上传图片，自动提取其中的文字内容，支持中英文，完全本地处理。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "OCR文字识别",
+                "item": "https://box.lynvortex.top/image/ocr-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "OCR文字识别",
+        "url": "https://box.lynvortex.top/image/ocr-tool.html",
+        "description": "上传图片，自动提取其中的文字内容，支持中英文，完全本地处理",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+
+    <main class="main-content">
+        <div class="main-scroll">
+
+            <div class="tool-container">
+                <div class="tool-header">
+                    <h1>🔍 OCR 文字识别</h1>
+                    <p>上传图片，自动提取其中的文字内容，支持中英文，完全本地处理</p>
+                </div>
+
+                <div class="tip-box">
+                    💡 首次使用需下载语言包（约 10MB），请保持网络畅通。识别在本地完成，图片不会上传到任何服务器。
+                </div>
+
+                <input type="file" id="fileInput" accept="image/*" style="display:none">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">🖼️</div>
+                    <div class="upload-text">点击或拖拽图片到此处上传</div>
+                    <div class="upload-hint">支持 JPG、PNG、WEBP、BMP 等格式，建议图片清晰、文字对比度高</div>
+                    
+                </div>
+
+                <div class="preview-section" id="previewSection">
+                    <div class="preview-img-wrap">
+                        <img id="previewImg" alt="预览图">
+                        <div class="preview-meta" id="previewMeta">-</div>
+                    </div>
+
+                    <div class="lang-row">
+                        <label>识别语言：</label>
+                        <select class="lang-select" id="langSelect">
+                            <option value="chi_sim+eng">中文简体 + 英文</option>
+                            <option value="chi_tra+eng">中文繁体 + 英文</option>
+                            <option value="eng">仅英文</option>
+                            <option value="chi_sim">仅中文简体</option>
+                            <option value="jpn+eng">日文 + 英文</option>
+                            <option value="kor+eng">韩文 + 英文</option>
+                        </select>
+                    </div>
+
+                    <div class="progress-wrap" id="progressWrap">
+                        <div class="progress-label">
+                            <span id="progressText">准备中...</span>
+                            <span id="progressPct">0%</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" id="progressFill"></div>
+                        </div>
+                    </div>
+
+                    <div class="result-box" id="resultBox">
+                        <div class="result-label">
+                            <span>识别结果</span>
+                            <button class="btn btn-copy" onclick="copyResult()">📋 复制</button>
+                        </div>
+                        <textarea class="result-textarea" id="resultText" placeholder="识别结果将显示在这里..."></textarea>
+                    </div>
+
+                    <div class="action-row">
+                        <button class="btn btn-primary" id="ocrBtn" onclick="startOCR()">🔍 开始识别</button>
+                        <button class="btn btn-secondary" onclick="resetAll()">🔄 重新上传</button>
+                    </div>
+                </div>
+
+                <div class="status-bar info" id="statusBar">请上传图片开始识别</div>
+
+                <footer class="footer">
+                    © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4ae2b7;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4ae2b7;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+                </footer>
+            </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>🔍 OCR 文字识别功能</h3>
+                <p>上传图片，自动提取其中的文字内容，支持中英文，完全本地处理</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">Tesseract.js</span>
+                    <span class="tld-chip">本地识别</span>
+                    <span class="tld-chip">中英文</span>
+                    <span class="tld-chip">离线可用</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>支持 JPG、PNG、WEBP、BMP 等常见图片格式</li>
+                    <li>首次使用需下载语言包（约 10MB），请保持网络畅通</li>
+                    <li>识别在浏览器本地完成，图片不会上传到任何服务器</li>
+                    <li>建议使用清晰、文字对比度高的图片以获得最佳效果</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+
+        </div>
+    </main>
+
+    <!-- Tesseract.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script>
+        let uploadedFile = null;
+        let uploadedImageUrl = null;
+
+        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+        uploadArea.addEventListener('drop', e => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', e => {
+            if (e.target.files.length > 0) handleFile(e.target.files[0]);
+        });
+
+        const handleFile = function(file) {
+            if (!file.type.startsWith('image/')) {
+                setStatus('请上传图片文件', 'error');
+                return;
+            }
+
+            uploadedFile = file;
+            const reader = new FileReader();
+            reader.onload = e => {
+                uploadedImageUrl = e.target.result;
+                document.getElementById('previewImg').src = uploadedImageUrl;
+
+                const img = new Image();
+                img.onload = () => {
+                    document.getElementById('previewMeta').textContent =
+                        `${file.name}  ·  ${(file.size / 1024).toFixed(1)} KB  ·  ${img.width}×${img.height}`;
+                };
+                img.src = uploadedImageUrl;
+
+                // 重置结果区
+                document.getElementById('previewSection').style.display = 'block';
+                document.getElementById('progressWrap').style.display = 'none';
+                document.getElementById('resultBox').style.display = 'none';
+                document.getElementById('resultText').value = '';
+                setStatus('图片已加载，选择语言后点击识别', 'info');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        const startOCR = async function() {
+            if (!uploadedFile) {
+                setStatus('请先上传图片', 'error');
+                return;
+            }
+
+            const lang = document.getElementById('langSelect').value;
+            const btn = document.getElementById('ocrBtn');
+            btn.disabled = true;
+            btn.textContent = '识别中...';
+
+            document.getElementById('progressWrap').style.display = 'block';
+            document.getElementById('resultBox').style.display = 'none';
+            setStatus('正在加载识别引擎...', 'loading');
+
+            try {
+                const worker = await Tesseract.createWorker(lang, 1, {
+                    logger: m => {
+                        if (m.status === 'loading tesseract core') {
+                            setProgressText('加载核心引擎...', m.progress);
+                        } else if (m.status === 'initializing tesseract') {
+                            setProgressText('初始化引擎...', m.progress);
+                        } else if (m.status === 'loading language traineddata') {
+                            setProgressText('下载语言包...', m.progress);
+                        } else if (m.status === 'initializing api') {
+                            setProgressText('初始化识别接口...', m.progress);
+                        } else if (m.status === 'recognizing text') {
+                            setProgressText('正在识别文字...', m.progress);
+                        }
+                    }
+                });
+
+                setStatus('正在识别，请稍候...', 'loading');
+                const { data: { text } } = await worker.recognize(uploadedImageUrl);
+                await worker.terminate();
+
+                const trimmed = text.trim();
+                document.getElementById('resultText').value = trimmed || '未识别到文字，请尝试更换图片或语言';
+                document.getElementById('resultBox').style.display = 'block';
+                document.getElementById('progressWrap').style.display = 'none';
+
+                const charCount = trimmed.length;
+                setStatus(`识别完成，共提取 ${charCount} 个字符`, 'success');
+            } catch (err) {
+                setStatus(`识别失败：${err.message}`, 'error');
+                document.getElementById('progressWrap').style.display = 'none';
+            }
+
+            btn.disabled = false;
+            btn.textContent = '🔍 开始识别';
+        }
+
+        const setProgressText = function(text, progress) {
+            const pct = Math.round((progress || 0) * 100);
+            document.getElementById('progressText').textContent = text;
+            document.getElementById('progressPct').textContent = `${pct}%`;
+            document.getElementById('progressFill').style.width = `${pct}%`;
+        }
+
+        const copyResult = function() {
+            const text = document.getElementById('resultText').value;
+            if (!text) return;
+            navigator.clipboard.writeText(text).then(() => {
+                setStatus('已复制到剪贴板', 'success');
+            }).catch(() => {
+                // 降级方案
+                document.getElementById('resultText').select();
+                document.execCommand('copy');
+                setStatus('已复制到剪贴板', 'success');
+            });
+        }
+
+        const resetAll = function() {
+            uploadedFile = null;
+            uploadedImageUrl = null;
+            fileInput.value = '';
+            document.getElementById('previewSection').style.display = 'none';
+            document.getElementById('progressWrap').style.display = 'none';
+            document.getElementById('resultBox').style.display = 'none';
+            setStatus('请上传图片开始识别', 'info');
+        }
+
+        const setStatus = function(msg, type) {
+            const bar = document.getElementById('statusBar');
+            bar.textContent = msg;
+            bar.className = `status-bar ${type}`;
+        }
+        uploadArea.addEventListener('click', (e) => {
+          e.stopPropagation();
+         fileInput.click();
+          });
+          fileInput.addEventListener('change', e => {
+    if (e.target.files.length > 0) {
+        handleFile(e.target.files[0]);
+        fileInput.value = ''; // 允许重复选同一文件
+    }
+});
+
+// 初始化共享侧边栏
+initSidebar('image');</script>
+</body>
+</html>

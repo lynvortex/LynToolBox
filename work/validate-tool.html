@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>通用数据校验 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="通用数据校验工具，纯前端校验邮箱、URL、IP、手机号、身份证、信用卡、UUID、ISBN等格式，无依赖本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.full-item{margin-bottom:20px;}
+.full-item label{display:block;font-size:0.85em;color:#64748b;font-weight:600;margin-bottom:6px;}
+.type-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px;}
+@media(max-width:600px){.type-grid{grid-template-columns:repeat(2,1fr);}}
+.type-chip{display:flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid #e0e6ed;border-radius:8px;cursor:pointer;font-size:0.82em;color:#64748b;transition:all 0.2s;background:#fff;user-select:none;}
+.type-chip input{margin:0;accent-color:#4a90e2;}
+.type-chip:hover{border-color:#4a90e2;color:#4a90e2;}
+.type-chip.checked{border-color:#4a90e2;background:#ebf5ff;color:#4a90e2;font-weight:600;}
+.bar-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
+.bar-row .sel-info{font-size:0.82em;color:#64748b;}
+.res-list{display:flex;flex-direction:column;gap:10px;}
+.res-item{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-radius:8px;border:1px solid #e0e6ed;background:#fff;}
+.res-item.pass{border-color:#bbf7d0;background:#f0fdf4;}
+.res-item.fail{border-color:#fecaca;background:#fef2f2;}
+.res-ic{font-size:1.1em;flex-shrink:0;line-height:1.4;}
+.res-body{flex:1;min-width:0;}
+.res-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:2px;}
+.res-name{font-weight:600;font-size:0.88em;color:#2c3e50;}
+.res-badge{font-size:0.72em;padding:1px 8px;border-radius:10px;font-weight:600;}
+.res-badge.pass{background:#dcfce7;color:#16a34a;}
+.res-badge.fail{background:#fee2e2;color:#ef4444;}
+.res-badge.info{background:#dbeafe;color:#1d4ed8;}
+.res-detail{font-size:0.8em;color:#64748b;line-height:1.5;word-break:break-all;}
+</style>
+    <meta name="keywords" content="通用数据校验,在线通用数据校验,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/validate-tool.html" />
+    <meta property="og:title" content="通用数据校验" />
+    <meta property="og:description" content="通用数据校验工具，纯前端校验邮箱、URL、IP、手机号、身份证、信用卡、UUID、ISBN等格式，无依赖本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/validate-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="通用数据校验" />
+    <meta itemprop="description" content="通用数据校验工具，纯前端校验邮箱、URL、IP、手机号、身份证、信用卡、UUID、ISBN等格式，无依赖本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "通用数据校验",
+                "item": "https://box.lynvortex.top/work/validate-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "通用数据校验",
+        "url": "https://box.lynvortex.top/work/validate-tool.html",
+        "description": "校验邮箱URL IP手机号身份证信用卡UUID等格式",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+  <div class="tool-container">
+    <div class="tool-header"><h1>✅ 通用数据校验</h1><p>纯前端校验邮箱、URL、IP、手机号、身份证、UUID、ISBN 等多种格式，无依赖本地处理</p></div>
+
+    <div class="full-item">
+      <label>待校验文本</label>
+      <textarea class="code-area" id="textInput" spellcheck="false" placeholder="输入需要校验的内容，可一次选择多种类型同时校验…"></textarea>
+    </div>
+
+    <div class="bar-row">
+      <span class="sel-info">选择校验类型（已选 <b id="selCount">0</b> 项）</span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" id="selectAllBtn" style="padding:5px 12px;font-size:0.8em;">全选</button>
+        <button class="btn btn-ghost" id="selectNoneBtn" style="padding:5px 12px;font-size:0.8em;">全不选</button>
+      </div>
+    </div>
+
+    <div class="type-grid" id="typeGrid"></div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="validateBtn">开始校验</button>
+      <button class="btn btn-outline" id="exampleBtn" style="font-size:0.82em;">加载示例</button>
+      <button class="btn btn-ghost" id="clearBtn">清空</button>
+    </div>
+
+    <div id="statusBar" class="status-bar info">选择校验类型并输入文本后点击开始校验</div>
+
+    <div id="resultArea" style="display:none;">
+      <div class="res-list" id="resList"></div>
+    </div>
+
+    <footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+  </div>
+  <div class="info-cards">
+    <div class="info-card"><h3>📦 功能说明</h3><p>内置多种常用格式校验器，基于正则与算法（Luhn、身份证校验位、ISBN 校验位）实现，可同时选择多项类型对同一段文本进行批量校验，逐项给出通过/不通过结论与说明。</p><div class="feature-chips"><span class="feature-chip">邮箱</span><span class="feature-chip">URL</span><span class="feature-chip">IP</span><span class="feature-chip">手机号</span><span class="feature-chip">身份证</span><span class="feature-chip">UUID</span><span class="feature-chip">多类型</span><span class="feature-chip">离线本地</span></div></div>
+    <div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>身份证校验包含 18 位结构与<strong>校验位算法</strong>，末位 X 大小写均可。</li><li>信用卡号校验使用 <strong>Luhn 算法</strong>，支持 13-19 位数字（可含空格/连字符）。</li><li>ISBN-13 校验包含 13 位结构与<strong>校验位算法</strong>，可含连字符。</li><li>密码强度根据长度、大小写、数字、符号综合评分，仅作参考评估。</li><li>所有校验均为本地正则与算法实现，<strong>不使用 eval</strong>，数据不上传。</li></ul></div>
+    <div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+      <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+      <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+  </div>
+</div></main>
+<script>
+(function(){
+  'use strict';
+  var textInput=document.getElementById('textInput');
+  var typeGrid=document.getElementById('typeGrid');
+  var selCount=document.getElementById('selCount');
+  var validateBtn=document.getElementById('validateBtn');
+  var exampleBtn=document.getElementById('exampleBtn');
+  var clearBtn=document.getElementById('clearBtn');
+  var selectAllBtn=document.getElementById('selectAllBtn');
+  var selectNoneBtn=document.getElementById('selectNoneBtn');
+  var statusBar=document.getElementById('statusBar');
+  var resultArea=document.getElementById('resultArea');
+  var resList=document.getElementById('resList');
+
+  // ---------- 校验器集合 ----------
+  var RE={
+    email:/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/,
+    url:/^https?:\/\/[^\s/$.?#].[^\s]*$/i,
+    ipv4:/^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/,
+    phoneCN:/^1[3-9]\d{9}$/,
+    uuidv4:/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    hexColor:/^#?(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/,
+    domain:/^(?=.{1,253}$)(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/
+  };
+  RE.ipv6=/^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/;
+
+  function luhn(digits){
+    var sum=0,alt=false;
+    for(var i=digits.length-1;i>=0;i--){
+      var n=parseInt(digits.charAt(i),10);
+      if(alt){n*=2;if(n>9)n-=9;}
+      sum+=n;alt=!alt;
+    }
+    return sum%10===0;
+  }
+  function checkIDCard(s){
+    if(!/^\d{17}[\dXx]$/.test(s))return false;
+    var w=[7,9,10,5,8,4,2,1,6,3,7,9,10,5,8,4,2];
+    var codes=['1','0','X','9','8','7','6','5','4','3','2'];
+    var sum=0;
+    for(var i=0;i<17;i++){sum+=parseInt(s.charAt(i),10)*w[i];}
+    return codes[sum%11]===s.charAt(17).toUpperCase();
+  }
+  function checkISBN13(s){
+    s=s.replace(/[-\s]/g,'');
+    if(!/^\d{13}$/.test(s))return false;
+    var sum=0;
+    for(var i=0;i<13;i++){sum+=parseInt(s.charAt(i),10)*(i%2===0?1:3);}
+    return sum%10===0;
+  }
+  function passwordStrength(pw){
+    var score=0;
+    var reasons=[];
+    if(pw.length<6){reasons.push('长度过短（建议至少 8 位）');}
+    if(pw.length>=8)score+=25;
+    if(pw.length>=12)score+=15;
+    if(/[a-z]/.test(pw))score+=10;else reasons.push('缺少小写字母');
+    if(/[A-Z]/.test(pw))score+=15;else reasons.push('缺少大写字母');
+    if(/\d/.test(pw))score+=15;else reasons.push('缺少数字');
+    if(/[^a-zA-Z0-9]/.test(pw))score+=20;else reasons.push('缺少特殊符号');
+    var level;
+    if(score<40)level='弱';
+    else if(score<60)level='中';
+    else if(score<80)level='强';
+    else level='非常强';
+    return {pass:score>=60,score:score,level:level,reasons:reasons};
+  }
+
+  var VALIDATORS=[
+    {key:'email',name:'邮箱地址',test:function(s){return RE.email.test(s);},detail:'符合标准邮箱格式 user@domain.tld'},
+    {key:'url',name:'URL 网址',test:function(s){return RE.url.test(s);},detail:'以 http:// 或 https:// 开头的网址'},
+    {key:'ipv4',name:'IPv4 地址',test:function(s){return RE.ipv4.test(s);},detail:'四段 0-255 数字，如 192.168.1.1'},
+    {key:'ipv6',name:'IPv6 地址',test:function(s){return RE.ipv6.test(s);},detail:'合法 IPv6 地址，含压缩写法'},
+    {key:'phoneCN',name:'中国手机号',test:function(s){return RE.phoneCN.test(s);},detail:'11 位，1 开头第二位 3-9'},
+    {key:'idcard',name:'身份证号',test:function(s){return checkIDCard(s);},detail:'18 位含校验位算法（末位可为 X）'},
+    {key:'credit',name:'信用卡号',test:function(s){var d=s.replace(/[\s-]/g,'');return /^\d{13,19}$/.test(d)&&luhn(d);},detail:'13-19 位数字，通过 Luhn 校验'},
+    {key:'uuid',name:'UUID v4',test:function(s){return RE.uuidv4.test(s);},detail:'标准 UUID v4 格式（第3段以4开头）'},
+    {key:'isbn',name:'ISBN-13',test:function(s){return checkISBN13(s);},detail:'13 位（可含连字符），通过校验位算法'},
+    {key:'hexcolor',name:'十六进制颜色',test:function(s){return RE.hexColor.test(s);},detail:'#RGB / #RRGGBB / #RRGGBBAA'},
+    {key:'domain',name:'域名',test:function(s){return RE.domain.test(s);},detail:'合法域名，如 example.com'},
+    {key:'password',name:'密码强度',test:function(s){return passwordStrength(s);},detail:'综合长度/大小写/数字/符号评分',custom:true}
+  ];
+
+  // ---------- 渲染类型选择 ----------
+  function renderTypes(){
+    var html='';
+    for(var i=0;i<VALIDATORS.length;i++){
+      var v=VALIDATORS[i];
+      html+='<label class="type-chip" data-key="'+v.key+'"><input type="checkbox" value="'+v.key+'"/><span>'+v.name+'</span></label>';
+    }
+    typeGrid.innerHTML=html;
+  }
+  renderTypes();
+
+  function updateSelCount(){
+    var c=typeGrid.querySelectorAll('input[type=checkbox]:checked').length;
+    selCount.textContent=c;
+    var chips=typeGrid.querySelectorAll('.type-chip');
+    for(var i=0;i<chips.length;i++){
+      var cb=chips[i].querySelector('input');
+      if(cb.checked)chips[i].classList.add('checked');else chips[i].classList.remove('checked');
+    }
+  }
+  typeGrid.addEventListener('change',updateSelCount);
+  selectAllBtn.addEventListener('click',function(){
+    var cbs=typeGrid.querySelectorAll('input[type=checkbox]');
+    for(var i=0;i<cbs.length;i++)cbs[i].checked=true;
+    updateSelCount();
+  });
+  selectNoneBtn.addEventListener('click',function(){
+    var cbs=typeGrid.querySelectorAll('input[type=checkbox]');
+    for(var i=0;i<cbs.length;i++)cbs[i].checked=false;
+    updateSelCount();
+  });
+
+  function doValidate(){
+    var text=textInput.value.trim();
+    if(!text){setStatus('请输入待校验文本','error');return;}
+    var checked=typeGrid.querySelectorAll('input[type=checkbox]:checked');
+    if(checked.length===0){setStatus('请至少选择一种校验类型','error');return;}
+    resultArea.style.display='block';
+    var html='';
+    var passCnt=0;
+    for(var i=0;i<checked.length;i++){
+      var v=null;
+      for(var j=0;j<VALIDATORS.length;j++){if(VALIDATORS[j].key===checked[i].value){v=VALIDATORS[j];break;}}
+      if(!v)continue;
+      var result=v.test(text);
+      var pass,detail,badgeCls,badgeText,ic;
+      if(v.custom&&v.key==='password'){
+        pass=result.pass;
+        badgeText=result.level+'（得分 '+result.score+'）';
+        badgeCls='info';
+        ic=pass?'✓':'▲';
+        detail='强度等级：'+result.level+'。'+(result.reasons.length?'待改进：'+result.reasons.join('、')+'。':'各项均较完善。');
+      }else{
+        pass=!!result;
+        badgeText=pass?'通过':'不通过';
+        badgeCls=pass?'pass':'fail';
+        ic=pass?'✓':'✗';
+        detail=pass?(v.detail+' —— 符合'):('不符合。参考：'+v.detail);
+      }
+      if(pass)passCnt++;
+      html+='<div class="res-item '+(pass?'pass':'fail')+'">'+
+        '<div class="res-ic">'+ic+'</div>'+
+        '<div class="res-body">'+
+          '<div class="res-title"><span class="res-name">'+escapeHtml(v.name)+'</span><span class="res-badge '+badgeCls+'">'+badgeText+'</span></div>'+
+          '<div class="res-detail">'+escapeHtml(detail)+'</div>'+
+        '</div></div>';
+    }
+    resList.innerHTML=html;
+    setStatus('已完成 '+checked.length+' 项校验，其中 '+passCnt+' 项通过',passCnt===checked.length?'success':'error');
+  }
+
+  exampleBtn.addEventListener('click',function(){
+    textInput.value='lynvortex@gmail.com';
+    var cbs=typeGrid.querySelectorAll('input[type=checkbox]');
+    for(var i=0;i<cbs.length;i++)cbs[i].checked=false;
+    var map={email:true,url:false};
+    for(var k in map){var el=typeGrid.querySelector('input[value="'+k+'"]');if(el)el.checked=map[k];}
+    updateSelCount();
+    setStatus('已加载示例（邮箱），可勾选更多类型后校验','info');
+  });
+  clearBtn.addEventListener('click',function(){
+    textInput.value='';
+    resultArea.style.display='none';
+    resList.innerHTML='';
+    setStatus('已清空，输入文本后选择类型校验','info');
+  });
+  validateBtn.addEventListener('click',doValidate);
+
+  updateSelCount();
+  setStatus('选择校验类型并输入文本后点击开始校验','info');
+})();
+initSidebar('work');
+</script>
+</body></html>

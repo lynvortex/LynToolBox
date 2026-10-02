@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG编辑预览 - 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="SVG编辑预览，输入SVG代码实时渲染预览，可下载SVG。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'PingFang SC', -apple-system, sans-serif; background: #f4f7f9; margin: 0; display: flex; height: 100vh; overflow: hidden; color: #333; }
+
+        .mobile-header {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 60px;
+            background: #fff;
+            padding: 0 20px;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            z-index: 1000;
+        }
+        .mobile-brand { font-size: 1.2em; font-weight: bold; color: #2c3e50; }
+        .menu-toggle { font-size: 24px; cursor: pointer; background: none; border: none; color: #4ae2b7; }
+
+        .sidebar { width: 240px; background: #fff; border-right: 1px solid #e1e4e8; display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02); transition: transform 0.3s; z-index: 1001; flex-shrink: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item { display: block; padding: 14px 22px; color: #606266; text-decoration: none; transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em; }
+        .category-item:hover, .category-item.active { background: #e6faf4; color: #4ae2b7; border-left-color: #4ae2b7; }
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+        .tool-container { width: 100%; max-width: 960px; background: #fff; border-radius: 12px; padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06); }
+        .tool-header { text-align: center; margin-bottom: 28px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+        .editor-wrap {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        @media (max-width: 600px) { .editor-wrap { grid-template-columns: 1fr; } }
+
+        .editor-panel {
+            display: flex;
+            flex-direction: column;
+        }
+        .editor-panel label {
+            font-size: 0.85em;
+            color: #64748b;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+        .editor-panel textarea {
+            flex: 1;
+            min-height: 260px;
+            padding: 12px;
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.85em;
+            resize: vertical;
+            outline: none;
+            background: #f8fafc;
+            color: #333;
+            tab-size: 2;
+            line-height: 1.5;
+        }
+        .editor-panel textarea:focus { border-color: #4ae2b7; }
+
+        .preview-panel {
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            padding: 12px;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+        }
+        .preview-panel label {
+            font-size: 0.85em;
+            color: #64748b;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+        .preview-wrap {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            border-radius: 6px;
+            min-height: 260px;
+            overflow: auto;
+            border: 1px solid #f0f2f5;
+        }
+        .preview-wrap svg {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .svg-info {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .svg-info-item {
+            font-size: 0.85em;
+            color: #64748b;
+            background: #f8fafc;
+            padding: 8px 14px;
+            border-radius: 6px;
+        }
+        .svg-info-item strong {
+            color: #4ae2b7;
+        }
+
+        .error-bar {
+            display: none;
+            padding: 8px 12px;
+            background: #fef2f2;
+            color: #ef4444;
+            border-radius: 6px;
+            font-size: 0.85em;
+            margin-bottom: 12px;
+        }
+
+        .action-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em; font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap; }
+        .btn-primary { background: #4ae2b7; color: white; }
+        .btn-primary:hover { background: #3ac9a0; }
+        .btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+.btn-outline { background: transparent; color: #4ae2b7; border: 1px solid #4ae2b7; }
+.btn-outline:hover { background: #4ae2b7; color: white; }
+.btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+.btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+        .btn-secondary { background: #f0f2f5; color: #606266; }
+        .btn-secondary:hover { background: #e1e4e8; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-success:hover { background: #059669; }
+
+        .status-bar { min-height: 20px; font-size: 0.85em; padding: 8px 12px; border-radius: 6px; margin-bottom: 16px; }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+        .footer a { color: #4ae2b7; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        .info-cards {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-top: 4px;
+        }
+        .info-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 22px 24px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+            border: 1px solid #f0f2f5;
+        }
+        .info-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1em;
+            color: #2c3e50;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .info-card p {
+            margin: 0 0 10px 0;
+            font-size: 0.82em;
+            color: #64748b;
+        }
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip {
+            background: #e0f2fe; color: #0369a1;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace;
+        }
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a {
+            font-size: 0.85em; color: #4ae2b7; text-decoration: none;
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s;
+        }
+        .tool-links a:hover { background: #e2e8f0; }
+
+    @media (max-width: 768px) {
+    body { display: block; height: auto; overflow: auto; }
+    .mobile-header { display: flex; }
+    .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+    .sidebar.active { transform: translateX(0); }
+    .close-sidebar { display: block; }
+    .main-content { display: block; }
+    .main-scroll { padding: 72px 16px 32px; gap: 20px;  }
+    .tool-container { padding: 24px 16px; border-radius: 10px; }
+    .tool-header h1 { font-size: 1.3em; }
+    .overlay.active { display: block; }
+}
+@media (max-width: 380px) { .tool-header h1 { font-size: 1.1em; } }
+
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="SVG编辑预览,在线SVG编辑预览,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/svg-preview-tool.html" />
+    <meta property="og:title" content="SVG编辑预览" />
+    <meta property="og:description" content="SVG编辑预览，输入SVG代码实时渲染预览，可下载SVG。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/svg-preview-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="SVG编辑预览" />
+    <meta itemprop="description" content="SVG编辑预览，输入SVG代码实时渲染预览，可下载SVG。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "SVG编辑预览",
+                "item": "https://box.lynvortex.top/image/svg-preview-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "SVG编辑预览",
+        "url": "https://box.lynvortex.top/image/svg-preview-tool.html",
+        "description": "输入SVG代码实时渲染预览，可下载SVG",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+<main class="main-content">
+    <div class="main-scroll">
+
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>SVG编辑预览</h1>
+                <p>在线编辑SVG代码并实时预览渲染效果，支持下载SVG文件</p>
+            </div>
+
+            <div class="editor-wrap">
+                <div class="editor-panel">
+                    <label for="svgInput">SVG 代码</label>
+                    <textarea id="svgInput" placeholder="在此输入SVG代码，例如：&#10;&lt;svg width=&quot;200&quot; height=&quot;200&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;&gt;&#10;  &lt;circle cx=&quot;100&quot; cy=&quot;100&quot; r=&quot;80&quot; fill=&quot;#4ae2b7&quot; /&gt;&#10;&lt;/svg&gt;"></textarea>
+                </div>
+                <div class="preview-panel">
+                    <label>实时预览</label>
+                    <div class="preview-wrap" id="svgPreviewWrap">
+                        <div id="svgPreview"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="svg-info">
+                <span class="svg-info-item">尺寸: <strong id="svgWidth">-</strong> x <strong id="svgHeight">-</strong></span>
+                <span class="svg-info-item">元素数量: <strong id="svgElementCount">-</strong></span>
+                <span class="svg-info-item">代码长度: <strong id="svgCodeLength">-</strong></span>
+            </div>
+
+            <div class="error-bar" id="errorBar">SVG解析错误</div>
+
+            <div class="action-row">
+                <button class="btn btn-primary" onclick="loadSample()">加载示例</button>
+                <button class="btn btn-success" id="downloadSvgBtn" onclick="downloadSvg()" style="display:none;">下载SVG文件</button>
+                <button class="btn btn-secondary" onclick="clearSvg()">清空</button>
+            </div>
+
+            <div class="status-bar info" id="statusBar">输入SVG代码即可实时预览</div>
+
+            <footer class="footer">
+                &copy; 2026 绘萤者-Lynvortex &middot; 美梦多彩 理想自由
+            <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4ae2b7;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4ae2b7;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>SVG编辑预览功能</h3>
+                <p>在线编辑SVG矢量代码，实时预览渲染效果，支持下载SVG文件</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">SVG编辑</span>
+                    <span class="tld-chip">实时预览</span>
+                    <span class="tld-chip">尺寸信息</span>
+                    <span class="tld-chip">SVG下载</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>使用须知</h3>
+                <ul class="tips-list">
+                    <li>在左侧文本域中输入或粘贴SVG代码</li>
+                    <li>右侧会实时渲染SVG预览效果</li>
+                    <li>支持标准SVG标签和属性</li>
+                    <li>点击下载按钮可将SVG保存为文件</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<script>
+window.escapeHtml = function(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+};
+
+let svgInput = document.getElementById('svgInput');
+let svgPreview = document.getElementById('svgPreview');
+let errorBar = document.getElementById('errorBar');
+
+/**
+ * 净化SVG代码，移除脚本和事件处理器，防止XSS攻击
+ */
+function sanitizeSvg(input) {
+    return input
+        // 移除 script 标签及其内容
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        // 移除 on* 事件处理器属性
+        .replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+        // 移除 javascript: 伪协议
+        .replace(/href\s*=\s*"(?:\s*javascript\s*:)/gi, 'href="#"')
+        .replace(/href\s*=\s*'(?:\s*javascript\s*:)/gi, "href='#'")
+        .replace(/xlink:href\s*=\s*"(?:\s*javascript\s*:)/gi, 'xlink:href="#"')
+        .replace(/xlink:href\s*=\s*'(?:\s*javascript\s*:)/gi, "xlink:href='#'");
+}
+
+function renderSvg() {
+    let code = svgInput.value.trim();
+    let downloadBtn = document.getElementById('downloadSvgBtn');
+
+    if (!code) {
+        svgPreview.innerHTML = '';
+        document.getElementById('svgWidth').textContent = '-';
+        document.getElementById('svgHeight').textContent = '-';
+        document.getElementById('svgElementCount').textContent = '-';
+        document.getElementById('svgCodeLength').textContent = '-';
+        errorBar.style.display = 'none';
+        downloadBtn.style.display = 'none';
+        setStatus('输入SVG代码即可实时预览', 'info');
+        return;
+    }
+
+    // 自动包裹svg标签
+    let svgCode = code;
+    if (!/^<svg[\s>]/i.test(code.trim())) {
+        svgCode = '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">' + code + '</svg>';
+    }
+
+    // 安全净化：移除脚本标签和事件处理器
+    svgCode = sanitizeSvg(svgCode);
+
+    errorBar.style.display = 'none';
+    svgPreview.innerHTML = svgCode;
+
+    let svgEl = svgPreview.querySelector('svg');
+    if (svgEl) {
+        let w = svgEl.getAttribute('width') || svgEl.getAttribute('viewBox') || 'auto';
+        let h = svgEl.getAttribute('height') || 'auto';
+        document.getElementById('svgWidth').textContent = w;
+        document.getElementById('svgHeight').textContent = h;
+        document.getElementById('svgElementCount').textContent = svgEl.querySelectorAll('*').length;
+        document.getElementById('svgCodeLength').textContent = code.length + ' 字符';
+        downloadBtn.style.display = 'inline-block';
+        setStatus('SVG渲染成功', 'success');
+    } else {
+        errorBar.style.display = 'block';
+        errorBar.textContent = 'SVG解析错误：无法识别有效的SVG元素，请检查代码';
+        document.getElementById('svgWidth').textContent = '-';
+        document.getElementById('svgHeight').textContent = '-';
+        document.getElementById('svgElementCount').textContent = '-';
+        downloadBtn.style.display = 'none';
+        setStatus('SVG解析失败，请检查代码', 'error');
+    }
+}
+
+function downloadSvg() {
+    let code = svgInput.value.trim();
+    if (!code) {
+        setStatus('没有可下载的SVG内容', 'error');
+        return;
+    }
+
+    // 确保有正确的svg包裹
+    let svgCode = code;
+    if (!/^<svg[\s>]/i.test(code.trim())) {
+        svgCode = '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">' + code + '</svg>';
+    }
+
+    // 尝试获取尺寸
+    let temp = document.createElement('div');
+    temp.innerHTML = svgCode;
+    let svgEl = temp.querySelector('svg');
+    let w = svgEl ? (svgEl.getAttribute('width') || '200') : '200';
+    let h = svgEl ? (svgEl.getAttribute('height') || '200') : '200';
+
+    let fullSvg = '<?xml version="1.0" encoding="UTF-8"?>\n' + svgCode;
+    let blob = new Blob([fullSvg], { type: 'image/svg+xml' });
+    let url = URL.createObjectURL(blob);
+    let a = document.createElement('a');
+    a.href = url;
+    a.download = 'svg_' + w + 'x' + h + '.svg';
+    a.click();
+    URL.revokeObjectURL(url);
+    setStatus('SVG文件已下载', 'success');
+}
+
+function loadSample() {
+    svgInput.value = '<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">\n' +
+        '  <defs>\n' +
+        '    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">\n' +
+        '      <stop offset="0%" style="stop-color:#4ae2b7;stop-opacity:1" />\n' +
+        '      <stop offset="100%" style="stop-color:#ec4899;stop-opacity:1" />\n' +
+        '    </linearGradient>\n' +
+        '  </defs>\n' +
+        '  <rect x="20" y="20" width="360" height="260" rx="20" fill="url(#grad)" />\n' +
+        '  <circle cx="120" cy="120" r="50" fill="rgba(255,255,255,0.3)" />\n' +
+        '  <circle cx="280" cy="180" r="40" fill="rgba(255,255,255,0.2)" />\n' +
+        '  <text x="200" y="160" text-anchor="middle" fill="white" font-size="24" font-weight="bold">Hello SVG</text>\n' +
+        '  <text x="200" y="190" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-size="14">绘萤工具箱</text>\n' +
+        '</svg>';
+    renderSvg();
+    setStatus('已加载示例SVG', 'success');
+}
+
+function clearSvg() {
+    svgInput.value = '';
+    renderSvg();
+    setStatus('已清空', 'info');
+}
+
+// 实时预览
+svgInput.addEventListener('input', renderSvg);
+
+initSidebar('image');
+</script>
+</body>
+</html>

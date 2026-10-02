@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Nginx配置生成器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="Nginx配置生成器，纯前端可视化勾选生成nginx.conf，支持反向代理/SSL/静态资源/Gzip等模块，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.main-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+@media(max-width:768px){.main-grid{grid-template-columns:1fr;}}
+.form-panel{background:#f8fafc;border:1px solid #e0e6ed;border-radius:10px;padding:16px;}
+.form-panel h3{font-size:.95em;margin-bottom:12px;color:#2c3e50;}
+.form-item{margin-bottom:12px;}
+.form-item label{display:block;font-size:.82em;color:#64748b;font-weight:600;margin-bottom:4px;}
+.form-item input,.form-item select{width:100%;padding:8px 12px;border:1px solid #e0e6ed;border-radius:6px;font-size:.85em;outline:none;box-sizing:border-box;}
+.form-item input[type=checkbox]{width:auto;margin-right:6px;}
+.checkbox-group{display:flex;flex-wrap:wrap;gap:10px;}
+.checkbox-group label{display:flex;align-items:center;font-size:.82em;color:#475569;cursor:pointer;}
+.output-panel{background:#1e293b;color:#e2e8f0;border-radius:10px;padding:16px;font-family:'Courier New',monospace;font-size:.82em;white-space:pre-wrap;word-break:break-all;min-height:400px;max-height:500px;overflow-y:auto;line-height:1.5;}
+.copy-btn{position:relative;}
+</style>
+    <meta name="keywords" content="Nginx配置生成器,在线Nginx配置生成器,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/nginx-gen-tool.html" />
+    <meta property="og:title" content="Nginx配置生成器" />
+    <meta property="og:description" content="Nginx配置生成器，纯前端可视化勾选生成nginx.conf，支持反向代理/SSL/静态资源/Gzip等模块，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/nginx-gen-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="Nginx配置生成器" />
+    <meta itemprop="description" content="Nginx配置生成器，纯前端可视化勾选生成nginx.conf，支持反向代理/SSL/静态资源/Gzip等模块，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Nginx配置生成器",
+                "item": "https://box.lynvortex.top/work/nginx-gen-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Nginx配置生成器",
+        "url": "https://box.lynvortex.top/work/nginx-gen-tool.html",
+        "description": "可视化勾选生成nginx.conf，支持反向代理/SSL/静态资源/Gzip等模块",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>⚙️ Nginx配置生成器</h1><p>可视化勾选生成nginx.conf，支持反向代理/SSL/静态资源</p></div>
+<div class="main-grid">
+<div class="form-panel">
+<h3>🔧 基础配置</h3>
+<div class="form-item"><label>监听端口</label><input type="number" id="port" value="80"/></div>
+<div class="form-item"><label>域名</label><input type="text" id="domain" value="example.com"/></div>
+<div class="form-item"><label>根目录</label><input type="text" id="rootDir" value="/var/www/html"/></div>
+<div class="form-item"><label>首页文件</label><input type="text" id="index" value="index.html index.htm"/></div>
+<h3 style="margin-top:16px;">📦 功能模块</h3>
+<div class="checkbox-group">
+<label><input type="checkbox" id="modProxy" checked/> 反向代理</label>
+<label><input type="checkbox" id="modSSL"/> HTTPS/SSL</label>
+<label><input type="checkbox" id="modGzip" checked/> Gzip压缩</label>
+<label><input type="checkbox" id="modStatic" checked/> 静态资源缓存</label>
+<label><input type="checkbox" id="modRewrite"/> URL重写</label>
+<label><input type="checkbox" id="modCors"/> CORS跨域</label>
+<label><input type="checkbox" id="modWs"/> WebSocket</label>
+<label><input type="checkbox" id="modLog" checked/> 访问日志</label>
+</div>
+<div id="proxyConfig" style="margin-top:14px;">
+<h3>🔄 反向代理</h3>
+<div class="form-item"><label>代理目标地址</label><input type="text" id="proxyPass" value="http://127.0.0.1:3000"/></div>
+<div class="form-item"><label>代理路径</label><input type="text" id="proxyPath" value="/api"/></div>
+</div>
+<div id="sslConfig" style="display:none;margin-top:14px;">
+<h3>🔒 SSL配置</h3>
+<div class="form-item"><label>SSL证书路径</label><input type="text" id="sslCert" value="/etc/nginx/ssl/cert.pem"/></div>
+<div class="form-item"><label>SSL密钥路径</label><input type="text" id="sslKey" value="/etc/nginx/ssl/key.pem"/></div>
+</div>
+<div id="rewriteConfig" style="display:none;margin-top:14px;">
+<h3>✏️ URL重写</h3>
+<div class="form-item"><label>重写规则</label><input type="text" id="rewriteRule" value="^/(.*)$ /index.php/$1 last"/></div>
+</div>
+</div>
+<div>
+<div class="output-panel" id="output"></div>
+<div style="text-align:center;margin-top:12px;">
+<button class="btn btn-primary" id="genBtn" style="padding:10px 28px;">⚙️ 生成配置</button>
+<button class="btn" id="copyBtn" style="padding:10px 16px;margin-left:8px;border:1px solid #4a90e2;border-radius:8px;background:#fff;color:#4a90e2;cursor:pointer;font-size:.85em;font-weight:600;">📋 复制</button>
+</div>
+</div>
+</div>
+<div id="statusBar" class="status-bar info">修改参数自动生成Nginx配置</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 Nginx配置生成器</h3><p>可视化生成nginx.conf</p><div class="feature-chips"><span class="feature-chip">反向代理</span><span class="feature-chip">SSL/HTTPS</span><span class="feature-chip">Gzip</span><span class="feature-chip">缓存</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>勾选功能模块自动生成对应配置段</li><li>支持反向代理、SSL、Gzip、缓存等</li><li>生成配置请根据实际环境修改</li><li>一键复制到剪贴板</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var inputs=document.querySelectorAll('input,select');
+inputs.forEach(function(el){el.oninput=generate;el.onchange=generate;});
+document.getElementById('modProxy').onchange=function(){document.getElementById('proxyConfig').style.display=this.checked?'block':'none';generate();};
+document.getElementById('modSSL').onchange=function(){document.getElementById('sslConfig').style.display=this.checked?'block':'none';generate();};
+document.getElementById('modRewrite').onchange=function(){document.getElementById('rewriteConfig').style.display=this.checked?'block':'none';generate();};
+function generate(){var port=document.getElementById('port').value;var domain=document.getElementById('domain').value;var root=document.getElementById('rootDir').value;var index=document.getElementById('index').value;var c='';c+='server {\n';c+='    listen '+port+';\n';c+='    server_name '+domain+';\n';if(document.getElementById('modSSL').checked){c+='    listen 443 ssl;\n';c+='    ssl_certificate '+document.getElementById('sslCert').value+';\n';c+='    ssl_certificate_key '+document.getElementById('sslKey').value+';\n';c+='    ssl_protocols TLSv1.2 TLSv1.3;\n';c+='    ssl_ciphers HIGH:!aNULL:!MD5;\n';}c+='\n';c+='    root '+root+';\n';c+='    index '+index+';\n';if(document.getElementById('modLog').checked){c+='\n    access_log /var/log/nginx/'+domain+'.access.log;\n';c+='    error_log /var/log/nginx/'+domain+'.error.log;\n';}if(document.getElementById('modGzip').checked){c+='\n    # Gzip压缩\n';c+='    gzip on;\n';c+='    gzip_types text/plain text/css application/json application/javascript text/xml application/xml;\n';c+='    gzip_min_length 1000;\n';c+='    gzip_comp_level 6;\n';}if(document.getElementById('modStatic').checked){c+='\n    # 静态资源缓存\n';c+='    location ~* \\.(jpg|jpeg|png|gif|ico|css|js|woff2?)$ {\n';c+='        expires 30d;\n';c+='        add_header Cache-Control "public, immutable";\n';c+='    }\n';}if(document.getElementById('modCors').checked){c+='\n    # CORS跨域\n';c+='    add_header Access-Control-Allow-Origin "*";\n';c+='    add_header Access-Control-Allow-Methods "GET, POST, OPTIONS";\n';c+='    add_header Access-Control-Allow-Headers "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization";\n';}if(document.getElementById('modProxy').checked){c+='\n    # 反向代理\n';c+='    location '+document.getElementById('proxyPath').value+' {\n';c+='        proxy_pass '+document.getElementById('proxyPass').value+';\n';c+='        proxy_set_header Host $host;\n';c+='        proxy_set_header X-Real-IP $remote_addr;\n';c+='        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n';c+='        proxy_set_header X-Forwarded-Proto $scheme;\n';if(document.getElementById('modWs').checked){c+='        proxy_http_version 1.1;\n';c+='        proxy_set_header Upgrade $http_upgrade;\n';c+='        proxy_set_header Connection "upgrade";\n';}c+='    }\n';}if(document.getElementById('modRewrite').checked){c+='\n    # URL重写\n';c+='    rewrite '+document.getElementById('rewriteRule').value+';\n';}c+='\n    location / {\n';c+='        try_files $uri $uri/ =404;\n';c+='    }\n';c+='}\n';document.getElementById('output').textContent=c;}
+document.getElementById('genBtn').onclick=generate;
+document.getElementById('copyBtn').onclick=function(){navigator.clipboard.writeText(document.getElementById('output').textContent).then(function(){document.getElementById('statusBar').textContent='已复制到剪贴板';document.getElementById('statusBar').className='status-bar success';});};
+generate();
+initSidebar('work');
+</script>
+</body>
+</html>

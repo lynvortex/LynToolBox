@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>音量标准化 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线音频音量标准化工具，峰值/RMS归一化到目标dBFS，提升过小音量、削峰修复，导出WAV，纯前端本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="音量标准化,音频增益,响度归一化,峰值归一化,RMS,音量提升,声音处理,音视频工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/media/audio-normalize-tool.html"/>
+<meta property="og:title" content="音量标准化"/>
+<meta property="og:description" content="峰值/RMS 归一化，统一音频响度。"/>
+<meta property="og:url" content="https://box.lynvortex.top/media/audio-normalize-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="音量标准化"/>
+<meta itemprop="description" content="峰值/RMS 归一化，统一音频响度。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"音视频处理","item":"https://box.lynvortex.top/media.html"},{"@type":"ListItem","position":3,"name":"音量标准化","item":"https://box.lynvortex.top/media/audio-normalize-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"音量标准化","url":"https://box.lynvortex.top/media/audio-normalize-tool.html","description":"音频音量标准化工具","applicationCategory":"音视频工具","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>📢 音量标准化</h1>
+        <p>把过小/过大的音量统一到标准电平</p>
+    </div>
+    <div class="upload-zone" id="dropZone">
+        <p style="margin:0;color:#64748b;">🎵 点击选择或拖入音频文件（MP3/WAV/OGG/M4A）</p>
+        <input type="file" id="fileInput" accept="audio/*" style="display:none;"/>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>归一化方式</label>
+            <select id="mode">
+                <option value="peak">峰值归一化（防削波）</option>
+                <option value="rms">RMS 响度归一化（听感均匀）</option>
+            </select>
+        </div>
+        <div class="form-item"><label>目标电平</label>
+            <select id="target">
+                <option value="-1">-1 dBFS（最大）</option>
+                <option value="-3">-3 dBFS（响亮）</option>
+                <option value="-6" selected>-6 dBFS（安全）</option>
+                <option value="-10">-10 dBFS（柔和）</option>
+            </select>
+        </div>
+        <div class="form-item"><label>限幅保护</label>
+            <select id="limiter"><option value="1">开启（防削波失真）</option><option value="0">关闭</option></select>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="runBtn" disabled>📏 开始标准化</button>
+        <button class="btn btn-outline" id="dlBtn" disabled>下载 WAV</button>
+    </div>
+    <div class="status-bar info" id="statusBar">请先选择音频文件</div>
+    <audio id="player" controls style="width:100%;display:none;margin-bottom:12px;"></audio>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 音量标准化</h3>
+        <p>扫描全轨峰值/RMS，计算增益并重写采样。</p>
+        <div class="feature-chips"><span class="feature-chip">峰值归一化</span><span class="feature-chip">RMS响度</span><span class="feature-chip">限幅保护</span><span class="feature-chip">导出WAV</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>峰值归一化只保证不超电平，不改变动态范围</li>
+            <li>RMS 模式听感更均匀，偶发尖峰由限幅器处理</li>
+            <li>多段素材统一响度建议统一使用 -6 dBFS</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+var audioBuf = null, outBlob = null;
+var dropZone = document.getElementById('dropZone'), fileInput = document.getElementById('fileInput');
+dropZone.onclick = function(){ fileInput.click(); };
+dropZone.ondragover = function(e){ e.preventDefault(); };
+dropZone.ondrop = function(e){ e.preventDefault(); if (e.dataTransfer.files[0]) loadAudio(e.dataTransfer.files[0]); };
+fileInput.onchange = function(){ if (fileInput.files[0]) loadAudio(fileInput.files[0]); };
+
+function loadAudio(f) {
+    setStatus('正在解码：' + f.name + ' …', 'info');
+    var fr = new FileReader();
+    fr.onload = function() {
+        var ctx = new AudioContext();
+        ctx.decodeAudioData(fr.result).then(function(buf) {
+            audioBuf = buf;
+            document.getElementById('runBtn').disabled = false;
+            var peak = 0, sum = 0, n = 0;
+            for (var c = 0; c < buf.numberOfChannels; c++) {
+                var d = buf.getChannelData(c);
+                for (var i = 0; i < d.length; i += 8) {
+                    var a = Math.abs(d[i]);
+                    if (a > peak) peak = a;
+                    sum += d[i] * d[i]; n++;
+                }
+            }
+            var rms = Math.sqrt(sum / n);
+            setStatus('解码完成，时长 ' + buf.duration.toFixed(1) + 's | 当前峰值 ' + (20 * Math.log10(peak)).toFixed(1) + ' dBFS | RMS ' + (20 * Math.log10(rms)).toFixed(1) + ' dBFS', 'success');
+        }).catch(function(e){ setStatus('解码失败：' + e.message, 'error'); });
+    };
+    fr.readAsArrayBuffer(f);
+}
+
+document.getElementById('runBtn').onclick = function() {
+    if (!audioBuf) return;
+    var mode = document.getElementById('mode').value;
+    var targetDb = parseFloat(document.getElementById('target').value);
+    var useLimiter = document.getElementById('limiter').value === '1';
+    var target = Math.pow(10, targetDb / 20);
+
+    var OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    var off = new OfflineCtx(audioBuf.numberOfChannels, audioBuf.length, audioBuf.sampleRate);
+    var src = off.createBufferSource();
+    src.buffer = audioBuf;
+
+    var peak = 0, sum = 0, n = 0;
+    for (var c = 0; c < audioBuf.numberOfChannels; c++) {
+        var d = audioBuf.getChannelData(c);
+        for (var i = 0; i < d.length; i++) {
+            var a = Math.abs(d[i]);
+            if (a > peak) peak = a;
+            sum += d[i] * d[i]; n++;
+        }
+    }
+    var rms = Math.sqrt(sum / n);
+    var measure = mode === 'peak' ? peak : rms;
+    var gain = measure > 0 ? target / measure : 1;
+    if (mode === 'rms' && !useLimiter && gain * peak > 1) {
+        gain = 1 / peak;
+        setStatus('RMS 增益会使峰值超限，已自动回退到峰值上限 ' + (20 * Math.log10(gain)).toFixed(1) + ' dB', 'info');
+    }
+
+    var g = off.createGain();
+    g.gain.value = gain;
+    src.connect(g);
+
+    if (useLimiter) {
+        var comp = off.createDynamicsCompressor();
+        comp.threshold.value = targetDb;
+        comp.knee.value = 0;
+        comp.ratio.value = 20;
+        comp.attack.value = 0.001;
+        comp.release.value = 0.1;
+        g.connect(comp);
+        comp.connect(off.destination);
+    } else {
+        g.connect(off.destination);
+    }
+    src.start();
+    off.startRendering().then(function(rendered) {
+        outBlob = encodeWAV(rendered);
+        document.getElementById('dlBtn').disabled = false;
+        var player = document.getElementById('player');
+        player.src = URL.createObjectURL(outBlob);
+        player.style.display = 'block';
+        setStatus('标准化完成：增益 ' + (20 * Math.log10(gain)).toFixed(2) + ' dB，目标 ' + targetDb + ' dBFS，可试听下载', 'success');
+    });
+};
+
+function encodeWAV(buf) {
+    var numCh = buf.numberOfChannels, len = buf.length, rate = buf.sampleRate;
+    var bytes = 44 + len * numCh * 2;
+    var ab = new ArrayBuffer(bytes), v = new DataView(ab);
+    var w = function(off, s){ for (var i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i)); };
+    w(0, 'RIFF'); v.setUint32(4, bytes - 8, true); w(8, 'WAVE');
+    w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true);
+    v.setUint16(22, numCh, true); v.setUint32(24, rate, true);
+    v.setUint32(28, rate * numCh * 2, true); v.setUint16(32, numCh * 2, true); v.setUint16(34, 16, true);
+    w(36, 'data'); v.setUint32(40, len * numCh * 2, true);
+    var chans = [];
+    for (var c = 0; c < numCh; c++) chans.push(buf.getChannelData(c));
+    var off = 44;
+    for (var i = 0; i < len; i++) {
+        for (var c = 0; c < numCh; c++) {
+            var s = Math.max(-1, Math.min(1, chans[c][i]));
+            v.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+            off += 2;
+        }
+    }
+    return new Blob([ab], { type: 'audio/wav' });
+}
+
+document.getElementById('dlBtn').onclick = function() {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(outBlob);
+    a.download = 'normalized.wav';
+    a.click();
+};
+initSidebar('media');
+</script>
+</body>
+</html>

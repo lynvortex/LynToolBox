@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Markdown转Word · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="Markdown转Word工具，纯前端将Markdown转换为Word文档(.doc)，支持标题列表表格代码块，导出.doc文件，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.main-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+@media(max-width:768px){.main-grid{grid-template-columns:1fr;}}
+.editor-panel textarea{width:100%;height:400px;padding:14px;border:1px solid #e0e6ed;border-radius:8px;font-size:.85em;font-family:'Courier New',monospace;resize:vertical;outline:none;box-sizing:border-box;line-height:1.6;}
+.preview-panel{background:#fff;border:1px solid #e0e6ed;border-radius:8px;padding:20px;min-height:400px;overflow-y:auto;max-height:400px;}
+.preview-panel h1{font-size:1.5em;font-weight:700;margin-bottom:8px;}
+.preview-panel h2{font-size:1.2em;font-weight:700;margin-bottom:8px;}
+.preview-panel h3{font-size:1.05em;font-weight:700;margin-bottom:6px;}
+.preview-panel p{margin-bottom:8px;line-height:1.6;}
+.preview-panel ul,.preview-panel ol{margin-bottom:8px;padding-left:24px;}
+.preview-panel li{margin-bottom:4px;}
+.preview-panel pre{background:#f1f5f9;padding:12px;border-radius:6px;overflow-x:auto;margin-bottom:10px;font-size:.82em;}
+.preview-panel code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:.85em;}
+.preview-panel pre code{background:none;padding:0;}
+.preview-panel table{border-collapse:collapse;width:100%;margin-bottom:10px;}
+.preview-panel th,.preview-panel td{border:1px solid #e0e6ed;padding:6px 10px;font-size:.82em;}
+.preview-panel th{background:#f8fafc;font-weight:600;}
+.preview-panel blockquote{border-left:4px solid #4a90e2;padding-left:12px;color:#64748b;margin-bottom:10px;}
+.preview-panel a{color:#4a90e2;text-decoration:underline;}
+</style>
+    <meta name="keywords" content="Markdown转Word,在线Markdown转Word,文档处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/document/md-to-word-tool.html" />
+    <meta property="og:title" content="Markdown转Word" />
+    <meta property="og:description" content="Markdown转Word工具，纯前端将Markdown转换为Word文档(.doc)，支持标题列表表格代码块，导出.doc文件，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/document/md-to-word-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="Markdown转Word" />
+    <meta itemprop="description" content="Markdown转Word工具，纯前端将Markdown转换为Word文档(.doc)，支持标题列表表格代码块，导出.doc文件，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文档处理",
+                "item": "https://box.lynvortex.top/document.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Markdown转Word",
+                "item": "https://box.lynvortex.top/document/md-to-word-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Markdown转Word",
+        "url": "https://box.lynvortex.top/document/md-to-word-tool.html",
+        "description": "Markdown渲染并导出Word(.doc)文档，支持标题列表表格代码块",
+        "applicationCategory": "文档处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>📝 Markdown转Word</h1><p>将Markdown转换为Word文档(.doc)下载</p></div>
+<div class="main-grid">
+<div class="editor-panel">
+<h3 style="font-size:.9em;margin-bottom:8px;color:#2c3e50;">✏️ Markdown输入</h3>
+<textarea id="mdInput"># 标题示例
+
+## 二级标题
+
+这是一段普通文本，包含**加粗**和*斜体*。
+
+### 列表
+
+- 第一项
+- 第二项
+- 第三项
+
+### 有序列表
+
+1. 第一步
+2. 第二步
+3. 第三步
+
+### 代码块
+
+```javascript
+function hello() {
+  console.log("Hello World");
+}
+```
+
+### 表格
+
+| 列1 | 列2 | 列3 |
+|-----|-----|-----|
+| A   | B   | C   |
+| D   | E   | F   |
+
+### 引用
+
+> 这是一段引用文本
+
+[链接示例](https://example.com)</textarea>
+</div>
+<div>
+<h3 style="font-size:.9em;margin-bottom:8px;color:#2c3e50;">👁️ 预览</h3>
+<div class="preview-panel" id="preview"></div>
+</div>
+</div>
+<div style="text-align:center;margin-bottom:14px;">
+<button class="btn btn-primary" id="dlBtn" style="padding:10px 28px;">⬇ 下载Word文档</button>
+<button class="btn btn-outline" id="copyBtn" style="padding:10px 20px;margin-left:8px;">📋 复制HTML</button>
+</div>
+<div id="statusBar" class="status-bar info">编辑Markdown实时预览并导出Word</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 Markdown转Word</h3><p>Markdown转Word文档</p><div class="feature-chips"><span class="feature-chip">标题/列表</span><span class="feature-chip">表格</span><span class="feature-chip">代码块</span><span class="feature-chip">.doc导出</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>支持标题、列表、表格、代码块等Markdown语法</li><li>实时预览转换后的效果</li><li>导出为Word兼容的.doc文件</li><li>所有处理在浏览器本地完成</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+document.getElementById('mdInput').oninput=render;
+function parseMd(md){
+var lines=md.split('\n');
+var html='';var inCode=false;var inList=false;var listType='';var inTable=false;var tableRows=[];
+lines.forEach(function(line){
+if(line.trim().startsWith('```')){if(inCode){html+='</code></pre>';inCode=false;}else{html+='<pre><code>';inCode=true;}return;}
+if(inCode){html+=line+'\n';return;}
+if(/^#{1,6}\s/.test(line)){if(inList){html+='</'+listType+'>';inList=false;}if(inTable){html+=renderTable(tableRows);tableRows=[];inTable=false;}var m=line.match(/^(#{1,6})\s+(.+)/);var level=m[1].length;html+='<h'+level+'>'+inline(m[2])+'</h'+level+'>';return;}
+if(/^\s*[-*]\s/.test(line)){if(!inList){html+='<ul>';inList=true;listType='ul';}html+='<li>'+inline(line.replace(/^\s*[-*]\s/,''))+'</li>';return;}
+if(/^\s*\d+\.\s/.test(line)){if(!inList||listType!=='ol'){if(inList)html+='</'+listType+'>';html+='<ol>';inList=true;listType='ol';}html+='<li>'+inline(line.replace(/^\s*\d+\.\s/,''))+'</li>';return;}
+if(line.trim().startsWith('>')){if(inList){html+='</'+listType+'>';inList=false;}if(inTable){html+=renderTable(tableRows);tableRows=[];inTable=false;}html+='<blockquote>'+inline(line.replace(/^\s*>/,'').trim())+'</blockquote>';return;}
+if(line.includes('|')&&line.trim().startsWith('|')){if(inList){html+='</'+listType+'>';inList=false;}if(line.match(/^\|[\s-:|]+\|$/)){return;}tableRows.push(line);inTable=true;return;}
+if(inList){html+='</'+listType+'>';inList=false;}
+if(inTable){html+=renderTable(tableRows);tableRows=[];inTable=false;}
+if(line.trim()){html+='<p>'+inline(line)+'</p>';}
+});
+if(inList)html+='</'+listType+'>';
+if(inTable)html+=renderTable(tableRows);
+if(inCode)html+='</code></pre>';
+return html;
+}
+function inline(text){
+text=text.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+text=text.replace(/\*(.+?)\*/g,'<em>$1</em>');
+text=text.replace(/`(.+?)`/g,'<code>$1</code>');
+text=text.replace(/\[(.+?)\]\((.+?)\)/g,'<a href="$2" target="_blank">$1</a>');
+return text;
+}
+function renderTable(rows){
+if(rows.length<1)return '';
+var html='<table>';rows.forEach(function(row,i){var cells=row.split('|').filter(function(c,idx,arr){return idx>0&&idx<arr.length-1;}).map(function(c){return c.trim();});if(i===0){html+='<tr>'+cells.map(function(c){return '<th>'+inline(c)+'</th>';}).join('')+'</tr>';}else{html+='<tr>'+cells.map(function(c){return '<td>'+inline(c)+'</td>';}).join('')+'</tr>';}});return html+'</table>';
+}
+function render(){document.getElementById('preview').innerHTML=parseMd(document.getElementById('mdInput').value);}
+document.getElementById('dlBtn').onclick=function(){
+var html=parseMd(document.getElementById('mdInput').value);
+var docHtml='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>Document</title><style>body{font-family:"Microsoft YaHei",sans-serif;font-size:12pt;line-height:1.6;}h1{font-size:18pt;}h2{font-size:16pt;}h3{font-size:14pt;}pre{background:#f0f0f0;padding:8pt;font-family:Consolas,monospace;font-size:10pt;}code{font-family:Consolas,monospace;}table{border-collapse:collapse;}th,td{border:1pt solid #000;padding:4pt 8pt;}th{background:#e0e0e0;}blockquote{border-left:3pt solid #4a90e2;padding-left:12pt;color:#666;}</style></head><body>'+html+'</body></html>';
+var blob=new Blob(['\ufeff'+docHtml],{type:'application/msword'});
+var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='document.doc';a.click();
+document.getElementById('statusBar').textContent='已下载Word文档';document.getElementById('statusBar').className='status-bar success';
+};
+document.getElementById('copyBtn').onclick=function(){navigator.clipboard.writeText(parseMd(document.getElementById('mdInput').value)).then(function(){document.getElementById('statusBar').textContent='已复制HTML';document.getElementById('statusBar').className='status-bar success';});};
+render();
+initSidebar('document');
+</script>
+</body>
+</html>

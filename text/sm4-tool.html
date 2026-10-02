@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SM4 加解密 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线 SM4 国密分组加解密工具，支持 ECB/CBC 模式，128位密钥，密钥随机生成，GB/T 32907 标准，纯前端本地计算。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sm-crypto.js"></script>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="SM4,国密加解密,GB/T 32907,ECB,CBC,分组密码,文本处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/text/sm4-tool.html"/>
+<meta property="og:title" content="SM4 加解密"/>
+<meta property="og:description" content="国密 SM4 ECB/CBC 加解密。"/>
+<meta property="og:url" content="https://box.lynvortex.top/text/sm4-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="SM4 加解密"/>
+<meta itemprop="description" content="国密 SM4 ECB/CBC 加解密。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"文本处理","item":"https://box.lynvortex.top/text.html"},{"@type":"ListItem","position":3,"name":"SM4 加解密","item":"https://box.lynvortex.top/text/sm4-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"SM4 加解密","url":"https://box.lynvortex.top/text/sm4-tool.html","description":"国密SM4加解密工具","applicationCategory":"文本处理","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>🔐 SM4 加解密</h1>
+        <p>中国密码标准 SM4（GB/T 32907）· ECB / CBC 模式</p>
+    </div>
+    <div class="form-grid">
+        <div class="form-item" style="grid-column:1/-1;"><label>输入内容</label>
+            <textarea class="code" id="input" placeholder="明文或密文（hex）…">国密SM4测试</textarea>
+        </div>
+        <div class="form-item"><label>密钥（32位 hex = 128位）</label>
+            <input type="text" id="key" placeholder="0123456789abcdeffedcba9876543210" value="0123456789abcdeffedcba9876543210"/>
+        </div>
+        <div class="form-item"><label>IV（CBC 模式需要，32位 hex）</label>
+            <input type="text" id="iv" placeholder="000102030405060708090a0b0c0d0e0f" value="000102030405060708090a0b0c0d0e0f"/>
+        </div>
+        <div class="form-item"><label>模式</label>
+            <select id="mode"><option value="ecb">ECB（电子密码本）</option><option value="cbc">CBC（密码分组链接）</option></select>
+        </div>
+        <div class="form-item"><label>操作</label>
+            <select id="op"><option value="enc">加密</option><option value="dec">解密</option></select>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="runBtn">⚙️ 执行</button>
+        <button class="btn btn-outline" id="genKey">🎲 随机密钥/IV</button>
+        <button class="btn btn-ghost" id="copyBtn">复制结果</button>
+    </div>
+    <div class="status-bar info" id="statusBar">SM4 密钥长度固定 128 位（32 个 hex 字符）</div>
+    <label style="font-size:0.85em;color:#64748b;font-weight:600;">结果</label>
+    <pre class="output" id="output" style="user-select:all;"></pre>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 SM4 加解密</h3>
+        <p>SM4 为无线局域网标准的分组密码算法，分组与密钥均 128 位。</p>
+        <div class="feature-chips"><span class="feature-chip">ECB</span><span class="feature-chip">CBC</span><span class="feature-chip">随机密钥</span><span class="feature-chip">hex输入输出</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>密钥/IV 必须为 32 个十六进制字符（128 位）</li>
+            <li>ECB 相同分组产生相同密文，重要数据建议 CBC</li>
+            <li>解密输入为加密输出的 hex 字符串</li>
+            <li>标准向量：密钥 0123456789abcdeffedcba9876543210 加密 0123456789abcdeffedcba9876543210 → 681edf34d206965e86b3e94f536e4246</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+document.getElementById('runBtn').onclick = function() {
+    var text = document.getElementById('input').value;
+    var key = document.getElementById('key').value.trim().toLowerCase();
+    var iv = document.getElementById('iv').value.trim().toLowerCase();
+    var mode = document.getElementById('mode').value;
+    var op = document.getElementById('op').value;
+    var output = document.getElementById('output');
+    if (!text) { setStatus('请输入内容', 'error'); return; }
+    if (!/^[0-9a-f]{32}$/.test(key)) { setStatus('密钥格式错误：需要 32 个 hex 字符', 'error'); return; }
+    if (mode === 'cbc' && !/^[0-9a-f]{32}$/.test(iv)) { setStatus('CBC 模式需要 32 位 hex 的 IV', 'error'); return; }
+    try {
+        if (op === 'enc') {
+            output.textContent = SMCrypto.sm4.encryptText(text, key, mode, mode === 'cbc' ? iv : null);
+            setStatus('加密完成（PKCS#7 填充）', 'success');
+        } else {
+            if (!/^[0-9a-f]+$/.test(text.trim())) { setStatus('解密输入应为 hex 密文', 'error'); return; }
+            output.textContent = SMCrypto.sm4.decryptText(text.trim(), key, mode, mode === 'cbc' ? iv : null);
+            setStatus('解密完成', 'success');
+        }
+    } catch (e) {
+        output.textContent = '错误：' + e.message;
+        setStatus('处理失败：' + e.message, 'error');
+    }
+};
+
+document.getElementById('genKey').onclick = function() {
+    document.getElementById('key').value = SMCrypto.sm4.genKey();
+    document.getElementById('iv').value = SMCrypto.sm4.genIv();
+    setStatus('已生成随机 128 位密钥与 IV（请自行保存）', 'success');
+};
+
+document.getElementById('copyBtn').onclick = function() {
+    var t = document.getElementById('output').textContent;
+    if (t) navigator.clipboard.writeText(t).then(function(){ setStatus('已复制', 'success'); });
+};
+initSidebar('text');
+</script>
+</body>
+</html>

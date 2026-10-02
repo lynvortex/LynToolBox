@@ -1,0 +1,65 @@
+# 绘萤工具箱 - Apache 配置
+# 启用 URL 重写
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+</IfModule>
+
+# 静态资源缓存
+<IfModule mod_expires.c>
+    ExpiresActive On
+    
+    # data.json 每次请求必须向服务器验证是否有更新（配合 api-loader.js 的 cache:'no-cache'）
+    <IfModule mod_headers.c>
+        <FilesMatch "data\.json$">
+            Header set Cache-Control "no-cache"
+        </FilesMatch>
+    </IfModule>
+    
+    # 图片缓存 30 天
+    ExpiresByType image/webp "access plus 30 days"
+    ExpiresByType image/png "access plus 30 days"
+    ExpiresByType image/jpeg "access plus 30 days"
+    ExpiresByType image/gif "access plus 30 days"
+    ExpiresByType image/svg+xml "access plus 30 days"
+    
+    # 字体文件缓存 30 天
+    ExpiresByType font/woff2 "access plus 30 days"
+    ExpiresByType application/font-woff2 "access plus 30 days"
+    
+    # PDF 缓存 7 天
+    ExpiresByType application/pdf "access plus 7 days"
+    
+    # JS/CSS 缓存 7 天
+    ExpiresByType text/javascript "access plus 7 days"
+    ExpiresByType application/javascript "access plus 7 days"
+    ExpiresByType text/css "access plus 7 days"
+    
+    # HTML 缓存 5 分钟
+    ExpiresByType text/html "access plus 5 minutes"
+</IfModule>
+
+# 压缩输出
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json
+</IfModule>
+
+# 安全：禁止访问敏感文件
+<FilesMatch "\.(php~|bak|swp|sql|md|log)$">
+    Require all denied
+</FilesMatch>
+
+# 安全：禁止访问 data 目录（存储管理员密码哈希等敏感数据）
+<IfModule mod_rewrite.c>
+    RewriteRule ^data/ - [F,L]
+</IfModule>
+
+# 安全：禁止目录列表
+Options -Indexes
+
+# 安全头
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>

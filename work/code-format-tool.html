@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>代码格式化 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="代码格式化工具，美化 HTML/CSS/JavaScript 代码，支持缩进设置与压缩，纯前端 js-beautify。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+        .lang-tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+        .lang-tab { padding: 8px 18px; border: 1px solid #e0e6ed; border-radius: 8px; background: #f8fafc; color: #64748b; cursor: pointer; font-size: 0.85em; font-weight: 600; }
+        .lang-tab.active { background: #4a90e2; color: #fff; border-color: #4a90e2; }
+        .io-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 768px) { .io-grid { grid-template-columns: 1fr; } }
+        .io-pane { display: flex; flex-direction: column; }
+        .io-pane label { font-size: 0.8em; color: #64748b; font-weight: 600; margin-bottom: 6px; }
+        .opt-row { display: flex; gap: 14px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+        .opt-row .opt { display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: #475569; }
+        .opt-row select { padding: 7px 10px; border: 1px solid #e0e6ed; border-radius: 6px; font-size: 0.85em; outline: none; }
+        .drop-zone { border: 2px dashed #cbd5e1; border-radius: 10px; padding: 14px; text-align: center; color: #94a3b8; font-size: 0.82em; cursor: pointer; margin-bottom: 10px; }
+        .drop-zone:hover { border-color: #4a90e2; color: #4a90e2; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <script src="../assets/js-beautify.min.js"></script>
+    <script src="../assets/js-beautify-css.min.js"></script>
+    <script src="../assets/js-beautify-html.min.js"></script>
+    <meta name="keywords" content="代码格式化,在线代码格式化,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/code-format-tool.html" />
+    <meta property="og:title" content="代码格式化" />
+    <meta property="og:description" content="代码格式化工具，美化 HTML/CSS/JavaScript 代码，支持缩进设置与压缩，纯前端 js-beautify。" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/code-format-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="代码格式化" />
+    <meta itemprop="description" content="代码格式化工具，美化 HTML/CSS/JavaScript 代码，支持缩进设置与压缩，纯前端 js-beautify。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "代码格式化",
+                "item": "https://box.lynvortex.top/work/code-format-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "代码格式化",
+        "url": "https://box.lynvortex.top/work/code-format-tool.html",
+        "description": "HTML/CSS/JS代码美化格式化，支持压缩与自定义缩进",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🧹 代码格式化</h1>
+                <p>美化 HTML / CSS / JavaScript 代码，支持自定义缩进与一键压缩</p>
+            </div>
+
+            <div class="lang-tabs">
+                <div class="lang-tab active" data-lang="js">JavaScript</div>
+                <div class="lang-tab" data-lang="html">HTML</div>
+                <div class="lang-tab" data-lang="css">CSS</div>
+            </div>
+
+            <div class="opt-row">
+                <div class="opt">缩进
+                    <select id="indentSel">
+                        <option value="2" selected>2 空格</option>
+                        <option value="4">4 空格</option>
+                        <option value="tab">Tab</option>
+                    </select>
+                </div>
+                <div class="opt"><input type="checkbox" id="preserveInline" /> 保留内联</div>
+                <div class="drop-zone" id="dropZone" style="margin:0 0 0 auto;padding:6px 14px;">📂 从文件导入</div>
+            </div>
+
+            <div class="io-grid">
+                <div class="io-pane">
+                    <label>输入代码</label>
+                    <textarea class="code" id="inputCode" spellcheck="false" placeholder="粘贴需要格式化的代码..."></textarea>
+                </div>
+                <div class="io-pane">
+                    <label>输出结果</label>
+                    <textarea class="code" id="outputCode" spellcheck="false" readonly style="background:#0f172a;color:#e2e8f0;"></textarea>
+                </div>
+            </div>
+
+            <div class="btn-row" style="margin-top:18px;">
+                <button class="btn btn-primary" id="beautifyBtn">✨ 格式化</button>
+                <button class="btn btn-outline" id="minifyBtn">📦 压缩</button>
+                <button class="btn btn-ghost" id="copyBtn">📋 复制结果</button>
+                <button class="btn btn-ghost" id="clearBtn">🗑️ 清空</button>
+            </div>
+
+            <div id="statusBar" class="status-bar info">粘贴代码后点击「格式化」</div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 代码格式化</h3>
+                <p>支持 HTML、CSS、JavaScript 代码美化和压缩</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">HTML</span>
+                    <span class="feature-chip">CSS</span>
+                    <span class="feature-chip">JavaScript</span>
+                    <span class="feature-chip">js-beautify</span>
+                    <span class="feature-chip">离线可用</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>基于 js-beautify 库实现，纯前端处理</li>
+                    <li>支持自定义缩进大小（2/4/8 空格）</li>
+                    <li>支持压缩为单行模式减小体积</li>
+                    <li>格式化结果可一键复制</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    let lang = 'js';
+    const inputCode = document.getElementById('inputCode');
+    const outputCode = document.getElementById('outputCode');
+    const indentSel = document.getElementById('indentSel');
+    const preserveInline = document.getElementById('preserveInline');
+    const statusBar = document.getElementById('statusBar');
+    const dropZone = document.getElementById('dropZone');
+    const setStatus = (m, t) => { statusBar.textContent = m; statusBar.className = 'status-bar ' + (t || 'info'); };
+
+    document.querySelectorAll('.lang-tab').forEach(t => t.addEventListener('click', () => {
+        document.querySelectorAll('.lang-tab').forEach(x => x.classList.remove('active'));
+        t.classList.add('active'); lang = t.dataset.lang;
+    }));
+
+    const opts = () => {
+        const ind = indentSel.value;
+        return {
+            indent_size: ind === 'tab' ? 1 : parseInt(ind, 10),
+            indent_char: ind === 'tab' ? '\t' : ' ',
+            preserve_newlines: true,
+            end_with_newline: true,
+            inline: preserveInline.checked ? [] : undefined
+        };
+    };
+
+    const getBeautifier = () => {
+        if (lang === 'js') return window.js_beautify;
+        if (lang === 'css') return window.css_beautify;
+        return window.html_beautify;
+    };
+
+    const minify = (code) => {
+        if (lang === 'css') return code.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s*([{}:;,])\s*/g, '$1').replace(/;}/g, '}').trim();
+        if (lang === 'html') return code.replace(/<!--[\s\S]*?-->/g, '').replace(/>\s+</g, '><').replace(/\s{2,}/g, ' ').trim();
+        return code.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ').trim();
+    };
+
+    document.getElementById('beautifyBtn').addEventListener('click', () => {
+        const code = inputCode.value;
+        if (!code.trim()) { setStatus('请先输入代码', 'error'); return; }
+        try {
+            const out = getBeautifier()(code, opts());
+            outputCode.value = out;
+            setStatus(`格式化完成，输出 ${out.length} 字符`, 'success');
+        } catch (e) { setStatus('格式化失败：' + e.message, 'error'); }
+    });
+
+    document.getElementById('minifyBtn').addEventListener('click', () => {
+        const code = inputCode.value;
+        if (!code.trim()) { setStatus('请先输入代码', 'error'); return; }
+        const out = minify(code);
+        outputCode.value = out;
+        const saved = code.length - out.length;
+        setStatus(`压缩完成，节省 ${saved} 字符（${code.length ? ((saved / code.length) * 100).toFixed(1) : 0}%）`, 'success');
+    });
+
+    document.getElementById('copyBtn').addEventListener('click', () => {
+        if (!outputCode.value) { setStatus('没有可复制的结果', 'error'); return; }
+        navigator.clipboard.writeText(outputCode.value).then(() => setStatus('已复制到剪贴板 ✓', 'success'))
+            .catch(() => { const ta = document.createElement('textarea'); ta.value = outputCode.value; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); setStatus('已复制到剪贴板 ✓', 'success'); });
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', () => { inputCode.value = ''; outputCode.value = ''; setStatus('已清空', 'info'); });
+
+    dropZone.addEventListener('click', () => {
+        const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.js,.css,.html,.htm,.txt';
+        inp.onchange = (e) => {
+            const f = e.target.files[0]; if (!f) return;
+            const r = new FileReader(); r.onload = () => { inputCode.value = r.result; setStatus(`已导入 ${f.name}`, 'success'); }; r.readAsText(f);
+        };
+        inp.click();
+    });
+
+    initSidebar('work');
+</script>
+</body>
+</html>

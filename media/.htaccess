@@ -1,0 +1,43 @@
+RewriteEngine On
+
+# 工具路径简写：/media/工具名 → /media/工具名.html
+RewriteRule ^recorder-tool$ recorder-tool.html [L]
+RewriteRule ^screen-record-tool$ screen-record-tool.html [L]
+RewriteRule ^audio-cut-tool$ audio-cut-tool.html [L]
+RewriteRule ^audio-convert-tool$ audio-convert-tool.html [L]
+RewriteRule ^video-to-gif-tool$ video-to-gif-tool.html [L]
+RewriteRule ^video-compress-tool$ video-compress-tool.html [L]
+RewriteRule ^audio-visual-tool$ audio-visual-tool.html [L]
+RewriteRule ^video-watermark-tool$ video-watermark-tool.html [L]
+RewriteRule ^video-crop-tool$ video-crop-tool.html [L]
+RewriteRule ^video-speed-tool$ video-speed-tool.html [L]
+RewriteRule ^video-keying-tool$ video-keying-tool.html [L]
+RewriteRule ^audio-eq-tool$ audio-eq-tool.html [L]
+RewriteRule ^audio-denoise-tool$ audio-denoise-tool.html [L]
+
+# 2026-08 新增工具
+RewriteRule ^audio-pan-tool$ audio-pan-tool.html [L]
+RewriteRule ^subtitle-shift-tool$ subtitle-shift-tool.html [L]
+RewriteRule ^audio-normalize-tool$ audio-normalize-tool.html [L]
+RewriteRule ^video-mute-tool$ video-mute-tool.html [L]
+RewriteRule ^video-reverse-tool$ video-reverse-tool.html [L]
+RewriteRule ^video-fps-tool$ video-fps-tool.html [L]
+RewriteRule ^audio-pitch-tool$ audio-pitch-tool.html [L]
+RewriteRule ^audio-reverb-tool$ audio-reverb-tool.html [L]
+
+# 补全简写规则
+RewriteRule ^mp3-recorder-tool$ mp3-recorder-tool.html [L]
+RewriteRule ^audio-wave-tool$ audio-wave-tool.html [L]
+RewriteRule ^hls-player-tool$ hls-player-tool.html [L]
+RewriteRule ^flv-player-tool$ flv-player-tool.html [L]
+RewriteRule ^synth-tool$ synth-tool.html [L]
+RewriteRule ^audio-player-tool$ audio-player-tool.html [L]
+RewriteRule ^video-player-tool$ video-player-tool.html [L]
+RewriteRule ^metronome-tool$ metronome-tool.html [L]
+RewriteRule ^audio-speed-tool$ audio-speed-tool.html [L]
+RewriteRule ^video-frame-tool$ video-frame-tool.html [L]
+RewriteRule ^white-noise-tool$ white-noise-tool.html [L]
+RewriteRule ^voice-changer-tool$ voice-changer-tool.html [L]
+RewriteRule ^video-to-audio-tool$ video-to-audio-tool.html [L]
+RewriteRule ^audio-merge-tool$ audio-merge-tool.html [L]
+RewriteRule ^video-cut-tool$ video-cut-tool.html [L]

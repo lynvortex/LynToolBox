@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>视频转GIF · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="上传视频文件，截取片段转换为GIF动图，支持调整帧率和尺寸，纯浏览器本地处理" />
+    <meta name="robots" content="noindex, follow" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+
+        .vg-area { display: flex; flex-direction: column; gap: 16px; }
+        .vg-range { display: flex; gap: 12px; align-items: center; }
+        .vg-range input[type=range] { flex: 1; }
+        .vg-time { font-family: 'Courier New', monospace; font-size: 0.85em; color: #64748b; min-width: 50px; text-align: center; }
+        .vg-preview { max-width: 100%; border-radius: 8px; border: 1px solid #e0e6ed; }
+    
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <script src="../assets/gif.js"></script>
+    <meta name="keywords" content="视频转GIF,在线视频转GIF,音视频处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/media/video-to-gif-tool.html" />
+    <meta property="og:title" content="视频转GIF" />
+    <meta property="og:description" content="上传视频文件，截取片段转换为GIF动图，支持调整帧率和尺寸，纯浏览器本地处理" />
+    <meta property="og:url" content="https://box.lynvortex.top/media/video-to-gif-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="视频转GIF" />
+    <meta itemprop="description" content="上传视频文件，截取片段转换为GIF动图，支持调整帧率和尺寸，纯浏览器本地处理" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "音视频处理",
+                "item": "https://box.lynvortex.top/media.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "视频转GIF",
+                "item": "https://box.lynvortex.top/media/video-to-gif-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "视频转GIF",
+        "url": "https://box.lynvortex.top/media/video-to-gif-tool.html",
+        "description": "截取视频片段转换为GIF动图，支持调整帧率和尺寸",
+        "applicationCategory": "音视频处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🎞️ 视频转GIF</h1>
+                <p>上传视频文件，截取片段转换为GIF动图，支持调整帧率和尺寸，纯浏览器本地处理</p>
+            </div>
+
+            <div class="form-item" style="margin-bottom:16px;">
+                <label>选择视频文件</label>
+                <input type="file" id="vgFile" accept="video/*" />
+            </div>
+            <video id="vgVideo" controls style="width:100%;border-radius:8px;display:none;margin-bottom:16px;"></video>
+            <div class="vg-area" id="vgControls" style="display:none;">
+                <div class="form-grid">
+                    <div class="form-item"><label>GIF宽度(px)</label><select id="vgWidth"><option value="320">320</option><option value="480" selected>480</option><option value="640">640</option><option value="800">800</option></select></div>
+                    <div class="form-item"><label>帧率(FPS)</label><select id="vgFps"><option value="5">5</option><option value="10" selected>10</option><option value="15">15</option><option value="20">20</option></select></div>
+                </div>
+                <div class="vg-range">
+                    <span class="vg-time" id="vgStartLabel">00:00</span>
+                    <input type="range" id="vgStart" min="0" max="100" value="0" />
+                    <input type="range" id="vgEnd" min="0" max="100" value="100" />
+                    <span class="vg-time" id="vgEndLabel">00:00</span>
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-primary" id="vgGen">🎬 生成GIF</button>
+                    <span class="hint" id="vgHint">选择时间段后点击生成</span>
+                </div>
+            </div>
+            <div id="vgResult" style="display:none; text-align:center; margin-top:16px;">
+                <img class="vg-preview" id="vgImg" />
+                <div style="margin-top:12px;">
+                    <button class="btn btn-outline" id="vgDl">⬇ 下载GIF</button>
+                </div>
+            </div>
+    
+            <div id="statusBar" class="status-bar info">准备就绪，请按提示操作</div>
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 视频转GIF</h3>
+                <p>截取视频片段生成GIF动图，支持自定义帧率和尺寸</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">Canvas截帧</span>
+                    <span class="feature-chip">GIF编码</span>
+                    <span class="feature-chip">自定义尺寸</span>
+                    <span class="feature-chip">本地处理</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>支持MP4、WebM等常见视频格式</li>
+                    <li>拖动滑块选择GIF的起止时间</li>
+                    <li>帧率越高GIF越流畅但文件越大</li>
+                    <li>GIF编码使用gif.js库，所有处理在本地完成</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+
+    let vgVideo = document.getElementById('vgVideo');
+    const setStatus = (m,t) => { const s=document.getElementById('statusBar'); s.textContent=m; s.className='status-bar '+(t||'info'); };
+    const fmt = s => { s=Math.floor(s); return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); };
+
+    document.getElementById('vgFile').addEventListener('change', e => {
+        const file = e.target.files[0]; if (!file) return;
+        vgVideo.src = URL.createObjectURL(file);
+        vgVideo.style.display = 'block';
+        vgVideo.onloadedmetadata = () => {
+            document.getElementById('vgControls').style.display = 'flex';
+            document.getElementById('vgStart').max = Math.floor(vgVideo.duration);
+            document.getElementById('vgEnd').max = Math.floor(vgVideo.duration);
+            document.getElementById('vgEnd').value = Math.floor(vgVideo.duration);
+            updateLabels();
+        };
+    });
+
+    function updateLabels() {
+        document.getElementById('vgStartLabel').textContent = fmt(+document.getElementById('vgStart').value);
+        document.getElementById('vgEndLabel').textContent = fmt(+document.getElementById('vgEnd').value);
+    }
+    document.getElementById('vgStart').addEventListener('input', updateLabels);
+    document.getElementById('vgEnd').addEventListener('input', updateLabels);
+
+    document.getElementById('vgGen').addEventListener('click', async () => {
+        const start = +document.getElementById('vgStart').value;
+        const end = +document.getElementById('vgEnd').value;
+        if (end - start < 0.1) { setStatus('请选择有效的起止时间', 'error'); return; }
+        const width = +document.getElementById('vgWidth').value;
+        const fps = +document.getElementById('vgFps').value;
+        const dur = end - start;
+        setStatus('正在截取帧（可能需要数秒）...', 'info');
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = width * vgVideo.videoHeight / vgVideo.videoWidth;
+        const ctx = canvas.getContext('2d');
+        const frames = [];
+
+        for (let t = start; t < end; t += 1/fps) {
+            vgVideo.currentTime = t;
+            await new Promise(r => vgVideo.onseeked = r);
+            ctx.drawImage(vgVideo, 0, 0, canvas.width, canvas.height);
+            frames.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+        }
+        setStatus('正在编码GIF...', 'info');
+        const gif = new GIF({ workers: 2, quality: 10, width: canvas.width, height: canvas.height });
+        frames.forEach(f => gif.addFrame(f, { delay: 1000/fps }));
+        gif.on('finished', blob => {
+            const url = URL.createObjectURL(blob);
+            document.getElementById('vgImg').src = url;
+            document.getElementById('vgResult').style.display = 'block';
+            document.getElementById('vgDl').onclick = () => { const a=document.createElement('a'); a.href=url; a.download='video-clip.gif'; a.click(); };
+            setStatus('GIF生成完成，共 ' + frames.length + ' 帧', 'success');
+        });
+        gif.render();
+    });
+    
+    initSidebar('media');
+</script>
+</body>
+</html>

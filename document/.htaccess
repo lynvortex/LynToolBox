@@ -1,0 +1,29 @@
+RewriteEngine On
+
+# 工具路径简写：/document/工具名 → /document/工具名.html
+RewriteRule ^pdf-merge-tool$ pdf-merge-tool.html [L]
+RewriteRule ^pdf-compress-tool$ pdf-compress-tool.html [L]
+RewriteRule ^csv-editor-tool$ csv-editor-tool.html [L]
+RewriteRule ^json-to-excel-tool$ json-to-excel-tool.html [L]
+
+# 2026-08 新增工具
+RewriteRule ^pdf-split-tool$ pdf-split-tool.html [L]
+RewriteRule ^pdf-pages-tool$ pdf-pages-tool.html [L]
+RewriteRule ^pdf-form-tool$ pdf-form-tool.html [L]
+RewriteRule ^xlsx-view-tool$ xlsx-view-tool.html [L]
+RewriteRule ^txt-reader-tool$ txt-reader-tool.html [L]
+
+# 补全简写规则
+RewriteRule ^word-view-tool$ word-view-tool.html [L]
+RewriteRule ^docx-gen-tool$ docx-gen-tool.html [L]
+RewriteRule ^pdf-view-tool$ pdf-view-tool.html [L]
+RewriteRule ^screenshot-tool$ screenshot-tool.html [L]
+RewriteRule ^csv-parse-tool$ csv-parse-tool.html [L]
+RewriteRule ^epub-reader-tool$ epub-reader-tool.html [L]
+RewriteRule ^md-to-pdf-tool$ md-to-pdf-tool.html [L]
+RewriteRule ^html-to-pdf-tool$ html-to-pdf-tool.html [L]
+RewriteRule ^pdf-to-img-tool$ pdf-to-img-tool.html [L]
+RewriteRule ^pdf-rotate-tool$ pdf-rotate-tool.html [L]
+RewriteRule ^resume-gen-tool$ resume-gen-tool.html [L]
+RewriteRule ^md-to-word-tool$ md-to-word-tool.html [L]
+RewriteRule ^pdf-watermark-tool$ pdf-watermark-tool.html [L]

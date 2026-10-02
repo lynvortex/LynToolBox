@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>IP地址校验解析 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp" />
+<meta name="description" content="IP地址校验解析工具，纯前端校验IPv4与IPv6地址合法性，支持CIDR子网计算、地址范围查询与网段判断，数据本地处理不上传。" />
+<link rel="stylesheet" href="../assets/tool-common.css" />
+<script src="../assets/sidebar.js"></script>
+<script src="../assets/ipaddr.min.js"></script>
+<style>
+    /* 工具特有样式 */
+    .res-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+    .res-table tr th { background: #f8fafc; width: 34%; padding: 12px 14px; text-align: left; color: #64748b; font-size: 0.82em; border-bottom: 1px solid #f0f2f5; vertical-align: middle; white-space: nowrap; }
+    .res-table tr td { padding: 12px 14px; color: #1e293b; font-size: 0.88em; border-bottom: 1px solid #f0f2f5; font-family: 'Consolas', monospace; word-break: break-all; line-height: 1.6; }
+    .res-table tr:last-child th, .res-table tr:last-child td { border-bottom: none; }
+    .binary-line { color: #475569; letter-spacing: 1px; font-size: 0.84em; }
+    .binary-label { color: #94a3b8; font-weight: 400; }
+    .result-area { border: 1px solid #f0f2f5; border-radius: 10px; overflow: hidden; margin-bottom: 8px; }
+    .section-title { font-size: 0.95em; font-weight: 600; color: #2c3e50; margin: 22px 0 10px; padding-left: 10px; border-left: 3px solid #4a90e2; }
+    .tag-ok { color: #16a34a; font-weight: 600; }
+    .tag-no { color: #ef4444; font-weight: 600; }
+    .seg-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+    .seg-chip { background: #f1f5f9; border-radius: 6px; padding: 6px 10px; font-size: 0.82em; font-family: 'Consolas', monospace; }
+    .seg-chip b { color: #4a90e2; }
+    .judge-box { background: #f8fafc; border-radius: 10px; padding: 16px; margin-top: 8px; }
+    .judge-result { margin-top: 14px; padding: 14px 16px; border-radius: 8px; font-size: 0.92em; display: none; }
+    .judge-result.yes { display: block; color: #16a34a; background: #f0fdf4; border: 1px solid #bbf7d0; }
+    .judge-result.no { display: block; color: #ef4444; background: #fef2f2; border: 1px solid #fecaca; }
+    .judge-result.warn { display: block; color: #d97706; background: #fffbeb; border: 1px solid #fde68a; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 600px) { .field-row { grid-template-columns: 1fr; } .res-table tr th { width: 40%; } }
+</style>
+    <meta name="keywords" content="IP地址校验解析,在线IP地址校验解析,网络工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/network/ip-validate-tool.html" />
+    <meta property="og:title" content="IP地址校验解析" />
+    <meta property="og:description" content="IP地址校验解析工具，纯前端校验IPv4与IPv6地址合法性，支持CIDR子网计算、地址范围查询与网段判断，数据本地处理不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/network/ip-validate-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="IP地址校验解析" />
+    <meta itemprop="description" content="IP地址校验解析工具，纯前端校验IPv4与IPv6地址合法性，支持CIDR子网计算、地址范围查询与网段判断，数据本地处理不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "网络工具",
+                "item": "https://box.lynvortex.top/network.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "IP地址校验解析",
+                "item": "https://box.lynvortex.top/network/ip-validate-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "IP地址校验解析",
+        "url": "https://box.lynvortex.top/network/ip-validate-tool.html",
+        "description": "IPv4/IPv6合法性校验、CIDR子网与地址范围解析，网段判断",
+        "applicationCategory": "网络工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+  <div class="tool-container">
+    <div class="tool-header">
+      <h1>🔍 IP地址校验解析</h1>
+      <p>IPv4/IPv6合法性校验、CIDR子网与地址范围解析</p>
+    </div>
+
+    <div class="section-title">IP / CIDR 校验解析</div>
+    <div class="form-grid">
+      <div class="form-item">
+        <label for="ipInput">IP 地址或 CIDR</label>
+        <input type="text" id="ipInput" value="192.168.1.100/24" placeholder="如 192.168.1.100 或 192.168.1.0/24 或 ::1/128" spellcheck="false" autocomplete="off" />
+        <span class="hint">支持 IPv4 / IPv6，可带 CIDR 前缀（如 10.0.0.0/16）</span>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="parseBtn">解析校验</button>
+      <button class="btn btn-outline" id="fillSampleBtn">填入示例</button>
+      <button class="btn btn-ghost" id="clearParseBtn">清空</button>
+    </div>
+    <div id="statusBar" class="status-bar info">输入 IP 或 IP/CIDR 后点击「解析校验」，结果将显示各段十进制/二进制及子网信息。</div>
+    <div id="parseArea" class="result-area" style="display:none;">
+      <table class="res-table"><tbody id="parseBody"></tbody></table>
+    </div>
+
+    <div class="section-title">判断 IP 是否属于某网段</div>
+    <div class="judge-box">
+      <div class="field-row">
+        <div class="form-item">
+          <label for="judgeIp">待判断 IP</label>
+          <input type="text" id="judgeIp" value="192.168.1.55" placeholder="如 192.168.1.55" spellcheck="false" autocomplete="off" />
+        </div>
+        <div class="form-item">
+          <label for="judgeCidr">网段 CIDR</label>
+          <input type="text" id="judgeCidr" value="192.168.1.0/24" placeholder="如 192.168.1.0/24 或 2001:db8::/32" spellcheck="false" autocomplete="off" />
+        </div>
+      </div>
+      <div class="btn-row" style="margin-top:8px; margin-bottom:0;">
+        <button class="btn btn-primary" id="judgeBtn">判断归属</button>
+        <button class="btn btn-ghost" id="clearJudgeBtn">清空</button>
+      </div>
+      <div id="judgeResult" class="judge-result"></div>
+    </div>
+
+    <footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+  </div>
+
+  <div class="info-cards">
+    <div class="info-card">
+      <h3>📦 功能说明</h3>
+      <p>纯前端校验 IPv4/IPv6 地址合法性，解析各段十进制与二进制；带 CIDR 时计算网络地址、广播地址、子网掩码、可用主机范围与地址总数；并支持判断某 IP 是否属于指定网段。</p>
+      <div class="feature-chips">
+        <span class="feature-chip">IPv4校验</span>
+        <span class="feature-chip">IPv6校验</span>
+        <span class="feature-chip">CIDR解析</span>
+        <span class="feature-chip">子网范围</span>
+        <span class="feature-chip">网段判断</span>
+        <span class="feature-chip">离线本地</span>
+      </div>
+    </div>
+    <div class="info-card">
+      <h3>💡 使用须知</h3>
+      <ul class="tips-list">
+        <li>所有校验与计算均在浏览器本地完成，数据不上传</li>
+        <li>解析能力基于 ipaddr.js（开源库），同时支持 IPv4 与 IPv6</li>
+        <li>CIDR 格式如 <code>192.168.1.0/24</code>，前缀长度 IPv4 为 0-32、IPv6 为 0-128</li>
+        <li>IPv4 子网可用主机数已扣除网络地址与广播地址（/31、/32 按特殊规则）</li>
+        <li>IPv6 理论上所有地址均可分配，结果中的「末地址」即网段最大地址</li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <h3>✨ 绘萤者</h3>
+      <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+      <div class="tool-links">
+        <a href="https://lynvortex.top" target="_blank">完全免费</a>
+        <a href="https://lynvortex.top" target="_blank">开源精神</a>
+        <a href="https://lynvortex.top" target="_blank">极客风范</a>
+        <a href="https://lynvortex.top" target="_blank">协作共创</a>
+      </div>
+      <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+  </div>
+</div></main>
+
+<script>
+initSidebar('network');
+
+(function () {
+    'use strict';
+    var $ = function (id) { return document.getElementById(id); };
+    var statusBar = $('statusBar');
+
+        statusBar.className = 'status-bar ' + type;
+        statusBar.innerHTML = msg;
+    }
+
+    /* ---------- 工具函数 ---------- */
+    // IPv4 各段二进制
+    function octetsToBinary(octets) {
+        return octets.map(function (o) {
+            var b = (o >>> 0).toString(2);
+            while (b.length < 8) b = '0' + b;
+            return b;
+        }).join('.');
+    }
+    // IPv6 parts -> 二进制（每段 16 位，用 : 分隔）
+    function partsToBinary(parts) {
+        return parts.map(function (p) {
+            var b = (p >>> 0).toString(2);
+            while (b.length < 16) b = '0' + b;
+            return b;
+        }).join(':');
+    }
+    // IPv4 整数表示
+    function ipv4ToInt(octets) {
+        return ((octets[0] * 256 + octets[1]) * 256 + octets[2]) * 256 + octets[3];
+    }
+    // IPv4 整数 -> 地址
+    function intToIPv4(n) {
+        return [(n >>> 24) & 255, (n >>> 16) & 255, (n >>> 8) & 255, n & 255].join('.');
+    }
+    // 中文范围名映射
+    function rangeNameCn(name) {
+        var map = {
+            unspecified: '未指定地址',
+            broadcast: '广播地址',
+            multicast: '组播地址',
+            linkLocal: '链路本地地址',
+            loopback: '环回地址',
+            carrierGradeNat: '运营商级NAT（CGN）',
+            private: '私有地址',
+            reserved: '保留地址',
+            as112: 'AS112 保留',
+            amt: 'AMT 保留',
+            uniqueLocal: '唯一本地地址（ULA）',
+            ipv4Mapped: 'IPv4映射地址',
+            discard: '丢弃地址',
+            rfc6145: 'RFC6145 翻译地址',
+            rfc6052: 'RFC6052 嵌入地址',
+            '6to4': '6to4 地址',
+            teredo: 'Teredo 隧道地址',
+            benchmarking: '基准测试地址',
+            orchid2: 'ORCHIDv2 地址',
+            deprecated: '已弃用地址',
+            droneRemoteIdProtocolEntityTags: '无人机远程标识地址',
+            unicast: '单播地址'
+        };
+        return map[name] || name;
+    }
+
+    function esc(s) { return window.escapeHtml(s); }
+
+    /* ---------- IP / CIDR 解析 ---------- */
+    function parseInput() {
+        var raw = $('ipInput').value.trim();
+        $('parseArea').style.display = 'none';
+        if (!raw) { setStatus('请输入 IP 地址或 IP/CIDR。', 'info')); return; }
+
+        var hasCidr = raw.indexOf('/') !== -1;
+        try {
+            if (hasCidr) {
+                if (!ipaddr.isValidCIDR(raw)) {
+                    setStatus('⚠️ 不是合法的 CIDR 格式，请检查如 <code>192.168.1.0/24</code>。', 'error'));
+                    return;
+                }
+                renderCIDR(raw);
+            } else {
+                if (!ipaddr.isValid(raw)) {
+                    setStatus('⚠️ 不是合法的 IPv4 / IPv6 地址。', 'error'));
+                    return;
+                }
+                renderSingle(ipaddr.parse(raw), raw);
+            }
+        } catch (e) {
+            setStatus('⚠️ 解析失败：' + esc(e.message, 'error')));
+        }
+    }
+
+    function renderSingle(addr, raw) {
+        var kind = addr.kind(); // ipv4 / ipv6
+        var rows = '';
+        rows += row('输入地址', esc(raw) + ' &nbsp;<span class="tag-ok">✓ 合法</span>');
+        rows += row('地址类型', '<b style="color:#4a90e2">' + (kind === 'ipv4' ? 'IPv4' : 'IPv6') + '</b>');
+        rows += row('范围归属', esc(rangeNameCn(addr.range())));
+        rows += row('规范化字符串', esc(addr.toString()));
+
+        if (kind === 'ipv4') {
+            var octets = addr.octets;
+            rows += row('十进制分段', octets.map(function (o) { return '<span class="seg-chip"><b>' + o + '</b></span>'; }).join(''));
+            rows += row('二进制', '<span class="binary-line">' + esc(octetsToBinary(octets)) + '</span>');
+            rows += row('整数表示', esc(String(ipv4ToInt(octets))));
+            rows += row('反向解析域', esc(octets[3] + '.' + octets[2] + '.' + octets[1] + '.' + octets[0] + '.in-addr.arpa'));
+        } else {
+            var parts = addr.parts;
+            rows += row('十六进制分段', parts.map(function (p) { return '<span class="seg-chip"><b>' + p.toString(16) + '</b></span>'; }).join(''));
+            rows += row('规范化（压缩）', esc(addr.toRFC5952String ? addr.toRFC5952String() : addr.toString()));
+            rows += row('完整展开', esc(addr.toNormalizedString()));
+            rows += row('二进制(128位)', '<span class="binary-line binary-label">' + esc(partsToBinary(parts)) + '</span>');
+        }
+        $('parseBody').innerHTML = rows;
+        $('parseArea').style.display = 'block';
+        setStatus('✓ 解析完成，地址类型为 ' + (kind === 'ipv4' ? 'IPv4' : 'IPv6', 'success')) + '。');
+    }
+
+    function renderCIDR(raw) {
+        var parsed = ipaddr.parseCIDR(raw); // [addr, prefix]
+        var addr = parsed[0];
+        var prefix = parsed[1];
+        var kind = addr.kind();
+        var isV4 = kind === 'ipv4';
+        var maxBits = isV4 ? 32 : 128;
+        var total = Math.pow(2, maxBits - prefix);
+
+        var rows = '';
+        rows += row('输入 CIDR', esc(raw) + ' &nbsp;<span class="tag-ok">✓ 合法</span>');
+        rows += row('地址类型', '<b style="color:#4a90e2">' + (isV4 ? 'IPv4' : 'IPv6') + '</b>');
+        rows += row('前缀长度', '/' + prefix + ' （掩码位数）');
+
+        var mask, network, broadcast;
+        if (isV4) {
+            mask = ipaddr.IPv4.subnetMaskFromPrefixLength(prefix);
+            network = ipaddr.IPv4.networkAddressFromCIDR(raw);
+            broadcast = ipaddr.IPv4.broadcastAddressFromCIDR(raw);
+        } else {
+            mask = ipaddr.IPv6.subnetMaskFromPrefixLength(prefix);
+            network = ipaddr.IPv6.networkAddressFromCIDR(raw);
+            broadcast = ipaddr.IPv6.broadcastAddressFromCIDR(raw);
+        }
+
+        rows += row('子网掩码', esc(mask.toString()));
+        if (isV4) {
+            rows += row('掩码(二进制)', '<span class="binary-line">' + esc(octetsToBinary(mask.octets)) + '</span>');
+        }
+        rows += row('网络地址', '<b style="color:#0369a1">' + esc(network.toString()) + '</b>');
+        rows += row((isV4 ? '广播地址' : '末地址'), '<b style="color:#0369a1">' + esc(broadcast.toString()) + '</b>');
+
+        // 可用主机范围
+        var rangeText, usableText;
+        if (isV4) {
+            var netInt = ipv4ToInt(network.octets);
+            var bcastInt = ipv4ToInt(broadcast.octets);
+            if (prefix === 32) {
+                rangeText = intToIPv4(netInt) + '（单主机）';
+                usableText = '1 个';
+            } else if (prefix === 31) {
+                rangeText = intToIPv4(netInt) + ' ~ ' + intToIPv4(bcastInt);
+                usableText = '2 个（点对点链路）';
+            } else if (prefix === 0) {
+                rangeText = intToIPv4(netInt + 1) + ' ~ ' + intToIPv4(bcastInt - 1);
+                usableText = (total - 2) + ' 个';
+            } else {
+                rangeText = intToIPv4(netInt + 1) + ' ~ ' + intToIPv4(bcastInt - 1);
+                usableText = (total - 2) + ' 个';
+            }
+            rows += row('可用主机范围', esc(rangeText));
+            rows += row('可用主机数', '<b>' + esc(usableText) + '</b>');
+            rows += row('地址总数', esc(total.toLocaleString()) + ' 个');
+        } else {
+            // IPv6：通常全部可用，展示范围
+            rows += row('地址范围', esc(network.toString()) + ' ~ ' + esc(broadcast.toString()));
+            rows += row('可用主机数', '理论上 ' + esc(total.toLocaleString()) + ' 个（IPv6 全部可用）');
+            rows += row('地址总数', esc(total.toLocaleString()) + ' 个');
+        }
+        $('parseBody').innerHTML = rows;
+        $('parseArea').style.display = 'block';
+        setStatus('✓ CIDR 解析完成，共 ' + total.toLocaleString(, 'success')) + ' 个地址。');
+    }
+
+    function row(th, td) {
+        return '<tr><th>' + th + '</th><td>' + td + '</td></tr>';
+    }
+
+    /* ---------- 网段判断 ---------- */
+    function judge() {
+        var ip = $('judgeIp').value.trim();
+        var cidr = $('judgeCidr').value.trim();
+        var box = $('judgeResult');
+        box.className = 'judge-result';
+        if (!ip || !cidr) {
+            box.classList.add('warn');
+            box.innerHTML = '⚠️ 请同时填写「待判断 IP」与「网段 CIDR」。';
+            return;
+        }
+        try {
+            if (!ipaddr.isValid(ip)) {
+                box.classList.add('warn');
+                box.innerHTML = '⚠️ 待判断 IP 不是合法的 IPv4 / IPv6 地址。';
+                return;
+            }
+            if (!ipaddr.isValidCIDR(cidr)) {
+                box.classList.add('warn');
+                box.innerHTML = '⚠️ 网段 CIDR 格式不正确，请使用如 <code>192.168.1.0/24</code>。';
+                return;
+            }
+            var addr = ipaddr.parse(ip);
+            var range = ipaddr.parseCIDR(cidr); // [rangeAddr, prefix]
+            var rangeAddr = range[0];
+            var prefix = range[1];
+            if (addr.kind() !== rangeAddr.kind()) {
+                box.classList.add('warn');
+                box.innerHTML = '⚠️ 地址类型不一致：IP 为 <b>' + (addr.kind() === 'ipv4' ? 'IPv4' : 'IPv6') + '</b>，网段为 <b>' + (rangeAddr.kind() === 'ipv4' ? 'IPv4' : 'IPv6') + '</b>，无法比较。';
+                return;
+            }
+            var belongs = addr.match(rangeAddr, prefix);
+            if (belongs) {
+                box.classList.add('yes');
+                box.innerHTML = '✅ <b>' + esc(ip) + '</b> 属于网段 <b>' + esc(cidr) + '</b>';
+            } else {
+                box.classList.add('no');
+                box.innerHTML = '❌ <b>' + esc(ip) + '</b> 不属于网段 <b>' + esc(cidr) + '</b>';
+            }
+        } catch (e) {
+            box.classList.add('warn');
+            box.innerHTML = '⚠️ 判断出错：' + esc(e.message);
+        }
+    }
+
+    /* ---------- 事件 ---------- */
+    $('parseBtn').addEventListener('click', parseInput);
+    $('ipInput').addEventListener('keypress', function (e) { if (e.key === 'Enter') parseInput(); });
+    $('clearParseBtn').addEventListener('click', function () {
+        $('ipInput').value = '';
+        $('parseArea').style.display = 'none';
+        setStatus('已清空，请输入 IP 地址或 IP/CIDR。', 'info'));
+    });
+    $('fillSampleBtn').addEventListener('click', function () {
+        var samples = ['192.168.1.100/24', '10.0.0.0/16', '172.16.5.3/12', '255.255.255.255/32', '2001:db8::1/64', '::1/128'];
+        $('ipInput').value = samples[Math.floor(Math.random() * samples.length)];
+        parseInput();
+    });
+
+    $('judgeBtn').addEventListener('click', judge);
+    $('clearJudgeBtn').addEventListener('click', function () {
+        $('judgeIp').value = '';
+        $('judgeCidr').value = '';
+        $('judgeResult').className = 'judge-result';
+        $('judgeResult').innerHTML = '';
+    });
+
+    // 初始自动解析
+    parseInput();
+})();
+</script>
+</body>
+</html>

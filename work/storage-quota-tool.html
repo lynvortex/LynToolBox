@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>存储配额 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线浏览器存储配额检测工具，查看站点可用存储空间、用量明细、localStorage 实际容量测试与持久化申请，PWA 开发调试必备。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<style>
+.sq-hero{background:linear-gradient(135deg,#0ea5e9,#6366f1);border-radius:12px;padding:24px;color:#fff;text-align:center;margin-bottom:18px;}
+.sq-num{font-size:2em;font-weight:700;font-family:Consolas,monospace;}
+.sq-bar{height:14px;border-radius:7px;background:rgba(255,255,255,0.2);overflow:hidden;margin:12px 0 6px;}
+.sq-fill{height:100%;background:#fff;border-radius:7px;transition:.4s;}
+.sq-sub{font-size:0.8em;opacity:0.9;}
+.sq-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
+.sq-card{border:1px solid #eef2f7;border-radius:10px;padding:16px;background:#fafbfc;}
+.sq-card h4{margin:0 0 10px;font-size:0.88em;color:#4a90e2;}
+.sq-row{display:flex;justify-content:space-between;font-size:0.8em;padding:4px 0;border-bottom:1px dashed #e8edf3;}
+.sq-row span:first-child{color:#64748b;}
+.sq-row span:last-child{color:#1e293b;font-family:Consolas,monospace;word-break:break-all;text-align:right;}
+</style>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="存储配额,storage estimate,localStorage容量,浏览器存储,PWA存储,持久化存储,编程开发,免费工具,在线工具,纯前端,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/work/storage-quota-tool.html"/>
+<meta property="og:title" content="存储配额"/>
+<meta property="og:description" content="站点存储配额/用量/持久化状态检测。"/>
+<meta property="og:url" content="https://box.lynvortex.top/work/storage-quota-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="存储配额"/>
+<meta itemprop="description" content="站点存储配额/用量/持久化状态检测。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"编程开发","item":"https://box.lynvortex.top/work.html"},{"@type":"ListItem","position":3,"name":"存储配额","item":"https://box.lynvortex.top/work/storage-quota-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"存储配额","url":"https://box.lynvortex.top/work/storage-quota-tool.html","description":"浏览器存储配额检测工具","applicationCategory":"编程开发","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>💾 存储配额</h1>
+        <p>站点存储配额 / 用量 / localStorage 实测容量 / 持久化</p>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="runBtn">🔄 刷新检测</button>
+        <button class="btn btn-outline" id="testBtn">🧪 实测 localStorage 容量</button>
+        <button class="btn btn-ghost" id="persistBtn">📌 申请持久化存储</button>
+    </div>
+    <div class="status-bar info" id="statusBar">检测中…</div>
+    <div class="sq-hero" id="hero" style="display:none;">
+        <div class="sq-sub">本源（Origin）存储配额</div>
+        <div class="sq-num" id="quotaNum">—</div>
+        <div class="sq-bar"><div class="sq-fill" id="quotaFill" style="width:0%"></div></div>
+        <div class="sq-sub" id="quotaSub">—</div>
+    </div>
+    <div class="sq-grid" id="grid"></div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 存储配额</h3>
+        <p>Storage Manager API + 逐级写入实测 localStorage 上限。</p>
+        <div class="feature-chips"><span class="feature-chip">配额估算</span><span class="feature-chip">用量明细</span><span class="feature-chip">实测容量</span><span class="feature-chip">persist申请</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>配额为浏览器按磁盘空间动态分配的估算值</li>
+            <li>localStorage 通常上限 5-10MB，与总配额分开计算</li>
+            <li>持久化申请可降低自动清理概率，浏览器可能询问用户</li>
+            <li>容量测试会在本源写入测试数据，结束后自动清理</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+function fmtBytes(b) {
+    if (!b && b !== 0) return '—';
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+    if (b < 1073741824) return (b / 1048576).toFixed(2) + ' MB';
+    return (b / 1073741824).toFixed(2) + ' GB';
+}
+
+function lsUsage() {
+    var bytes = 0, count = 0;
+    for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        bytes += (k.length + (localStorage.getItem(k) || '').length) * 2;
+        count++;
+    }
+    return { bytes: bytes, count: count };
+}
+function ssUsage() {
+    var bytes = 0, count = 0;
+    for (var i = 0; i < sessionStorage.length; i++) {
+        var k = sessionStorage.key(i);
+        bytes += (k.length + (sessionStorage.getItem(k) || '').length) * 2;
+        count++;
+    }
+    return { bytes: bytes, count: count };
+}
+
+function render() {
+    var grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    function card(title, arr) {
+        var d = document.createElement('div');
+        d.className = 'sq-card';
+        d.innerHTML = '<h4>' + title + '</h4>' + arr.map(function(r) {
+            return '<div class="sq-row"><span>' + r[0] + '</span><span>' + (r[1] === undefined ? '—' : r[1]) + '</span></div>';
+        }).join('');
+        grid.appendChild(d);
+    }
+
+    var ls = lsUsage(), ss = ssUsage();
+    card('📦 localStorage', [
+        ['键值对数量', ls.count + ' 个'],
+        ['当前占用', fmtBytes(ls.bytes)],
+        ['典型上限', '约 5 MB（2字节/字符）']
+    ]);
+    card('📦 sessionStorage', [
+        ['键值对数量', ss.count + ' 个'],
+        ['当前占用', fmtBytes(ss.bytes)],
+        ['生命周期', '当前标签页关闭即清空']
+    ]);
+    card('🗄️ IndexedDB / Cache', [
+        ['IndexedDB', 'indexedDB' in window ? '可用' : '不可用'],
+        ['Cache Storage', 'caches' in window ? '可用' : '不可用'],
+        ['共享配额', '是（与站点总配额合并）']
+    ]);
+
+    if (navigator.storage && navigator.storage.estimate) {
+        navigator.storage.estimate().then(function(est) {
+            var quota = est.quota || 0, usage = est.usage || 0;
+            document.getElementById('quotaNum').textContent = fmtBytes(quota);
+            document.getElementById('quotaSub').textContent = '已用 ' + fmtBytes(usage) + '（' + (quota ? (usage / quota * 100).toFixed(2) : '0') + '%）· 明细 ' + fmtBytes(est.usageDetails ? 0 : usage);
+            document.getElementById('quotaFill').style.width = Math.max(1, usage / quota * 100) + '%';
+            document.getElementById('hero').style.display = 'block';
+            card('🌐 Storage Manager（估算）', [
+                ['总配额', fmtBytes(quota)],
+                ['已用', fmtBytes(usage)],
+                ['剩余', fmtBytes(quota - usage)]
+            ]);
+        });
+        if (navigator.storage.persisted) {
+            navigator.storage.persisted().then(function(p) {
+                card('📌 持久化状态', [
+                    ['persisted', p ? '✅ 已持久化' : '❌ 未持久化（可能被自动清理）'],
+                    ['申请方式', '点击上方「申请持久化存储」']
+                ]);
+            });
+        }
+    } else {
+        card('🌐 Storage Manager', [['支持情况', '此浏览器不支持 estimate API']]);
+    }
+    setStatus('检测完成 · ' + new Date().toLocaleTimeString(), 'success');
+}
+
+document.getElementById('runBtn').onclick = render;
+
+document.getElementById('testBtn').onclick = function() {
+    setStatus('正在实测 localStorage 容量（写入测试数据）…', 'info');
+    var key = '__quota_test__';
+    var step = 102400;
+    var size = 0;
+    var probe = 'x'.repeat(1024);
+    var units = [];
+    localStorage.removeItem(key);
+    function grow() {
+        try {
+            units.push(probe);
+            localStorage.setItem(key, units.join(''));
+            size += 1024;
+            setTimeout(grow, 0);
+        } catch (e) {
+            localStorage.removeItem(key);
+            setStatus('实测完成：localStorage 可用容量约 ' + (size / 1024).toFixed(0) + ' KB（' + (size / 1048576).toFixed(2) + ' MB），测试数据已清理', 'success');
+        }
+    }
+    grow();
+};
+
+document.getElementById('persistBtn').onclick = function() {
+    if (!navigator.storage || !navigator.storage.persist) {
+        setStatus('此浏览器不支持 persist API', 'error');
+        return;
+    }
+    navigator.storage.persist().then(function(ok) {
+        setStatus(ok ? '✅ 持久化申请成功，数据将被优先保留' : '⚠️ 申请未通过（用户或策略拒绝）', ok ? 'success' : 'error');
+        render();
+    });
+};
+
+render();
+initSidebar('work');
+</script>
+</body>
+</html>

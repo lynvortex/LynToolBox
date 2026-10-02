@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>电话号码解析 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="电话号码解析工具，纯前端使用libphonenumber-js解析国际电话号码，校验有效性、识别类型与格式化，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<script src="../assets/libphonenumber.min.js"></script>
+<style>
+.region-hint{font-size:0.78em;color:#94a3b8;margin-top:4px;}
+.region-hint code{background:#f1f5f9;padding:1px 5px;border-radius:4px;color:#475569;font-family:'Courier New',monospace;}
+.parse-result{display:none;margin-top:4px;}
+.valid-banner{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:8px;margin-bottom:14px;font-weight:600;font-size:0.92em;}
+.valid-banner.valid{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;}
+.valid-banner.invalid{background:#fef2f2;color:#ef4444;border:1px solid #fecaca;}
+.valid-banner .ic{font-size:1.2em;}
+.info-rows{display:grid;grid-template-columns:1fr;gap:10px;}
+.info-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#f8fafc;border:1px solid #e0e6ed;border-radius:8px;padding:11px 14px;flex-wrap:wrap;}
+.info-row .k{font-size:0.82em;color:#64748b;font-weight:600;display:flex;align-items:center;gap:6px;}
+.info-row .v{font-family:'Courier New',monospace;font-size:0.9em;color:#1e293b;word-break:break-all;text-align:right;flex:1;min-width:120px;}
+.info-row .v.empty{color:#cbd5e1;font-style:italic;}
+.copy-mini{padding:3px 10px;font-size:0.74em;background:#fff;color:#4a90e2;border:1px solid #bfdbfe;border-radius:6px;cursor:pointer;font-family:inherit;flex-shrink:0;}
+.copy-mini:hover{background:#4a90e2;color:#fff;}
+.type-badge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:0.74em;font-weight:600;background:#dbeafe;color:#1d4ed8;}
+</style>
+    <meta name="keywords" content="电话号码解析,在线电话号码解析,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/phone-parse-tool.html" />
+    <meta property="og:title" content="电话号码解析" />
+    <meta property="og:description" content="电话号码解析工具，纯前端使用libphonenumber-js解析国际电话号码，校验有效性、识别类型与格式化，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/phone-parse-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="电话号码解析" />
+    <meta itemprop="description" content="电话号码解析工具，纯前端使用libphonenumber-js解析国际电话号码，校验有效性、识别类型与格式化，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "电话号码解析",
+                "item": "https://box.lynvortex.top/work/phone-parse-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "电话号码解析",
+        "url": "https://box.lynvortex.top/work/phone-parse-tool.html",
+        "description": "libphonenumber解析国际号码，校验有效性类型格式化",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+  <div class="tool-container">
+    <div class="tool-header"><h1>📱 电话号码解析</h1><p>纯前端使用 libphonenumber-js 解析国际电话号码，校验有效性、识别类型与格式化，数据完全本地化</p></div>
+
+    <div class="form-grid">
+      <div class="form-item">
+        <label>电话号码</label>
+        <input type="text" id="phoneInput" placeholder="如 +8613812345678 或 13812345678"/>
+      </div>
+      <div class="form-item">
+        <label>默认国家代码</label>
+        <input type="text" id="regionInput" value="CN" maxlength="3" placeholder="如 CN / US / JP"/>
+        <div class="region-hint">ISO 3166-1 alpha-2 国家码，如 <code>CN</code> <code>US</code> <code>JP</code> <code>GB</code></div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="parseBtn">解析号码</button>
+      <button class="btn btn-outline" id="exampleBtn" style="font-size:0.82em;">加载示例</button>
+      <button class="btn btn-ghost" id="clearBtn">清空</button>
+    </div>
+
+    <div id="statusBar" class="status-bar info">输入电话号码后点击解析号码</div>
+
+    <div id="resultArea" class="parse-result">
+      <div id="validBanner" class="valid-banner"></div>
+      <div class="info-rows" id="infoRows"></div>
+    </div>
+
+    <footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+  </div>
+  <div class="info-cards">
+    <div class="info-card"><h3>📦 功能说明</h3><p>基于 libphonenumber-js 在浏览器本地解析国际电话号码，自动识别国家与区号、号码类型，并输出国际格式、国内格式、E.164 与 RFC3964（tel: URI）等多种标准化格式。</p><div class="feature-chips"><span class="feature-chip">号码解析</span><span class="feature-chip">有效性校验</span><span class="feature-chip">类型识别</span><span class="feature-chip">国家识别</span><span class="feature-chip">格式化</span><span class="feature-chip">离线本地</span></div></div>
+    <div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>带 <strong>+</strong> 与国家区号的号码（如 <code>+8613812345678</code>）可不依赖默认国家码自动识别。</li><li>不带国际前缀的号码需通过默认国家码辅助解析，如 <code>13812345678</code> 配合 <code>CN</code>。</li><li>号码类型可能为：手机（MOBILE）、固话（FIXED_LINE）、固话/手机（FIXED_LINE_OR_MOBILE）、免费电话（TOLL_FREE）等。</li><li>“有效”依据 libphonenumber 的长度与编号规则判定，<strong>不代表号码真实存在或已开通</strong>。</li><li>所有解析在浏览器本地完成，<strong>号码不会上传</strong>。</li></ul></div>
+    <div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+      <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+      <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+  </div>
+</div></main>
+<script>
+(function(){
+  'use strict';
+  if(typeof libphonenumber==='undefined'||typeof libphonenumber.parsePhoneNumberFromString!=='function'){
+    document.getElementById('statusBar').textContent='libphonenumber 库未加载，请刷新页面重试';
+    return;
+  }
+  var phoneInput=document.getElementById('phoneInput');
+  var regionInput=document.getElementById('regionInput');
+  var parseBtn=document.getElementById('parseBtn');
+  var exampleBtn=document.getElementById('exampleBtn');
+  var clearBtn=document.getElementById('clearBtn');
+  var statusBar=document.getElementById('statusBar');
+  var resultArea=document.getElementById('resultArea');
+  var validBanner=document.getElementById('validBanner');
+  var infoRows=document.getElementById('infoRows');
+
+  function copy(text){
+    if(!text)return;
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){setStatus('已复制：'+text,'success');}).catch(fallback);
+    }else{fallback();}
+    function fallback(){
+      var ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+      document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}
+      document.body.removeChild(ta);setStatus('已复制：'+text,'success');
+    }
+  }
+
+  function row(icon,key,val,copyable){
+    if(val===null||val===undefined||val===''){val='—';var emptyCls=' empty';}else{emptyCls='';}
+    var html='<div class="info-row"><span class="k">'+icon+' '+escapeHtml(key)+'</span>';
+    html+='<span class="v'+emptyCls+'">'+escapeHtml(String(val))+'</span>';
+    if(copyable&&val!=='—'){html+='<button class="copy-mini" data-copy="'+escapeHtml(String(val))+'">复制</button>';}
+    html+='</div>';
+    return html;
+  }
+
+  function safeFormat(pn,fmt){
+    try{return pn.format(fmt);}
+    catch(e){return '';}
+  }
+  function safeGetType(pn){
+    var t=null;
+    try{t=pn.getType();}catch(e){t=null;}
+    if(t)return {type:t,inferred:false};
+    // 库元数据未给出类型时，基于号码段轻量推测（仅作参考）
+    var inferred=inferType(pn);
+    return {type:inferred,inferred:true};
+  }
+  function inferType(pn){
+    var nat=String(pn.nationalNumber||'');
+    var cc=pn.countryCallingCode;
+    var country=pn.country;
+    if(country==='CN'||cc===86){
+      if(/^1[3-9]\d{9}$/.test(nat))return 'MOBILE';
+      if(/^400\d{6,7}$/.test(nat))return 'TOLL_FREE';
+      if(/^800\d{6,7}$/.test(nat))return 'TOLL_FREE';
+      if(nat.length>=9&&nat.length<=12)return 'FIXED_LINE';
+      return 'UNKNOWN';
+    }
+    if(country==='JP'||cc===81){
+      if(/^(70|80|90)\d{8}$/.test(nat))return 'MOBILE';
+      if(nat.length>=9&&nat.length<=10)return 'FIXED_LINE';
+      return 'UNKNOWN';
+    }
+    if(cc===1){return 'FIXED_LINE_OR_MOBILE';}
+    if((country==='GB'||country==='GG'||country==='IM'||country==='JE')&&/^\d{10}$/.test(nat)){
+      if(/^7/.test(nat))return 'MOBILE';
+      return 'FIXED_LINE';
+    }
+    return 'UNKNOWN';
+  }
+  function isValid(pn){
+    if(typeof pn.isValidNumber==='boolean')return pn.isValidNumber;
+    if(typeof pn.isValid==='function')return pn.isValid();
+    if(typeof pn.isValid==='boolean')return pn.isValid;
+    return false;
+  }
+
+  function doParse(){
+    var raw=phoneInput.value.trim();
+    var region=regionInput.value.trim().toUpperCase()||'CN';
+    if(!raw){setStatus('请输入电话号码','error');return;}
+    var pn;
+    try{
+      pn=libphonenumber.parsePhoneNumberFromString(raw,region);
+    }catch(e){
+      resultArea.style.display='block';
+      validBanner.className='valid-banner invalid';
+      validBanner.innerHTML='<span class="ic">✗</span><span>解析失败：'+escapeHtml(e.message||'号码格式无法识别')+'</span>';
+      infoRows.innerHTML='';
+      setStatus('号码解析失败：'+(e.message||'未知错误'),'error');
+      return;
+    }
+    if(!pn){
+      resultArea.style.display='block';
+      validBanner.className='valid-banner invalid';
+      validBanner.innerHTML='<span class="ic">✗</span><span>无法解析该号码（请检查号码与国家代码）</span>';
+      infoRows.innerHTML='';
+      setStatus('无法解析该号码，请检查输入','error');
+      return;
+    }
+
+    var valid=isValid(pn);
+    var typeInfo=safeGetType(pn);
+    var rawType=typeInfo.type;
+    var typeMap={
+      MOBILE:'手机',FIXED_LINE:'固话',FIXED_LINE_OR_MOBILE:'固话/手机',
+      TOLL_FREE:'免费电话',PREMIUM_RATE:'付费电话',SHARED_COST:'共享费用',
+      VOIP:'VoIP',PERSONAL_NUMBER:'个人号码',PAGER:'寻呼机',
+      UAN:'通用号码',VOICEMAIL:'语音信箱',UNKNOWN:'未知'
+    };
+    var cnName=typeMap[rawType]||rawType;
+    var typeLabel=cnName+(typeInfo.inferred?'（推测）':'');
+    var typeBadgeText=rawType+(typeInfo.inferred?' · 推测':'');
+
+    resultArea.style.display='block';
+    validBanner.className='valid-banner '+(valid?'valid':'invalid');
+    validBanner.innerHTML='<span class="ic">'+(valid?'✓':'✗')+'</span><span>'+(valid?'号码有效':'号码无效（不符合编号规则）')+'</span>';
+
+    var international=safeFormat(pn,'INTERNATIONAL');
+    var national=safeFormat(pn,'NATIONAL');
+    var e164=safeFormat(pn,'E.164');
+    var rfc3966=safeFormat(pn,'RFC3966');
+
+    var html='';
+    html+=row('🆔','E.164 号码',pn.number,true);
+    html+=row('🌍','国家',pn.country||'未知',pn.country?true:false);
+    html+=row('📞','国家区号','+'+pn.countryCallingCode,true);
+    html+=row('🏷️','号码类型',typeLabel,false);
+    html+='<div class="info-row"><span class="k">🏷️ 类型标签</span><span class="v"><span class="type-badge">'+escapeHtml(typeBadgeText)+'</span></span></div>';
+    html+=row('🌐','国际格式',international,true);
+    html+=row('🏠','国内格式',national,true);
+    html+=row('🔗','RFC3966 (tel:)',rfc3966,true);
+    html+=row('🔢','国家号码段',pn.nationalNumber,true);
+    infoRows.innerHTML=html;
+    setStatus(valid?'解析成功，号码有效 ✓':'解析完成，但号码无效','success');
+  }
+
+  infoRows.addEventListener('click',function(e){
+    var btn=e.target.closest('.copy-mini');if(!btn)return;
+    copy(btn.getAttribute('data-copy'));
+  });
+
+  var EXAMPLES=[
+    {phone:'+8613812345678',region:'CN'},
+    {phone:'2025550143',region:'US'},
+    {phone:'+819012345678',region:'JP'}
+  ];
+  var exIdx=0;
+  exampleBtn.addEventListener('click',function(){
+    var ex=EXAMPLES[exIdx%EXAMPLES.length];exIdx++;
+    phoneInput.value=ex.phone;regionInput.value=ex.region;
+    setStatus('已加载示例：'+ex.phone+'（'+ex.region+'）','info');
+  });
+  clearBtn.addEventListener('click',function(){
+    phoneInput.value='';regionInput.value='CN';
+    resultArea.style.display='none';
+    infoRows.innerHTML='';
+    setStatus('已清空，输入号码后点击解析','info');
+  });
+  parseBtn.addEventListener('click',doParse);
+  phoneInput.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();doParse();}});
+
+  setStatus('输入电话号码后点击解析号码','info');
+})();
+initSidebar('work');
+</script>
+</body></html>

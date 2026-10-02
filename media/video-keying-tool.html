@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>视频绿幕抠像 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="视频绿幕抠像工具，纯前端Canvas逐帧色键处理，移除绿幕或蓝幕背景，支持自定义背景颜色与透明导出，MediaRecorder录制WebM，数据本地处理。"/>
+<meta name="robots" content="noindex, follow" />
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.video-wrap{text-align:center;margin-bottom:14px;}
+video#srcVideo{max-width:100%;border-radius:8px;}
+.preview-wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-bottom:14px;}
+.preview-box{text-align:center;}
+.preview-box canvas{max-width:100%;border-radius:8px;border:1px solid #e0e6ed;}
+.preview-box .cl{font-size:.8em;color:#94a3b8;margin-top:6px;}
+.color-pick{width:40px;height:36px;border:1px solid #e0e6ed;border-radius:6px;padding:2px;cursor:pointer;background:none;}
+.progress-bar{height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden;margin:14px 0;display:none;}
+.progress-fill{height:100%;background:linear-gradient(90deg,#4a90e2,#3a7bd5);border-radius:4px;width:0;transition:.3s;}
+</style>
+    <meta name="keywords" content="视频绿幕抠像,在线视频绿幕抠像,音视频处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/media/video-keying-tool.html" />
+    <meta property="og:title" content="视频绿幕抠像" />
+    <meta property="og:description" content="视频绿幕抠像工具，纯前端Canvas逐帧色键处理，移除绿幕或蓝幕背景，支持自定义背景颜色与透明导出，MediaRecorder录制WebM，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/media/video-keying-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="视频绿幕抠像" />
+    <meta itemprop="description" content="视频绿幕抠像工具，纯前端Canvas逐帧色键处理，移除绿幕或蓝幕背景，支持自定义背景颜色与透明导出，MediaRecorder录制WebM，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "音视频处理",
+                "item": "https://box.lynvortex.top/media.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "视频绿幕抠像",
+                "item": "https://box.lynvortex.top/media/video-keying-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "视频绿幕抠像",
+        "url": "https://box.lynvortex.top/media/video-keying-tool.html",
+        "description": "去除视频绿幕背景实现透明叠加，支持容差调节与实时预览",
+        "applicationCategory": "音视频处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🟩 视频绿幕抠像</h1><p>移除绿幕/蓝幕背景，替换背景色或透明导出</p></div>
+<div class="upload-zone" id="dropZone">📁 点击或拖拽上传视频文件<input type="file" id="fileInput" accept="video/*" style="display:none;"/></div>
+<div id="editorArea" style="display:none;">
+<div class="video-wrap"><video id="srcVideo" controls></video></div>
+<div class="form-grid">
+<div class="form-item"><label>色键类型</label><select id="keyType"><option value="green" selected>绿幕 (绿色)</option><option value="blue">蓝幕 (蓝色)</option><option value="custom">自定义颜色</option></select></div>
+<div class="form-item"><label>自定义色键颜色</label><input type="color" id="customColor" value="#00ff00" class="color-pick"/></div>
+<div class="form-item"><label>容差 (0-100)</label><input type="number" id="tolerance" value="35" min="0" max="100"/></div>
+<div class="form-item"><label>边缘柔和度 (0-50)</label><input type="number" id="softness" value="5" min="0" max="50"/></div>
+<div class="form-item"><label>替换背景</label><select id="bgType"><option value="transparent" selected>透明</option><option value="color">纯色背景</option><option value="none">仅去背景</option></select></div>
+<div class="form-item"><label>背景颜色</label><input type="color" id="bgColor" value="#000000" class="color-pick"/></div>
+</div>
+<div class="preview-wrap">
+<div class="preview-box"><canvas id="previewCanvas"></canvas><div class="cl">预览</div></div>
+</div>
+<div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+<div style="text-align:center;">
+<button class="btn btn-primary" id="processBtn" style="padding:12px 32px;">🎬 开始处理</button>
+</div>
+<div id="resultArea" style="display:none;margin-top:16px;">
+<h3 style="font-size:.95em;color:#2c3e50;margin-bottom:10px;">✅ 抠像结果</h3>
+<video id="resultVideo" controls style="width:100%;border-radius:8px;"></video>
+<div style="text-align:center;margin-top:10px;">
+<button class="btn btn-outline" id="dlBtn" style="padding:10px 24px;">⬇ 下载视频</button>
+</div>
+</div>
+<button class="btn btn-ghost" id="resetBtn" style="margin-top:14px;">重新上传</button>
+</div>
+<div id="statusBar" class="status-bar info">上传绿幕/蓝幕视频，设置色键参数</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 视频绿幕抠像</h3><p>移除绿幕/蓝幕背景</p><div class="feature-chips"><span class="feature-chip">色键处理</span><span class="feature-chip">绿幕蓝幕</span><span class="feature-chip">自定义颜色</span><span class="feature-chip">透明导出</span><span class="feature-chip">本地处理</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>选择色键类型：绿幕、蓝幕或自定义颜色</li><li>调整容差控制色键范围，边缘柔和度平滑过渡</li><li>可选择透明背景或替换纯色背景</li><li>使用Canvas逐帧像素处理并录制导出WebM</li><li>处理时间较长，建议短视频使用</li><li>所有处理在浏览器本地完成，数据不上传</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var videoFile=null,resultBlob=null;
+var dz=document.getElementById('dropZone'),fi=document.getElementById('fileInput');
+var video=document.getElementById('srcVideo');
+var previewCanvas=document.getElementById('previewCanvas');
+var previewCtx=previewCanvas.getContext('2d');
+dz.onclick=function(){fi.click();};
+dz.ondragover=function(e){e.preventDefault();};
+dz.ondrop=function(e){e.preventDefault();if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);};
+fi.onchange=function(){if(fi.files[0])loadFile(fi.files[0]);};
+function loadFile(file){videoFile=file;video.src=URL.createObjectURL(file);video.onloadedmetadata=function(){dz.style.display='none';document.getElementById('editorArea').style.display='block';document.getElementById('statusBar').textContent='已加载: '+file.name;document.getElementById('statusBar').className='status-bar success';video.currentTime=video.duration/2;video.pause();updatePreview();};}
+video.addEventListener('timeupdate',function(){if(video.paused)updatePreview();});
+['keyType','customColor','tolerance','softness','bgType','bgColor'].forEach(function(id){document.getElementById(id).onchange=updatePreview;});
+function getKeyColor(){
+var type=document.getElementById('keyType').value;
+if(type==='green')return[0,255,0];
+if(type==='blue')return[0,0,255];
+var hex=document.getElementById('customColor').value;
+return[parseInt(hex.substr(1,2),16),parseInt(hex.substr(3,2),16),parseInt(hex.substr(5,2),16)];
+}
+function updatePreview(){
+if(!video.videoWidth)return;
+var w=Math.min(video.videoWidth,480);
+var h=Math.round(w*video.videoHeight/video.videoWidth);
+previewCanvas.width=w;previewCanvas.height=h;
+previewCtx.drawImage(video,0,0,w,h);
+var imageData=previewCtx.getImageData(0,0,w,h);
+var data=imageData.data;
+var kc=getKeyColor();
+var tol=parseFloat(document.getElementById('tolerance').value)||35;
+var soft=parseFloat(document.getElementById('softness').value)||5;
+var bgType=document.getElementById('bgType').value;
+var bgHex=document.getElementById('bgColor').value;
+var bgR=parseInt(bgHex.substr(1,2),16),bgG=parseInt(bgHex.substr(3,2),16),bgB=parseInt(bgHex.substr(5,2),16);
+var tolDist=tol*4.42;
+var softDist=soft*4.42;
+for(var i=0;i<data.length;i+=4){
+var dr=data[i]-kc[0],dg=data[i+1]-kc[1],db=data[i+2]-kc[2];
+var dist=Math.sqrt(dr*dr+dg*dg+db*db);
+if(dist<tolDist){data[i+3]=0;}
+else if(dist<tolDist+softDist){var a=(dist-tolDist)/softDist;data[i+3]=Math.round(a*255);}
+if(bgType==='color'&&data[i+3]>0){data[i]=bgR;data[i+1]=bgG;data[i+2]=bgB;}
+else if(bgType==='color'){data[i]=bgR;data[i+1]=bgG;data[i+2]=bgB;data[i+3]=255;}
+}
+previewCtx.putImageData(imageData,0,0);
+}
+document.getElementById('processBtn').onclick=function(){
+if(!videoFile)return;
+document.getElementById('statusBar').textContent='正在抠像处理...';document.getElementById('statusBar').className='status-bar info';
+document.getElementById('progressBar').style.display='block';
+var canvas=document.createElement('canvas');canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+var ctx=canvas.getContext('2d');
+var stream=canvas.captureStream(30);
+try{var vs=video.captureStream?video.captureStream():video.mozCaptureStream();if(vs){vs.getAudioTracks().forEach(function(t){stream.addTrack(t);});}}catch(e){}
+var mime='video/webm;codecs=vp9';if(!MediaRecorder.isTypeSupported(mime))mime='video/webm';
+var recorder=new MediaRecorder(stream,{mimeType:mime});
+var chunks=[];recorder.ondataavailable=function(e){if(e.data.size>0)chunks.push(e.data);};
+recorder.onstop=function(){resultBlob=new Blob(chunks,{type:'video/webm'});var url=URL.createObjectURL(resultBlob);document.getElementById('resultVideo').src=url;document.getElementById('resultArea').style.display='block';document.getElementById('progressBar').style.display='none';document.getElementById('statusBar').textContent='抠像完成';document.getElementById('statusBar').className='status-bar success';};
+var kc=getKeyColor();
+var tol=parseFloat(document.getElementById('tolerance').value)||35;
+var soft=parseFloat(document.getElementById('softness').value)||5;
+var bgType=document.getElementById('bgType').value;
+var bgHex=document.getElementById('bgColor').value;
+var bgR=parseInt(bgHex.substr(1,2),16),bgG=parseInt(bgHex.substr(3,2),16),bgB=parseInt(bgHex.substr(5,2),16);
+var tolDist=tol*4.42;var softDist=soft*4.42;
+video.currentTime=0;video.muted=true;video.play();recorder.start();
+function drawFrame(){
+if(video.ended||video.paused){video.pause();recorder.stop();document.getElementById('progressFill').style.width='100%';return;}
+ctx.drawImage(video,0,0,canvas.width,canvas.height);
+var imageData=ctx.getImageData(0,0,canvas.width,canvas.height);
+var data=imageData.data;
+for(var i=0;i<data.length;i+=4){
+var dr=data[i]-kc[0],dg=data[i+1]-kc[1],db=data[i+2]-kc[2];
+var dist=Math.sqrt(dr*dr+dg*dg+db*db);
+if(dist<tolDist){data[i+3]=0;}
+else if(dist<tolDist+softDist){var a=(dist-tolDist)/softDist;data[i+3]=Math.round(a*255);}
+if(bgType==='color'){data[i]=bgR;data[i+1]=bgG;data[i+2]=bgB;if(data[i+3]===0)data[i+3]=255;}
+}
+ctx.putImageData(imageData,0,0);
+document.getElementById('progressFill').style.width=(video.currentTime/video.duration*95)+'%';
+requestAnimationFrame(drawFrame);
+}
+setTimeout(drawFrame,200);
+};
+document.getElementById('dlBtn').onclick=function(){if(resultBlob){var a=document.createElement('a');a.href=URL.createObjectURL(resultBlob);a.download='keyed.webm';a.click();}};
+document.getElementById('resetBtn').onclick=function(){dz.style.display='block';document.getElementById('editorArea').style.display='none';videoFile=null;resultBlob=null;fi.value='';document.getElementById('resultArea').style.display='none';document.getElementById('statusBar').textContent='请重新上传';document.getElementById('statusBar').className='status-bar info';};
+initSidebar('media');
+</script>
+</body>
+</html>

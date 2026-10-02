@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JSON 转代码类型 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="JSON转代码类型工具，粘贴JSON一键生成TypeScript/Java/Go/C#/Python类型定义，自动推断类型支持嵌套对象与数组。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', -apple-system, sans-serif;
+            background: #f4f7f9;
+            margin: 0;
+            display: flex;
+            height: 100vh; overflow: hidden;
+            color: #333;
+        }
+
+        .mobile-header {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: #fff; padding: 0 20px; align-items: center;
+            justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+        }
+        .mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+        .mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+        .menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #4a90e2; }
+
+        .sidebar {
+            width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+            display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+            transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+            position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item {
+            display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+            transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+        }
+        .category-item:hover, .category-item.active { background: #ebf5ff; color: #4a90e2; border-left-color: #4a90e2; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+        .tool-container {
+            width: 100%;
+            max-width: 960px;
+            background: #fff; border-radius: 12px;
+            padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+        }
+        .tool-header { text-align: center; margin-bottom: 28px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+        @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+
+        .form-item { display: flex; flex-direction: column; gap: 6px; }
+        .form-item label { font-size: 0.85em; color: #64748b; font-weight: 600; }
+        .form-item input[type="text"] {
+            padding: 10px 14px; border: 1px solid #e0e6ed; border-radius: 8px;
+            font-size: 0.9em; outline: none; transition: 0.2s; background: #fff;
+            font-family: inherit; color: #1e293b;
+        }
+        .form-item input[type="text"]:focus { border-color: #4a90e2; }
+        .hint { font-size: 0.78em; color: #94a3b8; margin-top: 4px; }
+
+        /* 语言 Tab */
+        .lang-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+        .lang-tab {
+            padding: 8px 14px; border: 1px solid #e0e6ed; border-radius: 8px;
+            background: #fff; color: #64748b; font-size: 0.85em; cursor: pointer;
+            transition: all 0.2s; font-family: inherit; font-weight: 500;
+        }
+        .lang-tab:hover { border-color: #4a90e2; color: #4a90e2; }
+        .lang-tab.active { background: #4a90e2; color: #fff; border-color: #4a90e2; }
+
+        /* 编辑器两栏 */
+        .editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
+        @media (max-width: 768px) { .editor-grid { grid-template-columns: 1fr; } }
+        .editor-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+        .editor-label {
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: 0.82em; color: #64748b; font-weight: 600;
+        }
+        .code-input, .code-output {
+            width: 100%; min-height: 340px; padding: 14px;
+            border: 1px solid #e0e6ed; border-radius: 10px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.86em; line-height: 1.6; color: #1e293b;
+            background: #f8fafc; outline: none; transition: border-color 0.2s;
+            resize: vertical;
+        }
+        .code-input:focus { border-color: #4a90e2; background: #fff; }
+        .code-output {
+            white-space: pre; overflow: auto; margin: 0; background: #0f172a; color: #e2e8f0;
+            border-color: #1e293b;
+        }
+        .code-output.empty { color: #64748b; font-style: italic; }
+
+        .btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em;
+            font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap;
+        }
+        .btn-primary { background: #4a90e2; color: white; }
+        .btn-primary:hover { background: #3a7bd5; }
+        .btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .btn-outline { background: transparent; color: #4a90e2; border: 1px solid #4a90e2; }
+        .btn-outline:hover { background: #4a90e2; color: white; }
+        .btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+        .btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+
+        .status-bar {
+            min-height: 20px; font-size: 0.85em;
+            padding: 8px 12px; border-radius: 6px; margin-bottom: 16px;
+        }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+        .footer p { margin: 0; }
+        .footer a { color: #4a90e2; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+
+        /* 信息卡片 */
+        .info-cards {
+            width: 100%;
+            max-width: 960px;
+            display: flex; flex-direction: column; gap: 18px; margin-top: 4px;
+        }
+        .info-card {
+            background: #fff; border-radius: 12px; padding: 22px 24px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06); border: 1px solid #f0f2f5;
+        }
+        .info-card h3 {
+            margin: 0 0 10px 0; font-size: 1em; color: #2c3e50; font-weight: 600;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .info-card p { margin: 0 0 10px 0; font-size: 0.82em; color: #64748b; }
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip {
+            background: #e0f2fe; color: #0369a1;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace;
+        }
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a {
+            font-size: 0.85em; color: #4a90e2; text-decoration: none;
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s;
+        }
+        .tool-links a:hover { background: #e2e8f0; }
+
+        @media (max-width: 768px) {
+            body { display: block; height: auto; overflow: auto; }
+            .mobile-header { display: flex; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .close-sidebar { display: block; }
+            .main-content { display: block; }
+            .main-scroll { padding: 72px 16px 32px; gap: 20px;  }
+            .tool-container { padding: 24px 16px; border-radius: 10px; }
+            .tool-header h1 { font-size: 1.3em; }
+            .code-input, .code-output { min-height: 240px; }
+            .overlay.active { display: block; }
+        }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="JSON转代码类型,在线JSON转代码类型,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/json-to-code-tool.html" />
+    <meta property="og:title" content="JSON 转代码类型" />
+    <meta property="og:description" content="JSON转代码类型工具，粘贴JSON一键生成TypeScript/Java/Go/C#/Python类型定义，自动推断类型支持嵌套对象与数组。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/json-to-code-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="JSON 转代码类型" />
+    <meta itemprop="description" content="JSON转代码类型工具，粘贴JSON一键生成TypeScript/Java/Go/C#/Python类型定义，自动推断类型支持嵌套对象与数组。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "JSON转代码类型",
+                "item": "https://box.lynvortex.top/work/json-to-code-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "JSON转代码类型",
+        "url": "https://box.lynvortex.top/work/json-to-code-tool.html",
+        "description": "JSON一键生成TypeScript/Java/Go/C#/Python类型定义",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🔄 JSON 转代码类型</h1>
+                <p>粘贴 JSON，一键生成 TypeScript / Java / Go / C# / Python 类型定义，纯前端处理</p>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-item">
+                    <label>目标语言</label>
+                    <div class="lang-tabs" id="langTabs">
+                        <button type="button" class="lang-tab active" data-lang="typescript">TypeScript</button>
+                        <button type="button" class="lang-tab" data-lang="java">Java</button>
+                        <button type="button" class="lang-tab" data-lang="go">Go</button>
+                        <button type="button" class="lang-tab" data-lang="csharp">C#</button>
+                        <button type="button" class="lang-tab" data-lang="python">Python</button>
+                    </div>
+                </div>
+                <div class="form-item">
+                    <label>根类名</label>
+                    <input type="text" id="rootName" value="Root" placeholder="Root" />
+                    <div class="hint">对象根使用该名称；数组根将作为元素类名</div>
+                </div>
+            </div>
+
+            <div class="editor-grid">
+                <div class="editor-col">
+                    <div class="editor-label">
+                        <span>📄 JSON 输入</span>
+                        <button type="button" class="btn btn-ghost" id="sampleBtn" style="padding:4px 10px;font-size:0.78em;">载入示例</button>
+                    </div>
+                    <textarea id="jsonInput" class="code-input" spellcheck="false" placeholder='{"name":"绘萤","age":3,"tags":["a","b"],"address":{"city":"长沙"},"active":true}'></textarea>
+                </div>
+                <div class="editor-col">
+                    <div class="editor-label">
+                        <span>⚙️ 生成代码</span>
+                        <button type="button" class="btn btn-outline" id="copyBtn" style="padding:4px 12px;font-size:0.78em;">📋 复制</button>
+                    </div>
+                    <pre id="codeOutput" class="code-output empty">点击「生成代码」查看结果，或修改左侧 JSON 自动生成</pre>
+                </div>
+            </div>
+
+            <div class="btn-row">
+                <button type="button" class="btn btn-primary" id="genBtn">⚡ 生成代码</button>
+                <button type="button" class="btn btn-ghost" id="clearBtn">🗑️ 清空</button>
+            </div>
+
+            <div id="statusBar" class="status-bar info">粘贴 JSON，选择目标语言后点击生成（修改内容会自动重新生成）</div>
+
+            <footer class="footer">
+                &copy; 2026 绘萤者-Lynvortex &middot; 美梦多彩 理想自由
+                <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 支持语言</h3>
+                <p>根据 JSON 自动推断类型并生成结构化定义，支持嵌套对象与数组</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">TypeScript</span>
+                    <span class="tld-chip">Java</span>
+                    <span class="tld-chip">Go</span>
+                    <span class="tld-chip">C#</span>
+                    <span class="tld-chip">Python</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 类型推断规则</h3>
+                <ul class="tips-list">
+                    <li>字符串 → string，布尔 → boolean，数字 → 整数 / 浮点</li>
+                    <li><strong>null</strong> 视为可选的任意类型，对象 → 独立类/结构体</li>
+                    <li>数组元素类型自动合并：全为对象时生成单个合并类，字段缺失标记为可选</li>
+                    <li>可自定义根类名；所有处理在浏览器本地完成，<strong>数据不上传</strong></li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    initSidebar('work');
+
+    var currentLang = 'typescript';
+    var jsonInput = document.getElementById('jsonInput');
+    var codeOutput = document.getElementById('codeOutput');
+    var rootNameInput = document.getElementById('rootName');
+    var statusBar = document.getElementById('statusBar');
+
+    function copyText(text, onSuccess) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function () { onSuccess && onSuccess(); }).catch(function () { fallbackCopy(text, onSuccess); });
+        } else { fallbackCopy(text, onSuccess); }
+    }
+    function fallbackCopy(text, onSuccess) {
+        var ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) { } document.body.removeChild(ta); onSuccess && onSuccess();
+    }
+
+    /* ============ 类型推断核心 ============ */
+    function classify(v) { if (v === null) return 'null'; if (Array.isArray(v)) return 'array'; return typeof v; }
+    function isInt(n) { return Number.isInteger(n); }
+    function toPascal(str) {
+        var s = String(str).replace(/[^a-zA-Z0-9]+/g, ' ').trim().split(/\s+/)
+            .map(function (x) { return x ? x.charAt(0).toUpperCase() + x.slice(1) : ''; }).join('');
+        s = s.replace(/^[0-9]/, function (m) { return '_' + m; });
+        return s || 'Item';
+    }
+    function toCamel(str) { var p = toPascal(str); return p.charAt(0).toLowerCase() + p.slice(1); }
+    function singularize(str) { if (str.length > 1 && /s$/i.test(str) && !/ss$/i.test(str)) return str.slice(0, -1); return str; }
+    function validIdent(k) { return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(k); }
+    function pyIdent(k) { var s = String(k).replace(/[^A-Za-z0-9_]/g, '_'); if (/^[0-9]/.test(s)) s = '_' + s; return s || 'field'; }
+
+    var classList, usedNames;
+    function reserveName(base) {
+        if (!usedNames.has(base)) { usedNames.add(base); return base; }
+        var i = 2; while (usedNames.has(base + i)) i++; usedNames.add(base + i); return base + i;
+    }
+
+    function infer(value, suggestedName, elemOverride) {
+        var c = classify(value);
+        if (c === 'null') return { kind: 'null' };
+        if (c === 'boolean') return { kind: 'primitive', ptype: 'boolean' };
+        if (c === 'string') return { kind: 'primitive', ptype: 'string' };
+        if (c === 'number') return { kind: 'primitive', ptype: isInt(value) ? 'int' : 'float' };
+        if (c === 'array') {
+            var nonNull = value.filter(function (v) { return v !== null; });
+            if (nonNull.length === 0) return { kind: 'array', element: { kind: 'any' } };
+            var kinds = {};
+            nonNull.forEach(function (v) { kinds[classify(v)] = true; });
+            var kindKeys = Object.keys(kinds);
+            if (kindKeys.length === 1 && kinds.object) {
+                var elemName = reserveName(elemOverride || singularize(suggestedName));
+                var cd = { name: elemName, fields: [] };
+                classList.push(cd);
+                var keyMap = {}, keyOrder = [];
+                nonNull.forEach(function (o) { Object.keys(o).forEach(function (k) { if (!(k in keyMap)) { keyMap[k] = true; keyOrder.push(k); } }); });
+                keyOrder.forEach(function (k) {
+                    var present = nonNull.filter(function (o) { return o[k] !== undefined; });
+                    var optional = present.length < nonNull.length;
+                    var nv = present.map(function (o) { return o[k]; }).filter(function (v) { return v !== null; });
+                    var ir;
+                    if (nv.length === 0) { ir = { kind: 'any' }; optional = true; }
+                    else { ir = infer(nv[0], toPascal(k)); if (present.some(function (o) { return o[k] === null; })) optional = true; }
+                    cd.fields.push({ key: k, ir: ir, optional: optional });
+                });
+                return { kind: 'array', element: { kind: 'object', className: elemName } };
+            }
+            if (kindKeys.length === 1) {
+                var k0 = kindKeys[0];
+                if (k0 === 'boolean') return { kind: 'array', element: { kind: 'primitive', ptype: 'boolean' } };
+                if (k0 === 'string') return { kind: 'array', element: { kind: 'primitive', ptype: 'string' } };
+                if (k0 === 'number') { var f = nonNull.some(function (v) { return !isInt(v); }); return { kind: 'array', element: { kind: 'primitive', ptype: f ? 'float' : 'int' } }; }
+                if (k0 === 'array') return infer(nonNull[0], suggestedName);
+            }
+            return { kind: 'array', element: { kind: 'any' } };
+        }
+        // object
+        var className = reserveName(suggestedName);
+        var cd2 = { name: className, fields: [] };
+        classList.push(cd2);
+        Object.keys(value).forEach(function (key) {
+            var v = value[key];
+            if (v === null) { cd2.fields.push({ key: key, ir: { kind: 'any' }, optional: true }); }
+            else { cd2.fields.push({ key: key, ir: infer(v, toPascal(key)), optional: false }); }
+        });
+        return { kind: 'object', className: className };
+    }
+
+    function analyze(jsonValue, rootName) {
+        classList = []; usedNames = new Set();
+        var rootIR = infer(jsonValue, rootName, rootName);
+        return { classes: classList, rootIR: rootIR };
+    }
+
+    /* ============ 类型字符串 ============ */
+    var PRIM = {
+        typescript: { string: 'string', boolean: 'boolean', int: 'number', float: 'number' },
+        java: { string: 'String', boolean: 'Boolean', int: 'Integer', float: 'Double' },
+        go: { string: 'string', boolean: 'bool', int: 'int', float: 'float64' },
+        csharp: { string: 'string', boolean: 'bool', int: 'int', float: 'double' },
+        python: { string: 'str', boolean: 'bool', int: 'int', float: 'float' }
+    };
+    function anyType(lang) { return lang === 'python' ? 'Any' : lang === 'go' ? 'interface{}' : lang === 'java' ? 'Object' : lang === 'csharp' ? 'object' : 'any'; }
+    function typeStr(ir, lang) {
+        if (ir.kind === 'null' || ir.kind === 'any') return anyType(lang);
+        if (ir.kind === 'primitive') return PRIM[lang][ir.ptype];
+        if (ir.kind === 'object') return ir.className;
+        if (ir.kind === 'array') {
+            var et = typeStr(ir.element, lang);
+            if (lang === 'typescript') return et + '[]';
+            if (lang === 'java') return 'List<' + et + '>';
+            if (lang === 'go') return '[]' + et;
+            if (lang === 'csharp') return 'List<' + et + '>';
+            if (lang === 'python') return 'List[' + et + ']';
+        }
+        return '';
+    }
+
+    /* ============ 各语言渲染 ============ */
+    function renderTS(rootIR, classes) {
+        var lines = ['// 根类型: ' + typeStr(rootIR, 'typescript'), ''];
+        classes.forEach(function (cd) {
+            lines.push('export interface ' + cd.name + ' {');
+            cd.fields.forEach(function (f) {
+                var k = validIdent(f.key) ? f.key : '"' + f.key + '"';
+                lines.push('  ' + k + (f.optional ? '?' : '') + ': ' + typeStr(f.ir, 'typescript') + ';');
+            });
+            lines.push('}', '');
+        });
+        return lines.join('\n');
+    }
+
+    function renderJava(rootIR, classes) {
+        var lines = ['// 根类型: ' + typeStr(rootIR, 'java')];
+        var usesList = rootIR.kind === 'array' || classes.some(function (cd) { return cd.fields.some(function (f) { return f.ir.kind === 'array'; }); });
+        if (usesList) lines.push('import java.util.List;', '');
+        else lines.push('');
+        classes.forEach(function (cd, idx) {
+            lines.push('public class ' + cd.name + ' {');
+            cd.fields.forEach(function (f) {
+                var fname = toCamel(f.key);
+                if (!validIdent(fname)) fname = 'field_' + idx;
+                lines.push('    private ' + typeStr(f.ir, 'java') + ' ' + fname + ';');
+            });
+            lines.push('}', '');
+        });
+        return lines.join('\n');
+    }
+
+    function renderGo(rootIR, classes) {
+        var lines = ['// 根类型: ' + typeStr(rootIR, 'go'), ''];
+        classes.forEach(function (cd) {
+            lines.push('type ' + cd.name + ' struct {');
+            var names = cd.fields.map(function (f) { var n = toPascal(f.key); return validIdent(n) ? n : 'Field' + n; });
+            var maxLen = 0; names.forEach(function (n) { if (n.length > maxLen) maxLen = n.length; });
+            cd.fields.forEach(function (f, i) {
+                var fn = names[i];
+                var pad = fn + new Array(Math.max(1, maxLen - fn.length + 1)).join(' ');
+                var t = typeStr(f.ir, 'go');
+                var tag = String(f.key).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+                lines.push('    ' + pad + ' ' + t + ' `json:"' + tag + '"`');
+            });
+            lines.push('}', '');
+        });
+        return lines.join('\n');
+    }
+
+    function renderCSharp(rootIR, classes) {
+        var lines = ['// 根类型: ' + typeStr(rootIR, 'csharp'), 'using System.Collections.Generic;', ''];
+        classes.forEach(function (cd, idx) {
+            lines.push('public class ' + cd.name + ' {');
+            cd.fields.forEach(function (f) {
+                var pn = toPascal(f.key);
+                if (!validIdent(pn)) pn = 'Field' + pn;
+                lines.push('    public ' + typeStr(f.ir, 'csharp') + ' ' + pn + ' { get; set; }');
+            });
+            lines.push('}', '');
+        });
+        return lines.join('\n');
+    }
+
+    function renderPython(rootIR, classes) {
+        var lines = ['from __future__ import annotations', 'from dataclasses import dataclass', 'from typing import List, Optional, Any', '', '# 根类型: ' + typeStr(rootIR, 'python'), ''];
+        classes.forEach(function (cd) {
+            lines.push('@dataclass', 'class ' + cd.name + ':');
+            if (cd.fields.length === 0) { lines.push('    pass'); }
+            else {
+                cd.fields.forEach(function (f) {
+                    var t = typeStr(f.ir, 'python');
+                    if (f.optional) t = 'Optional[' + t + ']';
+                    lines.push('    ' + pyIdent(f.key) + ': ' + t);
+                });
+            }
+            lines.push('');
+        });
+        return lines.join('\n');
+    }
+
+    /* ============ 主流程 ============ */
+    function generate() {
+        var raw = jsonInput.value.trim();
+        if (!raw) { setStatus('请输入 JSON 数据', 'error'); return; }
+        var data;
+        try { data = JSON.parse(raw); }
+        catch (e) { setStatus('JSON 解析失败: ' + e.message, 'error'); return; }
+        var rootName = (rootNameInput.value || '').trim();
+        rootName = toPascal(rootName) || 'Root';
+        var r = analyze(data, rootName);
+        var code = '';
+        if (currentLang === 'typescript') code = renderTS(r.rootIR, r.classes);
+        else if (currentLang === 'java') code = renderJava(r.rootIR, r.classes);
+        else if (currentLang === 'go') code = renderGo(r.rootIR, r.classes);
+        else if (currentLang === 'csharp') code = renderCSharp(r.rootIR, r.classes);
+        else if (currentLang === 'python') code = renderPython(r.rootIR, r.classes);
+        codeOutput.innerHTML = escapeHtml(code);
+        codeOutput.classList.remove('empty');
+        setStatus('已生成 ' + currentLang + ' 代码（共 ' + r.classes.length + ' 个类型定义）', 'success');
+    }
+
+    /* ============ 事件 ============ */
+    document.getElementById('langTabs').addEventListener('click', function (e) {
+        var btn = e.target.closest('.lang-tab'); if (!btn) return;
+        document.querySelectorAll('.lang-tab').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        currentLang = btn.dataset.lang;
+        if (jsonInput.value.trim()) generate();
+    });
+
+    var debounceTimer = null;
+    jsonInput.addEventListener('input', function () {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(function () { if (jsonInput.value.trim()) generate(); }, 350);
+    });
+    rootNameInput.addEventListener('input', function () { if (jsonInput.value.trim()) generate(); });
+
+    document.getElementById('genBtn').addEventListener('click', generate);
+
+    document.getElementById('clearBtn').addEventListener('click', function () {
+        jsonInput.value = '';
+        codeOutput.innerHTML = '点击「生成代码」查看结果，或修改左侧 JSON 自动生成';
+        codeOutput.classList.add('empty');
+        setStatus('已清空', 'info');
+    });
+
+    document.getElementById('copyBtn').addEventListener('click', function () {
+        var text = codeOutput.textContent;
+        if (!text || codeOutput.classList.contains('empty')) { setStatus('暂无可复制的内容', 'error'); return; }
+        copyText(text, function () { setStatus('代码已复制到剪贴板', 'success'); });
+    });
+
+    document.getElementById('sampleBtn').addEventListener('click', function () {
+        jsonInput.value = JSON.stringify({
+            name: '绘萤工具箱',
+            version: 3,
+            openSource: true,
+            tags: ['json', 'code', 'generator'],
+            rating: 4.9,
+            author: { name: 'Lynvortex', city: '长沙', verified: true },
+            stats: { stars: 1280, forks: 36, contributors: 7 },
+            modules: [{ id: 1, title: 'UUID', enabled: true }, { id: 2, title: 'Cron', enabled: false }]
+        }, null, 2);
+        generate();
+    });
+</script>
+</body>
+</html>

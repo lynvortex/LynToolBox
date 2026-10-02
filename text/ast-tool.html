@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>JS语法树查看 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp" />
+<meta name="description" content="JavaScript语法树查看工具，纯前端使用acorn解析JS代码生成AST，支持树形与JSON查看，数据本地处理。" />
+<link rel="stylesheet" href="../assets/tool-common.css" />
+<script src="../assets/sidebar.js"></script>
+<script src="../assets/acorn.min.js"></script>
+<style>
+  .io-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:16px; }
+  @media (max-width:600px){ .io-grid{ grid-template-columns:1fr; } }
+  .io-pane label { font-size:0.82em; color:#64748b; font-weight:600; margin-bottom:6px; display:block; }
+  textarea.code { width:100%; min-height:380px; padding:12px 14px; border:1px solid #e0e6ed; border-radius:8px; font-family:'Courier New',monospace; font-size:0.85em; outline:none; resize:vertical; background:#f8fafc; color:#1e293b; line-height:1.55; }
+  textarea.code:focus { border-color:#4a90e2; background:#fff; }
+  .out-tabs { display:flex; gap:6px; margin-bottom:8px; }
+  .out-tab { padding:7px 16px; border:1px solid #e0e6ed; border-radius:8px; background:#f8fafc; color:#64748b; cursor:pointer; font-size:0.84em; font-weight:600; }
+  .out-tab.active { background:#4a90e2; color:#fff; border-color:#4a90e2; }
+  .out-pane { display:none; }
+  .out-pane.active { display:block; }
+  pre.output { min-height:360px; max-height:560px; font-size:0.82em; }
+  .tree-view { border:1px solid #e0e6ed; border-radius:8px; padding:10px 12px; background:#0f172a; color:#e2e8f0; min-height:360px; max-height:560px; overflow:auto; font-family:'Consolas',monospace; font-size:0.82em; line-height:1.5; }
+  .tree-view ul { list-style:none; padding-left:18px; margin:0; border-left:1px dashed #334155; }
+  .tree-view > ul { padding-left:0; border-left:none; }
+  .tree-view li { margin:1px 0; }
+  .tv-toggle { cursor:pointer; user-select:none; color:#7dd3fc; }
+  .tv-toggle:hover { color:#38bdf8; }
+  .tv-type { color:#fbbf24; font-weight:700; }
+  .tv-key { color:#a5b4fc; }
+  .tv-val { color:#86efac; }
+  .tv-loc { color:#94a3b8; font-size:0.9em; }
+  .tv-leaf { color:#cbd5e1; }
+  .stats-row { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+  .stat-box { flex:1; min-width:120px; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; text-align:center; }
+  .stat-box .lbl { font-size:0.74em; color:#94a3b8; margin-bottom:4px; }
+  .stat-box .val { font-size:1.05em; font-weight:700; color:#4a90e2; font-family:'Consolas',monospace; }
+</style>
+    <meta name="keywords" content="JS语法树查看,在线JS语法树查看,文本处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/text/ast-tool.html" />
+    <meta property="og:title" content="JS语法树查看" />
+    <meta property="og:description" content="JavaScript语法树查看工具，纯前端使用acorn解析JS代码生成AST，支持树形与JSON查看，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/text/ast-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="JS语法树查看" />
+    <meta itemprop="description" content="JavaScript语法树查看工具，纯前端使用acorn解析JS代码生成AST，支持树形与JSON查看，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文本处理",
+                "item": "https://box.lynvortex.top/text.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "JS语法树查看",
+                "item": "https://box.lynvortex.top/text/ast-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "JS语法树查看",
+        "url": "https://box.lynvortex.top/text/ast-tool.html",
+        "description": "acorn解析JS代码生成AST，树形与JSON双视图",
+        "applicationCategory": "文本处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+  <div class="tool-container">
+    <div class="tool-header">
+      <h1>🌳 JS语法树查看</h1>
+      <p>纯前端 acorn 解析 JavaScript 代码生成 AST，支持树形与 JSON 视图，数据本地处理</p>
+    </div>
+
+    <div class="io-grid">
+      <div class="io-pane">
+        <label>JavaScript 代码输入</label>
+        <textarea class="code" id="inputArea" spellcheck="false" placeholder="输入 JS 代码..."></textarea>
+      </div>
+      <div class="io-pane">
+        <div class="out-tabs" id="outTabs">
+          <div class="out-tab active" data-view="tree">🌳 树形视图</div>
+          <div class="out-tab" data-view="json">{ } JSON 输出</div>
+        </div>
+        <div class="out-pane active" id="treePane"><div class="tree-view" id="treeView"></div></div>
+        <div class="out-pane" id="jsonPane"><pre class="output" id="jsonOutput"></pre></div>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box"><div class="lbl">节点总数</div><div class="val" id="nodeCount">—</div></div>
+      <div class="stat-box"><div class="lbl">代码行数</div><div class="val" id="lineCount">—</div></div>
+      <div class="stat-box"><div class="lbl">解析耗时</div><div class="val" id="parseTime">—</div></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="parseBtn">🔍 解析</button>
+      <button class="btn btn-outline" id="copyJsonBtn">📋 复制JSON</button>
+      <button class="btn btn-ghost" id="sampleBtn">载入示例</button>
+      <button class="btn btn-ghost" id="clearBtn">🗑️ 清空</button>
+    </div>
+
+    <div id="statusBar" class="status-bar info">输入 JS 代码后点击「解析」生成语法树</div>
+
+    <footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+  </div>
+
+  <div class="info-cards">
+    <div class="info-card">
+      <h3>📦 功能说明</h3>
+      <p>使用 acorn 解析器将 JavaScript 代码解析为抽象语法树（AST），提供可折叠的树形视图与格式化 JSON 两种查看方式，并统计节点数量、代码行数与解析耗时。</p>
+      <div class="feature-chips">
+        <span class="feature-chip">AST解析</span>
+        <span class="feature-chip">树形视图</span>
+        <span class="feature-chip">JSON输出</span>
+        <span class="feature-chip">ES2023+</span>
+        <span class="feature-chip">位置信息</span>
+        <span class="feature-chip">离线本地</span>
+      </div>
+    </div>
+    <div class="info-card">
+      <h3>💡 使用须知</h3>
+      <ul class="tips-list">
+        <li>使用 ecmaVersion: latest、sourceType: module 解析，支持最新语法</li>
+        <li>树形视图节点可点击折叠/展开，叶子节点显示原始值</li>
+        <li>位置信息（loc）展示每个节点的起止行列位置</li>
+        <li>代码有语法错误时会显示错误位置与提示信息</li>
+        <li>解析在本地完成，代码不会上传到任何服务器</li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <h3>✨ 绘萤者</h3>
+      <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+      <div class="tool-links">
+        <a href="https://lynvortex.top" target="_blank">完全免费</a>
+        <a href="https://lynvortex.top" target="_blank">开源精神</a>
+        <a href="https://lynvortex.top" target="_blank">极客风范</a>
+        <a href="https://lynvortex.top" target="_blank">协作共创</a>
+      </div>
+      <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+  </div>
+</div></main>
+<script>
+initSidebar('text');
+(function () {
+  'use strict';
+  var inputArea = document.getElementById('inputArea');
+  var treeView = document.getElementById('treeView');
+  var jsonOutput = document.getElementById('jsonOutput');
+  var statusBar = document.getElementById('statusBar');
+  var nodeCount = document.getElementById('nodeCount');
+  var lineCount = document.getElementById('lineCount');
+  var parseTime = document.getElementById('parseTime');
+  var lastAst = null;
+
+  document.querySelectorAll('.out-tab').forEach(function (t) {
+    t.addEventListener('click', function () {
+      document.querySelectorAll('.out-tab').forEach(function (x) { x.classList.remove('active'); });
+      t.classList.add('active');
+      var v = t.dataset.view;
+      document.getElementById('treePane').classList.toggle('active', v === 'tree');
+      document.getElementById('jsonPane').classList.toggle('active', v === 'json');
+    });
+  });
+
+  function isNode(v) { return v && typeof v === 'object' && typeof v.type === 'string' && !Array.isArray(v); }
+
+  function countNodes(node) {
+    if (!node || typeof node !== 'object') return 0;
+    var c = 0;
+    if (isNode(node)) c = 1;
+    for (var k in node) {
+      if (!Object.prototype.hasOwnProperty.call(node, k)) continue;
+      var v = node[k];
+      if (Array.isArray(v)) { for (var i = 0; i < v.length; i++) c += countNodes(v[i]); }
+      else if (v && typeof v === 'object') c += countNodes(v);
+    }
+    return c;
+  }
+
+  function buildTree(node) {
+    if (!isNode(node)) return '';
+    var loc = node.loc ? ' <span class="tv-loc">[' + node.loc.start.line + ':' + node.loc.start.column + '-' + (node.loc.end ? node.loc.end.line + ':' + node.loc.end.column : '') + ']</span>' : '';
+    var html = '<ul><li>';
+    var hasChildren = false;
+    var childHtml = '<ul>';
+    for (var key in node) {
+      if (!Object.prototype.hasOwnProperty.call(node, key)) continue;
+      if (key === 'loc' || key === 'start' || key === 'end' || key === 'range') continue;
+      var val = node[key];
+      if (isNode(val)) {
+        hasChildren = true;
+        childHtml += '<li><span class="tv-key">' + key + ':</span> ' + buildTree(val) + '</li>';
+      } else if (Array.isArray(val)) {
+        var arrHasNode = false;
+        var arrHtml = '<ul>';
+        for (var i = 0; i < val.length; i++) {
+          if (isNode(val[i])) { arrHasNode = true; arrHtml += '<li><span class="tv-key">[' + i + ']:</span> ' + buildTree(val[i]) + '</li>'; }
+          else { arrHtml += '<li><span class="tv-key">[' + i + ']:</span> <span class="tv-leaf">' + escapeHtml(JSON.stringify(val[i])) + '</span></li>'; }
+        }
+        arrHtml += '</ul>';
+        if (val.length > 0) { hasChildren = true; childHtml += '<li><span class="tv-key">' + key + ': [' + val.length + ']</span> ' + arrHtml + '</li>'; }
+      } else if (typeof val === 'object' && val !== null) {
+        // 非节点对象，简单展示
+        hasChildren = true;
+        childHtml += '<li><span class="tv-key">' + key + ':</span> <span class="tv-leaf">' + escapeHtml(JSON.stringify(val)) + '</span></li>';
+      } else {
+        // 叶子值
+        hasChildren = true;
+        var display = typeof val === 'string' ? '"' + val + '"' : String(val);
+        childHtml += '<li><span class="tv-key">' + key + ':</span> <span class="tv-val">' + escapeHtml(display) + '</span></li>';
+      }
+    }
+    childHtml += '</ul>';
+    if (hasChildren) {
+      html += '<span class="tv-toggle" data-collapsible>▼</span> <span class="tv-type">' + node.type + '</span>' + loc + childHtml;
+    } else {
+      html += '<span class="tv-type">' + node.type + '</span>' + loc;
+    }
+    html += '</li></ul>';
+    return html;
+  }
+
+  treeView.addEventListener('click', function (e) {
+    var t = e.target.closest('.tv-toggle');
+    if (!t) return;
+    var li = t.parentElement;
+    var ul = li.querySelector(':scope > ul');
+    if (ul) {
+      var hidden = ul.style.display === 'none';
+      ul.style.display = hidden ? '' : 'none';
+      t.textContent = hidden ? '▼' : '▶';
+    }
+  });
+
+  function parse() {
+    var code = inputArea.value;
+    if (!code.trim()) { setStatus('请输入 JS 代码', 'error'); return; }
+    if (typeof acorn === 'undefined') { setStatus('acorn 库未加载，请刷新页面', 'error'); return; }
+    var t0 = performance.now();
+    try {
+      var ast = acorn.parse(code, { ecmaVersion: 'latest', sourceType: 'module', locations: true });
+      lastAst = ast;
+      var t1 = performance.now();
+      var cnt = countNodes(ast);
+      nodeCount.textContent = cnt;
+      lineCount.textContent = code.split(/\r?\n/).length;
+      parseTime.textContent = (t1 - t0).toFixed(2) + ' ms';
+      // 树形视图
+      treeView.innerHTML = buildTree(ast);
+      // JSON 输出（去除 loc 等位置信息以减少噪音？保留以体现位置信息）
+      jsonOutput.textContent = JSON.stringify(ast, null, 2);
+      setStatus('解析成功 ✓（共 ' + cnt + ' 个节点）', 'success');
+    } catch (err) {
+      nodeCount.textContent = '—'; lineCount.textContent = '—'; parseTime.textContent = '—';
+      treeView.innerHTML = '<div style="color:#fca5a5;padding:8px;">解析错误：' + escapeHtml(err.message) + '</div>';
+      jsonOutput.textContent = '';
+      setStatus('解析失败：' + err.message, 'error');
+    }
+  }
+
+  document.getElementById('parseBtn').addEventListener('click', parse);
+  document.getElementById('sampleBtn').addEventListener('click', function () {
+    inputArea.value = SAMPLE;
+    parse();
+  });
+  document.getElementById('clearBtn').addEventListener('click', function () {
+    inputArea.value = ''; treeView.innerHTML = ''; jsonOutput.textContent = '';
+    nodeCount.textContent = '—'; lineCount.textContent = '—'; parseTime.textContent = '—';
+    setStatus('已清空', 'info');
+  });
+  document.getElementById('copyJsonBtn').addEventListener('click', function () {
+    if (!jsonOutput.textContent) { setStatus('没有可复制的 JSON，请先解析', 'error'); return; }
+    navigator.clipboard.writeText(jsonOutput.textContent).then(function () { setStatus('已复制 JSON 到剪贴板 ✓', 'success'); })
+      .catch(function () { jsonOutput.select ? null : null; var ta = document.createElement('textarea'); ta.value = jsonOutput.textContent; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); setStatus('已复制 JSON 到剪贴板 ✓', 'success'); });
+  });
+
+  var SAMPLE = '// 绘萤工具箱 AST 示例\nfunction fibonacci(n) {\n  if (n <= 1) return n;\n  const a = fibonacci(n - 1);\n  const b = fibonacci(n - 2);\n  return a + b;\n}\n\nconst result = fibonacci(10);\nconsole.log("结果:", result);';
+
+  inputArea.value = SAMPLE;
+  parse();
+})();
+</script>
+</body>
+</html>

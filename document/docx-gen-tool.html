@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Word文档生成 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="Word文档生成工具，纯前端将HTML内容导出为Word(.doc)文档，支持标题段落表格，无需后端，数据本地处理" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <script src="../assets/sidebar.js"></script>
+    <style>
+        .dg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        @media (max-width: 700px) { .dg-grid { grid-template-columns: 1fr; } }
+        .dg-edit { display: flex; flex-direction: column; gap: 8px; }
+        .dg-editbar { display: flex; gap: 6px; flex-wrap: wrap; }
+        .dg-editbar button { padding: 5px 10px; font-size: 0.82em; border-radius: 6px; border: 1px solid #e0e6ed; background: #f8fafc; cursor: pointer; transition: 0.2s; }
+        .dg-editbar button:hover { background: #4a90e2; color: #fff; border-color: #4a90e2; }
+        .dg-editor { width: 100%; min-height: 260px; padding: 14px; border: 1px solid #e0e6ed; border-radius: 8px; font-size: 0.92em; outline: none; resize: vertical; background: #fff; color: #1e293b; line-height: 1.7; }
+        .dg-editor:focus { border-color: #4a90e2; }
+        .dg-editor h1, .dg-editor h2, .dg-editor h3 { margin: 0.6em 0 0.3em; }
+        .dg-editor table { border-collapse: collapse; }
+        .dg-editor table td { border: 1px solid #cbd5e1; padding: 4px 8px; }
+        .dg-preview { padding: 18px 22px; border: 1px solid #e0e6ed; border-radius: 8px; background: #fff; min-height: 260px; max-height: 420px; overflow-y: auto; line-height: 1.8; color: #1e293b; font-size: 0.92em; }
+        .dg-preview:empty::before { content: '预览区为空'; color: #94a3b8; font-style: italic; }
+        .dg-preview h1 { font-size: 1.5em; color: #2c3e50; }
+        .dg-preview h2 { font-size: 1.3em; color: #2c3e50; }
+        .dg-preview h3 { font-size: 1.12em; color: #2c3e50; }
+        .dg-preview table { border-collapse: collapse; margin: 10px 0; }
+        .dg-preview table th, .dg-preview table td { border: 1px solid #cbd5e1; padding: 6px 10px; }
+        .dg-preview table th { background: #f1f5f9; }
+        .dg-label { font-size: 0.85em; color: #64748b; font-weight: 600; margin-bottom: 4px; }
+    </style>
+    <meta name="keywords" content="Word文档生成,在线Word文档生成,文档处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/document/docx-gen-tool.html" />
+    <meta property="og:title" content="Word文档生成" />
+    <meta property="og:description" content="Word文档生成工具，纯前端将HTML内容导出为Word(.doc)文档，支持标题段落表格，无需后端，数据本地处理" />
+    <meta property="og:url" content="https://box.lynvortex.top/document/docx-gen-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="Word文档生成" />
+    <meta itemprop="description" content="Word文档生成工具，纯前端将HTML内容导出为Word(.doc)文档，支持标题段落表格，无需后端，数据本地处理" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文档处理",
+                "item": "https://box.lynvortex.top/document.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Word文档生成",
+                "item": "https://box.lynvortex.top/document/docx-gen-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Word文档生成",
+        "url": "https://box.lynvortex.top/document/docx-gen-tool.html",
+        "description": "纯前端HTML导出Word(.doc)文档，支持标题段落表格",
+        "applicationCategory": "文档处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>📝 Word文档生成</h1>
+                <p>纯前端将 HTML 内容导出为 Word(.doc) 文档，支持标题段落表格，无需后端，数据本地处理</p>
+            </div>
+
+            <div class="dg-grid">
+                <div class="dg-edit">
+                    <div class="dg-label">编辑区（可直接输入文字或使用工具栏排版）</div>
+                    <div class="dg-editbar">
+                        <button data-cmd="h1" title="一级标题">H1</button>
+                        <button data-cmd="h2" title="二级标题">H2</button>
+                        <button data-cmd="h3" title="三级标题">H3</button>
+                        <button data-cmd="p" title="段落">¶ 段落</button>
+                        <button data-cmd="bold" title="加粗"><b>B</b></button>
+                        <button data-cmd="italic" title="斜体"><i>I</i></button>
+                        <button data-cmd="underline" title="下划线"><u>U</u></button>
+                        <button data-cmd="insertUnorderedList" title="无序列表">• 列表</button>
+                        <button data-cmd="insertOrderedList" title="有序列表">1. 列表</button>
+                        <button data-cmd="table" title="插入表格">▦ 表格</button>
+                    </div>
+                    <div class="dg-editor" id="dgEditor" contenteditable="true"></div>
+                </div>
+                <div>
+                    <div class="dg-label">预览区</div>
+                    <div class="dg-preview" id="dgPreview"></div>
+                </div>
+            </div>
+
+            <div class="form-grid" style="margin-bottom:16px;">
+                <div class="form-item">
+                    <label>文档标题（文件名）</label>
+                    <input type="text" id="dgTitle" placeholder="例如：项目周报" value="导出文档" />
+                </div>
+                <div class="form-item">
+                    <label>页面方向</label>
+                    <select id="dgOrient">
+                        <option value="portrait">纵向（Portrait）</option>
+                        <option value="landscape">横向（Landscape）</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn-primary" id="dgGen">⬇ 生成并下载 .doc</button>
+                <button class="btn btn-outline" id="dgTpl">📋 载入模板</button>
+                <span style="flex:1;"></span>
+                <button class="btn btn-ghost" id="dgClear">🗑 清空</button>
+            </div>
+
+            <div id="statusBar" class="status-bar info">准备就绪，编辑内容后点击生成按钮</div>
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 功能说明</h3>
+                <p>通过富文本编辑器编排内容（标题、段落、加粗、列表、表格），将 HTML 包裹 Word XML 命名空间后生成可被 Word 打开的 .doc 文件并下载。</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">.doc生成</span>
+                    <span class="feature-chip">HTML导出</span>
+                    <span class="feature-chip">标题表格</span>
+                    <span class="feature-chip">无后端</span>
+                    <span class="feature-chip">模板</span>
+                    <span class="feature-chip">离线本地</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>使用编辑区工具栏排版，也可直接输入文字与换行</li>
+                    <li>生成的为 .doc（HTML 包装）格式，可用 Word/WPS 打开</li>
+                    <li>支持设置文档标题作为文件名，可选纵向/横向页面</li>
+                    <li>点击“载入模板”快速体验标题+正文+表格示例</li>
+                    <li>所有生成过程在浏览器本地完成，不上传任何内容</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const setStatus = (m, t) => { const s = document.getElementById('statusBar'); s.textContent = m; s.className = 'status-bar ' + (t || 'info'); };
+    const editor = document.getElementById('dgEditor');
+    const preview = document.getElementById('dgPreview');
+
+    // 工具栏命令
+    document.querySelectorAll('.dg-editbar button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const cmd = btn.dataset.cmd;
+            editor.focus();
+            if (cmd === 'h1' || cmd === 'h2' || cmd === 'h3' || cmd === 'p') {
+                document.execCommand('formatBlock', false, cmd);
+            } else if (cmd === 'table') {
+                document.execCommand('insertHTML', false, '<table><tbody><tr><td>单元格1</td><td>单元格2</td></tr><tr><td>单元格3</td><td>单元格4</td></tr></tbody></table><p><br></p>');
+            } else {
+                document.execCommand(cmd, false, null);
+            }
+            syncPreview();
+        });
+    });
+
+    function syncPreview() { preview.innerHTML = editor.innerHTML; }
+    editor.addEventListener('input', syncPreview);
+    editor.addEventListener('keyup', syncPreview);
+
+    // 载入模板
+    document.getElementById('dgTpl').addEventListener('click', () => {
+        editor.innerHTML = '<h1>项目周报标题</h1><p>这是一段正文内容，<b>加粗文字</b>与<i>斜体文字</i>混合展示。</p><h2>本周进展</h2><p>完成了核心功能开发与联调测试。</p><table><thead><tr><th>任务</th><th>状态</th><th>负责人</th></tr></thead><tbody><tr><td>需求评审</td><td>已完成</td><td>张三</td></tr><tr><td>前端开发</td><td>进行中</td><td>李四</td></tr><tr><td>测试用例</td><td>待开始</td><td>王五</td></tr></tbody></table><h2>下周计划</h2><ul><li>完成剩余功能开发</li><li>提交测试并修复缺陷</li></ul>';
+        syncPreview();
+        setStatus('模板已载入，可继续编辑', 'info');
+    });
+
+    // 清空
+    document.getElementById('dgClear').addEventListener('click', () => {
+        editor.innerHTML = '';
+        syncPreview();
+        setStatus('已清空编辑区', 'info');
+    });
+
+    // 生成 .doc
+    document.getElementById('dgGen').addEventListener('click', () => {
+        const content = editor.innerHTML.trim();
+        if (!content || content === '<br>') {
+            setStatus('编辑区内容为空，请先输入内容', 'error');
+            return;
+        }
+        let title = document.getElementById('dgTitle').value.trim() || '导出文档';
+        // 清理文件名非法字符
+        title = title.replace(/[\\/:*?"<>|]/g, '_');
+        const orient = document.getElementById('dgOrient').value;
+        const pageWidth = orient === 'landscape' ? '11906' : '11906';
+        const pageHeight = orient === 'landscape' ? '16838' : '16838';
+        const orientVal = orient === 'landscape' ? 'landscape' : 'portrait';
+
+        // Word XML 命名空间 + 页面设置
+        const html =
+            '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">' +
+            '<head><meta charset="utf-8">' +
+            '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->' +
+            '<style>@page WordSection1{size:' + pageWidth + 'pt ' + pageHeight + 'pt;mso-page-orientation:' + orientVal + ';margin:72pt 90pt;}div.WordSection1{page:WordSection1;}' +
+            'body{font-family:"宋体","SimSun",serif;font-size:12pt;line-height:1.75;color:#000;}' +
+            'table{border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;}' +
+            'td,th{border:1pt solid #000;padding:4pt 8pt;}' +
+            'h1{font-size:22pt;}h2{font-size:18pt;}h3{font-size:15pt;}' +
+            '</style></head>' +
+            '<body><div class="WordSection1">' + content + '</div></body></html>';
+
+        try {
+            const blob = new Blob(['\ufeff' + html], { type: 'application/msword;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = title + '.doc';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+            setStatus('文档已生成并下载：' + title + '.doc', 'success');
+        } catch (e) {
+            setStatus('生成失败: ' + e.message, 'error');
+        }
+    });
+
+    // 默认载入模板，方便用户快速体验
+    document.getElementById('dgTpl').click();
+
+    initSidebar('document');
+</script>
+</body>
+</html>

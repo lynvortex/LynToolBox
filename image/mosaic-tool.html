@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>图片马赛克 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="图片马赛克打码工具，在图片上涂抹区域打马赛克/模糊，保护隐私，纯前端Canvas处理可下载。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+        .drop-zone { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 24px 20px; text-align: center; color: #94a3b8; cursor: pointer; margin-bottom: 16px; transition: 0.2s; }
+        .drop-zone:hover, .drop-zone.dragover { border-color: #4a90e2; color: #4a90e2; background: #f0f7ff; }
+        .toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; padding: 12px; background: #f8fafc; border-radius: 10px; border: 1px solid #e0e6ed; }
+        .tbtn { padding: 8px 16px; border-radius: 8px; border: 1px solid #e0e6ed; background: #fff; cursor: pointer; font-size: 0.85em; font-weight: 600; color: #475569; }
+        .tbtn.active { background: #4a90e2; color: #fff; border-color: #4a90e2; }
+        input[type=range] { accent-color: #4a90e2; }
+        .canvas-stage { background: #fff; border: 2px solid #e0e6ed; border-radius: 12px; overflow: auto; display: flex; justify-content: center; }
+        canvas#stage { cursor: crosshair; touch-action: none; max-width: 100%; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="图片马赛克,在线图片马赛克,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/mosaic-tool.html" />
+    <meta property="og:title" content="图片马赛克" />
+    <meta property="og:description" content="图片马赛克打码工具，在图片上涂抹区域打马赛克/模糊，保护隐私，纯前端Canvas处理可下载。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/mosaic-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="图片马赛克" />
+    <meta itemprop="description" content="图片马赛克打码工具，在图片上涂抹区域打马赛克/模糊，保护隐私，纯前端Canvas处理可下载。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "图片马赛克",
+                "item": "https://box.lynvortex.top/image/mosaic-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "图片马赛克",
+        "url": "https://box.lynvortex.top/image/mosaic-tool.html",
+        "description": "给图片添加马赛克模糊效果，保护隐私信息",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🔲 图片马赛克</h1>
+                <p>在图片上涂抹区域进行马赛克/模糊处理，保护隐私信息，可下载</p>
+            </div>
+
+            <div class="drop-zone" id="dropZone">
+                <div style="font-size:2em;">🖼️</div>
+                <div>点击或拖拽上传图片</div>
+                <input type="file" id="fileInput" accept="image/*" style="display:none;" />
+            </div>
+
+            <div class="toolbar">
+                <button class="tbtn active" data-mode="mosaic">🔲 马赛克</button>
+                <button class="tbtn" data-mode="blur">🌫️ 高斯模糊</button>
+                <button class="tbtn" data-mode="black">⬛ 纯黑遮挡</button>
+                <label style="font-size:0.85em;color:#475569;">笔刷大小 <span id="brushVal" style="color:#4a90e2;font-weight:600;">30</span>
+                    <input type="range" id="brushInput" min="10" max="120" value="30" />
+                </label>
+                <label style="font-size:0.85em;color:#475569;">马赛克块 <span id="blockVal" style="color:#4a90e2;font-weight:600;">10</span>
+                    <input type="range" id="blockInput" min="4" max="40" value="10" />
+                </label>
+                <button class="tbtn" id="undoBtn" style="margin-left:auto;">↶ 撤销</button>
+                <button class="tbtn" id="downloadBtn">💾 下载</button>
+                <button class="tbtn" id="resetBtn">🔄 重置</button>
+            </div>
+
+            <div class="canvas-stage" id="stageWrap">
+                <canvas id="stage" width="800" height="500"></canvas>
+            </div>
+
+            <div id="statusBar" class="status-bar info">上传图片后，在需要打码的区域涂抹即可</div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 图片马赛克</h3>
+                <p>为图片添加马赛克或模糊效果，保护隐私</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">Canvas API</span>
+                    <span class="feature-chip">隐私保护</span>
+                    <span class="feature-chip">局部马赛克</span>
+                    <span class="feature-chip">离线可用</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>支持全图或局部区域马赛克处理</li>
+                    <li>可调节马赛克块大小</li>
+                    <li>图片不上传服务器，本地处理</li>
+                    <li>适合遮挡敏感信息后再分享</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const canvas = document.getElementById('stage');
+    const ctx = canvas.getContext('2d');
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const statusBar = document.getElementById('statusBar');
+    const setStatus = (m, t) => { statusBar.textContent = m; statusBar.className = 'status-bar ' + (t || 'info'); };
+    let mode = 'mosaic', drawing = false, origData = null, hist = [];
+
+    // 占位提示
+    ctx.fillStyle = '#f1f5f9'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#94a3b8'; ctx.font = '16px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('上传图片后在此处涂抹打码', canvas.width / 2, canvas.height / 2);
+
+    const setMode = (m) => { mode = m; document.querySelectorAll('.tbtn[data-mode]').forEach(b => b.classList.toggle('active', b.dataset.mode === m)); };
+    document.querySelectorAll('.tbtn[data-mode]').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
+    document.getElementById('brushInput').addEventListener('input', (e) => document.getElementById('brushVal').textContent = e.target.value);
+    document.getElementById('blockInput').addEventListener('input', (e) => document.getElementById('blockVal').textContent = e.target.value);
+
+    const handleFile = (f) => {
+        if (!f) return;
+        const r = new FileReader();
+        r.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const maxW = 1000;
+                let w = img.width, h = img.height;
+                if (w > maxW) { h = h * maxW / w; w = maxW; }
+                canvas.width = w; canvas.height = h;
+                ctx.drawImage(img, 0, 0, w, h);
+                origData = ctx.getImageData(0, 0, w, h);
+                hist = [origData];
+                setStatus('图片已加载，开始涂抹打码区域', 'info');
+            };
+            img.src = e.target.result;
+        };
+        r.readAsDataURL(f);
+    };
+    dropZone.onclick = () => fileInput.click();
+    fileInput.onchange = (e) => handleFile(e.target.files[0]);
+    ['dragenter', 'dragover'].forEach(ev => dropZone.addEventListener(ev, (e) => { e.preventDefault(); dropZone.classList.add('dragover'); }));
+    ['dragleave', 'drop'].forEach(ev => dropZone.addEventListener(ev, (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); }));
+    dropZone.addEventListener('drop', (e) => { if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+
+    const pos = (e) => {
+        const r = canvas.getBoundingClientRect();
+        const sx = canvas.width / r.width, sy = canvas.height / r.height;
+        const cx = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+        const cy = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+        return { x: cx * sx, y: cy * sy };
+    };
+
+    const applyBrush = (x, y) => {
+        const brush = parseInt(document.getElementById('brushInput').value, 10);
+        const block = parseInt(document.getElementById('blockInput').value, 10);
+        const r = brush / 2;
+        if (mode === 'mosaic') {
+            // 在笔刷范围内分块取色填充
+            for (let by = Math.floor((y - r) / block) * block; by < y + r; by += block) {
+                for (let bx = Math.floor((x - r) / block) * block; bx < x + r; bx += block) {
+                    const cx0 = bx + block / 2, cy0 = by + block / 2;
+                    if ((cx0 - x) ** 2 + (cy0 - y) ** 2 > r * r) continue;
+                    if (bx < 0 || by < 0 || bx + block > canvas.width || by + block > canvas.height) continue;
+                    const i = (Math.floor(cy0) * canvas.width + Math.floor(cx0)) * 4;
+                    const d = ctx.getImageData(bx, by, Math.min(block, canvas.width - bx), Math.min(block, canvas.height - by));
+                    const dd = d.data;
+                    for (let p = 0; p < dd.length; p += 4) { dd[p] = origData.data[i]; dd[p + 1] = origData.data[i + 1]; dd[p + 2] = origData.data[i + 2]; }
+                    ctx.putImageData(d, bx, by);
+                }
+            }
+        } else if (mode === 'blur') {
+            const tmp = document.createElement('canvas'); tmp.width = canvas.width; tmp.height = canvas.height;
+            const tctx = tmp.getContext('2d');
+            tctx.filter = `blur(${block / 2}px)`;
+            tctx.drawImage(canvas, 0, 0);
+            ctx.save();
+            ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.clip();
+            ctx.drawImage(tmp, 0, 0);
+            ctx.restore();
+        } else if (mode === 'black') {
+            ctx.save();
+            ctx.fillStyle = '#000';
+            ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+        }
+    };
+
+    const start = (e) => { if (!origData) return; e.preventDefault(); drawing = true; const p = pos(e); applyBrush(p.x, p.y); };
+    const move = (e) => { if (!drawing) return; e.preventDefault(); const p = pos(e); applyBrush(p.x, p.y); };
+    const end = () => { if (drawing) { drawing = false; hist.push(ctx.getImageData(0, 0, canvas.width, canvas.height)); if (hist.length > 20) hist.shift(); } };
+    canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', move); window.addEventListener('mouseup', end);
+    canvas.addEventListener('touchstart', start); canvas.addEventListener('touchmove', move); canvas.addEventListener('touchend', end);
+
+    document.getElementById('undoBtn').onclick = () => { if (hist.length > 1) { hist.pop(); ctx.putImageData(hist[hist.length - 1], 0, 0); setStatus('已撤销', 'info'); } };
+    document.getElementById('resetBtn').onclick = () => { if (origData) { ctx.putImageData(origData, 0, 0); hist = [origData]; setStatus('已重置原图', 'info'); } };
+    document.getElementById('downloadBtn').onclick = () => { if (!origData) { setStatus('请先上传图片', 'error'); return; } const a = document.createElement('a'); a.href = canvas.toDataURL('image/png'); a.download = 'mosaic.png'; a.click(); setStatus('已下载 mosaic.png ✓', 'success'); };
+
+    initSidebar('image');
+</script>
+</body>
+</html>

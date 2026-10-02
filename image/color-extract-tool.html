@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>图片主色提取 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="图片主色提取工具，从图片中提取主要颜色配色，median cut量化算法，纯前端Canvas处理。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+        .drop-zone { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 24px 20px; text-align: center; color: #94a3b8; cursor: pointer; margin-bottom: 16px; transition: 0.2s; }
+        .drop-zone:hover, .drop-zone.dragover { border-color: #4a90e2; color: #4a90e2; background: #f0f7ff; }
+        .opt-row { display: flex; gap: 14px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+        .opt-row label { font-size: 0.85em; color: #475569; display: flex; align-items: center; gap: 6px; }
+        .opt-row select, .opt-row input[type=range] { padding: 6px 10px; border: 1px solid #e0e6ed; border-radius: 6px; font-size: 0.85em; }
+        input[type=range] { accent-color: #4a90e2; }
+        .color-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+        .color-card { background: #fff; border: 1px solid #e1e4e8; border-radius: 10px; overflow: hidden; cursor: pointer; transition: 0.15s; }
+        .color-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.1); transform: translateY(-2px); }
+        .color-swatch { height: 90px; }
+        .color-info { padding: 10px 12px; }
+        .color-info .hex { font-family: 'Courier New', monospace; font-size: 0.88em; font-weight: 700; color: #1e293b; }
+        .color-info .rgb { font-family: 'Courier New', monospace; font-size: 0.72em; color: #64748b; margin-top: 2px; }
+        .color-info .ratio { font-size: 0.78em; color: #4a90e2; font-weight: 600; margin-top: 4px; }
+        #srcPreview { max-width: 100%; max-height: 280px; border-radius: 8px; display: block; margin: 0 auto; }
+        .prev-card { background: #fff; border: 1px solid #e1e4e8; border-radius: 10px; padding: 12px; margin-bottom: 16px; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="颜色提取,在线颜色提取,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/color-extract-tool.html" />
+    <meta property="og:title" content="图片主色提取" />
+    <meta property="og:description" content="图片主色提取工具，从图片中提取主要颜色配色，median cut量化算法，纯前端Canvas处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/color-extract-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="图片主色提取" />
+    <meta itemprop="description" content="图片主色提取工具，从图片中提取主要颜色配色，median cut量化算法，纯前端Canvas处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "颜色提取",
+                "item": "https://box.lynvortex.top/image/color-extract-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "颜色提取",
+        "url": "https://box.lynvortex.top/image/color-extract-tool.html",
+        "description": "从图片中提取主色调，生成配色方案",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🎨 图片主色提取</h1>
+                <p>从图片中提取主要颜色配色方案，median cut 量化算法，点击色卡复制色值</p>
+            </div>
+
+            <div class="drop-zone" id="dropZone">
+                <div style="font-size:2em;">🖼️</div>
+                <div>点击或拖拽上传图片</div>
+                <input type="file" id="fileInput" accept="image/*" style="display:none;" />
+            </div>
+
+            <div class="prev-card" id="prevCard" style="display:none;"><img id="srcPreview" /></div>
+
+            <div class="opt-row">
+                <label>提取数量
+                    <input type="range" id="countInput" min="3" max="12" value="6" />
+                    <span id="countVal" style="color:#4a90e2;font-weight:600;">6</span>
+                </label>
+                <label>采样精度
+                    <select id="qualitySel">
+                        <option value="2" selected>标准</option>
+                        <option value="1">高精度</option>
+                        <option value="4">快速</option>
+                    </select>
+                </label>
+                <button class="btn btn-primary" id="extractBtn" style="margin-left:auto;">🎨 提取主色</button>
+            </div>
+
+            <div class="color-grid" id="colorGrid">
+                <div style="grid-column:1/-1;text-align:center;color:#94a3b8;padding:40px;">上传图片后点击「提取主色」</div>
+            </div>
+
+            <div id="statusBar" class="status-bar info">支持 PNG/JPG/WEBP，纯前端处理不上传</div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 颜色提取</h3>
+                <p>从图片中提取主要颜色配色方案</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">中位切分算法</span>
+                    <span class="feature-chip">Canvas API</span>
+                    <span class="feature-chip">配色方案</span>
+                    <span class="feature-chip">离线可用</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>使用中位切分算法提取主色调</li>
+                    <li>可调节提取颜色数量</li>
+                    <li>同时显示 HEX 和 RGB 值</li>
+                    <li>适合设计师获取图片配色灵感</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const srcPreview = document.getElementById('srcPreview');
+    const prevCard = document.getElementById('prevCard');
+    const colorGrid = document.getElementById('colorGrid');
+    const statusBar = document.getElementById('statusBar');
+    const setStatus = (m, t) => { statusBar.textContent = m; statusBar.className = 'status-bar ' + (t || 'info'); };
+    let curImg = null;
+
+    document.getElementById('countInput').addEventListener('input', (e) => document.getElementById('countVal').textContent = e.target.value);
+
+    const handleFile = (f) => {
+        if (!f) return;
+        const r = new FileReader();
+        r.onload = (e) => { srcPreview.src = e.target.result; prevCard.style.display = 'block'; const img = new Image(); img.onload = () => { curImg = img; extract(); }; img.src = e.target.result; };
+        r.readAsDataURL(f);
+    };
+    dropZone.onclick = () => fileInput.click();
+    fileInput.onchange = (e) => handleFile(e.target.files[0]);
+    ['dragenter', 'dragover'].forEach(ev => dropZone.addEventListener(ev, (e) => { e.preventDefault(); dropZone.classList.add('dragover'); }));
+    ['dragleave', 'drop'].forEach(ev => dropZone.addEventListener(ev, (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); }));
+    dropZone.addEventListener('drop', (e) => { if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+
+    // Median Cut 量化算法
+    function medianCut(pixels, depth, maxDepth) {
+        if (depth >= maxDepth || pixels.length === 0) {
+            // 求平均色
+            let r = 0, g = 0, b = 0;
+            for (const p of pixels) { r += p[0]; g += p[1]; b += p[2]; }
+            const n = pixels.length || 1;
+            return [{ color: [Math.round(r / n), Math.round(g / n), Math.round(b / n)], count: pixels.length }];
+        }
+        // 找最大色差通道
+        let rMin = 255, gMin = 255, bMin = 255, rMax = 0, gMax = 0, bMax = 0;
+        for (const p of pixels) { rMin = Math.min(rMin, p[0]); gMin = Math.min(gMin, p[1]); bMin = Math.min(bMin, p[2]); rMax = Math.max(rMax, p[0]); gMax = Math.max(gMax, p[1]); bMax = Math.max(bMax, p[2]); }
+        const rRange = rMax - rMin, gRange = gMax - gMin, bRange = bMax - bMin;
+        let ch = 0;
+        if (gRange >= rRange && gRange >= bRange) ch = 1;
+        else if (bRange >= rRange && bRange >= gRange) ch = 2;
+        pixels.sort((a, b) => a[ch] - b[ch]);
+        const mid = Math.floor(pixels.length / 2);
+        return [...medianCut(pixels.slice(0, mid), depth + 1, maxDepth), ...medianCut(pixels.slice(mid), depth + 1, maxDepth)];
+    }
+
+    function extract() {
+        if (!curImg) { setStatus('请先上传图片', 'error'); return; }
+        const count = parseInt(document.getElementById('countInput').value, 10);
+        const quality = parseInt(document.getElementById('qualitySel').value, 10);
+        const maxDepth = Math.ceil(Math.log2(count));
+        const c = document.createElement('canvas');
+        const scale = Math.min(1, 200 / Math.max(curImg.width, curImg.height));
+        c.width = Math.max(1, Math.round(curImg.width * scale));
+        c.height = Math.max(1, Math.round(curImg.height * scale));
+        const cx = c.getContext('2d');
+        cx.drawImage(curImg, 0, 0, c.width, c.height);
+        const data = cx.getImageData(0, 0, c.width, c.height).data;
+        const pixels = [];
+        for (let i = 0; i < data.length; i += 4 * quality) {
+            if (data[i + 3] < 125) continue;
+            pixels.push([data[i], data[i + 1], data[i + 2]]);
+        }
+        const palette = medianCut(pixels, 0, maxDepth);
+        const total = palette.reduce((s, p) => s + p.count, 0) || 1;
+        palette.sort((a, b) => b.count - a.count);
+        const top = palette.slice(0, count);
+        colorGrid.innerHTML = top.map(p => {
+            const hex = '#' + [p.color[0], p.color[1], p.color[2]].map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
+            const pct = ((p.count / total) * 100).toFixed(1);
+            return `<div class="color-card" data-hex="${hex}">
+                <div class="color-swatch" style="background:${hex};"></div>
+                <div class="color-info">
+                    <div class="hex">${hex}</div>
+                    <div class="rgb">rgb(${p.color[0]}, ${p.color[1]}, ${p.color[2]})</div>
+                    <div class="ratio">占比 ${pct}%</div>
+                </div>
+            </div>`;
+        }).join('');
+        setStatus(`已提取 ${top.length} 种主色（采样 ${pixels.length} 像素）`, 'success');
+    }
+
+    document.getElementById('extractBtn').addEventListener('click', extract);
+
+    colorGrid.addEventListener('click', (e) => {
+        const card = e.target.closest('.color-card');
+        if (!card) return;
+        const hex = card.dataset.hex;
+        navigator.clipboard.writeText(hex).then(() => { setStatus(`已复制 ${hex} ✓`, 'success'); })
+            .catch(() => { const ta = document.createElement('textarea'); ta.value = hex; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); setStatus(`已复制 ${hex} ✓`, 'success'); });
+    });
+
+    initSidebar('image');
+</script>
+</body>
+</html>

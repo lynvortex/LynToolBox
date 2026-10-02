@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>图片拼图模板 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="图片拼图模板工具，纯前端Canvas多图拼图，支持九宫格、自由拼图、海报拼图等模板，自定义间距圆角背景，导出PNG，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.img-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;min-height:60px;padding:12px;border:2px dashed #e0e6ed;border-radius:8px;align-items:center;}
+.img-thumb{position:relative;width:80px;height:80px;border-radius:6px;overflow:hidden;border:1px solid #e0e6ed;}
+.img-thumb img{width:100%;height:100%;object-fit:cover;}
+.img-thumb .del{position:absolute;top:2px;right:2px;width:20px;height:20px;background:rgba(0,0,0,0.6);color:#fff;border-radius:50%;border:none;font-size:12px;cursor:pointer;line-height:20px;text-align:center;}
+.img-empty{color:#94a3b8;font-size:.85em;}
+.layout-presets{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+@media(max-width:500px){.layout-presets{grid-template-columns:repeat(2,1fr);}}
+.layout-preset{padding:12px 8px;border-radius:8px;border:2px solid #e0e6ed;background:#f8fafc;color:#64748b;cursor:pointer;text-align:center;font-size:.78em;transition:.2s;}
+.layout-preset:hover,.layout-preset.active{border-color:#4a90e2;background:#ebf5ff;color:#4a90e2;}
+.preview-wrap{display:flex;justify-content:center;margin-bottom:14px;}
+.preview-wrap canvas{max-width:100%;border-radius:8px;border:1px solid #e0e6ed;}
+.color-pick{width:40px;height:36px;border:1px solid #e0e6ed;border-radius:6px;padding:2px;cursor:pointer;background:none;}
+</style>
+    <meta name="keywords" content="图片拼贴,在线图片拼贴,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/img-collage-tool.html" />
+    <meta property="og:title" content="图片拼图模板" />
+    <meta property="og:description" content="图片拼图模板工具，纯前端Canvas多图拼图，支持九宫格、自由拼图、海报拼图等模板，自定义间距圆角背景，导出PNG，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/img-collage-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="图片拼图模板" />
+    <meta itemprop="description" content="图片拼图模板工具，纯前端Canvas多图拼图，支持九宫格、自由拼图、海报拼图等模板，自定义间距圆角背景，导出PNG，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "图片拼贴",
+                "item": "https://box.lynvortex.top/image/img-collage-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "图片拼贴",
+        "url": "https://box.lynvortex.top/image/img-collage-tool.html",
+        "description": "多图拼贴排版工具，支持网格/自由/拼接等多种模板与自定义间距圆角",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🧩 图片拼图模板</h1><p>多图拼图，支持九宫格、自由拼图、海报拼图</p></div>
+<div class="upload-zone" id="dropZone">📁 点击或拖拽上传多张图片<input type="file" id="fileInput" accept="image/*" multiple style="display:none;"/></div>
+<div id="editorArea" style="display:none;">
+<div class="img-list" id="imgList"><span class="img-empty">请上传图片</span></div>
+<div class="layout-presets">
+<div class="layout-preset active" data-layout="grid2">2格<br>横排</div>
+<div class="layout-preset" data-layout="grid3">3格<br>横排</div>
+<div class="layout-preset" data-layout="grid9">9宫格<br>3×3</div>
+<div class="layout-preset" data-layout="grid4">4宫格<br>2×2</div>
+<div class="layout-preset" data-layout="freestyle">自由<br>拼图</div>
+<div class="layout-preset" data-layout="poster">海报<br>拼图</div>
+<div class="layout-preset" data-layout="left-right">左右<br>对比</div>
+<div class="layout-preset" data-layout="top-bottom">上下<br>拼接</div>
+</div>
+<div class="form-grid">
+<div class="form-item"><label>图片间距 (px)</label><input type="number" id="gap" value="10" min="0" max="50"/></div>
+<div class="form-item"><label>圆角半径 (px)</label><input type="number" id="radius" value="8" min="0" max="50"/></div>
+<div class="form-item"><label>背景颜色</label><input type="color" id="bgColor" value="#ffffff" class="color-pick"/></div>
+<div class="form-item"><label>输出宽度 (px)</label><input type="number" id="outWidth" value="800" min="200" max="3000"/></div>
+</div>
+<div class="preview-wrap"><canvas id="previewCanvas"></canvas></div>
+<div style="text-align:center;">
+<button class="btn btn-primary" id="processBtn" style="padding:12px 32px;">⬇ 下载拼图</button>
+</div>
+<button class="btn btn-ghost" id="resetBtn" style="margin-top:14px;">重置</button>
+</div>
+<div id="statusBar" class="status-bar info">上传多张图片，选择拼图模板</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 图片拼图模板</h3><p>多图拼图组合</p><div class="feature-chips"><span class="feature-chip">九宫格</span><span class="feature-chip">自由拼图</span><span class="feature-chip">海报拼图</span><span class="feature-chip">左右对比</span><span class="feature-chip">PNG导出</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>上传多张图片，拖拽或点击选择</li><li>选择拼图模板：横排、九宫格、自由、海报等</li><li>自定义间距、圆角、背景色和输出宽度</li><li>实时预览拼图效果，满意后下载PNG</li><li>所有处理在浏览器本地完成，数据不上传</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var images=[];
+var dz=document.getElementById('dropZone'),fi=document.getElementById('fileInput');
+var canvas=document.getElementById('previewCanvas');
+var ctx=canvas.getContext('2d');
+var currentLayout='grid2';
+dz.onclick=function(){fi.click();};
+dz.ondragover=function(e){e.preventDefault();};
+dz.ondrop=function(e){e.preventDefault();if(e.dataTransfer.files.length>0)addFiles(e.dataTransfer.files);};
+fi.onchange=function(){if(fi.files.length>0)addFiles(fi.files);};
+function addFiles(files){
+for(var i=0;i<files.length;i++){
+if(files[i].type.startsWith('image/')){
+var reader=new FileReader();
+reader.onload=function(e){var img=new Image();img.onload=function(){images.push(img);renderList();render();};img.src=e.target.result;};
+reader.readAsDataURL(files[i]);
+}
+}
+document.getElementById('editorArea').style.display='block';
+document.getElementById('dropZone').style.display='none';
+document.getElementById('statusBar').textContent='已加载 '+images.length+' 张图片';document.getElementById('statusBar').className='status-bar success';
+}
+function renderList(){
+var list=document.getElementById('imgList');list.innerHTML='';
+if(images.length===0){list.innerHTML='<span class="img-empty">请上传图片</span>';return;}
+images.forEach(function(img,idx){
+var div=document.createElement('div');div.className='img-thumb';
+div.innerHTML='<img src="'+img.src+'"/><button class="del" data-idx="'+idx+'">×</button>';
+list.appendChild(div);
+});
+list.querySelectorAll('.del').forEach(function(btn){btn.onclick=function(){var i=parseInt(this.dataset.idx);images.splice(i,1);renderList();render();};});
+}
+document.querySelectorAll('.layout-preset').forEach(function(btn){
+btn.onclick=function(){document.querySelectorAll('.layout-preset').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');currentLayout=btn.dataset.layout;render();};
+});
+['gap','radius','bgColor','outWidth'].forEach(function(id){document.getElementById(id).onchange=render;});
+function render(){
+if(images.length===0)return;
+var gap=parseInt(document.getElementById('gap').value)||0;
+var radius=parseInt(document.getElementById('radius').value)||0;
+var bg=document.getElementById('bgColor').value;
+var outW=parseInt(document.getElementById('outWidth').value)||800;
+var cols,rows;
+if(currentLayout==='grid2'){cols=Math.min(2,images.length);rows=Math.ceil(images.length/cols);}
+else if(currentLayout==='grid3'){cols=3;rows=Math.ceil(images.length/3);}
+else if(currentLayout==='grid9'){cols=3;rows=3;}
+else if(currentLayout==='grid4'){cols=2;rows=2;}
+else if(currentLayout==='left-right'){cols=images.length;rows=1;}
+else if(currentLayout==='top-bottom'){cols=1;rows=images.length;}
+else if(currentLayout==='freestyle'||currentLayout==='poster'){cols=2;rows=Math.ceil(images.length/2);}
+else{cols=2;rows=Math.ceil(images.length/2);}
+var cellW=(outW-gap*(cols+1))/cols;
+var cellH=cellW;
+var outH=gap*(rows+1)+cellH*rows;
+if(currentLayout==='poster'){outH+=80;}
+canvas.width=outW;canvas.height=outH;
+ctx.fillStyle=bg;ctx.fillRect(0,0,outW,outH);
+images.slice(0,cols*rows).forEach(function(img,idx){
+var col,row;
+if(currentLayout==='freestyle'){
+col=idx%2;row=Math.floor(idx/2);var offset=idx%2===0?0:cellW*0.15;
+drawImgClip(img,gap+col*(cellW+gap)+offset,gap+row*(cellH+gap),cellW*0.85,cellH*0.85,radius);
+}else{
+col=idx%cols;row=Math.floor(idx/cols);
+drawImgClip(img,gap+col*(cellW+gap),gap+row*(cellH+gap),cellW,cellH,radius);
+}
+});
+if(currentLayout==='poster'){
+ctx.fillStyle='rgba(0,0,0,0.7)';ctx.fillRect(0,outH-60,outW,60);
+ctx.fillStyle='#fff';ctx.font='bold 20px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('我的拼图',outW/2,outH-30);
+}
+}
+function drawImgClip(img,x,y,w,h,r){
+r=Math.min(r,w/2,h/2);
+ctx.save();
+ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();ctx.clip();
+var scale=Math.max(w/img.width,h/img.height);
+var sw=w/scale,sh=h/scale;
+ctx.drawImage(img,(img.width-sw)/2,(img.height-sh)/2,sw,sh,x,y,w,h);
+ctx.restore();
+}
+document.getElementById('processBtn').onclick=function(){
+if(images.length===0)return;
+canvas.toBlob(function(blob){var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='collage.png';a.click();},'image/png');
+};
+document.getElementById('resetBtn').onclick=function(){images=[];renderList();document.getElementById('editorArea').style.display='none';document.getElementById('dropZone').style.display='block';fi.value='';document.getElementById('statusBar').textContent='请重新上传';document.getElementById('statusBar').className='status-bar info';};
+initSidebar('image');
+</script>
+</body>
+</html>

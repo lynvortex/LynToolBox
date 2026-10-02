@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>双色调效果 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线图片双色调（Duotone）滤镜，暗部/中间调/亮部三色映射，内置杂志风配色，制作海报级双色图片，纯前端本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<style>
+.canvas-wrap canvas{max-width:420px;max-height:380px;}
+.preset-row{display:flex;gap:8px;flex-wrap:wrap;}
+.preset{width:44px;height:30px;border-radius:6px;cursor:pointer;border:2px solid transparent;}
+.preset.sel{border-color:#4a90e2;}
+</style>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="双色调,duotone,双色滤镜,杂志风,海报配色,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/image/duotone-tool.html"/>
+<meta property="og:title" content="双色调效果"/>
+<meta property="og:description" content="暗/中/亮三色映射，生成杂志风双色图片。"/>
+<meta property="og:url" content="https://box.lynvortex.top/image/duotone-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="双色调效果"/>
+<meta itemprop="description" content="暗/中/亮三色映射，生成杂志风双色图片。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"图像工具","item":"https://box.lynvortex.top/image.html"},{"@type":"ListItem","position":3,"name":"双色调效果","item":"https://box.lynvortex.top/image/duotone-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"双色调效果","url":"https://box.lynvortex.top/image/duotone-tool.html","description":"图片双色调滤镜效果","applicationCategory":"图像工具","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>🎨 双色调效果</h1>
+        <p>暗部 / 中间调 / 亮部三色映射，杂志海报质感</p>
+    </div>
+    <div class="upload-zone" id="dropZone">
+        <p style="margin:0;color:#64748b;">🖼️ 点击选择或拖入图片</p>
+        <input type="file" id="fileInput" accept="image/*" style="display:none;"/>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>暗部颜色（阴影）</label><input type="color" id="dark" value="#2b32b2" style="height:40px;"/></div>
+        <div class="form-item"><label>亮部颜色（高光）</label><input type="color" id="light" value="#f8b195" style="height:40px;"/></div>
+        <div class="form-item"><label>对比度</label><input type="range" id="contrast" min="50" max="250" value="120"/><span class="hint" id="cv">120%</span></div>
+        <div class="form-item"><label>反转明暗</label><select id="invert"><option value="0">否</option><option value="1">是</option></select></div>
+        <div class="form-item" style="grid-column:1/-1;"><label>预设配色</label>
+            <div class="preset-row" id="presets">
+                <div class="preset sel" data-d="#2b32b2" data-l="#f8b195" style="background:linear-gradient(90deg,#2b32b2,#f8b195)" title="暮光蓝橙"></div>
+                <div class="preset" data-d="#0f2027" data-l="#2c5364" style="background:linear-gradient(90deg,#0f2027,#2c5364)" title="深海"></div>
+                <div class="preset" data-d="#41295a" data-l="#f7b733" style="background:linear-gradient(90deg,#41295a,#f7b733)" title="紫金"></div>
+                <div class="preset" data-d="#870000" data-l="#f9d976" style="background:linear-gradient(90deg,#870000,#f9d976)" title="熔岩"></div>
+                <div class="preset" data-d="#093028" data-l="#5bd1a5" style="background:linear-gradient(90deg,#093028,#5bd1a5)" title="苔原"></div>
+                <div class="preset" data-d="#141e30" data-l="#4b79a1" style="background:linear-gradient(90deg,#141e30,#4b79a1)" title="夜航"></div>
+                <div class="preset" data-d="#ff0084" data-l="#ffe259" style="background:linear-gradient(90deg,#ff0084,#ffe259)" title="霓虹"></div>
+                <div class="preset" data-d="#232526" data-l="#e1eec3" style="background:linear-gradient(90deg,#232526,#e1eec3)" title="水墨"></div>
+                <div class="preset" data-d="#1a2980" data-l="#26d0ce" style="background:linear-gradient(90deg,#1a2980,#26d0ce)" title="赛博青"></div>
+                <div class="preset" data-d="#5f2c82" data-l="#49a09d" style="background:linear-gradient(90deg,#5f2c82,#49a09d)" title="莫兰迪"></div>
+            </div>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-outline" id="dlBtn" disabled>下载 PNG</button>
+    </div>
+    <div class="status-bar info" id="statusBar">请先选择图片</div>
+    <div class="canvas-wrap">
+        <div class="canvas-box"><canvas id="outCanvas"></canvas><div class="cl">双色调效果</div></div>
+    </div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 双色调效果</h3>
+        <p>将灰度亮度映射到双色渐变，经典印刷海报视觉。</p>
+        <div class="feature-chips"><span class="feature-chip">10套预设</span><span class="feature-chip">自定义双色</span><span class="feature-chip">对比度调节</span><span class="feature-chip">明暗反转</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>主体与背景明暗差异大的图片效果更突出</li>
+            <li>反转明暗可快速得到负片风格</li>
+            <li>适合做封面图、Banner 与播客封面</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+var srcImg = null, outCanvas = document.getElementById('outCanvas');
+var dropZone = document.getElementById('dropZone'), fileInput = document.getElementById('fileInput');
+dropZone.onclick = function(){ fileInput.click(); };
+dropZone.ondragover = function(e){ e.preventDefault(); };
+dropZone.ondrop = function(e){ e.preventDefault(); if (e.dataTransfer.files[0]) loadImg(e.dataTransfer.files[0]); };
+fileInput.onchange = function(){ if (fileInput.files[0]) loadImg(fileInput.files[0]); };
+
+function loadImg(f) {
+    var img = new Image();
+    img.onload = function(){
+        srcImg = img;
+        var scale = Math.min(1, 1000 / Math.max(img.width, img.height));
+        outCanvas.width = Math.round(img.width * scale);
+        outCanvas.height = Math.round(img.height * scale);
+        render();
+        setStatus('图片已加载：' + img.width + ' × ' + img.height, 'success');
+        document.getElementById('dlBtn').disabled = false;
+    };
+    img.src = URL.createObjectURL(f);
+}
+
+function hexToRgb(h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }
+
+function render() {
+    if (!srcImg) return;
+    var ctx = outCanvas.getContext('2d');
+    ctx.drawImage(srcImg, 0, 0, outCanvas.width, outCanvas.height);
+    var imgData = ctx.getImageData(0, 0, outCanvas.width, outCanvas.height);
+    var d = imgData.data;
+    var ct = parseInt(document.getElementById('contrast').value) / 100;
+    var inv = document.getElementById('invert').value === '1';
+    document.getElementById('cv').textContent = Math.round(ct * 100) + '%';
+    var dc = hexToRgb(document.getElementById('dark').value);
+    var lc = hexToRgb(document.getElementById('light').value);
+    for (var i = 0; i < d.length; i += 4) {
+        var g = (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]) / 255;
+        g = Math.min(1, Math.max(0, (g - 0.5) * ct + 0.5));
+        if (inv) g = 1 - g;
+        d[i] = dc[0] + (lc[0] - dc[0]) * g;
+        d[i + 1] = dc[1] + (lc[1] - dc[1]) * g;
+        d[i + 2] = dc[2] + (lc[2] - dc[2]) * g;
+    }
+    ctx.putImageData(imgData, 0, 0);
+}
+
+['dark', 'light'].forEach(function(id) { document.getElementById(id).oninput = function(){ if (srcImg) render(); }; });
+document.getElementById('contrast').oninput = function(){ if (srcImg) render(); };
+document.getElementById('invert').onchange = function(){ if (srcImg) render(); };
+document.querySelectorAll('.preset').forEach(function(el) {
+    el.onclick = function() {
+        document.querySelectorAll('.preset').forEach(function(s){ s.classList.remove('sel'); });
+        el.classList.add('sel');
+        document.getElementById('dark').value = el.getAttribute('data-d');
+        document.getElementById('light').value = el.getAttribute('data-l');
+        if (srcImg) render();
+    };
+});
+document.getElementById('dlBtn').onclick = function() {
+    outCanvas.toBlob(function(b) {
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(b);
+        a.download = 'duotone.png';
+        a.click();
+    }, 'image/png');
+};
+initSidebar('image');
+</script>
+</body>
+</html>

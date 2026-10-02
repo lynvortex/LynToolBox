@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>假文生成器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="假文生成器，生成中英文占位文本与随机姓名/手机号/邮箱/地址等Mock数据。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', -apple-system, sans-serif;
+            background: #f4f7f9;
+            margin: 0;
+            display: flex;
+            height: 100vh; overflow: hidden;
+            color: #333;
+        }
+
+        .mobile-header {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: #fff; padding: 0 16px; align-items: center;
+            justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+        }
+        .mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+        .mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+        .menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #e8845a; }
+
+        .sidebar {
+            width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+            display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+            transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+            position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item {
+            display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+            transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+        }
+        .category-item:hover, .category-item.active { background: #fdf0eb; color: #e8845a; border-left-color: #e8845a; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+        .tool-container {
+            width: 100%;
+            max-width: 960px;
+            background: #fff; border-radius: 12px;
+            padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+        }
+        .tool-header { text-align: center; margin-bottom: 28px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+        .io-wrap {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        @media (max-width: 600px) { .io-wrap { grid-template-columns: 1fr; } }
+
+        .io-block label {
+            display: block; font-size: 0.85em; color: #64748b; margin-bottom: 8px; font-weight: 500;
+        }
+        textarea {
+            width: 100%;
+            height: 280px;
+            padding: 14px;
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            font-size: 0.92em;
+            font-family: 'Consolas', 'Courier New', monospace;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+        textarea:focus { border-color: #4a90e2; }
+        textarea[readonly] { background: #f8fafc; cursor: default; }
+
+        .action-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em;
+            font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap;
+        }
+        .btn-primary { background: #e8845a; color: white; }
+        .btn-primary:hover { background: #d4734a; }
+        .btn-success { background: #34d399; color: white; }
+        .btn-success:hover { background: #2bb981; }
+        .btn-warning { background: #f59e0b; color: white; }
+        .btn-warning:hover { background: #d97706; }
+        .btn-outline { background: transparent; color: #e8845a; border: 1px solid #e8845a; }
+        .btn-outline:hover { background: #e8845a; color: white; }
+        .btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+        .btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+
+        .status-bar {
+            min-height: 20px; font-size: 0.85em;
+            padding: 8px 12px; border-radius: 6px; margin-bottom: 16px;
+        }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+        .footer p { margin: 0; }
+        .footer a { color: #e8845a; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+
+        .info-cards {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-top: 4px;
+        }
+
+        .info-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 22px 24px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+            border: 1px solid #f0f2f5;
+        }
+
+        .info-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1em;
+            color: #2c3e50;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .info-card p {
+            margin: 0 0 10px 0;
+            font-size: 0.82em;
+            color: #64748b;
+        }
+
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip {
+            background: #e0f2fe; color: #0369a1;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace;
+        }
+
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a {
+            font-size: 0.85em; color: #4a90e2; text-decoration: none;
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s;
+        }
+        .tool-links a:hover { background: #e2e8f0; }
+
+        .options-row {
+            display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
+            margin-bottom: 18px; padding: 14px 16px;
+            background: #f8fafc; border-radius: 8px; border: 1px solid #f0f2f5;
+            font-size: 0.85em; color: #475569;
+        }
+        .options-row label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+        .options-row select, .options-row input[type="number"] {
+            padding: 5px 8px; border: 1px solid #e0e6ed; border-radius: 6px;
+            font-size: 0.92em; font-family: inherit; color: #1e293b; outline: none; background: #fff;
+        }
+        .options-row select:focus, .options-row input[type="number"]:focus { border-color: #4a90e2; }
+        .options-row input[type="number"] { width: 80px; }
+
+        .divider { height: 1px; background: #e1e4e8; margin: 24px 0; }
+
+        .mock-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .mock-item {
+            background: #f8fafc; border: 1px solid #f0f2f5; border-radius: 8px;
+            padding: 12px 14px; font-size: 0.85em;
+        }
+        .mock-item .mock-label { color: #64748b; font-size: 0.78em; margin-bottom: 4px; font-weight: 600; }
+        .mock-item .mock-val { color: #1e293b; font-family: 'Consolas', monospace; word-break: break-all; }
+
+        @media (max-width: 768px) {
+            body { display: block; height: auto; overflow: auto; }
+            .mobile-header { display: flex; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .close-sidebar { display: block; }
+            .main-content { display: block; }
+            .main-scroll { padding: 72px 16px 32px; gap: 20px;  }
+            .tool-container { padding: 24px 16px; border-radius: 10px; }
+            .tool-header h1 { font-size: 1.3em; }
+            .action-row { gap: 8px; }
+            .btn { padding: 8px 14px; font-size: 0.85em; }
+            .info-card { padding: 18px 16px; }
+            .overlay.active { display: block; }
+            .options-row { gap: 10px; }
+        }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="假文生成器,在线假文生成器,文本处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/text/lorem-tool.html" />
+    <meta property="og:title" content="假文生成器" />
+    <meta property="og:description" content="假文生成器，生成中英文占位文本与随机姓名/手机号/邮箱/地址等Mock数据。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/text/lorem-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="假文生成器" />
+    <meta itemprop="description" content="假文生成器，生成中英文占位文本与随机姓名/手机号/邮箱/地址等Mock数据。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文本处理",
+                "item": "https://box.lynvortex.top/text.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "假文生成器",
+                "item": "https://box.lynvortex.top/text/lorem-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "假文生成器",
+        "url": "https://box.lynvortex.top/text/lorem-tool.html",
+        "description": "生成中英文占位文本及随机姓名、手机号等Mock数据",
+        "applicationCategory": "文本处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>假文生成器</h1>
+                <p>生成中英文占位文本与随机 Mock 数据，纯前端无依赖</p>
+            </div>
+
+            <div class="options-row">
+                <label>语言：
+                    <select id="langSel">
+                        <option value="zh">中文</option>
+                        <option value="en">英文 (Lorem Ipsum)</option>
+                    </select>
+                </label>
+                <label>模式：
+                    <select id="modeSel">
+                        <option value="paragraph">段落</option>
+                        <option value="sentence">句子</option>
+                        <option value="word">单词/词组</option>
+                    </select>
+                </label>
+                <label>数量：
+                    <input type="number" id="countInput" value="5" min="1" max="500" />
+                </label>
+                <label>每段句数（仅段落模式）：
+                    <input type="number" id="sentPerPara" value="4" min="1" max="20" />
+                </label>
+                <label><input type="checkbox" id="startLorem" checked /> 英文以 "Lorem ipsum" 开头</label>
+            </div>
+
+            <div class="action-row">
+                <button class="btn btn-primary" id="generateBtn">&#x1F4DD; 生成文本</button>
+                <button class="btn btn-outline" id="copyBtn">&#x1F4CB; 复制结果</button>
+                <button class="btn btn-ghost" id="clearBtn">&#x1F5D1; 清空</button>
+            </div>
+
+            <div class="status-bar info" id="statusBar">选择语言、模式与数量，点击生成</div>
+
+            <div class="io-block" style="margin-bottom:0;">
+                <label>生成结果</label>
+                <textarea id="outputText" readonly placeholder="生成的占位文本将显示在这里..."></textarea>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="options-row">
+                <label>Mock 数据条数：
+                    <input type="number" id="mockCount" value="5" min="1" max="50" />
+                </label>
+                <button class="btn btn-success" id="mockBtn">&#x1F3B2; 生成 Mock 数据</button>
+            </div>
+            <div class="mock-grid" id="mockGrid"></div>
+
+            <footer class="footer">
+                &copy; 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+            <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#e8845a;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#e8845a;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>&#x1F4E6; 功能说明</h3>
+                <p>占位文本与测试数据一站生成</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">中英文</span>
+                    <span class="tld-chip">段落/句子/单词</span>
+                    <span class="tld-chip">Mock 数据</span>
+                    <span class="tld-chip">无依赖</span>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h3>&#x1F4A1; 使用须知</h3>
+                <ul class="tips-list">
+                    <li>所有处理在浏览器本地执行，数据不会上传</li>
+                    <li>中文文本由内置常用词汇库随机组合成通顺句子</li>
+                    <li>英文采用经典 Lorem Ipsum 词库，可指定开头</li>
+                    <li>Mock 数据包含随机姓名、手机号、邮箱、身份证、地址等</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h3>&#x2728; 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    // 侧边栏由 sidebar.js 统一管理
+    initSidebar('text');
+
+    var setStatus = function (msg, type) {
+        var sb = document.getElementById('statusBar');
+        sb.textContent = msg;
+        sb.className = 'status-bar ' + type;
+    };
+
+    // 随机整数 [min, max]
+    var randInt = function (min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; };
+    var pick = function (arr) { return arr[randInt(0, arr.length - 1)]; };
+
+    // ========== 中文词汇库 ==========
+    var ZH_SUBJECTS = ['我们', '他们', '人们', '技术', '生活', '时代', '世界', '未来', '梦想', '团队', '用户', '产品', '系统', '数据', '网络', '云服务', '人工智能', '开发者', '工程师', '设计师'];
+    var ZH_VERBS = ['推动', '改变', '创造', '实现', '探索', '构建', '优化', '提升', '连接', '赋能', '重构', '设计', '开发', '验证', '部署', '维护', '迭代', '突破', '重塑', '驱动'];
+    var ZH_ADJECTIVES = ['高效的', '智能的', '创新的', '稳定的', '安全的', '开放的', '灵活的', '可靠的', '前沿的', '便捷的', '强大的', '优雅的', '极致的', '无缝的', '可持续的'];
+    var ZH_OBJECTS = ['解决方案', '应用', '平台', '架构', '生态', '体验', '流程', '模型', '服务', '工具', '体系', '框架', '机制', '能力', '价值', '场景', '基础设施', '数字世界', '协作方式', '未来'];
+    var ZH_ADVERBS = ['持续', '不断', '深入', '全面', '快速', '稳步', '积极', '主动', '系统性地', '全方位地'];
+    var ZH_CONJ = ['因此', '同时', '此外', '然而', '总之', '在此基础上', '进一步地', '与此同时', '归根结底', '显而易见'];
+
+    var genZhSentence = function () {
+        var parts = [];
+        if (Math.random() < 0.4) parts.push(pick(ZH_CONJ) + '，');
+        parts.push(pick(ZH_SUBJECTS));
+        parts.push(pick(ZH_ADVERBS));
+        parts.push(pick(ZH_VERBS));
+        if (Math.random() < 0.5) parts.push(pick(ZH_ADJECTIVES));
+        parts.push(pick(ZH_OBJECTS));
+        var s = parts.join('');
+        return s + '。';
+    };
+
+    var genZhWord = function () {
+        return pick(ZH_ADJECTIVES).replace(/的$/, '') + pick(ZH_OBJECTS);
+    };
+
+    // ========== 英文 Lorem Ipsum 词库 ==========
+    var EN_WORDS = ('lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua enim ad minim veniam quis nostrud exercitation ullamco laboris nisi aliquip ex ea commodo consequat duis aute irure in reprehenderit voluptate velit esse cillum eu fugiat nulla pariatur excepteur sint occaecat cupidatat non proident sunt culpa qui officia deserunt mollit anim id est laborum').split(' ');
+
+    var genEnSentence = function () {
+        var len = randInt(6, 16);
+        var words = [];
+        for (var i = 0; i < len; i++) words.push(pick(EN_WORDS));
+        var s = words.join(' ');
+        return s.charAt(0).toUpperCase() + s.slice(1) + '.';
+    };
+
+    var genEnSentenceLoremStart = function () {
+        var start = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit';
+        var extra = randInt(2, 8);
+        var words = [];
+        for (var i = 0; i < extra; i++) words.push(pick(EN_WORDS));
+        return start + ' ' + words.join(' ') + '.';
+    };
+
+    // ========== 生成主文本 ==========
+    var generate = function () {
+        var lang = document.getElementById('langSel').value;
+        var mode = document.getElementById('modeSel').value;
+        var count = parseInt(document.getElementById('countInput').value, 10) || 1;
+        if (count < 1) count = 1; if (count > 500) count = 500;
+        var sentPerPara = parseInt(document.getElementById('sentPerPara').value, 10) || 4;
+        var startLorem = document.getElementById('startLorem').checked;
+
+        var result = '';
+        if (lang === 'zh') {
+            if (mode === 'word') {
+                var ws = [];
+                for (var w = 0; w < count; w++) ws.push(genZhWord());
+                result = ws.join('、');
+            } else if (mode === 'sentence') {
+                var ss = [];
+                for (var s = 0; s < count; s++) ss.push(genZhSentence());
+                result = ss.join('');
+            } else { // paragraph
+                var ps = [];
+                for (var p = 0; p < count; p++) {
+                    var para = '';
+                    var sn = sentPerPara;
+                    for (var k = 0; k < sn; k++) para += genZhSentence();
+                    ps.push(para);
+                }
+                result = ps.join('\n\n');
+            }
+        } else { // en
+            if (mode === 'word') {
+                var ew = [];
+                for (var ewi = 0; ewi < count; ewi++) ew.push(pick(EN_WORDS));
+                result = ew.join(' ');
+            } else if (mode === 'sentence') {
+                var es = [];
+                for (var esi = 0; esi < count; esi++) {
+                    es.push((startLorem && esi === 0) ? genEnSentenceLoremStart() : genEnSentence());
+                }
+                result = es.join(' ');
+            } else { // paragraph
+                var ep = [];
+                for (var epi = 0; epi < count; epi++) {
+                    var epara = [];
+                    var esn = sentPerPara;
+                    for (var ek = 0; ek < esn; ek++) {
+                        epara.push((startLorem && epi === 0 && ek === 0) ? genEnSentenceLoremStart() : genEnSentence());
+                    }
+                    ep.push(epara.join(' '));
+                }
+                result = ep.join('\n\n');
+            }
+        }
+        document.getElementById('outputText').value = result;
+        setStatus('已生成 ' + count + ' 个' + (mode === 'paragraph' ? '段落' : mode === 'sentence' ? '句子' : '词组'), 'success');
+    };
+
+    // ========== Mock 数据 ==========
+    var SURNAMES = '王李张刘陈杨黄赵周吴徐孙朱马胡郭林何高梁郑罗宋谢唐韩曹许邓萧冯曾程蔡彭潘袁于董余苏叶吕魏蒋田杜丁沈姜范江傅钟卢汪戴崔任陆廖姚方金邱夏谭韦贾邹石熊孟秦阎薛侯雷白龙段郝孔邵史毛常万顾赖武康贺严尹钱施牛洪龚'.split('');
+    var GIVEN_NAMES = ['伟', '芳', '娜', '敏', '静', '丽', '强', '磊', '军', '洋', '勇', '艳', '杰', '娟', '涛', '明', '超', '秀英', '霞', '平', '刚', '桂英', '建国', '建华', '俊杰', '梓涵', '欣怡', '子轩', '浩然', '诗涵', '宇轩', '思远', '雨彤', '一鸣', '若曦', '晨阳', '梦琪', '嘉怡', '睿', '晨', '婷', '雪', '辉', '斌'];
+    var PROVINCES = ['北京市', '上海市', '广东省', '浙江省', '江苏省', '四川省', '湖北省', '湖南省', '福建省', '山东省', '河南省', '陕西省', '辽宁省', '重庆市', '天津市'];
+    var CITIES = ['朝阳区', '海淀区', '浦东新区', '南山区', '西湖区', '武侯区', '岳麓区', '天河区', '雁塔区', '历下区', '江宁区', '青羊区'];
+    var STREETS = ['人民路', '解放大道', '中山路', '建国路', '科技园路', '创新大道', '幸福街', '和平路', '复兴路', '光明大街', '学府路', '迎宾大道'];
+    var EMAIL_DOMAINS = ['qq.com', '163.com', 'gmail.com', 'outlook.com', '126.com', 'sina.com', 'foxmail.com', 'yeah.net'];
+
+    var genName = function () { return pick(SURNAMES) + pick(GIVEN_NAMES); };
+    var genPhone = function () {
+        var prefixes = ['13', '14', '15', '16', '17', '18', '19'];
+        var p = pick(prefixes) + randInt(0, 9);
+        for (var i = 0; i < 9; i++) p += randInt(0, 9);
+        return p;
+    };
+    var genIdCard = function () {
+        var provinces = ['11', '31', '44', '33', '32', '51', '42', '43', '35', '37', '41', '61', '21', '50', '12'];
+        var id = pick(provinces) + '0' + randInt(100, 999) + (1970 + randInt(0, 35)) + (randInt(1, 12) < 10 ? '0' : '') + randInt(1, 28) + randInt(100, 999);
+        var check = '10X98765432'[randInt(0, 10)];
+        return id + check;
+    };
+    var genEmail = function () {
+        var name = genName().toLowerCase() + randInt(1, 999);
+        // 转拼音太复杂，用随机字母
+        var chars = 'abcdefghijklmnopqrstuvwxyz';
+        var n = '';
+        for (var i = 0; i < randInt(5, 8); i++) n += chars[randInt(0, 25)];
+        return n + randInt(1, 99) + '@' + pick(EMAIL_DOMAINS);
+    };
+    var genAddress = function () {
+        return pick(PROVINCES) + pick(CITIES) + pick(STREETS) + randInt(1, 200) + '号' + randInt(1, 30) + '栋' + randInt(101, 2099) + '室';
+    };
+    var genId = function () {
+        var chars = 'abcdef0123456789';
+        var s = '';
+        for (var i = 0; i < 16; i++) s += chars[randInt(0, 15)];
+        return s;
+    };
+    var genDate = function () {
+        var y = 1970 + randInt(0, 45);
+        var m = randInt(1, 12); var d = randInt(1, 28);
+        return y + '-' + (m < 10 ? '0' + m : m) + '-' + (d < 10 ? '0' + d : d);
+    };
+    var genCompany = function () {
+        var pre = ['汇通', '盛世', '万方', '九州', '宏图', '智云', '星辰', '浪潮', '鼎峰', '嘉禾', '迅捷', '融创'];
+        var mid = ['科技', '网络', '信息', '数据', '智能', '软件', '互联', '数字', '云算', '通信'];
+        var suf = ['有限公司', '股份有限公司', '集团', '控股有限公司'];
+        return pick(pre) + pick(mid) + pick(suf);
+    };
+
+    var generateMock = function () {
+        var count = parseInt(document.getElementById('mockCount').value, 10) || 5;
+        if (count < 1) count = 1; if (count > 50) count = 50;
+        var grid = document.getElementById('mockGrid');
+        grid.innerHTML = '';
+        var allData = [];
+        for (var i = 0; i < count; i++) {
+            allData.push({
+                name: genName(),
+                phone: genPhone(),
+                email: genEmail(),
+                idcard: genIdCard(),
+                address: genAddress(),
+                uuid: genId(),
+                date: genDate(),
+                company: genCompany()
+            });
+        }
+        // 按字段渲染：每个字段一列，列出所有条数
+        var fields = [
+            { key: 'name', label: '姓名' },
+            { key: 'phone', label: '手机号' },
+            { key: 'email', label: '邮箱' },
+            { key: 'idcard', label: '身份证号' },
+            { key: 'address', label: '地址' },
+            { key: 'company', label: '公司' },
+            { key: 'uuid', label: 'UUID' },
+            { key: 'date', label: '出生日期' }
+        ];
+        fields.forEach(function (f) {
+            var div = document.createElement('div');
+            div.className = 'mock-item';
+            var labelHtml = '<div class="mock-label">' + escapeHtml(f.label) + '</div>';
+            var vals = allData.map(function (d) { return escapeHtml(d[f.key]); }).join('<br>');
+            div.innerHTML = labelHtml + '<div class="mock-val">' + vals + '</div>';
+            grid.appendChild(div);
+        });
+        // 同时生成一份可复制的文本
+        var lines = allData.map(function (d) {
+            return d.name + ' | ' + d.phone + ' | ' + d.email + ' | ' + d.idcard + ' | ' + d.address + ' | ' + d.company + ' | ' + d.date + ' | ' + d.uuid;
+        });
+        document.getElementById('outputText').value = lines.join('\n');
+        setStatus('已生成 ' + count + ' 条 Mock 数据', 'success');
+    };
+
+    var copyResult = function () {
+        var output = document.getElementById('outputText').value;
+        if (!output) { setStatus('没有可复制的内容', 'error'); return; }
+        navigator.clipboard.writeText(output).then(function () {
+            setStatus('已复制到剪贴板', 'success');
+        }).catch(function () {
+            document.getElementById('outputText').select();
+            document.execCommand('copy');
+            setStatus('已复制到剪贴板', 'success');
+        });
+    };
+
+    var clearAll = function () {
+        document.getElementById('outputText').value = '';
+        document.getElementById('mockGrid').innerHTML = '';
+        setStatus('已清空', 'info');
+    };
+
+    document.getElementById('generateBtn').addEventListener('click', generate);
+    document.getElementById('mockBtn').addEventListener('click', generateMock);
+    document.getElementById('copyBtn').addEventListener('click', copyResult);
+    document.getElementById('clearBtn').addEventListener('click', clearAll);
+</script>
+</body>
+</html>

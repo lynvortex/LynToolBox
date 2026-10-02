@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Dockerfile生成器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="Dockerfile生成器，纯前端可视化勾选生成Dockerfile，支持Node/Python/Go/Java等基础镜像，多阶段构建，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.main-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+@media(max-width:768px){.main-grid{grid-template-columns:1fr;}}
+.form-panel{background:#f8fafc;border:1px solid #e0e6ed;border-radius:10px;padding:16px;}
+.form-panel h3{font-size:.95em;margin-bottom:12px;color:#2c3e50;}
+.form-item{margin-bottom:12px;}
+.form-item label{display:block;font-size:.82em;color:#64748b;font-weight:600;margin-bottom:4px;}
+.form-item input,.form-item select,.form-item textarea{width:100%;padding:8px 12px;border:1px solid #e0e6ed;border-radius:6px;font-size:.85em;outline:none;box-sizing:border-box;}
+.form-item textarea{resize:vertical;min-height:60px;font-family:'Courier New',monospace;}
+.checkbox-group{display:flex;flex-wrap:wrap;gap:10px;}
+.checkbox-group label{display:flex;align-items:center;font-size:.82em;color:#475569;cursor:pointer;}
+.output-panel{background:#1e293b;color:#e2e8f0;border-radius:10px;padding:16px;font-family:'Courier New',monospace;font-size:.82em;white-space:pre-wrap;word-break:break-all;min-height:400px;max-height:500px;overflow-y:auto;line-height:1.5;}
+</style>
+    <meta name="keywords" content="Dockerfile生成器,在线Dockerfile生成器,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/dockerfile-gen-tool.html" />
+    <meta property="og:title" content="Dockerfile生成器" />
+    <meta property="og:description" content="Dockerfile生成器，纯前端可视化勾选生成Dockerfile，支持Node/Python/Go/Java等基础镜像，多阶段构建，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/dockerfile-gen-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="Dockerfile生成器" />
+    <meta itemprop="description" content="Dockerfile生成器，纯前端可视化勾选生成Dockerfile，支持Node/Python/Go/Java等基础镜像，多阶段构建，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Dockerfile生成器",
+                "item": "https://box.lynvortex.top/work/dockerfile-gen-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Dockerfile生成器",
+        "url": "https://box.lynvortex.top/work/dockerfile-gen-tool.html",
+        "description": "可视化生成Dockerfile，支持多阶段构建、端口暴露、环境变量配置",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🐳 Dockerfile生成器</h1><p>可视化生成Dockerfile，支持多语言多阶段构建</p></div>
+<div class="main-grid">
+<div class="form-panel">
+<h3>🔧 基础配置</h3>
+<div class="form-item"><label>基础镜像</label><select id="baseImage">
+<option value="node:18-alpine">Node.js 18 (Alpine)</option>
+<option value="node:20-alpine">Node.js 20 (Alpine)</option>
+<option value="python:3.11-slim">Python 3.11 (Slim)</option>
+<option value="python:3.12-slim">Python 3.12 (Slim)</option>
+<option value="golang:1.21-alpine">Go 1.21 (Alpine)</option>
+<option value="openjdk:17-slim">Java 17 (Slim)</option>
+<option value="nginx:alpine">Nginx (Alpine)</option>
+<option value="rust:1.75-slim">Rust 1.75 (Slim)</option>
+</select></div>
+<div class="form-item"><label>工作目录</label><input type="text" id="workDir" value="/app"/></div>
+<div class="form-item"><label>暴露端口</label><input type="text" id="exposePort" value="3000"/></div>
+<div class="form-item"><label>启动命令</label><input type="text" id="cmd" value="npm start"/></div>
+<h3 style="margin-top:16px;">📦 功能模块</h3>
+<div class="checkbox-group">
+<label><input type="checkbox" id="modMultiStage"/> 多阶段构建</label>
+<label><input type="checkbox" id="modEnv" checked/> 环境变量</label>
+<label><input type="checkbox" id="modCopy" checked/> COPY文件</label>
+<label><input type="checkbox" id="modRun" checked/> 安装依赖</label>
+<label><input type="checkbox" id="modHealth"/> 健康检查</label>
+<label><input type="checkbox" id="modNonRoot"/> 非root用户</label>
+<label><input type="checkbox" id="modVolume"/> 数据卷</label>
+</div>
+<div id="envConfig" style="margin-top:14px;">
+<h3>🌍 环境变量</h3>
+<div class="form-item"><label>环境变量 (每行KEY=VALUE)</label><textarea id="envVars">NODE_ENV=production
+PORT=3000</textarea></div>
+</div>
+<div id="copyConfig" style="margin-top:14px;">
+<h3>📂 文件复制</h3>
+<div class="form-item"><label>源文件</label><input type="text" id="copySrc" value="package*.json ./"/></div>
+<div class="form-item"><label>复制全部源码</label><input type="text" id="copyAll" value=". ."/></div>
+</div>
+<div id="runConfig" style="margin-top:14px;">
+<h3>⚡ 安装命令</h3>
+<div class="form-item"><label>依赖安装命令</label><input type="text" id="runCmd" value="npm ci --only=production"/></div>
+</div>
+<div id="healthConfig" style="display:none;margin-top:14px;">
+<h3>🏥 健康检查</h3>
+<div class="form-item"><label>检查命令</label><input type="text" id="healthCmd" value="curl -f http://localhost:3000/ || exit 1"/></div>
+<div class="form-item"><label>检查间隔(秒)</label><input type="number" id="healthInterval" value="30"/></div>
+</div>
+</div>
+<div>
+<div class="output-panel" id="output"></div>
+<div style="text-align:center;margin-top:12px;">
+<button class="btn btn-primary" id="genBtn" style="padding:10px 28px;">🐳 生成Dockerfile</button>
+<button class="btn" id="copyBtn" style="padding:10px 16px;margin-left:8px;border:1px solid #4a90e2;border-radius:8px;background:#fff;color:#4a90e2;cursor:pointer;font-size:.85em;font-weight:600;">📋 复制</button>
+<button class="btn" id="dlBtn" style="padding:10px 16px;margin-left:8px;border:1px solid #4a90e2;border-radius:8px;background:#fff;color:#4a90e2;cursor:pointer;font-size:.85em;font-weight:600;">⬇ 下载</button>
+</div>
+</div>
+</div>
+<div id="statusBar" class="status-bar info">修改参数自动生成Dockerfile</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 Dockerfile生成器</h3><p>可视化生成标准化Dockerfile</p><div class="feature-chips"><span class="feature-chip">多语言镜像</span><span class="feature-chip">多阶段构建</span><span class="feature-chip">健康检查</span><span class="feature-chip">非root</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>选择基础镜像自动匹配最佳实践配置</li><li>多阶段构建可减小最终镜像体积</li><li>非root用户提升容器安全性</li><li>生成配置请根据项目实际修改</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var inputs=document.querySelectorAll('input,select,textarea');
+inputs.forEach(function(el){el.oninput=generate;el.onchange=generate;});
+document.getElementById('modHealth').onchange=function(){document.getElementById('healthConfig').style.display=this.checked?'block':'none';generate();};
+function generate(){
+var base=document.getElementById('baseImage').value;
+var workDir=document.getElementById('workDir').value;
+var port=document.getElementById('exposePort').value;
+var cmd=document.getElementById('cmd').value;
+var c='';
+c+='# Dockerfile - 自动生成\n';
+c+='# 基础镜像\n';
+if(document.getElementById('modMultiStage').checked){
+c+='FROM '+base+' AS builder\n\n';
+c+='WORKDIR '+workDir+'\n\n';
+if(document.getElementById('modCopy').checked){
+c+='COPY '+document.getElementById('copySrc').value+'\n\n';
+}
+if(document.getElementById('modRun').checked){
+c+='RUN '+document.getElementById('runCmd').value+'\n\n';
+}
+c+='COPY '+document.getElementById('copyAll').value+'\n\n';
+c+='# 运行阶段\n';
+c+='FROM '+base+'\n\n';
+c+='WORKDIR '+workDir+'\n\n';
+c+='COPY --from=builder '+workDir+' .\n\n';
+}else{
+c+='FROM '+base+'\n\n';
+c+='WORKDIR '+workDir+'\n\n';
+if(document.getElementById('modCopy').checked){
+c+='COPY '+document.getElementById('copySrc').value+'\n\n';
+}
+if(document.getElementById('modRun').checked){
+c+='RUN '+document.getElementById('runCmd').value+'\n\n';
+}
+c+='COPY '+document.getElementById('copyAll').value+'\n\n';
+}
+if(document.getElementById('modEnv').checked){
+var envs=document.getElementById('envVars').value.trim().split('\n');
+c+='# 环境变量\n';
+envs.forEach(function(e){if(e.trim())c+='ENV '+e.trim()+'\n';});
+c+='\n';
+}
+c+='EXPOSE '+port+'\n\n';
+if(document.getElementById('modVolume').checked){
+c+='VOLUME ["'+workDir+'/data"]\n\n';
+}
+if(document.getElementById('modHealth').checked){
+c+='# 健康检查\n';
+c+='HEALTHCHECK --interval='+document.getElementById('healthInterval').value+'s --timeout=3s --retries=3 \\\n';
+c+='  CMD '+document.getElementById('healthCmd').value+'\n\n';
+}
+if(document.getElementById('modNonRoot').checked){
+c+='# 非root用户\n';
+c+='RUN addgroup -S appgroup && adduser -S appuser -G appgroup\n';
+c+='USER appuser\n\n';
+}
+c+='# 启动命令\n';
+c+='CMD ["sh", "-c", "'+cmd+'"]\n';
+document.getElementById('output').textContent=c;
+}
+document.getElementById('genBtn').onclick=generate;
+document.getElementById('copyBtn').onclick=function(){navigator.clipboard.writeText(document.getElementById('output').textContent).then(function(){document.getElementById('statusBar').textContent='已复制到剪贴板';document.getElementById('statusBar').className='status-bar success';});};
+document.getElementById('dlBtn').onclick=function(){var blob=new Blob([document.getElementById('output').textContent],{type:'text/plain'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Dockerfile';a.click();document.getElementById('statusBar').textContent='已下载Dockerfile';document.getElementById('statusBar').className='status-bar success';};
+generate();
+initSidebar('work');
+</script>
+</body>
+</html>

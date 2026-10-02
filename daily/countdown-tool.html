@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>纪念日倒数 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="纪念日倒数工具，纯前端计算距目标日期的倒计时天数，支持添加多个纪念日，localStorage本地保存，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.add-form{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;}
+.add-form input,.add-form select{padding:10px 14px;border:1px solid #e0e6ed;border-radius:8px;font-size:.9em;outline:none;box-sizing:border-box;}
+.add-form input[type=text]{flex:1;min-width:150px;}
+.add-form input[type=date]{min-width:140px;}
+.add-form select{min-width:100px;}
+.add-form button{padding:10px 20px;border:none;border-radius:8px;background:#4a90e2;color:#fff;font-size:.85em;font-weight:600;cursor:pointer;white-space:nowrap;}
+.countdown-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+.cd-card{background:#fff;border:1px solid #e0e6ed;border-radius:14px;padding:20px;position:relative;overflow:hidden;transition:.2s;}
+.cd-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.08);}
+.cd-card .icon{font-size:1.8em;margin-bottom:8px;}
+.cd-card .title{font-size:1.05em;font-weight:700;color:#2c3e50;margin-bottom:4px;}
+.cd-card .date{font-size:.78em;color:#94a3b8;margin-bottom:10px;}
+.cd-card .days{font-size:2.4em;font-weight:700;font-family:'Courier New',monospace;}
+.cd-card .days.past{color:#94a3b8;}
+.cd-card .days.future{color:#4a90e2;}
+.cd-card .label{font-size:.82em;color:#64748b;margin-top:4px;}
+.cd-card .del{position:absolute;top:10px;right:10px;cursor:pointer;color:#cbd5e1;font-size:1.1em;transition:.2s;}
+.cd-card .del:hover{color:#ef4444;}
+.cd-card .progress{height:4px;background:#f1f5f9;border-radius:2px;margin-top:12px;overflow:hidden;}
+.cd-card .progress-bar{height:100%;background:linear-gradient(90deg,#4a90e2,#3a7bd5);border-radius:2px;transition:.3s;}
+.cd-card.past{opacity:.75;}
+</style>
+    <meta name="keywords" content="纪念日倒数,在线纪念日倒数,日常通用,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/daily/countdown-tool.html" />
+    <meta property="og:title" content="纪念日倒数" />
+    <meta property="og:description" content="纪念日倒数工具，纯前端计算距目标日期的倒计时天数，支持添加多个纪念日，localStorage本地保存，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/daily/countdown-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="纪念日倒数" />
+    <meta itemprop="description" content="纪念日倒数工具，纯前端计算距目标日期的倒计时天数，支持添加多个纪念日，localStorage本地保存，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "日常通用",
+                "item": "https://box.lynvortex.top/daily.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "纪念日倒数",
+                "item": "https://box.lynvortex.top/daily/countdown-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "纪念日倒数",
+        "url": "https://box.lynvortex.top/daily/countdown-tool.html",
+        "description": "设置重要日期实时倒数，支持农历与重复提醒",
+        "applicationCategory": "日常通用",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>📅 纪念日倒数</h1><p>添加重要日期，实时倒数/正数天数</p></div>
+<div class="add-form">
+<input type="text" id="eventName" placeholder="事件名称 (如：生日、考试、旅行)"/>
+<input type="date" id="eventDate"/>
+<select id="eventIcon">
+<option value="🎂">🎂 生日</option>
+<option value="🎉">🎉 庆祝</option>
+<option value="✈️">✈️ 旅行</option>
+<option value="📚">📚 考试</option>
+<option value="💍">💍 纪念</option>
+<option value="🎄">🎄 节日</option>
+<option value="⭐">⭐ 重要</option>
+<option value="🎯">🎯 目标</option>
+</select>
+<button id="addBtn">➕ 添加</button>
+</div>
+<div class="countdown-grid" id="cdGrid"></div>
+<div id="emptyHint" style="text-align:center;padding:40px;color:#94a3b8;font-size:.9em;">还没有添加纪念日，快添加一个吧！</div>
+<div id="statusBar" class="status-bar info">添加重要日期实时查看倒数</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 纪念日倒数</h3><p>管理重要日期倒数</p><div class="feature-chips"><span class="feature-chip">倒数/正数</span><span class="feature-chip">多事件</span><span class="feature-chip">本地保存</span><span class="feature-chip">进度条</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>支持添加多个纪念日/倒计时事件</li><li>数据自动保存在浏览器本地</li><li>未来日期显示倒数，过去日期显示已过天数</li><li>进度条显示距事件的时间进度</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var events=[];
+try{events=JSON.parse(localStorage.getItem('cd_events')||'[]');}catch(e){events=[];}
+function save(){localStorage.setItem('cd_events',JSON.stringify(events));}
+document.getElementById('addBtn').onclick=function(){
+var name=document.getElementById('eventName').value.trim();
+var date=document.getElementById('eventDate').value;
+var icon=document.getElementById('eventIcon').value;
+if(!name||!date){document.getElementById('statusBar').textContent='请填写事件名称和日期';document.getElementById('statusBar').className='status-bar error';return;}
+events.push({name:name,date:date,icon:icon,id:Date.now()});
+save();render();
+document.getElementById('eventName').value='';document.getElementById('eventDate').value='';
+document.getElementById('statusBar').textContent='已添加「'+name+'」';document.getElementById('statusBar').className='status-bar success';
+};
+function render(){
+var grid=document.getElementById('cdGrid');
+if(events.length===0){grid.innerHTML='';document.getElementById('emptyHint').style.display='';return;}
+document.getElementById('emptyHint').style.display='none';
+var today=new Date();today.setHours(0,0,0,0);
+var html='';
+events.sort(function(a,b){return new Date(a.date)-new Date(b.date);});
+events.forEach(function(e){
+var ed=new Date(e.date);ed.setHours(0,0,0,0);
+var diff=Math.round((ed-today)/(1000*60*60*24));
+var isPast=diff<0;
+var absDiff=Math.abs(diff);
+var label=isPast?(absDiff===0?'就是今天':'已过'):(diff===0?'就是今天':'还有');
+var daysText=absDiff===0?'今天':absDiff+'天';
+var yearProgress=0;
+if(isPast){
+var oneYearLater=new Date(ed);oneYearLater.setFullYear(oneYearLater.getFullYear()+1);
+yearProgress=Math.min(100,Math.round((today-ed)/(oneYearLater-ed)*100));
+}else{
+var createdDate=new Date(e.id);
+var totalDiff=ed-today;
+yearProgress=Math.round((1-totalDiff/(365*24*60*60*1000))*100);
+yearProgress=Math.max(0,Math.min(100,yearProgress));
+}
+html+='<div class="cd-card'+(isPast?' past':'')+'">';
+html+='<span class="del" data-id="'+e.id+'">✕</span>';
+html+='<div class="icon">'+e.icon+'</div>';
+html+='<div class="title">'+e.name+'</div>';
+html+='<div class="date">'+e.date+'</div>';
+html+='<div class="days '+(isPast?'past':'future')+'">'+daysText+'</div>';
+html+='<div class="label">'+label+'</div>';
+html+='<div class="progress"><div class="progress-bar" style="width:'+yearProgress+'%;"></div></div>';
+html+='</div>';
+});
+grid.innerHTML=html;
+document.querySelectorAll('.cd-card .del').forEach(function(btn){
+btn.onclick=function(){var id=parseInt(this.dataset.id);events=events.filter(function(e){return e.id!==id;});save();render();document.getElementById('statusBar').textContent='已删除';document.getElementById('statusBar').className='status-bar info';};
+});
+}
+render();
+setInterval(render,60000);
+initSidebar('daily');
+</script>
+</body>
+</html>

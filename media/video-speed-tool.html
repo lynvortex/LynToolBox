@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>视频变速 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="视频变速工具，纯前端调整视频播放速度，支持0.25x~4x倍速，MediaRecorder录制导出WebM，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.video-wrap{text-align:center;margin-bottom:14px;}
+video#srcVideo{max-width:100%;border-radius:8px;}
+.speed-presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+.speed-preset{padding:8px 16px;border-radius:8px;border:1px solid #e0e6ed;background:#f8fafc;color:#64748b;cursor:pointer;font-size:.85em;transition:.2s;}
+.speed-preset:hover,.speed-preset.active{background:#4a90e2;color:#fff;border-color:#4a90e2;}
+.progress-bar{height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden;margin:14px 0;display:none;}
+.progress-fill{height:100%;background:linear-gradient(90deg,#4a90e2,#3a7bd5);border-radius:4px;width:0;transition:.3s;}
+</style>
+    <meta name="keywords" content="视频变速,在线视频变速,音视频处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/media/video-speed-tool.html" />
+    <meta property="og:title" content="视频变速" />
+    <meta property="og:description" content="视频变速工具，纯前端调整视频播放速度，支持0.25x~4x倍速，MediaRecorder录制导出WebM，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/media/video-speed-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="视频变速" />
+    <meta itemprop="description" content="视频变速工具，纯前端调整视频播放速度，支持0.25x~4x倍速，MediaRecorder录制导出WebM，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "音视频处理",
+                "item": "https://box.lynvortex.top/media.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "视频变速",
+                "item": "https://box.lynvortex.top/media/video-speed-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "视频变速",
+        "url": "https://box.lynvortex.top/media/video-speed-tool.html",
+        "description": "调整视频播放速度，支持0.25x至4x变速，导出WebM格式",
+        "applicationCategory": "音视频处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>⚡ 视频变速</h1><p>调整视频播放速度，0.25x~4x倍速导出</p></div>
+<div class="upload-zone" id="dropZone">📁 点击或拖拽上传视频文件<input type="file" id="fileInput" accept="video/*" style="display:none;"/></div>
+<div id="editorArea" style="display:none;">
+<div class="video-wrap"><video id="srcVideo" controls></video></div>
+<div class="form-grid">
+<div class="form-item"><label>播放速度 (倍)</label><input type="number" id="speed" value="1" min="0.25" max="4" step="0.25"/></div>
+<div class="form-item"><label>保持音轨</label><select id="keepAudio"><option value="1" selected>保留音频</option><option value="0">去除音频</option></select></div>
+</div>
+<div class="speed-presets">
+<div class="speed-preset" data-speed="0.25">0.25x 慢动作</div>
+<div class="speed-preset" data-speed="0.5">0.5x 慢速</div>
+<div class="speed-preset active" data-speed="1">1.0x 原速</div>
+<div class="speed-preset" data-speed="1.5">1.5x 快速</div>
+<div class="speed-preset" data-speed="2">2.0x 倍速</div>
+<div class="speed-preset" data-speed="4">4.0x 极速</div>
+</div>
+<div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+<div style="text-align:center;">
+<button class="btn btn-primary" id="processBtn" style="padding:12px 32px;">🎬 开始变速</button>
+</div>
+<div id="resultArea" style="display:none;margin-top:16px;">
+<h3 style="font-size:.95em;color:#2c3e50;margin-bottom:10px;">✅ 变速结果</h3>
+<video id="resultVideo" controls style="width:100%;border-radius:8px;"></video>
+<div style="text-align:center;margin-top:10px;">
+<button class="btn btn-outline" id="dlBtn" style="padding:10px 24px;">⬇ 下载视频</button>
+</div>
+</div>
+<button class="btn btn-ghost" id="resetBtn" style="margin-top:14px;">重新上传</button>
+</div>
+<div id="statusBar" class="status-bar info">上传视频，选择变速倍率</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 视频变速</h3><p>调整视频播放速度</p><div class="feature-chips"><span class="feature-chip">0.25x~4x</span><span class="feature-chip">慢动作</span><span class="feature-chip">倍速播放</span><span class="feature-chip">WebM导出</span><span class="feature-chip">本地处理</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>选择预设倍率或自定义0.25x~4x速度</li><li>变速后可选择保留或去除音轨</li><li>使用Canvas+MediaRecorder逐帧录制导出</li><li>慢速时帧率会提升以保持流畅，文件会变大</li><li>所有处理在浏览器本地完成，数据不上传</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var videoFile=null,resultBlob=null;
+var dz=document.getElementById('dropZone'),fi=document.getElementById('fileInput');
+var video=document.getElementById('srcVideo');
+dz.onclick=function(){fi.click();};
+dz.ondragover=function(e){e.preventDefault();};
+dz.ondrop=function(e){e.preventDefault();if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);};
+fi.onchange=function(){if(fi.files[0])loadFile(fi.files[0]);};
+function loadFile(file){videoFile=file;video.src=URL.createObjectURL(file);video.onloadedmetadata=function(){dz.style.display='none';document.getElementById('editorArea').style.display='block';document.getElementById('statusBar').textContent='已加载: '+file.name+' ('+video.duration.toFixed(1)+'秒)';document.getElementById('statusBar').className='status-bar success';};}
+document.querySelectorAll('.speed-preset').forEach(function(btn){
+btn.onclick=function(){
+document.querySelectorAll('.speed-preset').forEach(function(b){b.classList.remove('active');});
+btn.classList.add('active');
+document.getElementById('speed').value=btn.dataset.speed;
+};
+});
+document.getElementById('processBtn').onclick=function(){
+if(!videoFile)return;
+var speed=parseFloat(document.getElementById('speed').value)||1;
+var keepAudio=document.getElementById('keepAudio').value==='1';
+document.getElementById('statusBar').textContent='正在变速处理...';document.getElementById('statusBar').className='status-bar info';
+document.getElementById('progressBar').style.display='block';
+var canvas=document.createElement('canvas');canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+var ctx=canvas.getContext('2d');
+var fps=Math.min(60,Math.round(30*speed));
+var stream=canvas.captureStream(fps);
+if(keepAudio){
+try{var vs=video.captureStream?video.captureStream():video.mozCaptureStream();if(vs){vs.getAudioTracks().forEach(function(t){stream.addTrack(t);});}}catch(e){}
+}
+var mime='video/webm;codecs=vp9';if(!MediaRecorder.isTypeSupported(mime))mime='video/webm';
+var recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:5000000});
+var chunks=[];recorder.ondataavailable=function(e){if(e.data.size>0)chunks.push(e.data);};
+recorder.onstop=function(){resultBlob=new Blob(chunks,{type:'video/webm'});var url=URL.createObjectURL(resultBlob);document.getElementById('resultVideo').src=url;document.getElementById('resultArea').style.display='block';document.getElementById('progressBar').style.display='none';document.getElementById('statusBar').textContent='变速完成 ('+speed+'x)';document.getElementById('statusBar').className='status-bar success';};
+video.currentTime=0;video.muted=true;video.playbackRate=speed;video.play();recorder.start();
+function drawFrame(){
+if(video.ended||video.paused){video.pause();recorder.stop();document.getElementById('progressFill').style.width='100%';return;}
+ctx.drawImage(video,0,0,canvas.width,canvas.height);
+document.getElementById('progressFill').style.width=(video.currentTime/video.duration*95)+'%';
+requestAnimationFrame(drawFrame);
+}
+setTimeout(drawFrame,200);
+};
+document.getElementById('dlBtn').onclick=function(){if(resultBlob){var a=document.createElement('a');a.href=URL.createObjectURL(resultBlob);a.download='speed-changed.webm';a.click();}};
+document.getElementById('resetBtn').onclick=function(){dz.style.display='block';document.getElementById('editorArea').style.display='none';videoFile=null;resultBlob=null;fi.value='';video.playbackRate=1;document.getElementById('resultArea').style.display='none';document.getElementById('statusBar').textContent='请重新上传';document.getElementById('statusBar').className='status-bar info';};
+initSidebar('media');
+</script>
+</body>
+</html>

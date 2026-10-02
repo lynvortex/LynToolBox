@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>敏感信息脱敏 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="自动识别并脱敏文本中的手机号、身份证、邮箱、银行卡等敏感信息，纯前端正则处理" />
+    <meta name="robots" content="noindex, follow" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+
+        textarea.code { min-height: 160px; }
+        .mask-types { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+        .mask-type { display: flex; align-items: center; gap: 4px; font-size: 0.85em; color: #64748b; cursor: pointer; padding: 4px 10px; background: #f1f5f9; border-radius: 6px; }
+        .mask-type input { accent-color: #4a90e2; }
+    
+    </style>
+    <script src="../assets/sidebar.js"></script>
+
+    <meta name="keywords" content="敏感信息脱敏,在线敏感信息脱敏,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/mask-tool.html" />
+    <meta property="og:title" content="敏感信息脱敏" />
+    <meta property="og:description" content="自动识别并脱敏文本中的手机号、身份证、邮箱、银行卡等敏感信息，纯前端正则处理" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/mask-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="敏感信息脱敏" />
+    <meta itemprop="description" content="自动识别并脱敏文本中的手机号、身份证、邮箱、银行卡等敏感信息，纯前端正则处理" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "敏感信息脱敏",
+                "item": "https://box.lynvortex.top/work/mask-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "敏感信息脱敏",
+        "url": "https://box.lynvortex.top/work/mask-tool.html",
+        "description": "自动识别并脱敏文本中的手机号、身份证、邮箱等敏感信息",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🛡️ 敏感信息脱敏</h1>
+                <p>自动识别并脱敏文本中的手机号、身份证、邮箱、银行卡等敏感信息，纯前端正则处理</p>
+            </div>
+
+            <div class="form-item" style="margin-bottom:12px;">
+                <label>输入文本</label>
+                <textarea class="code" id="mkInput" placeholder="粘贴包含敏感信息的文本...">张三的手机号是13812345678，身份证号110101199001011234，邮箱zhangsan@example.com，银行卡6222021234567890123。</textarea>
+            </div>
+            <div class="mask-types" id="mkTypes">
+                <label class="mask-type"><input type="checkbox" data-type="phone" checked> 手机号</label>
+                <label class="mask-type"><input type="checkbox" data-type="idcard" checked> 身份证</label>
+                <label class="mask-type"><input type="checkbox" data-type="email" checked> 邮箱</label>
+                <label class="mask-type"><input type="checkbox" data-type="bank" checked> 银行卡</label>
+                <label class="mask-type"><input type="checkbox" data-type="ip" checked> IP地址</label>
+                <label class="mask-type"><input type="checkbox" data-type="url" > URL</label>
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-primary" id="mkMask">🛡️ 脱敏处理</button>
+                <button class="btn btn-outline" id="mkCopy">📋 复制结果</button>
+                <button class="btn btn-ghost" id="mkClear">🗑 清空</button>
+            </div>
+            <div class="form-item" style="margin-top:12px;">
+                <label>脱敏结果</label>
+                <textarea class="code" id="mkOutput" readonly style="min-height:160px;"></textarea>
+            </div>
+            <div id="mkStats" style="font-size:0.85em;color:#64748b;margin-top:8px;"></div>
+    
+            <div id="statusBar" class="status-bar info">准备就绪，请按提示操作</div>
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 敏感信息脱敏</h3>
+                <p>自动识别并打码文本中的手机号、身份证、邮箱、银行卡等敏感信息</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">正则识别</span>
+                    <span class="feature-chip">6种类型</span>
+                    <span class="feature-chip">批量脱敏</span>
+                    <span class="feature-chip">本地处理</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>支持手机号、身份证、邮箱、银行卡、IP地址、URL六种脱敏</li>
+                    <li>可勾选需要脱敏的类型，灵活组合</li>
+                    <li>手机号保留前3后4，身份证保留前6后4，邮箱保留前2位</li>
+                    <li>所有处理在浏览器本地完成，不上传任何数据</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+
+    const setStatus = (m,t) => { const s=document.getElementById('statusBar'); s.textContent=m; s.className='status-bar '+(t||'info'); };
+    const rules = {
+        phone: { pattern: /1[3-9]\d{9}/g, mask: m => m.substr(0,3) + '****' + m.substr(7) },
+        idcard: { pattern: /[1-9]\d{5}(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx]/g, mask: m => m.substr(0,6) + '********' + m.substr(-4) },
+        email: { pattern: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, mask: m => { const [u,d] = m.split('@'); return u.substr(0,Math.min(2,u.length)) + '***@' + d; } },
+        bank: { pattern: /\b[1-9]\d{15,18}\b/g, mask: m => m.substr(0,4) + ' **** **** ' + m.substr(-4) },
+        ip: { pattern: /\b(?:\d{1,3}\.){3}\d{1,3}\b/g, mask: m => { const p = m.split('.'); return p[0] + '.' + p[1] + '.*.*'; } },
+        url: { pattern: /https?:\/\/[a-zA-Z0-9.-]+\S*/g, mask: m => m.substr(0, m.indexOf('://')+3) + '***' }
+    };
+
+    document.getElementById('mkMask').addEventListener('click', () => {
+        let text = document.getElementById('mkInput').value;
+        if (!text.trim()) { setStatus('请输入文本', 'error'); return; }
+        const enabled = {};
+        document.querySelectorAll('.mask-types input:checked').forEach(c => enabled[c.dataset.type] = true);
+        let stats = {};
+        Object.keys(rules).forEach(type => {
+            if (!enabled[type]) return;
+            text = text.replace(rules[type].pattern, m => { stats[type] = (stats[type]||0) + 1; return rules[type].mask(m); });
+        });
+        document.getElementById('mkOutput').value = text;
+        const statText = Object.entries(stats).map(([k,v]) => k + ':' + v).join('，') || '未发现敏感信息';
+        document.getElementById('mkStats').textContent = '脱敏统计：' + statText;
+        setStatus('脱敏完成，共处理 ' + Object.values(stats).reduce((a,b)=>a+b,0) + ' 处', 'success');
+    });
+
+    document.getElementById('mkCopy').addEventListener('click', () => {
+        const text = document.getElementById('mkOutput').value;
+        if (!text) { setStatus('请先脱敏处理', 'error'); return; }
+        navigator.clipboard.writeText(text).then(() => setStatus('已复制到剪贴板', 'success'));
+    });
+
+    document.getElementById('mkClear').addEventListener('click', () => {
+        document.getElementById('mkInput').value = ''; document.getElementById('mkOutput').value = '';
+        document.getElementById('mkStats').textContent = ''; setStatus('已清空', 'info');
+    });
+    
+    initSidebar('work');
+</script>
+</body>
+</html>

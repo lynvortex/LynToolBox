@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PDF预览提取 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="PDF在线预览与文字提取工具，纯前端使用pdf.js渲染PDF页面并提取文字内容，支持下载文本，数据本地处理" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <script src="../assets/sidebar.js"></script>
+    <script src="../assets/pdf.min.js"></script>
+    <style>
+        .pv-toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+        .pv-toolbar .pv-stat { font-size: 0.82em; color: #64748b; background: #f1f5f9; padding: 5px 10px; border-radius: 6px; }
+        .pv-scale { display: flex; align-items: center; gap: 6px; font-size: 0.82em; color: #64748b; }
+        .pv-scale input { width: 90px; }
+        .pv-pages { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 16px 0; background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 10px; min-height: 200px; }
+        .pv-pages:empty::before { content: '预览区为空，请上传 PDF 文件'; color: #94a3b8; font-style: italic; padding: 40px; }
+        .pv-page-wrap { position: relative; box-shadow: 0 2px 12px rgba(0,0,0,0.12); background: #fff; }
+        .pv-page-num { position: absolute; top: -22px; left: 0; font-size: 0.78em; color: #64748b; font-weight: 600; }
+        .pv-drop { border: 2px dashed #cbd5e1; border-radius: 10px; padding: 22px; text-align: center; color: #64748b; cursor: pointer; transition: 0.2s; background: #f8fafc; margin-bottom: 14px; }
+        .pv-drop:hover, .pv-drop.dragover { border-color: #4a90e2; color: #4a90e2; background: #ebf5ff; }
+        .pv-drop .pv-icon { font-size: 2em; display: block; margin-bottom: 6px; }
+    </style>
+    <meta name="keywords" content="PDF预览提取,在线PDF预览提取,文档处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/document/pdf-view-tool.html" />
+    <meta property="og:title" content="PDF预览提取" />
+    <meta property="og:description" content="PDF在线预览与文字提取工具，纯前端使用pdf.js渲染PDF页面并提取文字内容，支持下载文本，数据本地处理" />
+    <meta property="og:url" content="https://box.lynvortex.top/document/pdf-view-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="PDF预览提取" />
+    <meta itemprop="description" content="PDF在线预览与文字提取工具，纯前端使用pdf.js渲染PDF页面并提取文字内容，支持下载文本，数据本地处理" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文档处理",
+                "item": "https://box.lynvortex.top/document.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "PDF预览提取",
+                "item": "https://box.lynvortex.top/document/pdf-view-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "PDF预览提取",
+        "url": "https://box.lynvortex.top/document/pdf-view-tool.html",
+        "description": "pdf.js渲染PDF页面并提取文字，支持缩放与下载",
+        "applicationCategory": "文档处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>📕 PDF预览提取</h1>
+                <p>纯前端使用 pdf.js 渲染 PDF 页面并提取文字内容，支持缩放与文本下载，数据本地处理</p>
+            </div>
+
+            <div class="form-item" style="margin-bottom:12px;">
+                <label>选择 PDF 文件</label>
+                <input type="file" id="pvFile" accept="application/pdf,.pdf" />
+            </div>
+
+            <div class="pv-drop" id="pvDrop">
+                <span class="pv-icon">📕</span>
+                <span>将 PDF 文件拖拽到此处，或点击上方按钮选择</span>
+            </div>
+
+            <div class="pv-toolbar">
+                <button class="btn btn-primary" id="pvExtract" disabled>📝 提取全部文字</button>
+                <button class="btn btn-outline" id="pvDownloadTxt" disabled>⬇ 下载文本</button>
+                <button class="btn btn-ghost" id="pvClear">🗑 清空</button>
+                <span style="flex:1;"></span>
+                <div class="pv-scale">
+                    缩放
+                    <input type="range" id="pvScale" min="0.5" max="3" step="0.1" value="1.2" />
+                    <span id="pvScaleVal">120%</span>
+                </div>
+                <span class="pv-stat" id="pvStat">未加载</span>
+            </div>
+
+            <div class="pv-pages" id="pvPages"></div>
+
+            <div id="statusBar" class="status-bar info">准备就绪，请上传 PDF 文件进行预览</div>
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 功能说明</h3>
+                <p>基于 pdf.js 在浏览器中逐页渲染 PDF 至 Canvas，可调节缩放比例，并提取全部文字内容合并导出为 .txt 文件。</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">PDF预览</span>
+                    <span class="feature-chip">页面渲染</span>
+                    <span class="feature-chip">文字提取</span>
+                    <span class="feature-chip">缩放</span>
+                    <span class="feature-chip">文本下载</span>
+                    <span class="feature-chip">离线核心</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>核心库 pdf.js 本地加载，仅 Worker 从 CDN 获取</li>
+                    <li>渲染大文件可能耗时，请耐心等待页面逐页呈现</li>
+                    <li>文字提取基于 PDF 文本层，扫描版 PDF（图片型）无法提取文字</li>
+                    <li>拖动缩放滑块可调整预览清晰度，范围 50%-300%</li>
+                    <li>所有 PDF 处理在浏览器本地完成，不上传任何文件</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const setStatus = (m, t) => { const s = document.getElementById('statusBar'); s.textContent = m; s.className = 'status-bar ' + (t || 'info'); };
+    let pdfDoc = null;
+    let extractedText = '';
+
+    // 配置 Worker（核心库本地，Worker 从 CDN）
+    if (typeof pdfjsLib !== 'undefined') {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+    }
+
+    const scaleSlider = document.getElementById('pvScale');
+    const scaleVal = document.getElementById('pvScaleVal');
+    scaleSlider.addEventListener('input', () => {
+        scaleVal.textContent = Math.round(scaleSlider.value * 100) + '%';
+    });
+
+    function clearView() {
+        document.getElementById('pvPages').innerHTML = '';
+        document.getElementById('pvStat').textContent = '未加载';
+        document.getElementById('pvExtract').disabled = true;
+        document.getElementById('pvDownloadTxt').disabled = true;
+        extractedText = '';
+    }
+
+    async function renderPdf(uint8) {
+        if (typeof pdfjsLib === 'undefined') {
+            setStatus('pdf.js 库未加载，请刷新页面重试', 'error');
+            return;
+        }
+        setStatus('正在加载 PDF...', 'info');
+        try {
+            pdfDoc = await pdfjsLib.getDocument({ data: uint8 }).promise;
+            const total = pdfDoc.numPages;
+            document.getElementById('pvStat').textContent = '共 ' + total + ' 页';
+            const pagesEl = document.getElementById('pvPages');
+            pagesEl.innerHTML = '';
+            const scale = parseFloat(scaleSlider.value);
+            extractedText = '';
+
+            for (let n = 1; n <= total; n++) {
+                const page = await pdfDoc.getPage(n);
+                const viewport = page.getViewport({ scale: scale });
+                const wrap = document.createElement('div');
+                wrap.className = 'pv-page-wrap';
+                const num = document.createElement('div');
+                num.className = 'pv-page-num';
+                num.textContent = '第 ' + n + ' / ' + total + ' 页';
+                wrap.appendChild(num);
+                const canvas = document.createElement('canvas');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                canvas.style.display = 'block';
+                wrap.appendChild(canvas);
+                pagesEl.appendChild(wrap);
+                const ctx = canvas.getContext('2d');
+                await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+            }
+            document.getElementById('pvExtract').disabled = false;
+            setStatus('PDF 渲染完成，共 ' + total + ' 页', 'success');
+        } catch (e) {
+            setStatus('PDF 加载失败: ' + e.message, 'error');
+        }
+    }
+
+    async function extractAllText() {
+        if (!pdfDoc) return;
+        setStatus('正在提取文字...', 'info');
+        try {
+            const total = pdfDoc.numPages;
+            const parts = [];
+            for (let n = 1; n <= total; n++) {
+                const page = await pdfDoc.getPage(n);
+                const content = await page.getTextContent();
+                const text = content.items.map(item => item.str).join('');
+                parts.push('===== 第 ' + n + ' 页 =====\n' + text);
+            }
+            extractedText = parts.join('\n\n');
+            document.getElementById('pvDownloadTxt').disabled = !extractedText;
+            const charCount = extractedText.length;
+            if (charCount === 0) {
+                setStatus('未提取到文字（可能是扫描版/图片型 PDF）', 'error');
+            } else {
+                setStatus('文字提取完成，共 ' + charCount + ' 字符', 'success');
+            }
+        } catch (e) {
+            setStatus('文字提取失败: ' + e.message, 'error');
+        }
+    }
+
+    document.getElementById('pvFile').addEventListener('change', async e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        clearView();
+        const uint8 = new Uint8Array(await file.arrayBuffer());
+        await renderPdf(uint8);
+    });
+
+    // 拖拽
+    const drop = document.getElementById('pvDrop');
+    drop.addEventListener('click', () => document.getElementById('pvFile').click());
+    ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('dragover'); }));
+    ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('dragover'); }));
+    drop.addEventListener('drop', async e => {
+        const file = e.dataTransfer.files[0];
+        if (file && (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'))) {
+            document.getElementById('pvFile').files = e.dataTransfer.files;
+            clearView();
+            const uint8 = new Uint8Array(await file.arrayBuffer());
+            await renderPdf(uint8);
+        } else {
+            setStatus('请拖入 PDF 文件', 'error');
+        }
+    });
+
+    // 重新渲染（缩放变化时防抖）
+    let scaleTimer = null;
+    scaleSlider.addEventListener('change', () => {
+        if (!pdfDoc) return;
+        clearTimeout(scaleTimer);
+        scaleTimer = setTimeout(async () => {
+            const uint8 = await pdfDoc.getData();
+            await renderPdf(uint8);
+        }, 300);
+    });
+
+    document.getElementById('pvExtract').addEventListener('click', extractAllText);
+
+    document.getElementById('pvDownloadTxt').addEventListener('click', () => {
+        if (!extractedText) return;
+        const blob = new Blob([extractedText], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'extracted.txt'; a.click();
+        setStatus('文本文件已下载', 'success');
+    });
+
+    document.getElementById('pvClear').addEventListener('click', () => {
+        clearView();
+        pdfDoc = null;
+        document.getElementById('pvFile').value = '';
+        setStatus('已清空，请重新上传 PDF', 'info');
+    });
+
+    initSidebar('document');
+</script>
+</body>
+</html>

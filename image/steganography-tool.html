@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>图片隐写术 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="图片LSB隐写术工具，纯前端Canvas将文字信息隐藏在图片像素中，支持加密嵌入与提取，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.sub-tabs{display:flex;gap:8px;margin-bottom:18px;}
+.sub-tab{padding:10px 20px;border-radius:8px;border:1px solid #e0e6ed;background:#f8fafc;color:#64748b;cursor:pointer;font-size:.85em;font-weight:600;transition:.2s;}
+.sub-tab.active{background:#4a90e2;color:#fff;border-color:#4a90e2;}
+.canvas-box canvas{max-width:100%;border-radius:8px;border:1px solid #e0e6ed;background:#f8fafc;image-rendering:pixelated;}
+.form-item{margin-bottom:14px;}
+.form-item label{display:block;font-size:.85em;color:#64748b;margin-bottom:6px;font-weight:600;}
+.form-item textarea,.form-item input{width:100%;padding:10px 14px;border:1px solid #e0e6ed;border-radius:8px;font-size:.9em;outline:none;font-family:inherit;box-sizing:border-box;}
+.form-item textarea{min-height:100px;resize:vertical;}
+.capacity-bar{background:#f1f5f9;border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:.82em;}
+.capacity-bar .cap-val{font-weight:700;color:#4a90e2;}
+.info-note{background:#e0f2fe;border:1px solid #bae6fd;border-radius:8px;padding:14px;font-size:.82em;color:#075985;margin-bottom:14px;}
+</style>
+    <meta name="keywords" content="图片隐写术,在线图片隐写术,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/steganography-tool.html" />
+    <meta property="og:title" content="图片隐写术" />
+    <meta property="og:description" content="图片LSB隐写术工具，纯前端Canvas将文字信息隐藏在图片像素中，支持加密嵌入与提取，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/steganography-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="图片隐写术" />
+    <meta itemprop="description" content="图片LSB隐写术工具，纯前端Canvas将文字信息隐藏在图片像素中，支持加密嵌入与提取，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "图片隐写术",
+                "item": "https://box.lynvortex.top/image/steganography-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "图片隐写术",
+        "url": "https://box.lynvortex.top/image/steganography-tool.html",
+        "description": "LSB算法将文字隐藏于图片像素中，支持密码加密与提取",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🔐 图片隐写术</h1><p>LSB算法将文字隐藏于图片像素，无形传递秘密信息</p></div>
+
+<div class="sub-tabs">
+<div class="sub-tab active" data-mode="encode">📝 嵌入信息</div>
+<div class="sub-tab" data-mode="decode">🔍 提取信息</div>
+</div>
+
+<div id="encodePanel">
+<div class="upload-zone" id="dropZone">📁 选择载体图片（建议PNG）<input type="file" id="fileInput" accept="image/*" style="display:none;"/></div>
+
+<div id="encodeArea" style="display:none;">
+<div class="canvas-wrap">
+<div class="canvas-box">
+<canvas id="canvas"></canvas>
+<div class="cl">载体图片预览</div>
+</div>
+</div>
+
+<div class="capacity-bar">
+容量上限：<span class="cap-val" id="capVal">—</span> 字符
+</div>
+
+<div class="form-item">
+<label>隐藏文字</label>
+<textarea id="secretText" placeholder="输入要隐藏的秘密信息..."></textarea>
+</div>
+
+<div class="form-item">
+<label>加密密码（可选）</label>
+<input type="password" id="encPass" placeholder="留空则不加密"/>
+</div>
+
+<div style="text-align:center;">
+<button class="btn btn-primary" id="encodeBtn" style="padding:10px 28px;">🔐 嵌入并下载</button>
+</div>
+</div>
+</div>
+
+<div id="decodePanel" style="display:none;">
+<div class="upload-zone" id="dropZone2">📁 选择含隐写信息的图片<input type="file" id="fileInput2" accept="image/*" style="display:none;"/></div>
+
+<div id="decodeArea" style="display:none;">
+<div class="canvas-wrap">
+<div class="canvas-box">
+<canvas id="canvas2"></canvas>
+<div class="cl">待提取图片</div>
+</div>
+</div>
+
+<div class="form-item">
+<label>解密密码（如有加密）</label>
+<input type="password" id="decPass" placeholder="留空则不解密"/>
+</div>
+
+<div style="text-align:center;margin-bottom:16px;">
+<button class="btn btn-primary" id="decodeBtn" style="padding:10px 28px;">🔍 提取信息</button>
+</div>
+
+<div class="form-item">
+<label>提取结果</label>
+<textarea id="resultText" readonly placeholder="提取结果将显示在这里..." style="min-height:120px;"></textarea>
+</div>
+</div>
+</div>
+
+<div id="statusBar" class="status-bar info">LSB隐写术——将信息编码到图片像素最低位，肉眼不可见</div>
+
+<footer class="footer">
+© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+</footer>
+</div>
+
+<div class="info-cards">
+<div class="info-card">
+<h3>📦 图片隐写术</h3>
+<p>LSB最低有效位隐写算法</p>
+<div class="feature-chips">
+<span class="feature-chip">LSB嵌入</span>
+<span class="feature-chip">密码加密</span>
+<span class="feature-chip">信息提取</span>
+<span class="feature-chip">纯本地</span>
+</div>
+</div>
+<div class="info-card">
+<h3>💡 使用须知</h3>
+<ul class="tips-list">
+<li>载体图片建议使用PNG格式（无损压缩）</li>
+<li>JPG有损压缩可能破坏隐写数据</li>
+<li>容量取决于图片像素数，每个像素可藏3bit</li>
+<li>可选密码加密增强安全性</li>
+</ul>
+</div>
+<div class="info-card">
+<h3>✨ 绘萤者</h3>
+<p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+<div class="tool-links">
+<a href="https://lynvortex.top" target="_blank">完全免费</a>
+<a href="https://lynvortex.top" target="_blank">开源精神</a>
+<a href="https://lynvortex.top" target="_blank">极客风范</a>
+<a href="https://lynvortex.top" target="_blank">协作共创</a>
+</div>
+<p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+</div>
+</div>
+</div></main>
+
+<script>
+var mode = 'encode';
+
+document.querySelectorAll('.sub-tab').forEach(function(t) {
+    t.onclick = function() {
+        document.querySelectorAll('.sub-tab').forEach(function(x) { x.classList.remove('active'); });
+        t.classList.add('active');
+        mode = t.dataset.mode;
+        document.getElementById('encodePanel').style.display = mode === 'encode' ? 'block' : 'none';
+        document.getElementById('decodePanel').style.display = mode === 'decode' ? 'block' : 'none';
+    };
+});
+
+function simpleXOR(text, pass) {
+    if (!pass) return text;
+    var result = '';
+    for (var i = 0; i < text.length; i++) {
+        result += String.fromCharCode(text.charCodeAt(i) ^ pass.charCodeAt(i % pass.length));
+    }
+    return result;
+}
+
+function strToBits(str) {
+    var bits = [];
+    for (var i = 0; i < str.length; i++) {
+        var code = str.charCodeAt(i);
+        for (var j = 15; j >= 0; j--) {
+            bits.push((code >> j) & 1);
+        }
+    }
+    return bits;
+}
+
+function bitsToStr(bits) {
+    var str = '';
+    for (var i = 0; i < bits.length; i += 16) {
+        if (i + 16 > bits.length) break;
+        var code = 0;
+        for (var j = 0; j < 16; j++) {
+            code = (code << 1) | bits[i + j];
+        }
+        str += String.fromCharCode(code);
+    }
+    return str;
+}
+
+var endMarker = '<<STEG_END>>';
+
+document.getElementById('dropZone').onclick = function() { document.getElementById('fileInput').click(); };
+document.getElementById('fileInput').onchange = function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+        var img = new Image();
+        img.onload = function() {
+            var canvas = document.getElementById('canvas');
+            canvas.width = img.width; canvas.height = img.height;
+            canvas.getContext('2d').drawImage(img, 0, 0);
+            document.getElementById('encodeArea').style.display = 'block';
+            var cap = Math.floor((img.width * img.height * 3) / 16) - endMarker.length;
+            document.getElementById('capVal').textContent = Math.max(0, cap);
+        };
+        img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+};
+
+document.getElementById('encodeBtn').onclick = function() {
+    var text = document.getElementById('secretText').value;
+    var pass = document.getElementById('encPass').value;
+    if (!text) { document.getElementById('statusBar').textContent = '请输入要隐藏的文字'; return; }
+
+    var encText = simpleXOR(text, pass);
+    var fullText = encText + endMarker;
+    var bits = strToBits(fullText);
+
+    var canvas = document.getElementById('canvas');
+    var ctx = canvas.getContext('2d');
+    var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var data = imgData.data;
+
+    var totalCapacity = Math.floor((data.length / 4) * 3);
+    if (bits.length > totalCapacity) {
+        document.getElementById('statusBar').textContent = '文字太长，超出图片容量';
+        document.getElementById('statusBar').className = 'status-bar error';
+        return;
+    }
+
+    var bitIdx = 0;
+    for (var i = 0; i < data.length && bitIdx < bits.length; i += 4) {
+        for (var c = 0; c < 3 && bitIdx < bits.length; c++) {
+            data[i + c] = (data[i + c] & 0xFE) | bits[bitIdx];
+            bitIdx++;
+        }
+    }
+
+    ctx.putImageData(imgData, 0, 0);
+
+    canvas.toBlob(function(blob) {
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'stego_output.png';
+        a.click();
+        document.getElementById('statusBar').textContent = '隐写完成！已下载图片';
+        document.getElementById('statusBar').className = 'status-bar success';
+    }, 'image/png');
+};
+
+document.getElementById('dropZone2').onclick = function() { document.getElementById('fileInput2').click(); };
+document.getElementById('fileInput2').onchange = function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+        var img = new Image();
+        img.onload = function() {
+            var canvas = document.getElementById('canvas2');
+            canvas.width = img.width; canvas.height = img.height;
+            canvas.getContext('2d').drawImage(img, 0, 0);
+            document.getElementById('decodeArea').style.display = 'block';
+        };
+        img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+};
+
+document.getElementById('decodeBtn').onclick = function() {
+    var pass = document.getElementById('decPass').value;
+    var canvas = document.getElementById('canvas2');
+    var ctx = canvas.getContext('2d');
+    var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var data = imgData.data;
+
+    var bits = [];
+    for (var i = 0; i < data.length; i += 4) {
+        for (var c = 0; c < 3; c++) {
+            bits.push(data[i + c] & 1);
+        }
+    }
+
+    var chars = [];
+    var found = false;
+    for (var i = 0; i + 16 <= bits.length; i += 16) {
+        var code = 0;
+        for (var j = 0; j < 16; j++) code = (code << 1) | bits[i + j];
+        chars.push(String.fromCharCode(code));
+        if (chars.length >= endMarker.length) {
+            var tail = chars.slice(chars.length - endMarker.length).join('');
+            if (tail === endMarker) {
+                found = true;
+                break;
+            }
+        }
+    }
+
+    if (!found) {
+        document.getElementById('resultText').value = '未检测到隐写信息，或图片可能已被有损压缩破坏';
+        document.getElementById('statusBar').textContent = '提取失败';
+        document.getElementById('statusBar').className = 'status-bar error';
+        return;
+    }
+
+    var encText = chars.slice(0, chars.length - endMarker.length).join('');
+    var decText = simpleXOR(encText, pass);
+    document.getElementById('resultText').value = decText;
+    document.getElementById('statusBar').textContent = '提取成功！';
+    document.getElementById('statusBar').className = 'status-bar success';
+};
+
+var dz = document.getElementById('dropZone');
+dz.ondragover = function(e) { e.preventDefault(); dz.style.borderColor = '#4a90e2'; };
+dz.ondragleave = function() { dz.style.borderColor = '#e0e6ed'; };
+dz.ondrop = function(e) {
+    e.preventDefault(); dz.style.borderColor = '#e0e6ed';
+    var f = e.dataTransfer.files[0];
+    if (f && f.type.startsWith('image/')) {
+        document.getElementById('fileInput').files = e.dataTransfer.files;
+        document.getElementById('fileInput').onchange({ target: { files: [f] } });
+    }
+};
+
+var dz2 = document.getElementById('dropZone2');
+dz2.ondragover = function(e) { e.preventDefault(); dz2.style.borderColor = '#4a90e2'; };
+dz2.ondragleave = function() { dz2.style.borderColor = '#e0e6ed'; };
+dz2.ondrop = function(e) {
+    e.preventDefault(); dz2.style.borderColor = '#e0e6ed';
+    var f = e.dataTransfer.files[0];
+    if (f && f.type.startsWith('image/')) {
+        document.getElementById('fileInput2').files = e.dataTransfer.files;
+        document.getElementById('fileInput2').onchange({ target: { files: [f] } });
+    }
+};
+
+initSidebar('image');
+</script>
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PDF拆分 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="PDF拆分工具，支持按页码范围提取、每N页切分、逐页拆分三种模式，纯前端处理，文件不上传。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<style>
+.mode-tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+.mode-tab{padding:9px 18px;border-radius:8px;border:1px solid #e0e6ed;background:#f8fafc;cursor:pointer;font-weight:600;color:#64748b;font-size:.85em;}
+.mode-tab.active{background:#4a90e2;color:#fff;border-color:#4a90e2;}
+.file-info{background:#f0f7ff;border:1px solid #d0e3f7;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:.9em;color:#2c3e50;display:none;}
+.result-list{margin-top:16px;display:flex;flex-direction:column;gap:8px;}
+.result-item{display:flex;justify-content:space-between;align-items:center;background:#f8fafc;border:1px solid #e0e6ed;border-radius:8px;padding:10px 14px;font-size:.88em;}
+.result-item a{color:#4a90e2;font-weight:600;text-decoration:none;}
+</style>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="PDF拆分,PDF分割,PDF按页拆分,PDF提取页面,文档处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/document/pdf-split-tool.html"/>
+<meta property="og:title" content="PDF拆分"/>
+<meta property="og:description" content="PDF拆分工具，支持按页码范围提取、每N页切分、逐页拆分三种模式，纯前端处理，文件不上传。"/>
+<meta property="og:url" content="https://box.lynvortex.top/document/pdf-split-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="PDF拆分"/>
+<meta itemprop="description" content="PDF拆分工具，支持按页码范围提取、每N页切分、逐页拆分三种模式，纯前端处理，文件不上传。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"文档处理","item":"https://box.lynvortex.top/document.html"},{"@type":"ListItem","position":3,"name":"PDF拆分","item":"https://box.lynvortex.top/document/pdf-split-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"PDF拆分","url":"https://box.lynvortex.top/document/pdf-split-tool.html","description":"按页码范围提取、每N页切分、逐页拆分","applicationCategory":"文档处理","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>✂️ PDF拆分</h1>
+        <p>按范围提取 / 每N页切分 / 逐页拆分，文件不离开浏览器</p>
+    </div>
+    <div class="upload-zone" id="dropZone">
+        <p style="margin:0;color:#64748b;">📄 点击选择或拖入 PDF 文件</p>
+        <input type="file" id="fileInput" accept="application/pdf" style="display:none;"/>
+    </div>
+    <div class="file-info" id="fileInfo"></div>
+    <div class="mode-tabs">
+        <div class="mode-tab active" data-mode="range">按页码范围提取</div>
+        <div class="mode-tab" data-mode="every">每 N 页切分</div>
+        <div class="mode-tab" data-mode="single">逐页拆分</div>
+    </div>
+    <div id="panelRange">
+        <div class="form-item" style="margin-bottom:14px;">
+            <label>页码范围（提取为单个 PDF）</label>
+            <input type="text" id="rangeInput" placeholder="例如：1-3,5,8-10"/>
+            <div class="hint">支持逗号分隔的页码与区间，页码从 1 开始</div>
+        </div>
+    </div>
+    <div id="panelEvery" style="display:none;">
+        <div class="form-item" style="margin-bottom:14px;">
+            <label>每份包含的页数 N</label>
+            <input type="number" id="everyN" value="1" min="1"/>
+        </div>
+    </div>
+    <div id="panelSingle" style="display:none;">
+        <p style="color:#64748b;font-size:.9em;">将每一页拆分为独立 PDF，打包为 ZIP 下载。</p>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="runBtn" disabled>开始拆分</button>
+    </div>
+    <div class="status-bar info" id="statusBar">请先选择 PDF 文件</div>
+    <div class="result-list" id="resultList"></div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 PDF拆分</h3>
+        <p>基于 pdf-lib 的纯前端 PDF 拆分工具，三种拆分模式覆盖常见需求。</p>
+        <div class="feature-chips"><span class="feature-chip">范围提取</span><span class="feature-chip">每N页切分</span><span class="feature-chip">逐页拆分</span><span class="feature-chip">ZIP打包</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>文件全程在浏览器本地处理，不会上传到任何服务器</li>
+            <li>多份输出自动打包为 ZIP 下载</li>
+            <li>加密的 PDF 需先解密后再拆分</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script src="../assets/pdf-lib.min.js"></script>
+<script src="../assets/jszip.min.js"></script>
+<script>
+var srcBytes = null, pageCount = 0, fileName = '', mode = 'range';
+var dropZone = document.getElementById('dropZone'), fileInput = document.getElementById('fileInput');
+dropZone.onclick = function(){ fileInput.click(); };
+dropZone.ondragover = function(e){ e.preventDefault(); dropZone.style.borderColor = '#4a90e2'; };
+dropZone.ondragleave = function(){ dropZone.style.borderColor = ''; };
+dropZone.ondrop = function(e){ e.preventDefault(); dropZone.style.borderColor = ''; if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); };
+fileInput.onchange = function(){ if (fileInput.files[0]) loadFile(fileInput.files[0]); };
+
+function loadFile(f) {
+    if (!/pdf$/i.test(f.name.split('.').pop())) { setStatus('请选择 PDF 文件', 'error'); return; }
+    fileName = f.name.replace(/\.pdf$/i, '');
+    var reader = new FileReader();
+    reader.onload = async function(){
+        try {
+            srcBytes = new Uint8Array(reader.result);
+            var doc = await PDFLib.PDFDocument.load(srcBytes, { ignoreEncryption: true });
+            pageCount = doc.getPageCount();
+            document.getElementById('fileInfo').style.display = 'block';
+            document.getElementById('fileInfo').textContent = '📄 ' + f.name + ' · 共 ' + pageCount + ' 页 · ' + (f.size / 1024).toFixed(1) + ' KB';
+            document.getElementById('runBtn').disabled = false;
+            setStatus('文件已加载，共 ' + pageCount + ' 页', 'success');
+        } catch (e) { setStatus('PDF 解析失败：' + e.message, 'error'); }
+    };
+    reader.readAsArrayBuffer(f);
+}
+
+document.querySelectorAll('.mode-tab').forEach(function(t){
+    t.onclick = function(){
+        document.querySelectorAll('.mode-tab').forEach(function(x){ x.classList.remove('active'); });
+        t.classList.add('active');
+        mode = t.dataset.mode;
+        document.getElementById('panelRange').style.display = mode === 'range' ? 'block' : 'none';
+        document.getElementById('panelEvery').style.display = mode === 'every' ? 'block' : 'none';
+        document.getElementById('panelSingle').style.display = mode === 'single' ? 'block' : 'none';
+    };
+});
+
+function parseRange(str, max) {
+    var pages = [];
+    str.split(',').forEach(function(part){
+        part = part.trim();
+        if (!part) return;
+        if (part.indexOf('-') > -1) {
+            var seg = part.split('-'), a = parseInt(seg[0]), b = parseInt(seg[1]);
+            if (isNaN(a) || isNaN(b) || a < 1 || b > max || a > b) throw new Error('无效区间：' + part);
+            for (var i = a; i <= b; i++) pages.push(i - 1);
+        } else {
+            var n = parseInt(part);
+            if (isNaN(n) || n < 1 || n > max) throw new Error('无效页码：' + part);
+            pages.push(n - 1);
+        }
+    });
+    if (!pages.length) throw new Error('页码范围为空');
+    return pages;
+}
+
+async function extractPages(indices) {
+    var src = await PDFLib.PDFDocument.load(srcBytes, { ignoreEncryption: true });
+    var out = await PDFLib.PDFDocument.create();
+    var copied = await out.copyPages(src, indices);
+    copied.forEach(function(p){ out.addPage(p); });
+    return out.save();
+}
+
+function download(bytes, name) {
+    var blob = new Blob([bytes], { type: name.endsWith('.zip') ? 'application/zip' : 'application/pdf' });
+    var url = URL.createObjectURL(blob);
+    var div = document.createElement('div');
+    div.className = 'result-item';
+    var span = document.createElement('span');
+    span.textContent = name + '（' + (blob.size / 1024).toFixed(1) + ' KB）';
+    var a = document.createElement('a');
+    a.href = url; a.download = name; a.textContent = '⬇ 下载';
+    div.appendChild(span); div.appendChild(a);
+    document.getElementById('resultList').appendChild(div);
+}
+
+document.getElementById('runBtn').onclick = async function(){
+    if (!srcBytes) return;
+    var btn = this; btn.disabled = true;
+    document.getElementById('resultList').innerHTML = '';
+    setStatus('正在拆分…', 'info');
+    try {
+        if (mode === 'range') {
+            var pages = parseRange(document.getElementById('rangeInput').value, pageCount);
+            var bytes = await extractPages(pages);
+            download(bytes, fileName + '_提取.pdf');
+            setStatus('已提取 ' + pages.length + ' 页', 'success');
+        } else if (mode === 'every') {
+            var n = parseInt(document.getElementById('everyN').value);
+            if (!n || n < 1) throw new Error('N 必须为正整数');
+            var zip = new JSZip(), count = 0;
+            for (var i = 0; i < pageCount; i += n) {
+                var idx = [];
+                for (var j = i; j < Math.min(i + n, pageCount); j++) idx.push(j);
+                zip.file(fileName + '_' + (count + 1) + '.pdf', await extractPages(idx));
+                count++;
+            }
+            var zb = await zip.generateAsync({ type: 'uint8array' });
+            download(zb, fileName + '_拆分.zip');
+            setStatus('已切分为 ' + count + ' 份', 'success');
+        } else {
+            var zip2 = new JSZip();
+            for (var k = 0; k < pageCount; k++) {
+                zip2.file(fileName + '_第' + (k + 1) + '页.pdf', await extractPages([k]));
+            }
+            var zb2 = await zip2.generateAsync({ type: 'uint8array' });
+            download(zb2, fileName + '_逐页.zip');
+            setStatus('已拆分为 ' + pageCount + ' 个单页', 'success');
+        }
+    } catch (e) { setStatus('拆分失败：' + e.message, 'error'); }
+    btn.disabled = false;
+};
+initSidebar('document');
+</script>
+</body>
+</html>

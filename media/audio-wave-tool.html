@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>音频波形编辑 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="音频波形可视化编辑工具，纯前端使用wavesurfer.js显示音频波形，支持播放、缩放与区域选择，数据本地处理" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <script src="../assets/sidebar.js"></script>
+    <script src="../assets/wavesurfer.min.js"></script>
+    <style>
+        .wave-box { background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 10px; padding: 14px; margin-bottom: 16px; }
+        #waveform { background: #fff; border-radius: 8px; min-height: 120px; }
+        .wave-empty { text-align: center; color: #94a3b8; padding: 46px 10px; font-size: 0.9em; }
+        .transport { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 14px 0; }
+        .t-btn { width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer; font-size: 1.1em; background: #4a90e2; color: #fff; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; }
+        .t-btn:hover { background: #3a7bd5; }
+        .t-btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+        .t-btn.ghost { background: #f1f5f9; color: #475569; }
+        .t-btn.ghost:hover { background: #e2e8f0; }
+        .time-display { font-family: 'Courier New', monospace; font-size: 0.95em; color: #2c3e50; margin-left: auto; }
+        .seek-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+        .seek-bar { flex: 1; -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; background: #e2e8f0; outline: none; }
+        .seek-bar::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #4a90e2; cursor: pointer; }
+        .seek-bar::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #4a90e2; cursor: pointer; border: none; }
+        .slider-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 0.85em; color: #475569; }
+        .slider-row input[type=range] { flex: 1; }
+        .slider-row .val { min-width: 48px; text-align: right; color: #4a90e2; font-weight: 600; font-family: 'Courier New', monospace; }
+    </style>
+    <meta name="keywords" content="音频波形编辑,在线音频波形编辑,音视频处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/media/audio-wave-tool.html" />
+    <meta property="og:title" content="音频波形编辑" />
+    <meta property="og:description" content="音频波形可视化编辑工具，纯前端使用wavesurfer.js显示音频波形，支持播放、缩放与区域选择，数据本地处理" />
+    <meta property="og:url" content="https://box.lynvortex.top/media/audio-wave-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="音频波形编辑" />
+    <meta itemprop="description" content="音频波形可视化编辑工具，纯前端使用wavesurfer.js显示音频波形，支持播放、缩放与区域选择，数据本地处理" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "音视频处理",
+                "item": "https://box.lynvortex.top/media.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "音频波形编辑",
+                "item": "https://box.lynvortex.top/media/audio-wave-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "音频波形编辑",
+        "url": "https://box.lynvortex.top/media/audio-wave-tool.html",
+        "description": "基于wavesurfer.js显示音频波形，支持播放、缩放与进度控制",
+        "applicationCategory": "音视频处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🎵 音频波形编辑</h1>
+                <p>基于 wavesurfer.js 显示音频波形，支持播放、缩放与进度控制，纯前端本地处理</p>
+            </div>
+
+            <div class="form-item" style="margin-bottom: 16px;">
+                <label>选择音频文件</label>
+                <input type="file" id="audioFile" accept="audio/*" />
+                <span class="hint">支持 MP3 / WAV / OGG / M4A / FLAC 等浏览器可解码格式</span>
+            </div>
+
+            <div class="wave-box">
+                <div id="waveform">
+                    <div class="wave-empty" id="waveEmpty">📂 请先选择音频文件以加载波形</div>
+                </div>
+            </div>
+
+            <div class="seek-row">
+                <span class="time-display" id="curTime" style="margin-left:0;">00:00</span>
+                <input type="range" class="seek-bar" id="seekBar" min="0" max="1000" value="0" step="1" disabled />
+                <span class="time-display" id="durTime">00:00</span>
+            </div>
+
+            <div class="transport">
+                <button class="t-btn ghost" id="prevBtn" title="后退5秒" disabled>⏮</button>
+                <button class="t-btn" id="playBtn" title="播放/暂停" disabled>▶</button>
+                <button class="t-btn ghost" id="stopBtn" title="停止" disabled>⏹</button>
+                <button class="t-btn ghost" id="nextBtn" title="前进5秒" disabled>⏭</button>
+                <span class="time-display" id="playState">未加载</span>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-item">
+                    <label>缩放（像素/秒）</label>
+                    <div class="slider-row">
+                        <input type="range" id="zoomSlider" min="0" max="300" value="0" step="1" disabled />
+                        <span class="val" id="zoomVal">适配</span>
+                    </div>
+                </div>
+                <div class="form-item">
+                    <label>音量</label>
+                    <div class="slider-row">
+                        <input type="range" id="volSlider" min="0" max="100" value="80" step="1" />
+                        <span class="val" id="volVal">80%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="form-item" style="margin-bottom:0;">
+                <label>播放速度</label>
+                <select id="rateSel" disabled>
+                    <option value="0.5">0.5x</option>
+                    <option value="0.75">0.75x</option>
+                    <option value="1" selected>1x（正常）</option>
+                    <option value="1.25">1.25x</option>
+                    <option value="1.5">1.5x</option>
+                    <option value="2">2x</option>
+                </select>
+            </div>
+
+            <div id="statusBar" class="status-bar info">准备就绪，请选择音频文件加载波形</div>
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 功能说明</h3>
+                <p>上传音频文件即可生成可交互波形，支持播放/暂停/停止、进度拖动、缩放、音量与播放速度调节。</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">波形显示</span>
+                    <span class="feature-chip">播放控制</span>
+                    <span class="feature-chip">缩放</span>
+                    <span class="feature-chip">进度</span>
+                    <span class="feature-chip">音频上传</span>
+                    <span class="feature-chip">离线本地</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>支持浏览器原生可解码的音频格式（MP3/WAV/OGG/M4A 等）</li>
+                    <li>可直接点击波形定位播放位置，拖动进度条精确跳转</li>
+                    <li>缩放滑块用于横向放大波形查看细节</li>
+                    <li>所有音频数据在本地处理，不上传服务器</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const setStatus = (m, t) => { const s = document.getElementById('statusBar'); s.textContent = m; s.className = 'status-bar ' + (t || 'info'); };
+    const fmt = s => { if (!isFinite(s) || s < 0) s = 0; return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(Math.floor(s % 60)).padStart(2, '0'); };
+
+    const playBtn = document.getElementById('playBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const seekBar = document.getElementById('seekBar');
+    const zoomSlider = document.getElementById('zoomSlider');
+    const volSlider = document.getElementById('volSlider');
+    const rateSel = document.getElementById('rateSel');
+    const curTimeEl = document.getElementById('curTime');
+    const durTimeEl = document.getElementById('durTime');
+    const playState = document.getElementById('playState');
+
+    let ws = null, seeking = false;
+
+    if (typeof WaveSurfer === 'undefined') {
+        setStatus('波形库加载失败，请检查网络后刷新页面', 'error');
+    }
+
+    function enableControls(en) {
+        [playBtn, stopBtn, prevBtn, nextBtn, seekBar, zoomSlider, rateSel].forEach(b => b.disabled = !en);
+    }
+    enableControls(false);
+
+    function createWs() {
+        ws = WaveSurfer.create({
+            container: '#waveform',
+            waveColor: '#9dc3e6',
+            progressColor: '#4a90e2',
+            cursorColor: '#2c3e50',
+            cursorWidth: 2,
+            height: 130,
+            barWidth: 2,
+            barRadius: 1,
+            barGap: 2,
+            normalize: true,
+            interact: true
+        });
+
+        ws.on('ready', () => {
+            const dur = ws.getDuration();
+            durTimeEl.textContent = fmt(dur);
+            curTimeEl.textContent = '00:00';
+            seekBar.value = 0;
+            enableControls(true);
+            ws.setVolume(volSlider.value / 100);
+            playState.textContent = '已就绪';
+            setStatus('波形加载完成，时长 ' + fmt(dur) + '，点击播放', 'success');
+        });
+
+        ws.on('timeupdate', (t) => { if (!seeking) updateProgress(t); });
+        ws.on('audioprocess', (t) => { if (!seeking) updateProgress(t); });
+        ws.on('play', () => { playBtn.textContent = '⏸'; playState.textContent = '播放中'; });
+        ws.on('pause', () => { playBtn.textContent = '▶'; playState.textContent = '已暂停'; });
+        ws.on('finish', () => { playBtn.textContent = '▶'; playState.textContent = '播放结束'; seekBar.value = 0; curTimeEl.textContent = '00:00'; });
+        ws.on('seeking', (t) => { if (!seeking) updateProgress(t); });
+        ws.on('error', (e) => { setStatus('音频加载失败：' + (e && e.message ? e.message : '格式不支持或文件损坏'), 'error'); });
+    }
+
+    function updateProgress(t) {
+        const dur = ws.getDuration() || 0;
+        curTimeEl.textContent = fmt(t);
+        seekBar.max = Math.max(1000, Math.round(dur * 1000));
+        seekBar.value = Math.round(t * 1000);
+    }
+
+    document.getElementById('audioFile').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        document.getElementById('waveEmpty') && (document.getElementById('waveEmpty').style.display = 'none');
+        if (ws) { try { ws.destroy(); } catch (err) {} ws = null; }
+        createWs();
+        enableControls(false);
+        playState.textContent = '加载中…';
+        setStatus('正在加载音频并解码波形…', 'info');
+        const url = URL.createObjectURL(file);
+        ws.load(url);
+    });
+
+    playBtn.addEventListener('click', () => { if (ws) ws.playPause(); });
+    stopBtn.addEventListener('click', () => { if (ws) { ws.stop(); playBtn.textContent = '▶'; playState.textContent = '已停止'; } });
+    prevBtn.addEventListener('click', () => { if (ws) { const t = Math.max(0, ws.getCurrentTime() - 5); ws.setTime(t); } });
+    nextBtn.addEventListener('click', () => { if (ws) { const t = Math.min(ws.getDuration(), ws.getCurrentTime() + 5); ws.setTime(t); } });
+
+    seekBar.addEventListener('input', () => {
+        if (!ws) return;
+        seeking = true;
+        const dur = ws.getDuration() || 0;
+        const t = (seekBar.value / Math.max(1, seekBar.max)) * dur;
+        curTimeEl.textContent = fmt(t);
+    });
+    seekBar.addEventListener('change', () => {
+        if (!ws) { seeking = false; return; }
+        const dur = ws.getDuration() || 0;
+        const t = (seekBar.value / Math.max(1, seekBar.max)) * dur;
+        ws.setTime(t);
+        seeking = false;
+    });
+
+    zoomSlider.addEventListener('input', () => {
+        const v = parseInt(zoomSlider.value, 10);
+        document.getElementById('zoomVal').textContent = v === 0 ? '适配' : v + 'px';
+        if (ws) ws.zoom(v);
+    });
+    volSlider.addEventListener('input', () => {
+        const v = volSlider.value;
+        document.getElementById('volVal').textContent = v + '%';
+        if (ws) ws.setVolume(v / 100);
+    });
+    rateSel.addEventListener('change', () => { if (ws) ws.setPlaybackRate(parseFloat(rateSel.value)); });
+
+    initSidebar('media');
+</script>
+</body>
+</html>

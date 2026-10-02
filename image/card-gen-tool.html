@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>贺卡邀请函生成器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="贺卡邀请函生成器，纯前端Canvas选模板填文字生成贺卡邀请函，支持自定义背景颜色文字，导出PNG，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.template-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px;}
+.template-card{border:2px solid #e0e6ed;border-radius:10px;cursor:pointer;overflow:hidden;transition:.2s;text-align:center;padding:8px;}
+.template-card:hover{border-color:#4a90e2;}
+.template-card.active{border-color:#4a90e2;background:#eff6ff;}
+.template-card .tp{width:100%;height:60px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.75em;color:#fff;font-weight:700;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;max-width:500px;margin-left:auto;margin-right:auto;}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr;}}
+.form-grid label{font-size:.82em;color:#64748b;font-weight:600;}
+.form-grid input,.form-grid textarea,.form-grid select{padding:8px 12px;border:1px solid #e0e6ed;border-radius:6px;font-size:.88em;outline:none;width:100%;box-sizing:border-box;}
+.form-grid textarea{min-height:60px;resize:vertical;}
+.canvas-wrap{display:flex;justify-content:center;margin-bottom:16px;}
+.canvas-box canvas{max-width:100%;border-radius:12px;border:1px solid #e0e6ed;}
+</style>
+    <meta name="keywords" content="贺卡生成器,在线贺卡生成器,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/card-gen-tool.html" />
+    <meta property="og:title" content="贺卡邀请函生成器" />
+    <meta property="og:description" content="贺卡邀请函生成器，纯前端Canvas选模板填文字生成贺卡邀请函，支持自定义背景颜色文字，导出PNG，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/card-gen-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="贺卡邀请函生成器" />
+    <meta itemprop="description" content="贺卡邀请函生成器，纯前端Canvas选模板填文字生成贺卡邀请函，支持自定义背景颜色文字，导出PNG，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "贺卡生成器",
+                "item": "https://box.lynvortex.top/image/card-gen-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "贺卡生成器",
+        "url": "https://box.lynvortex.top/image/card-gen-tool.html",
+        "description": "上传图片添加祝福文字生成精美贺卡，支持多种模板与字体样式",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>💌 贺卡邀请函生成器</h1><p>选模板填文字，一键生成精美贺卡邀请函</p></div>
+<div class="template-grid" id="tplGrid"></div>
+<div class="form-grid">
+<div><label>标题</label><input type="text" id="titleInput" value="生日快乐"/></div>
+<div><label>副标题</label><input type="text" id="subInput" value="Happy Birthday"/></div>
+<div><label>正文内容</label><textarea id="bodyInput">诚邀您参加生日派对\n时间：2026年8月10日 18:00\n地点：星光餐厅三楼</textarea></div>
+<div><label>署名</label><input type="text" id="signInput" value="—— 小绘"/></div>
+<div><label>背景色</label><input type="color" id="bgColor" value="#e11d48" style="height:36px;"/></div>
+<div><label>文字色</label><input type="color" id="textColor" value="#fef3c7" style="height:36px;"/></div>
+</div>
+<div style="text-align:center;margin-bottom:16px;">
+<button class="btn btn-primary" id="genBtn" style="padding:10px 28px;">✨ 生成贺卡</button>
+<button class="btn" id="downloadBtn" style="padding:10px 16px;margin-left:8px;border:1px solid #4a90e2;border-radius:8px;background:#fff;color:#4a90e2;cursor:pointer;font-size:.85em;font-weight:600;">⬇ 下载PNG</button>
+</div>
+<div class="canvas-wrap"><div class="canvas-box"><canvas id="cardCanvas" width="600" height="800"></canvas></div></div>
+<div id="statusBar" class="status-bar info">选择模板，填写文字，点击生成</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 贺卡邀请函生成器</h3><p>模板化贺卡邀请函制作</p><div class="feature-chips"><span class="feature-chip">多模板</span><span class="feature-chip">自定义文字</span><span class="feature-chip">自选配色</span><span class="feature-chip">导出PNG</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>6种预设模板：生日/婚礼/新年/圣诞/邀请/感谢</li><li>自定义标题、正文、署名文字</li><li>可调背景色和文字色</li><li>导出600x800高清PNG</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var templates=[{name:'生日',bg:'#e11d48',tc:'#fef3c7',icon:'🎂'},{name:'婚礼',bg:'#f43f5e',tc:'#fff',icon:'💒'},{name:'新年',bg:'#dc2626',tc:'#fde047',icon:'🧧'},{name:'圣诞',bg:'#059669',tc:'#fff',icon:'🎄'},{name:'邀请',bg:'#4a90e2',tc:'#fff',icon:'✉️'},{name:'感谢',bg:'#7c3aed',tc:'#f3e8ff',icon:'🙏'}];
+var curTpl=0;
+var tplGrid=document.getElementById('tplGrid');
+templates.forEach(function(t,i){var d=document.createElement('div');d.className='template-card'+(i===0?' active':'');d.innerHTML='<div class="tp" style="background:'+t.bg+';color:'+t.tc+';">'+t.icon+' '+t.name+'</div>';d.onclick=function(){document.querySelectorAll('.template-card').forEach(function(x){x.classList.remove('active');});d.classList.add('active');curTpl=i;document.getElementById('bgColor').value=t.bg;document.getElementById('textColor').value=t.tc;generate();};tplGrid.appendChild(d);});
+function generate(){var c=document.getElementById('cardCanvas');var ctx=c.getContext('2d');var bg=document.getElementById('bgColor').value;var tc=document.getElementById('textColor').value;var title=document.getElementById('titleInput').value;var sub=document.getElementById('subInput').value;var body=document.getElementById('bodyInput').value;var sign=document.getElementById('signInput').value;var tpl=templates[curTpl];ctx.fillStyle=bg;ctx.fillRect(0,0,c.width,c.height);var grad=ctx.createLinearGradient(0,0,0,c.height);grad.addColorStop(0,'rgba(255,255,255,0.15)');grad.addColorStop(1,'rgba(0,0,0,0.15)');ctx.fillStyle=grad;ctx.fillRect(0,0,c.width,c.height);ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=3;ctx.strokeRect(30,30,c.width-60,c.height-60);ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.lineWidth=1;ctx.strokeRect(40,40,c.width-80,c.height-80);ctx.textAlign='center';ctx.fillStyle=tc;ctx.font='bold 52px serif';ctx.fillText(tpl.icon,c.width/2,180);ctx.font='bold 42px sans-serif';ctx.fillText(title,c.width/2,260);ctx.font='italic 22px serif';ctx.globalAlpha=0.8;ctx.fillText(sub,c.width/2,300);ctx.globalAlpha=1;ctx.font='20px sans-serif';var lines=body.split('\\n');var y=400;lines.forEach(function(line){ctx.fillText(line,c.width/2,y);y+=36;});ctx.font='italic 18px serif';ctx.globalAlpha=0.7;ctx.fillText(sign,c.width/2,c.height-80);ctx.globalAlpha=1;document.getElementById('statusBar').textContent='贺卡生成完成！';}
+document.getElementById('genBtn').onclick=generate;
+document.getElementById('downloadBtn').onclick=function(){var c=document.getElementById('cardCanvas');c.toBlob(function(blob){var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='greeting_card.png';a.click();});};
+generate();
+initSidebar('image');
+</script>
+</body>
+</html>

@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>音频播放器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="在线音频播放器，纯前端使用howler.js播放本地音频，支持播放列表与控制，数据本地处理" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <script src="../assets/sidebar.js"></script>
+    <script src="../assets/howler.min.js"></script>
+    <style>
+        .now-card { background: linear-gradient(135deg,#4a90e2,#3a7bd5); border-radius: 12px; padding: 18px 20px; color: #fff; margin-bottom: 16px; box-shadow: 0 6px 18px rgba(74,144,226,0.25); }
+        .now-card .label { font-size: 0.74em; opacity: 0.85; letter-spacing: 1px; }
+        .now-card .title { font-size: 1.15em; font-weight: 700; margin: 4px 0 12px; word-break: break-all; }
+        .seek-row { display: flex; align-items: center; gap: 10px; }
+        .seek-row .t { font-family: 'Courier New', monospace; font-size: 0.82em; min-width: 42px; }
+        .seek-bar { flex: 1; -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.3); outline: none; }
+        .seek-bar::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #fff; cursor: pointer; }
+        .seek-bar::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #fff; cursor: pointer; border: none; }
+        .controls { display: flex; align-items: center; gap: 12px; justify-content: center; margin: 14px 0; flex-wrap: wrap; }
+        .c-btn { width: 46px; height: 46px; border-radius: 50%; border: none; cursor: pointer; font-size: 1em; background: rgba(255,255,255,0.18); color: #fff; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; }
+        .c-btn:hover { background: rgba(255,255,255,0.32); }
+        .c-btn.play { width: 58px; height: 58px; background: #fff; color: #4a90e2; font-size: 1.3em; }
+        .c-btn.play:hover { background: #f1f5f9; }
+        .c-btn.loop { font-size: 0.82em; width: auto; padding: 0 12px; border-radius: 20px; }
+        .c-btn.loop.active { background: #fff; color: #4a90e2; font-weight: 600; }
+        .vol-row { display: flex; align-items: center; gap: 10px; max-width: 280px; margin: 0 auto 16px; font-size: 0.85em; }
+        .vol-row input { flex: 1; }
+        .pl-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .pl-head h3 { margin: 0; font-size: 0.95em; color: #2c3e50; }
+        .playlist { display: flex; flex-direction: column; gap: 6px; max-height: 280px; overflow-y: auto; }
+        .pl-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid #e0e6ed; border-radius: 8px; cursor: pointer; transition: 0.15s; background: #fff; }
+        .pl-item:hover { border-color: #4a90e2; background: #f8fbff; }
+        .pl-item.active { border-color: #4a90e2; background: #ebf5ff; }
+        .pl-item .idx { width: 24px; text-align: center; color: #94a3b8; font-size: 0.82em; font-family: 'Courier New', monospace; }
+        .pl-item.active .idx { color: #4a90e2; }
+        .pl-item .pname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.88em; color: #2c3e50; }
+        .pl-item .pdur { font-size: 0.78em; color: #94a3b8; font-family: 'Courier New', monospace; }
+        .pl-item .pdel { background: none; border: none; color: #cbd5e1; cursor: pointer; font-size: 1em; padding: 0 4px; }
+        .pl-item .pdel:hover { color: #ef4444; }
+        .pl-empty { text-align: center; color: #94a3b8; padding: 30px 10px; font-size: 0.9em; }
+    </style>
+    <meta name="keywords" content="音频播放器,在线音频播放器,音视频处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/media/audio-player-tool.html" />
+    <meta property="og:title" content="音频播放器" />
+    <meta property="og:description" content="在线音频播放器，纯前端使用howler.js播放本地音频，支持播放列表与控制，数据本地处理" />
+    <meta property="og:url" content="https://box.lynvortex.top/media/audio-player-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="音频播放器" />
+    <meta itemprop="description" content="在线音频播放器，纯前端使用howler.js播放本地音频，支持播放列表与控制，数据本地处理" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "音视频处理",
+                "item": "https://box.lynvortex.top/media.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "音频播放器",
+                "item": "https://box.lynvortex.top/media/audio-player-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "音频播放器",
+        "url": "https://box.lynvortex.top/media/audio-player-tool.html",
+        "description": "基于howler.js播放本地音频，支持播放列表、进度拖动与循环模式",
+        "applicationCategory": "音视频处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🔊 音频播放器</h1>
+                <p>基于 howler.js 播放本地音频，支持播放列表、进度拖动与循环模式，纯前端本地处理</p>
+            </div>
+
+            <div class="form-item" style="margin-bottom: 16px;">
+                <label>添加音频文件到播放列表</label>
+                <input type="file" id="fileInput" accept="audio/*" multiple />
+                <span class="hint">支持 MP3 / WAV / OGG / M4A / FLAC 等格式，可多选</span>
+            </div>
+
+            <div class="now-card">
+                <div class="label">▶ 当前播放</div>
+                <div class="title" id="trackTitle">未选择曲目</div>
+                <div class="seek-row">
+                    <span class="t" id="curTime">00:00</span>
+                    <input type="range" class="seek-bar" id="seekBar" min="0" max="1000" value="0" step="1" disabled />
+                    <span class="t" id="durTime" style="text-align:right;">00:00</span>
+                </div>
+                <div class="controls">
+                    <button class="c-btn" id="prevBtn" title="上一首" disabled>⏮</button>
+                    <button class="c-btn play" id="playBtn" title="播放/暂停" disabled>▶</button>
+                    <button class="c-btn" id="nextBtn" title="下一首" disabled>⏭</button>
+                    <button class="c-btn loop" id="loopBtn" title="切换循环模式">🔁 列表循环</button>
+                </div>
+                <div class="vol-row">
+                    <span>🔊</span>
+                    <input type="range" id="volSlider" min="0" max="100" value="80" />
+                    <span id="volVal" style="min-width:40px;text-align:right;font-family:'Courier New',monospace;">80%</span>
+                </div>
+            </div>
+
+            <div class="pl-head">
+                <h3>📋 播放列表</h3>
+                <button class="btn btn-ghost" id="clearBtn" style="padding:4px 10px;font-size:0.78em;">清空</button>
+            </div>
+            <div class="playlist" id="playlist">
+                <div class="pl-empty" id="plEmpty">还没有添加音频，请上方选择文件</div>
+            </div>
+
+            <div id="statusBar" class="status-bar info">准备就绪，请选择音频文件加入播放列表</div>
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 功能说明</h3>
+                <p>添加多个音频文件生成播放列表，支持播放/暂停、上下首切换、进度拖动、音量调节与循环模式。</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">播放列表</span>
+                    <span class="feature-chip">播放控制</span>
+                    <span class="feature-chip">音量</span>
+                    <span class="feature-chip">进度</span>
+                    <span class="feature-chip">循环模式</span>
+                    <span class="feature-chip">离线本地</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>支持浏览器可解码的音频格式，可一次选择多个文件</li>
+                    <li>循环模式：列表循环 / 单曲循环 / 顺序播放，点击按钮切换</li>
+                    <li>可直接拖动进度条跳转，点击列表项切换曲目</li>
+                    <li>所有音频文件在本地播放，不上传服务器</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const setStatus = (m, t) => { const s = document.getElementById('statusBar'); s.textContent = m; s.className = 'status-bar ' + (t || 'info'); };
+    const fmt = s => { if (!isFinite(s) || s < 0) s = 0; return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(Math.floor(s % 60)).padStart(2, '0'); };
+
+    const fileInput = document.getElementById('fileInput');
+    const playlistEl = document.getElementById('playlist');
+    const trackTitle = document.getElementById('trackTitle');
+    const playBtn = document.getElementById('playBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const loopBtn = document.getElementById('loopBtn');
+    const seekBar = document.getElementById('seekBar');
+    const curTimeEl = document.getElementById('curTime');
+    const durTimeEl = document.getElementById('durTime');
+    const volSlider = document.getElementById('volSlider');
+
+    let playlist = []; // {name, url, howl, duration, loaded, error}
+    let currentIndex = -1;
+    let loopMode = 'list'; // list | single | none
+    let rafId = null, seeking = false, playing = false;
+
+    if (typeof Howl === 'undefined') {
+        setStatus('Howler 加载失败，请检查网络后刷新页面', 'error');
+        fileInput.disabled = true;
+    }
+    const LOOP_LABELS = { list: '🔁 列表循环', single: '🔂 单曲循环', none: '➡️ 顺序播放' };
+
+    function getFormat(name) {
+        const m = /\.([a-z0-9]+)$/i.exec(name || '');
+        if (!m) return null;
+        const ext = m[1].toLowerCase();
+        const map = { mp3: 'mp3', wav: 'wav', ogg: 'ogg', oga: 'ogg', m4a: 'm4a', flac: 'flac', webm: 'webm', aac: 'aac' };
+        return map[ext] || ext;
+    }
+
+    function enableControls(en) {
+        [playBtn, prevBtn, nextBtn, seekBar].forEach(b => b.disabled = !en);
+    }
+    enableControls(false);
+
+    fileInput.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+        let added = 0;
+        files.forEach(file => {
+            const url = URL.createObjectURL(file);
+            const fmt_ = getFormat(file.name);
+            const item = { name: file.name, url, howl: null, duration: 0, loaded: false, error: false };
+            const opts = { src: [url], html5: true, preload: 'metadata', volume: 1 };
+            if (fmt_) opts.format = [fmt_];
+            const howl = new Howl(opts);
+            item.howl = howl;
+            howl.on('load', () => {
+                item.loaded = true;
+                item.duration = howl.duration() || 0;
+                renderPlaylist();
+                if (playlist[currentIndex] === item) durTimeEl.textContent = fmt(item.duration);
+            });
+            howl.on('loaderror', () => {
+                item.error = true;
+                renderPlaylist();
+                setStatus('音频加载失败：' + item.name + '（格式可能不受支持）', 'error');
+            });
+            howl.on('playerror', () => {
+                setStatus('播放失败：' + item.name, 'error');
+            });
+            howl.on('end', () => onEnd());
+            playlist.push(item);
+            added++;
+        });
+        e.target.value = '';
+        renderPlaylist();
+        if (currentIndex === -1 && playlist.length > 0) {
+            // 不自动播放，仅准备第一首
+        }
+        setStatus('已添加 ' + added + ' 个文件到播放列表' + (currentIndex === -1 ? '，点击曲目或播放按钮开始' : ''), 'success');
+    });
+
+    function playIndex(i) {
+        if (i < 0 || i >= playlist.length) return;
+        // 停止当前
+        if (currentIndex >= 0 && playlist[currentIndex] && playlist[currentIndex].howl) {
+            const h = playlist[currentIndex].howl;
+            try { h.stop(); } catch (e) {}
+        }
+        currentIndex = i;
+        const item = playlist[i];
+        trackTitle.textContent = item.name;
+        enableControls(true);
+        renderPlaylist();
+        try {
+            item.howl.play();
+            playing = true;
+            playBtn.textContent = '⏸';
+            setStatus('正在播放：' + item.name, 'info');
+            startProgress();
+        } catch (e) {
+            setStatus('播放出错：' + (e.message || e), 'error');
+        }
+    }
+
+    function onEnd() {
+        stopProgress();
+        if (loopMode === 'single') {
+            const item = playlist[currentIndex];
+            if (item) { try { item.howl.seek(0); item.howl.play(); startProgress(); } catch (e) {} return; }
+        }
+        if (currentIndex < playlist.length - 1) {
+            playIndex(currentIndex + 1);
+        } else {
+            // 到末尾
+            if (loopMode === 'list') {
+                playIndex(0);
+            } else {
+                // 顺序播放结束
+                playing = false;
+                playBtn.textContent = '▶';
+                seekBar.value = 0;
+                curTimeEl.textContent = '00:00';
+                setStatus('播放列表已播放完毕', 'info');
+            }
+        }
+    }
+
+    function togglePlay() {
+        if (currentIndex < 0) {
+            if (playlist.length > 0) playIndex(0);
+            return;
+        }
+        const item = playlist[currentIndex];
+        if (!item || !item.howl) return;
+        if (playing) {
+            item.howl.pause();
+            playing = false;
+            playBtn.textContent = '▶';
+            stopProgress();
+            setStatus('已暂停', 'info');
+        } else {
+            item.howl.play();
+            playing = true;
+            playBtn.textContent = '⏸';
+            setStatus('正在播放：' + item.name, 'info');
+            startProgress();
+        }
+    }
+
+    function startProgress() {
+        stopProgress();
+        const tick = () => {
+            if (!playing) return;
+            const item = playlist[currentIndex];
+            if (item && item.howl && !seeking) {
+                const cur = item.howl.seek() || 0;
+                const dur = item.duration || item.howl.duration() || 0;
+                curTimeEl.textContent = fmt(cur);
+                if (dur > 0) {
+                    seekBar.max = 1000;
+                    seekBar.value = Math.min(1000, Math.round(cur / dur * 1000));
+                }
+            }
+            rafId = requestAnimationFrame(tick);
+        };
+        rafId = requestAnimationFrame(tick);
+    }
+    function stopProgress() { if (rafId) { cancelAnimationFrame(rafId); rafId = null; } }
+
+    playBtn.addEventListener('click', togglePlay);
+    prevBtn.addEventListener('click', () => {
+        if (playlist.length === 0) return;
+        const i = currentIndex <= 0 ? playlist.length - 1 : currentIndex - 1;
+        playIndex(i);
+    });
+    nextBtn.addEventListener('click', () => {
+        if (playlist.length === 0) return;
+        const i = (currentIndex + 1) % playlist.length;
+        playIndex(i);
+    });
+
+    loopBtn.addEventListener('click', () => {
+        loopMode = loopMode === 'list' ? 'single' : (loopMode === 'single' ? 'none' : 'list');
+        loopBtn.textContent = LOOP_LABELS[loopMode];
+        loopBtn.classList.toggle('active', loopMode !== 'list');
+    });
+
+    seekBar.addEventListener('input', () => {
+        const item = playlist[currentIndex];
+        if (!item || !item.howl) return;
+        seeking = true;
+        const dur = item.duration || item.howl.duration() || 0;
+        const cur = (seekBar.value / 1000) * dur;
+        curTimeEl.textContent = fmt(cur);
+    });
+    seekBar.addEventListener('change', () => {
+        const item = playlist[currentIndex];
+        if (!item || !item.howl) { seeking = false; return; }
+        const dur = item.duration || item.howl.duration() || 0;
+        const cur = (seekBar.value / 1000) * dur;
+        try { item.howl.seek(cur); } catch (e) {}
+        seeking = false;
+    });
+
+    volSlider.addEventListener('input', () => {
+        const v = parseInt(volSlider.value, 10);
+        document.getElementById('volVal').textContent = v + '%';
+        if (typeof Howler !== 'undefined') Howler.volume(v / 100);
+    });
+    if (typeof Howler !== 'undefined') Howler.volume(0.8);
+
+    document.getElementById('clearBtn').addEventListener('click', () => {
+        stopProgress();
+        playlist.forEach(p => { try { p.howl.unload(); } catch (e) {} URL.revokeObjectURL(p.url); });
+        playlist = [];
+        currentIndex = -1;
+        playing = false;
+        playBtn.textContent = '▶';
+        trackTitle.textContent = '未选择曲目';
+        curTimeEl.textContent = '00:00';
+        durTimeEl.textContent = '00:00';
+        seekBar.value = 0;
+        enableControls(false);
+        renderPlaylist();
+        setStatus('已清空播放列表', 'info');
+    });
+
+    function renderPlaylist() {
+        if (playlist.length === 0) {
+            playlistEl.innerHTML = '<div class="pl-empty">还没有添加音频，请上方选择文件</div>';
+            return;
+        }
+        playlistEl.innerHTML = playlist.map((p, i) => `
+            <div class="pl-item ${i === currentIndex ? 'active' : ''}" onclick="playItem(${i})">
+                <span class="idx">${i === currentIndex && playing ? '▶' : (i + 1)}</span>
+                <span class="pname">${escapeHtml(p.name)}${p.error ? ' ⚠️' : ''}</span>
+                <span class="pdur">${p.loaded ? fmt(p.duration) : '--:--'}</span>
+                <button class="pdel" onclick="event.stopPropagation();removeItem(${i})" title="移除">✕</button>
+            </div>
+        `).join('');
+    }
+    window.playItem = (i) => playIndex(i);
+    window.removeItem = (i) => {
+        const p = playlist[i];
+        try { p.howl.unload(); } catch (e) {}
+        URL.revokeObjectURL(p.url);
+        const wasCurrent = i === currentIndex;
+        playlist.splice(i, 1);
+        if (playlist.length === 0) {
+            currentIndex = -1; playing = false;
+            playBtn.textContent = '▶';
+            trackTitle.textContent = '未选择曲目';
+            curTimeEl.textContent = '00:00'; durTimeEl.textContent = '00:00';
+            seekBar.value = 0;
+            enableControls(false);
+        } else if (wasCurrent) {
+            stopProgress();
+            playing = false;
+            playBtn.textContent = '▶';
+            if (currentIndex >= playlist.length) currentIndex = playlist.length - 1;
+            if (currentIndex >= 0) {
+                trackTitle.textContent = playlist[currentIndex].name;
+                enableControls(true);
+            }
+        } else if (i < currentIndex) {
+            currentIndex--;
+        }
+        renderPlaylist();
+        setStatus('已移除该曲目', 'info');
+    };
+
+    initSidebar('media');
+</script>
+</body>
+</html>

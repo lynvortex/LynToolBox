@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ZIP打包解包 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp" />
+<meta name="description" content="ZIP打包解包工具，纯前端使用JSZip在浏览器中创建与解压ZIP文件，支持添加多文件、预览与下载，数据本地处理。" />
+<link rel="stylesheet" href="../assets/tool-common.css" />
+<script src="../assets/sidebar.js"></script>
+<script src="../assets/jszip.min.js"></script>
+<style>
+  .mode-tabs { display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; }
+  .mode-tab { padding:9px 20px; border:1px solid #e0e6ed; border-radius:8px; background:#f8fafc; color:#64748b; cursor:pointer; font-size:0.88em; font-weight:600; transition:all .2s; }
+  .mode-tab.active { background:#4a90e2; color:#fff; border-color:#4a90e2; }
+  .panel { display:none; }
+  .panel.active { display:block; }
+  .add-row { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-bottom:16px; }
+  .add-row .form-item { flex:1; min-width:160px; margin-bottom:0; }
+  .file-drop { border:2px dashed #cbd5e1; border-radius:10px; padding:22px; text-align:center; color:#64748b; background:#f8fafc; cursor:pointer; transition:all .2s; margin-bottom:14px; }
+  .file-drop:hover, .file-drop.dragover { border-color:#4a90e2; background:#ebf5ff; color:#4a90e2; }
+  .file-list { border:1px solid #e0e6ed; border-radius:8px; max-height:320px; overflow:auto; background:#fff; }
+  .file-item { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid #f1f5f9; font-size:0.86em; }
+  .file-item:last-child { border-bottom:none; }
+  .file-item .fname { color:#2c3e50; font-weight:600; word-break:break-all; }
+  .file-item .fmeta { color:#94a3b8; font-size:0.85em; font-family:'Consolas',monospace; margin-left:8px; white-space:nowrap; }
+  .file-item .factions { display:flex; gap:8px; margin-left:10px; }
+  .mini-btn { padding:4px 10px; border:1px solid #cbd5e1; border-radius:6px; background:#fff; color:#4a90e2; cursor:pointer; font-size:0.82em; font-weight:600; white-space:nowrap; }
+  .mini-btn:hover { background:#ebf5ff; }
+  .mini-btn.danger { color:#ef4444; border-color:#fecaca; }
+  .mini-btn.danger:hover { background:#fef2f2; }
+  .empty-tip { padding:24px; text-align:center; color:#94a3b8; font-size:0.85em; }
+  textarea.code { width:100%; min-height:120px; padding:12px 14px; border:1px solid #e0e6ed; border-radius:8px; font-family:'Courier New',monospace; font-size:0.86em; outline:none; resize:vertical; background:#f8fafc; color:#1e293b; }
+  textarea.code:focus { border-color:#4a90e2; background:#fff; }
+</style>
+    <meta name="keywords" content="ZIP打包解包,在线ZIP打包解包,文本处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/text/zip-tool.html" />
+    <meta property="og:title" content="ZIP打包解包" />
+    <meta property="og:description" content="ZIP打包解包工具，纯前端使用JSZip在浏览器中创建与解压ZIP文件，支持添加多文件、预览与下载，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/text/zip-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="ZIP打包解包" />
+    <meta itemprop="description" content="ZIP打包解包工具，纯前端使用JSZip在浏览器中创建与解压ZIP文件，支持添加多文件、预览与下载，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文本处理",
+                "item": "https://box.lynvortex.top/text.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "ZIP打包解包",
+                "item": "https://box.lynvortex.top/text/zip-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "ZIP打包解包",
+        "url": "https://box.lynvortex.top/text/zip-tool.html",
+        "description": "浏览器中创建与解压ZIP文件，支持多文件预览与批量下载",
+        "applicationCategory": "文本处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+  <div class="tool-container">
+    <div class="tool-header">
+      <h1>📦 ZIP打包解包</h1>
+      <p>纯前端 JSZip 在浏览器中创建与解压 ZIP 文件，支持多文件、预览与下载</p>
+    </div>
+
+    <div class="mode-tabs" id="modeTabs">
+      <div class="mode-tab active" data-mode="pack">打包（生成 ZIP）</div>
+      <div class="mode-tab" data-mode="unpack">解包（解压 ZIP）</div>
+    </div>
+
+    <!-- 打包面板 -->
+    <div class="panel active" id="packPanel">
+      <div class="file-drop" id="packDrop">
+        📂 点击选择文件或拖拽到此处上传（可多选）
+        <input type="file" id="packFile" multiple style="display:none;" />
+      </div>
+
+      <div style="font-size:0.82em;color:#64748b;font-weight:600;margin-bottom:6px;">或手动添加文件</div>
+      <div class="add-row">
+        <div class="form-item">
+          <label>文件名</label>
+          <input type="text" id="manualName" placeholder="例如：readme.txt" />
+        </div>
+        <div class="form-item" style="flex:2;">
+          <label>文件内容（文本）</label>
+          <textarea class="code" id="manualContent" placeholder="输入文件文本内容..."></textarea>
+        </div>
+        <button class="btn btn-outline" id="addManualBtn">➕ 添加</button>
+      </div>
+
+      <div style="font-size:0.82em;color:#64748b;font-weight:600;margin-bottom:6px;">打包文件列表（<span id="packCount">0</span> 个文件）</div>
+      <div class="file-list" id="packList">
+        <div class="empty-tip">暂无文件，请上传或手动添加</div>
+      </div>
+
+      <div class="btn-row" style="margin-top:16px;">
+        <button class="btn btn-primary" id="genZipBtn">📦 生成并下载 ZIP</button>
+        <button class="btn btn-ghost" id="clearPackBtn">🗑️ 清空列表</button>
+      </div>
+    </div>
+
+    <!-- 解包面板 -->
+    <div class="panel" id="unpackPanel">
+      <div class="file-drop" id="unpackDrop">
+        📂 点击选择 ZIP 文件或拖拽到此处
+        <input type="file" id="unpackFile" accept=".zip,application/zip,application/x-zip-compressed" style="display:none;" />
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:8px;">
+        <span style="font-size:0.82em;color:#64748b;font-weight:600;">文件清单（<span id="unpackCount">0</span> 个文件）</span>
+        <button class="mini-btn" id="dlAllBtn" style="display:none;">⬇️ 全部下载</button>
+      </div>
+      <div class="file-list" id="unpackList">
+        <div class="empty-tip">请先上传 ZIP 文件</div>
+      </div>
+
+      <div id="previewWrap" style="display:none;margin-top:16px;">
+        <div style="font-size:0.82em;color:#64748b;font-weight:600;margin-bottom:6px;">预览：<span id="previewName" style="color:#4a90e2;"></span></div>
+        <pre class="output" id="previewArea"></pre>
+      </div>
+    </div>
+
+    <div id="statusBar" class="status-bar info">选择「打包」或「解包」模式开始操作</div>
+
+    <footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+  </div>
+
+  <div class="info-cards">
+    <div class="info-card">
+      <h3>📦 功能说明</h3>
+      <p>使用 JSZip 在浏览器本地完成 ZIP 文件的创建与解压。打包支持文件上传或手动添加文本文件；解压支持列出文件清单、预览文本内容并单独或批量下载。</p>
+      <div class="feature-chips">
+        <span class="feature-chip">创建ZIP</span>
+        <span class="feature-chip">解压ZIP</span>
+        <span class="feature-chip">多文件</span>
+        <span class="feature-chip">文件预览</span>
+        <span class="feature-chip">批量下载</span>
+        <span class="feature-chip">离线本地</span>
+      </div>
+    </div>
+    <div class="info-card">
+      <h3>💡 使用须知</h3>
+      <ul class="tips-list">
+        <li>打包时上传的文件以二进制原样写入，手动添加的文件以 UTF-8 文本写入</li>
+        <li>解压预览仅对文本类文件友好，二进制文件建议直接下载查看</li>
+        <li>支持拖拽上传，多个文件会被分别加入打包列表</li>
+        <li>所有操作均在浏览器本地完成，文件不会上传到任何服务器</li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <h3>✨ 绘萤者</h3>
+      <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+      <div class="tool-links">
+        <a href="https://lynvortex.top" target="_blank">完全免费</a>
+        <a href="https://lynvortex.top" target="_blank">开源精神</a>
+        <a href="https://lynvortex.top" target="_blank">极客风范</a>
+        <a href="https://lynvortex.top" target="_blank">协作共创</a>
+      </div>
+      <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+  </div>
+</div></main>
+<script>
+initSidebar('text');
+(function () {
+  'use strict';
+  function fmtSize(n) { if (n < 1024) return n + ' B'; if (n < 1048576) return (n / 1024).toFixed(1) + ' KB'; return (n / 1048576).toFixed(2) + ' MB'; }
+
+  // 模式切换
+  document.querySelectorAll('.mode-tab').forEach(function (t) {
+    t.addEventListener('click', function () {
+      document.querySelectorAll('.mode-tab').forEach(function (x) { x.classList.remove('active'); });
+      t.classList.add('active');
+      var m = t.dataset.mode;
+      document.getElementById('packPanel').classList.toggle('active', m === 'pack');
+      document.getElementById('unpackPanel').classList.toggle('active', m === 'unpack');
+      setStatus(m === 'pack' ? '打包模式：上传或添加文件后生成 ZIP' : '解包模式：上传 ZIP 后查看文件', 'info');
+    });
+  });
+
+  /* ============ 打包 ============ */
+  var packFiles = []; // {name, content:Uint8Array|ArrayBuffer}
+  var packList = document.getElementById('packList');
+
+  function renderPackList() {
+    document.getElementById('packCount').textContent = packFiles.length;
+    if (packFiles.length === 0) { packList.innerHTML = '<div class="empty-tip">暂无文件，请上传或手动添加</div>'; return; }
+    packList.innerHTML = packFiles.map(function (f, i) {
+      return '<div class="file-item"><div style="min-width:0;"><span class="fname">' + escapeHtml(f.name) + '</span><span class="fmeta">' + fmtSize(f.size) + '</span></div>' +
+        '<div class="factions"><button class="mini-btn danger" data-del="' + i + '">删除</button></div></div>';
+    }).join('');
+  }
+
+  function addFiles(fileObjs) {
+    if (typeof JSZip === 'undefined') { setStatus('JSZip 库未加载，请刷新页面', 'error'); return; }
+    var promises = Array.prototype.map.call(fileObjs, function (file) {
+      return file.arrayBuffer().then(function (buf) {
+        packFiles.push({ name: file.webkitRelativePath || file.name, content: buf, size: file.size });
+      });
+    });
+    Promise.all(promises).then(function () { renderPackList(); setStatus('已添加 ' + fileObjs.length + ' 个文件', 'success'); });
+  }
+
+  var packFileInput = document.getElementById('packFile');
+  var packDrop = document.getElementById('packDrop');
+  packDrop.addEventListener('click', function () { packFileInput.click(); });
+  packFileInput.addEventListener('change', function () { if (packFileInput.files.length) addFiles(packFileInput.files); packFileInput.value = ''; });
+  ['dragover', 'dragenter'].forEach(function (ev) { packDrop.addEventListener(ev, function (e) { e.preventDefault(); packDrop.classList.add('dragover'); }); });
+  ['dragleave', 'drop'].forEach(function (ev) { packDrop.addEventListener(ev, function (e) { e.preventDefault(); packDrop.classList.remove('dragover'); }); });
+  packDrop.addEventListener('drop', function (e) { if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files); });
+
+  document.getElementById('addManualBtn').addEventListener('click', function () {
+    var name = document.getElementById('manualName').value.trim();
+    var content = document.getElementById('manualContent').value;
+    if (!name) { setStatus('请输入文件名', 'error'); return; }
+    var bytes = new TextEncoder().encode(content);
+    packFiles.push({ name: name, content: bytes.buffer.slice(0), size: bytes.length, _text: content });
+    document.getElementById('manualName').value = '';
+    document.getElementById('manualContent').value = '';
+    renderPackList();
+    setStatus('已添加文件：' + name, 'success');
+  });
+
+  packList.addEventListener('click', function (e) {
+    var del = e.target.getAttribute('data-del');
+    if (del !== null) { packFiles.splice(parseInt(del, 10), 1); renderPackList(); setStatus('已删除', 'info'); }
+  });
+
+  document.getElementById('genZipBtn').addEventListener('click', function () {
+    if (packFiles.length === 0) { setStatus('列表为空，请先添加文件', 'error'); return; }
+    setStatus('正在生成 ZIP...', 'info');
+    var zip = new JSZip();
+    var used = {};
+    packFiles.forEach(function (f) {
+      var n = f.name;
+      var i = 1;
+      while (used[n]) { n = f.name.replace(/(\.[^.]+)?$/, function (m, ext) { return ' (' + i + ')' + (ext || ''); }); i++; }
+      used[n] = true;
+      zip.file(n, f.content);
+    });
+    zip.generateAsync({ type: 'blob', compression: 'DEFLATE' }).then(function (blob) {
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'huanying-' + Date.now() + '.zip';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 1500);
+      setStatus('ZIP 已生成并下载 ✓（' + packFiles.length + ' 个文件）', 'success');
+    }).catch(function (err) { setStatus('生成失败：' + err.message, 'error'); });
+  });
+
+  document.getElementById('clearPackBtn').addEventListener('click', function () { packFiles = []; renderPackList(); setStatus('已清空打包列表', 'info'); });
+
+  /* ============ 解包 ============ */
+  var zipEntries = []; // {name, size, entry}
+  var unpackList = document.getElementById('unpackList');
+  var unpackFileInput = document.getElementById('unpackFile');
+  var unpackDrop = document.getElementById('unpackDrop');
+  var zipBlob = null;
+
+  unpackDrop.addEventListener('click', function () { unpackFileInput.click(); });
+  unpackFileInput.addEventListener('change', function () { if (unpackFileInput.files[0]) loadZip(unpackFileInput.files[0]); unpackFileInput.value = ''; });
+  ['dragover', 'dragenter'].forEach(function (ev) { unpackDrop.addEventListener(ev, function (e) { e.preventDefault(); unpackDrop.classList.add('dragover'); }); });
+  ['dragleave', 'drop'].forEach(function (ev) { unpackDrop.addEventListener(ev, function (e) { e.preventDefault(); unpackDrop.classList.remove('dragover'); }); });
+  unpackDrop.addEventListener('drop', function (e) { if (e.dataTransfer.files[0]) loadZip(e.dataTransfer.files[0]); });
+
+  function loadZip(file) {
+    if (typeof JSZip === 'undefined') { setStatus('JSZip 库未加载，请刷新页面', 'error'); return; }
+    zipBlob = file;
+    setStatus('正在读取 ZIP...', 'info');
+    JSZip.loadAsync(file).then(function (zip) {
+      zipEntries = [];
+      var entries = [];
+      zip.forEach(function (relPath, entry) {
+        if (!entry.dir) entries.push(entry);
+      });
+      var promises = entries.map(function (entry) {
+        return entry.async('uint8array').then(function (data) {
+          zipEntries.push({ name: entry.name, size: data.length, entry: entry, data: data });
+        });
+      });
+      Promise.all(promises).then(function () {
+        renderUnpackList();
+        setStatus('读取成功，共 ' + zipEntries.length + ' 个文件', 'success');
+      });
+    }).catch(function (err) { setStatus('读取失败：' + err.message + '（请确认是有效的 ZIP 文件）', 'error'); });
+  }
+
+  function renderUnpackList() {
+    document.getElementById('unpackCount').textContent = zipEntries.length;
+    document.getElementById('dlAllBtn').style.display = zipEntries.length ? '' : 'none';
+    if (zipEntries.length === 0) { unpackList.innerHTML = '<div class="empty-tip">ZIP 中没有文件</div>'; return; }
+    unpackList.innerHTML = zipEntries.map(function (f, i) {
+      return '<div class="file-item"><div style="min-width:0;"><span class="fname">' + escapeHtml(f.name) + '</span><span class="fmeta">' + fmtSize(f.size) + '</span></div>' +
+        '<div class="factions"><button class="mini-btn" data-preview="' + i + '">预览</button><button class="mini-btn" data-dl="' + i + '">下载</button></div></div>';
+    }).join('');
+  }
+
+  unpackList.addEventListener('click', function (e) {
+    var pv = e.target.getAttribute('data-preview');
+    var dl = e.target.getAttribute('data-dl');
+    if (pv !== null) previewEntry(parseInt(pv, 10));
+    if (dl !== null) downloadEntry(parseInt(dl, 10));
+  });
+
+  function isTextName(name) {
+    return /\.(txt|md|log|json|js|ts|css|html|htm|xml|yml|yaml|csv|tsv|ini|conf|svg|java|c|cpp|h|py|rb|go|rs|sh|bat|sql|toml|env)$/i.test(name);
+  }
+
+  function previewEntry(i) {
+    var f = zipEntries[i];
+    if (!f) return;
+    var wrap = document.getElementById('previewWrap');
+    var area = document.getElementById('previewArea');
+    var nm = document.getElementById('previewName');
+    nm.textContent = f.name;
+    if (isTextName(f.name) || f.size < 512000) {
+      try {
+        var text = new TextDecoder('utf-8', { fatal: false }).decode(f.data);
+        area.textContent = text.length > 200000 ? text.slice(0, 200000) + '\n\n…（内容过长，已截断，请下载查看完整内容）' : text;
+      } catch (err) { area.textContent = '[无法预览此文件的文本内容，请直接下载]'; }
+    } else {
+      area.textContent = '[二进制文件，建议直接下载查看]';
+    }
+    wrap.style.display = 'block';
+    setStatus('已加载预览：' + f.name, 'info');
+  }
+
+  function downloadEntry(i) {
+    var f = zipEntries[i];
+    if (!f) return;
+    var blob = new Blob([f.data], { type: 'application/octet-stream' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = f.name.split('/').pop() || 'file';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1500);
+    setStatus('已下载：' + f.name, 'success');
+  }
+
+  document.getElementById('dlAllBtn').addEventListener('click', function () {
+    if (!zipEntries.length) return;
+    var idx = 0;
+    function next() {
+      if (idx >= zipEntries.length) { setStatus('全部文件已下载 ✓（' + zipEntries.length + ' 个）', 'success'); return; }
+      downloadEntry(idx);
+      idx++;
+      setTimeout(next, 250);
+    }
+    next();
+  });
+})();
+</script>
+</body>
+</html>

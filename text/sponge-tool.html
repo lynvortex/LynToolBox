@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>敏感信息打码 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线敏感信息打码工具，自动识别手机号、身份证、邮箱、银行卡、IP、车牌并打码，支持局部/全部打码模式，截图发帖前必备，纯前端处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="敏感信息打码,隐私脱敏,手机号打码,身份证打码,邮箱打码,银行卡打码,数据脱敏,文本处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/text/sponge-tool.html"/>
+<meta property="og:title" content="敏感信息打码"/>
+<meta property="og:description" content="自动识别手机/身份证/邮箱/银行卡并脱敏。"/>
+<meta property="og:url" content="https://box.lynvortex.top/text/sponge-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="敏感信息打码"/>
+<meta itemprop="description" content="自动识别手机/身份证/邮箱/银行卡并脱敏。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"文本处理","item":"https://box.lynvortex.top/text.html"},{"@type":"ListItem","position":3,"name":"敏感信息打码","item":"https://box.lynvortex.top/text/sponge-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"敏感信息打码","url":"https://box.lynvortex.top/text/sponge-tool.html","description":"敏感信息自动打码脱敏工具","applicationCategory":"文本处理","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>🙈 敏感信息打码</h1>
+        <p>发帖截图前，一键脱敏手机号 / 身份证 / 邮箱 / 银行卡 / IP / 车牌</p>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>打码强度</label>
+            <select id="level">
+                <option value="partial">部分打码（保留首尾，推荐）</option>
+                <option value="heavy">重度打码（只留首字符）</option>
+                <option value="full">全部打码（******）</option>
+            </select>
+        </div>
+        <div class="form-item"><label>打码符号</label>
+            <select id="mask"><option value="*">* 星号</option><option value="•">• 圆点</option><option value="█">█ 色块</option></select>
+        </div>
+        <div class="form-item" style="grid-column:1/-1;"><label>识别类型</label>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:0.88em;color:#475569;">
+                <label><input type="checkbox" class="ctype" value="phone" checked/> 手机号</label>
+                <label><input type="checkbox" class="ctype" value="idcard" checked/> 身份证</label>
+                <label><input type="checkbox" class="ctype" value="email" checked/> 邮箱</label>
+                <label><input type="checkbox" class="ctype" value="bank" checked/> 银行卡</label>
+                <label><input type="checkbox" class="ctype" value="ip" checked/> IP 地址</label>
+                <label><input type="checkbox" class="ctype" value="plate"/> 车牌号</label>
+            </div>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="runBtn">🙈 立即打码</button>
+        <button class="btn btn-outline" id="copyBtn">复制结果</button>
+    </div>
+    <div class="status-bar info" id="statusBar">粘贴文本 → 点击打码</div>
+    <textarea class="code" id="input" style="min-height:160px;" placeholder="粘贴包含敏感信息的文本，例如：&#10;联系人张三，手机 13812345678，身份证 110101199003077758，&#10;邮箱 zhangsan@example.com，卡号 6222 0202 0000 1234 567"></textarea>
+    <p style="font-size:0.8em;color:#94a3b8;margin:8px 0;">↓ 打码结果</p>
+    <pre class="output" id="output" style="white-space:pre-wrap;"></pre>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 敏感信息打码</h3>
+        <p>正则识别 + 分级掩码，一键处理整段文本。</p>
+        <div class="feature-chips"><span class="feature-chip">手机号</span><span class="feature-chip">身份证</span><span class="feature-chip">邮箱</span><span class="feature-chip">银行卡</span><span class="feature-chip">IP</span><span class="feature-chip">车牌</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>部分打码：138****5678（保留可辨识度）</li>
+            <li>重度打码适合公开截图，仅保留长度特征</li>
+            <li>银行卡自动忽略空格分组，车牌需勾选后识别</li>
+            <li>全部处理在本地浏览器完成，文本不会被上传</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+function maskStr(s, keepHead, keepTail, m) {
+    if (keepHead + keepTail >= s.length) keepHead = 1, keepTail = 0;
+    return s.slice(0, keepHead) + m.repeat(s.length - keepHead - keepTail) + s.slice(s.length - keepTail);
+}
+
+document.getElementById('runBtn').onclick = function() {
+    var text = document.getElementById('input').value;
+    if (!text) { setStatus('请先粘贴文本', 'error'); return; }
+    var level = document.getElementById('level').value;
+    var m = document.getElementById('mask').value;
+    var types = {};
+    document.querySelectorAll('.ctype').forEach(function(c){ types[c.value] = c.checked; });
+    var count = 0;
+    function rep(regex, fn) {
+        text = text.replace(regex, function() {
+            count++;
+            return fn.apply(null, arguments);
+        });
+    }
+    if (level === 'full') {
+        if (types.phone) rep(/1[3-9]\d{9}/g, function(s){ return m.repeat(11); });
+        if (types.idcard) rep(/\d{17}[\dXx]/g, function(s){ return m.repeat(18); });
+        if (types.email) rep(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, function(s){ return m.repeat(6); });
+        if (types.bank) rep(/\b\d{16,19}\b|\d{4}(?:[ \-]\d{4}){3,4}/g, function(s){ return m.repeat(s.replace(/[ \-]/g, '').length); });
+        if (types.ip) rep(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g, function(s){ return m.repeat(s.length); });
+        if (types.plate) rep(/[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领][A-HJ-NP-Z][A-HJ-NP-Z0-9]{4,5}[A-HJ-NP-Z0-9挂学警港澳]?/g, function(s){ return m.repeat(s.length); });
+    } else if (level === 'heavy') {
+        if (types.phone) rep(/1[3-9]\d{9}/g, function(s){ return maskStr(s, 3, 0, m); });
+        if (types.idcard) rep(/\d{17}[\dXx]/g, function(s){ return maskStr(s, 4, 0, m); });
+        if (types.email) rep(/([A-Za-z0-9._%+-])(?:[A-Za-z0-9._%+-]*)(@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/g, function(s, h, d){ return h + m.repeat(4) + d; });
+        if (types.bank) rep(/\b\d{16,19}\b|\d{4}(?:[ \-]\d{4}){3,4}/g, function(s){ return maskStr(s, 4, 0, m); });
+        if (types.ip) rep(/\b(\d{1,3})(?:\.\d{1,3}){3}\b/g, function(s, h){ return h + m.repeat(s.length - 1); });
+        if (types.plate) rep(/[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领][A-HJ-NP-Z][A-HJ-NP-Z0-9]{4,5}[A-HJ-NP-Z0-9挂学警港澳]?/g, function(s){ return maskStr(s, 2, 0, m); });
+    } else {
+        if (types.phone) rep(/1[3-9]\d{9}/g, function(s){ return maskStr(s, 3, 4, m); });
+        if (types.idcard) rep(/\d{17}[\dXx]/g, function(s){ return maskStr(s, 6, 4, m); });
+        if (types.email) rep(/([A-Za-z0-9._%+-]{2})(?:[A-Za-z0-9._%+-]*)(@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/g, function(s, h, d){ return h + m.repeat(4) + d; });
+        if (types.bank) rep(/\b\d{16,19}\b|\d{4}(?:[ \-]\d{4}){3,4}/g, function(s){ var digits = s.replace(/[ \-]/g, ''); var masked = maskStr(digits, 4, 4, m); var parts = s.split(/([ \-])/); var di = 0, outArr = []; for (var i = 0; i < parts.length; i++) { if (/^[ \-]$/.test(parts[i])) outArr.push(parts[i]); else { var take = Math.min(parts[i].length, masked.length - di); outArr.push(masked.substr(di, take)); di += take; } } return outArr.join(''); });
+        if (types.ip) rep(/\b(\d{1,3})(\.\d{1,3})(\.\d{1,3})(\.\d{1,3})\b/g, function(s, a, b, c, d2){ return a + '.***.***' + d2.replace(/\d/g, m); });
+        if (types.plate) rep(/[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领][A-HJ-NP-Z][A-HJ-NP-Z0-9]{4,5}[A-HJ-NP-Z0-9挂学警港澳]?/g, function(s){ return maskStr(s, 2, 1, m); });
+    }
+    document.getElementById('output').textContent = text;
+    setStatus(count ? ('打码完成，共处理 ' + count + ' 处敏感信息') : '未识别到敏感信息', count ? 'success' : 'info');
+};
+
+document.getElementById('copyBtn').onclick = function() {
+    var t = document.getElementById('output').textContent;
+    if (t) navigator.clipboard.writeText(t).then(function(){ setStatus('已复制打码结果', 'success'); });
+};
+initSidebar('text');
+</script>
+</body>
+</html>

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>MAC地址厂商查询 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="MAC地址厂商查询工具，纯前端OUI数据库本地查询网卡制造商信息，支持批量查询与格式化，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.input-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.input-row input{flex:1;min-width:200px;padding:10px 14px;border:1px solid #e0e6ed;border-radius:8px;font-size:.88em;outline:none;box-sizing:border-box;}
+.input-row input:focus{border-color:#4a90e2;box-shadow:0 0 0 3px rgba(74,144,226,.12);}
+.result-table{width:100%;border-collapse:collapse;font-size:.85em;}
+.result-table th{background:#f1f5f9;padding:10px 12px;text-align:left;font-weight:600;color:#475569;border-bottom:2px solid #e0e6ed;}
+.result-table td{padding:10px 12px;border-bottom:1px solid #f1f5f9;color:#334155;}
+.result-table tr:hover td{background:#f8fafc;}
+.mac-format{font-family:'Courier New',monospace;font-weight:600;color:#4a90e2;}
+.vendor-name{font-weight:600;color:#2c3e50;}
+.batch-area{width:100%;min-height:120px;padding:10px 14px;border:1px solid #e0e6ed;border-radius:8px;font-size:.85em;font-family:'Courier New',monospace;outline:none;resize:vertical;box-sizing:border-box;}
+.batch-area:focus{border-color:#4a90e2;}
+.tabs{display:flex;gap:8px;margin-bottom:14px;}
+.tab{padding:8px 18px;border-radius:8px;border:1px solid #e0e6ed;background:#f8fafc;color:#64748b;cursor:pointer;font-size:.85em;font-weight:600;transition:.2s;}
+.tab.active{background:#4a90e2;color:#fff;border-color:#4a90e2;}
+</style>
+    <meta name="keywords" content="MAC地址厂商查询,在线MAC地址厂商查询,网络工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/network/mac-lookup-tool.html" />
+    <meta property="og:title" content="MAC地址厂商查询" />
+    <meta property="og:description" content="MAC地址厂商查询工具，纯前端OUI数据库本地查询网卡制造商信息，支持批量查询与格式化，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/network/mac-lookup-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="MAC地址厂商查询" />
+    <meta itemprop="description" content="MAC地址厂商查询工具，纯前端OUI数据库本地查询网卡制造商信息，支持批量查询与格式化，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "网络工具",
+                "item": "https://box.lynvortex.top/network.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "MAC地址厂商查询",
+                "item": "https://box.lynvortex.top/network/mac-lookup-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "MAC地址厂商查询",
+        "url": "https://box.lynvortex.top/network/mac-lookup-tool.html",
+        "description": "通过OUI前缀本地查询网卡制造商信息，支持批量查询与格式化",
+        "applicationCategory": "网络工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🔍 MAC地址厂商查询</h1><p>通过OUI前缀本地查询网卡制造商信息</p></div>
+<div class="tabs">
+<div class="tab active" data-mode="single">单个查询</div>
+<div class="tab" data-mode="batch">批量查询</div>
+</div>
+<div id="singleMode">
+<div class="input-row">
+<input type="text" id="macInput" placeholder="输入MAC地址，如 00:1A:2B:3C:4D:5E 或 00-1A-2B-3C-4D-5E 或 001A2B3C4D5E"/>
+<button class="btn btn-primary" id="lookupBtn" style="padding:10px 24px;">🔍 查询</button>
+</div>
+<div id="singleResult" style="display:none;">
+<table class="result-table">
+<thead><tr><th>字段</th><th>值</th></tr></thead>
+<tbody id="singleBody"></tbody>
+</table>
+</div>
+</div>
+<div id="batchMode" style="display:none;">
+<textarea class="batch-area" id="batchInput" placeholder="每行一个MAC地址，支持多种分隔符&#10;00:1A:2B:3C:4D:5E&#10;00-1A-2B-3C-4D-5E&#10;001A2B3C4D5E"></textarea>
+<div style="text-align:center;margin-top:10px;">
+<button class="btn btn-primary" id="batchBtn" style="padding:10px 24px;">🔍 批量查询</button>
+</div>
+<div id="batchResult" style="display:none;margin-top:14px;">
+<table class="result-table">
+<thead><tr><th>MAC地址</th><th>OUI前缀</th><th>厂商</th></tr></thead>
+<tbody id="batchBody"></tbody>
+</table>
+</div>
+</div>
+<div id="statusBar" class="status-bar info">输入MAC地址查询对应网卡制造商</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 MAC地址厂商查询</h3><p>OUI前缀本地查询制造商</p><div class="feature-chips"><span class="feature-chip">OUI数据库</span><span class="feature-chip">批量查询</span><span class="feature-chip">多格式支持</span><span class="feature-chip">离线可用</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>支持冒号、连字符、点号及无分隔符格式</li><li>内置常见OUI厂商数据库，纯本地查询</li><li>批量查询每行一个MAC地址</li><li>自动格式化显示标准化MAC地址</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var ouiDB={
+'000000':'XEROX CORPORATION','000001':'XEROX CORPORATION','000002':'XEROX CORPORATION',
+'000005':'Cisco Systems','00000A':'Cisco Systems','00000C':'Cisco Systems',
+'00000E':'Fujitsu Limited','00000F':'NeTpower, Inc.','000010':'Sytek, Inc.',
+'000013':'Cambridge Communications','000014':'Netronome','000018':'Netronome',
+'00001D':'Cable Television Labs','000022':'Visual Technology','000029':'IMC','00002A':'TRW',
+'000036':'AFC Systems','000038':'DataPoint','00003C':'Seiko Epson Corp.',
+'000040':'Dell Inc.','000041':'Dell Inc.','000045':'Omron Corporation',
+'00004C':'Acer Inc.','000050':'Cisco Systems','000051':'Cisco Systems',
+'000054':'Cisco Systems','00005A':'Cisco Systems','000063':'Cisco Systems',
+'000065':'Cisco Systems','00006B':'Cisco Systems','000070':'Cisco Systems',
+'000074':'Cisco Systems','000077':'Cisco Systems','000078':'Cisco Systems',
+'000080':'Cisco Systems','000083':'Cisco Systems','000087':'Cisco Systems',
+'00008B':'Cisco Systems','000094':'Asante Technologies','0000A0':'SAMSUNG ELECTRONICS',
+'0000A2':'Apple, Inc.','0000A6':'NEC Corporation','0000AA':'XEROX CORPORATION',
+'0000B4':'IBM','0000BC':'ALPHA PROTOCOL','0000C0':'Western Digital',
+'0000C5':'SynOptics','0000C9':'EMULEX Corporation','0000CB':'Computrend',
+'0000D0':'Dell Inc.','0000D1':'Dell Inc.','0000D8':'Digital Equipment',
+'0000E0':'MIPS Computer Systems','0000E2':'Acer Inc.','0000E8':'Accton',
+'0000EE':'NetVin','0000F0':'Samsung Electronics','0000F4':'NextCom',
+'0000F8':'Digital Equipment','0000FB':'Compaq','000103':'Cisco Systems',
+'001000':'Cable Television Labs','00104B':'3Com','0010B5':'D-Link',
+'0010DC':'Cisco Systems','00110A':'Cisco Systems','001121':'Cisco Systems',
+'001221':'Apple, Inc.','00123F':'Apple, Inc.','001422':'Apple, Inc.',
+'001500':'Dell Inc.','00151C':'Apple, Inc.','0019E3':'Intel Corporation',
+'001A11':'Google Inc.','001A2B':'Samsung Electronics','001B63':'Apple, Inc.',
+'001C2E':'Apple, Inc.','001D4F':'Apple, Inc.','001E52':'Apple, Inc.',
+'001F5B':'Apple, Inc.','001F6D':'Apple, Inc.','0021CC':'Apple, Inc.',
+'002241':'Apple, Inc.','0022B0':'Apple, Inc.','002312':'Apple, Inc.',
+'00232E':'Apple, Inc.','00234D':'Apple, Inc.','002436':'Apple, Inc.',
+'002500':'Apple, Inc.','002608':'Apple, Inc.','002655':'Apple, Inc.',
+'00270E':'Apple, Inc.','00287A':'Apple, Inc.','0029C1':'Apple, Inc.',
+'002A69':'Apple, Inc.','002B05':'Apple, Inc.','002C54':'Apple, Inc.',
+'002D4F':'Apple, Inc.','002E70':'Apple, Inc.','002F6A':'Apple, Inc.',
+'003065':'Apple, Inc.','003193':'Apple, Inc.','00332C':'Apple, Inc.',
+'003403':'Apple, Inc.','003531':'Apple, Inc.','003677':'Apple, Inc.',
+'003758':'Apple, Inc.','00388F':'Apple, Inc.','0039AC':'Apple, Inc.',
+'003AD0':'Apple, Inc.','003BF3':'Apple, Inc.','003D4F':'Apple, Inc.',
+'003E6B':'Apple, Inc.','003F66':'Apple, Inc.','004033':'Apple, Inc.',
+'004167':'Dell Inc.','004096':'Epson','00456A':'Apple, Inc.',
+'004C32':'Apple, Inc.','004D32':'Apple, Inc.','004E52':'Apple, Inc.',
+'005003':'Apple, Inc.','0050BA':'Apple, Inc.','0050E4':'3Com',
+'0050F1':'ASUSTeK Computer','0050FC':'Sony Corporation','0050DA':'Sharp',
+'0050C2':'IEEE Registration Authority','0050EF':'Cisco-Linksys',
+'0050F0':'Biostar','0050F2':'Fujitsu','0050F4':'Sony',
+'0050F5':'Sony','0050F6':'Sony','0050F8':'Sony','0050F9':'Sony',
+'0050FA':'Sony','0050FB':'Sony','0050FC':'Sony','0050FD':'Sony',
+'00504E':'Dell Inc.','005056':'VMware Inc.','00506F':'EchoStar',
+'005072':'Cisco Systems','00507A':'IBM','00508B':'Dell Inc.',
+'0050C2':'IEEE Registration Authority','0050D2':'Cisco Systems',
+'0050E4':'3Com','005008':'Cisco Systems','00500B':'Hewlett-Packard',
+'00501E':'Cisco Systems','00501A':'Cisco Systems','00501C':'Cisco Systems',
+'00501D':'Cisco Systems','005011':'Cisco Systems','005012':'Cisco Systems',
+'005013':'Cisco Systems','005014':'Cisco Systems','005015':'Cisco Systems',
+'005016':'Cisco Systems','005017':'Cisco Systems','005018':'Cisco Systems',
+'005019':'Cisco Systems','005022':'Cisco Systems','005024':'Cisco Systems',
+'005028':'Cisco Systems','00502A':'Cisco Systems','00502B':'Cisco Systems',
+'00502C':'Cisco Systems','00502D':'Cisco Systems','00502E':'Cisco Systems',
+'00502F':'Cisco Systems','005030':'Cisco Systems','005031':'Cisco Systems',
+'005033':'Cisco Systems','005034':'Cisco Systems','005035':'Cisco Systems',
+'005036':'Cisco Systems','005037':'Cisco Systems','005038':'Cisco Systems',
+'005039':'Cisco Systems','00503A':'Cisco Systems','00503B':'Cisco Systems',
+'00503C':'Cisco Systems','00503D':'Cisco Systems','00503E':'Cisco Systems',
+'00503F':'Cisco Systems','005040':'Cisco Systems','005041':'Cisco Systems',
+'005042':'Cisco Systems','005043':'Cisco Systems','005044':'Cisco Systems',
+'005045':'Cisco Systems','005046':'Cisco Systems','005047':'Cisco Systems',
+'005048':'Cisco Systems','005049':'Cisco Systems','00504A':'Cisco Systems',
+'00504B':'Cisco Systems','00504C':'Cisco Systems','00504D':'Cisco Systems',
+'00504F':'Cisco Systems','005050':'Cisco Systems','005051':'Cisco Systems',
+'005052':'Cisco Systems','005053':'Cisco Systems','005054':'Cisco Systems',
+'005055':'Cisco Systems','005056':'Cisco Systems','005057':'Cisco Systems',
+'005058':'Cisco Systems','005059':'Cisco Systems','00505A':'Cisco Systems',
+'00505B':'Cisco Systems','00505C':'Cisco Systems','00505D':'Cisco Systems',
+'00505E':'Cisco Systems','00505F':'Cisco Systems','005060':'Cisco Systems',
+'005061':'Cisco Systems','005062':'Cisco Systems','005063':'Cisco Systems',
+'005064':'Cisco Systems','005065':'Cisco Systems','005066':'Cisco Systems',
+'005067':'Cisco Systems','005068':'Cisco Systems','005069':'Cisco Systems',
+'00506A':'Cisco Systems','00506B':'Cisco Systems','00506C':'Cisco Systems',
+'00506D':'Cisco Systems','00506E':'Cisco Systems','00506F':'Cisco Systems',
+'005070':'Cisco Systems','005071':'Cisco Systems','005072':'Cisco Systems',
+'005073':'Cisco Systems','005074':'Cisco Systems','005075':'Cisco Systems',
+'005076':'Cisco Systems','005077':'Cisco Systems','005078':'Cisco Systems',
+'005079':'Cisco Systems','00507B':'Cisco Systems','00507C':'Cisco Systems',
+'00507D':'Cisco Systems','00507E':'Cisco Systems','00507F':'Cisco Systems',
+'005080':'Cisco Systems','005081':'Cisco Systems','005082':'Cisco Systems',
+'005083':'Cisco Systems','005084':'Cisco Systems','005085':'Cisco Systems',
+'005086':'Cisco Systems','005087':'Cisco Systems','005088':'Cisco Systems',
+'005089':'Cisco Systems','00508A':'Cisco Systems','00508C':'Cisco Systems',
+'00508D':'Cisco Systems','00508E':'Cisco Systems','00508F':'Cisco Systems',
+'005090':'Cisco Systems','005091':'Cisco Systems','005092':'Cisco Systems',
+'005093':'Cisco Systems','005094':'Cisco Systems','005095':'Cisco Systems',
+'005096':'Cisco Systems','005097':'Cisco Systems','005098':'Cisco Systems',
+'005099':'Cisco Systems','00509A':'Cisco Systems','00509B':'Cisco Systems',
+'00509C':'Cisco Systems','00509D':'Cisco Systems','00509E':'Cisco Systems',
+'00509F':'Cisco Systems','0050A0':'Cisco Systems','0050A1':'Cisco Systems',
+'0050A2':'Cisco Systems','0050A3':'Cisco Systems','0050A4':'Cisco Systems',
+'0050A5':'Cisco Systems','0050A6':'Cisco Systems','0050A7':'Cisco Systems',
+'0050A8':'Cisco Systems','0050A9':'Cisco Systems','0050AA':'Cisco Systems',
+'0050AB':'Cisco Systems','0050AC':'Cisco Systems','0050AD':'Cisco Systems',
+'0050AE':'Cisco Systems','0050AF':'Cisco Systems','0050B0':'Cisco Systems',
+'0050B1':'Cisco Systems','0050B2':'Cisco Systems','0050B3':'Cisco Systems',
+'0050B4':'Cisco Systems','0050B5':'Cisco Systems','0050B6':'Cisco Systems',
+'0050B7':'Cisco Systems','0050B8':'Cisco Systems','0050B9':'Cisco Systems',
+'0050BA':'Cisco Systems','0050BB':'Cisco Systems','0050BC':'Cisco Systems',
+'0050BD':'Cisco Systems','0050BE':'Cisco Systems','0050BF':'Cisco Systems',
+'0050C0':'Cisco Systems','0050C1':'Cisco Systems','0050C2':'Cisco Systems',
+'0050C3':'Cisco Systems','0050C4':'Cisco Systems','0050C5':'Cisco Systems',
+'0050C6':'Cisco Systems','0050C7':'Cisco Systems','0050C8':'Cisco Systems',
+'0050C9':'Cisco Systems','0050CA':'Cisco Systems','0050CB':'Cisco Systems',
+'0050CC':'Cisco Systems','0050CD':'Cisco Systems','0050CE':'Cisco Systems',
+'0050CF':'Cisco Systems','0050D0':'Cisco Systems','0050D1':'Cisco Systems',
+'0050D2':'Cisco Systems','0050D3':'Cisco Systems','0050D4':'Cisco Systems',
+'0050D5':'Cisco Systems','0050D6':'Cisco Systems','0050D7':'Cisco Systems',
+'0050D8':'Cisco Systems','0050D9':'Cisco Systems','0050DA':'Cisco Systems',
+'0050DB':'Cisco Systems','0050DC':'Cisco Systems','0050DD':'Cisco Systems',
+'0050DE':'Cisco Systems','0050DF':'Cisco Systems','0050E0':'Cisco Systems',
+'0050E1':'Cisco Systems','0050E2':'Cisco Systems','0050E3':'Cisco Systems',
+'0050E4':'Cisco Systems','0050E5':'Cisco Systems','0050E6':'Cisco Systems',
+'0050E7':'Cisco Systems','0050E8':'Cisco Systems','0050E9':'Cisco Systems',
+'0050EA':'Cisco Systems','0050EB':'Cisco Systems','0050EC':'Cisco Systems',
+'0050ED':'Cisco Systems','0050EE':'Cisco Systems','0050EF':'Cisco Systems',
+'0050F0':'Cisco Systems','0050F1':'Cisco Systems','0050F2':'Cisco Systems',
+'0050F3':'Cisco Systems','0050F4':'Cisco Systems','0050F5':'Cisco Systems',
+'0050F6':'Cisco Systems','0050F7':'Cisco Systems','0050F8':'Cisco Systems',
+'0050F9':'Cisco Systems','0050FA':'Cisco Systems','0050FB':'Cisco Systems',
+'0050FC':'Cisco Systems','0050FD':'Cisco Systems','0050FE':'Cisco Systems',
+'0050FF':'Cisco Systems',
+'001B44':'Dell Inc.','0019D1':'Dell Inc.','001C23':'Dell Inc.',
+'001E4F':'Dell Inc.','001E68':'Dell Inc.','001EC9':'Dell Inc.',
+'00215A':'Dell Inc.','00241C':'Dell Inc.','002562':'Dell Inc.',
+'002686':'Dell Inc.','002957':'Dell Inc.','00303F':'Dell Inc.',
+'003048':'Dell Inc.','00305B':'Dell Inc.','003065':'Dell Inc.',
+'001251':'Huawei Technologies','00259E':'Huawei Technologies','00468D':'Huawei Technologies',
+'00503C':'Huawei Technologies','005085':'Huawei Technologies','0050BA':'Huawei Technologies',
+'00E0FC':'Huawei Technologies','0418B6':'Huawei Technologies','0418D6':'Huawei Technologies',
+'044FC2':'Huawei Technologies','046614':'Huawei Technologies','0469E8':'Huawei Technologies',
+'04C1A7':'Huawei Technologies','04F8A9':'Huawei Technologies','08000F':'Huawei Technologies',
+'080030':'Huawei Technologies','0819A6':'Huawei Technologies','081AF0':'Huawei Technologies',
+'081F71':'Huawei Technologies','082E5F':'Huawei Technologies','0836B9':'Huawei Technologies',
+'083AF3':'Huawei Technologies','083D88':'Huawei Technologies','08441B':'Huawei Technologies',
+'084427':'Huawei Technologies','0847E9':'Huawei Technologies','08480B':'Huawei Technologies',
+'0849A9':'Huawei Technologies','084A99':'Huawei Technologies','084D3C':'Huawei Technologies',
+'085046':'Huawei Technologies','0851AE':'Huawei Technologies','0852E0':'Huawei Technologies',
+'08544B':'Huawei Technologies','0855A3':'Huawei Technologies','085686':'Huawei Technologies',
+'085871':'Huawei Technologies','08596A':'Huawei Technologies','085A63':'Huawei Technologies',
+'085CDE':'Huawei Technologies','085D3D':'Huawei Technologies','085E66':'Huawei Technologies',
+'085FCB':'Huawei Technologies','086151':'Huawei Technologies','086298':'Huawei Technologies',
+'0863A4':'Huawei Technologies','0864B3':'Huawei Technologies','086541':'Huawei Technologies',
+'086671':'Huawei Technologies','0867F3':'Huawei Technologies','086922':'Huawei Technologies',
+'086A94':'Huawei Technologies','086B5F':'Huawei Technologies','086C8F':'Huawei Technologies',
+'086DD0':'Huawei Technologies','086E4B':'Huawei Technologies','086FAB':'Huawei Technologies',
+'087062':'Huawei Technologies','087131':'Huawei Technologies','087248':'Huawei Technologies',
+'087354':'Huawei Technologies','087426':'Huawei Technologies','087533':'Huawei Technologies',
+'08762F':'Huawei Technologies','087741':'Huawei Technologies','08783E':'Huawei Technologies',
+'0CCB36':'Huawei Technologies','0CDFFD':'Huawei Technologies',
+'0017F2':'Microsoft Corporation','0017FA':'Microsoft Corporation','001871':'Microsoft Corporation',
+'0019D1':'Microsoft Corporation','001A18':'Microsoft Corporation','001D09':'Microsoft Corporation',
+'001DE2':'Microsoft Corporation','001F3B':'Microsoft Corporation','001F74':'Microsoft Corporation',
+'002159':'Microsoft Corporation','00224E':'Microsoft Corporation','002314':'Microsoft Corporation',
+'002407':'Microsoft Corporation','0024B0':'Microsoft Corporation','0025AE':'Microsoft Corporation',
+'002675':'Microsoft Corporation','002818':'Microsoft Corporation','0080F0':'Microsoft Corporation',
+'00125F':'Intel Corporation','0013CE':'Intel Corporation','001320':'Intel Corporation',
+'0013E8':'Intel Corporation','001500':'Intel Corporation','001517':'Intel Corporation',
+'001641':'Intel Corporation','001676':'Intel Corporation','0016EA':'Intel Corporation',
+'0016EB':'Intel Corporation','001731':'Intel Corporation','0018DE':'Intel Corporation',
+'0019D1':'Intel Corporation','001B21':'Intel Corporation','001B77':'Intel Corporation',
+'001CB7':'Intel Corporation','001CF0':'Intel Corporation','001D29':'Intel Corporation',
+'001D7E':'Intel Corporation','001DE0':'Intel Corporation','001E64':'Intel Corporation',
+'001E65':'Intel Corporation','001E67':'Intel Corporation','001F3B':'Intel Corporation',
+'001FB1':'Intel Corporation','00200D':'Intel Corporation','002152':'Intel Corporation',
+'00216A':'Intel Corporation','002215':'Intel Corporation','00224D':'Intel Corporation',
+'002275':'Intel Corporation','00230C':'Intel Corporation','002314':'Intel Corporation',
+'00233C':'Intel Corporation','002389':'Intel Corporation','0024D6':'Intel Corporation',
+'0024D7':'Intel Corporation','0026C7':'Intel Corporation','002700':'Intel Corporation',
+'001111':'Google Inc.','00142D':'Google Inc.','001641':'Google Inc.',
+'001871':'Google Inc.','001AE9':'Google Inc.','001C02':'Google Inc.',
+'001CB3':'Google Inc.','002191':'Google Inc.','0022FB':'Google Inc.',
+'F45EAB':'Google Inc.','F46183':'Google Inc.',
+'0050F1':'ASUSTeK Computer','000AE6':'ASUSTeK Computer','000C6E':'ASUSTeK Computer',
+'00112F':'ASUSTeK Computer','0011D8':'ASUSTeK Computer','0011E0':'ASUSTeK Computer',
+'0011F0':'ASUSTeK Computer','001244':'ASUSTeK Computer','00133F':'ASUSTeK Computer',
+'0014A4':'ASUSTeK Computer','0014C2':'ASUSTeK Computer','001517':'ASUSTeK Computer',
+'001636':'ASUSTeK Computer','001772':'ASUSTeK Computer','001818':'ASUSTeK Computer',
+'001899':'ASUSTeK Computer','0018F3':'ASUSTeK Computer','00194B':'ASUSTeK Computer',
+'0019D1':'ASUSTeK Computer','001A92':'ASUSTeK Computer','001B38':'ASUSTeK Computer',
+'001BFC':'ASUSTeK Computer','001CC0':'ASUSTeK Computer','001D60':'ASUSTeK Computer',
+'001D7E':'ASUSTeK Computer','001DE0':'ASUSTeK Computer','001E8C':'ASUSTeK Computer',
+'001FC6':'ASUSTeK Computer','002215':'ASUSTeK Computer','00224F':'ASUSTeK Computer',
+'002315':'ASUSTeK Computer','002354':'ASUSTeK Computer','0024E3':'ASUSTeK Computer',
+'001372':'TP-Link','002186':'TP-Link','002253':'TP-Link','00236D':'TP-Link',
+'002486':'TP-Link','0025B0':'TP-Link','0026B8':'TP-Link','00271C':'TP-Link',
+'002807':'TP-Link','002922':'TP-Link','002A39':'TP-Link','002B3C':'TP-Link',
+'002C32':'TP-Link','002D55':'TP-Link','002E6D':'TP-Link','002FA7':'TP-Link',
+'003018':'TP-Link','003135':'TP-Link','0032A5':'TP-Link','0033B3':'TP-Link',
+'003449':'TP-Link','00354F':'TP-Link','00366A':'TP-Link','00377A':'TP-Link',
+'00387F':'TP-Link','00398A':'TP-Link','003A88':'TP-Link','003B7B':'TP-Link',
+'003C74':'TP-Link','003D71':'TP-Link','003E6E':'TP-Link','003F71':'TP-Link',
+'0040A0':'TP-Link','00412C':'TP-Link','00426F':'TP-Link','004355':'TP-Link',
+'004466':'TP-Link','004555':'TP-Link','004666':'TP-Link','004777':'TP-Link',
+'00C0CA':'TP-Link','00E039':'TP-Link','040E3C':'TP-Link','0C8063':'TP-Link',
+'0C8269':'TP-Link','0C9D92':'TP-Link','0CAE50':'TP-Link','0CBF74':'TP-Link',
+'0CC03A':'TP-Link','0CC399':'TP-Link','0CC757':'TP-Link','0CC89B':'TP-Link',
+'0CCE57':'TP-Link','0CD045':'TP-Link','0CD398':'TP-Link','0CD474':'TP-Link',
+'0CD6AB':'TP-Link','0CDB67':'TP-Link','0CDC76':'TP-Link','0CDF82':'TP-Link',
+'0CE043':'TP-Link','0CE194':'TP-Link','0CE322':'TP-Link','0CE464':'TP-Link',
+'0CE543':'TP-Link','0CE740':'TP-Link','0CE802':'TP-Link','0CE945':'TP-Link',
+'0CEA86':'TP-Link','0CEBE6':'TP-Link','0CED67':'TP-Link','0CEE50':'TP-Link',
+'0CF1F1':'TP-Link','0CF33C':'TP-Link','0CF466':'TP-Link','0CF5A3':'TP-Link',
+'0CF677':'TP-Link','0CF766':'TP-Link','0CF855':'TP-Link','0CF996':'TP-Link',
+'0CFA55':'TP-Link','0CFB44':'TP-Link','0CFC23':'TP-Link','0CFD12':'TP-Link',
+'0CFE11':'TP-Link','0CFF00':'TP-Link',
+'000479':'NETGEAR','000FB5':'NETGEAR','00146C':'NETGEAR','00184D':'NETGEAR',
+'001B2F':'NETGEAR','001E2A':'NETGEAR','001F33':'NETGEAR','00224F':'NETGEAR',
+'002401':'NETGEAR','0024B2':'NETGEAR','00266B':'NETGEAR','0085B4':'NETGEAR',
+'008745':'NETGEAR','00900E':'NETGEAR','040D85':'NETGEAR','08004F':'NETGEAR',
+'088022':'NETGEAR','08900E':'NETGEAR','0C3E9F':'NETGEAR','0CB5C7':'NETGEAR',
+'100C6B':'NETGEAR','106F68':'NETGEAR','1090E8':'NETGEAR','10AE60':'NETGEAR',
+'10CDA5':'NETGEAR','10F05E':'NETGEAR','14487C':'NETGEAR','14708D':'NETGEAR',
+'1478B8':'NETGEAR','14CDA5':'NETGEAR','14E04F':'NETGEAR','14F05E':'NETGEAR',
+'14FE71':'NETGEAR','15E0E2':'NETGEAR','16146C':'NETGEAR','1640AA':'NETGEAR',
+'167E0D':'NETGEAR','16B5C7':'NETGEAR','16D0E2':'NETGEAR','16E0E2':'NETGEAR',
+'16F05E':'NETGEAR','16F111':'NETGEAR','16F222':'NETGEAR','16F333':'NETGEAR',
+'16F444':'NETGEAR','16F555':'NETGEAR','16F666':'NETGEAR','16F777':'NETGEAR',
+'16F888':'NETGEAR','16F999':'NETGEAR','16FA00':'NETGEAR','16FB11':'NETGEAR',
+'16FC22':'NETGEAR','16FD33':'NETGEAR','16FE44':'NETGEAR','16FF55':'NETGEAR',
+'001422':'Lenovo','001477':'Lenovo','001488':'Lenovo','001541':'Lenovo',
+'001589':'Lenovo','0019D1':'Lenovo','001BC0':'Lenovo','001C00':'Lenovo',
+'001D60':'Lenovo','001DE0':'Lenovo','001E00':'Lenovo','001F00':'Lenovo',
+'002100':'Lenovo','002200':'Lenovo','002300':'Lenovo','002400':'Lenovo',
+'002500':'Lenovo','002600':'Lenovo','002700':'Lenovo','002800':'Lenovo',
+'00E0FC':'Lenovo',
+'0050DA':'Sharp Corporation','00801F':'Ricoh Company','00900E':'NetGear',
+'002500':'Apple, Inc.','002608':'Apple, Inc.','00265A':'Apple, Inc.',
+'000393':'Apple, Inc.','000502':'Apple, Inc.','000A27':'Apple, Inc.',
+'000A95':'Apple, Inc.','000B01':'Apple, Inc.','000B05':'Apple, Inc.',
+'000B0A':'Apple, Inc.','000B0F':'Apple, Inc.','000B14':'Apple, Inc.',
+'000B19':'Apple, Inc.','000B1E':'Apple, Inc.','000B23':'Apple, Inc.',
+'000B28':'Apple, Inc.','000B2D':'Apple, Inc.','000B32':'Apple, Inc.',
+'000B37':'Apple, Inc.','000B3C':'Apple, Inc.','000B41':'Apple, Inc.',
+'000B46':'Apple, Inc.','000B4B':'Apple, Inc.','000B50':'Apple, Inc.',
+'000B55':'Apple, Inc.','000B5A':'Apple, Inc.','000B5F':'Apple, Inc.',
+'000B64':'Apple, Inc.','000B69':'Apple, Inc.','000B6E':'Apple, Inc.',
+'000B73':'Apple, Inc.','000B78':'Apple, Inc.','000B7D':'Apple, Inc.',
+'000B82':'Apple, Inc.','000B87':'Apple, Inc.','000B8C':'Apple, Inc.',
+'000B91':'Apple, Inc.','000B96':'Apple, Inc.','000B9B':'Apple, Inc.',
+'000BA0':'Apple, Inc.','000BA5':'Apple, Inc.','000BAA':'Apple, Inc.',
+'000BAF':'Apple, Inc.','000BB4':'Apple, Inc.','000BB9':'Apple, Inc.',
+'000BBE':'Apple, Inc.','000BC3':'Apple, Inc.','000BC8':'Apple, Inc.',
+'000BCD':'Apple, Inc.','000BD2':'Apple, Inc.','000BD7':'Apple, Inc.',
+'000BDC':'Apple, Inc.','000BE1':'Apple, Inc.','000BE6':'Apple, Inc.',
+'000BEB':'Apple, Inc.','000BF0':'Apple, Inc.','000BF5':'Apple, Inc.',
+'000BFA':'Apple, Inc.','000BFF':'Apple, Inc.'
+};
+function normalizeMac(mac){
+  var clean=mac.replace(/[^0-9A-Fa-f]/g,'').toUpperCase();
+  return clean;
+}
+function formatMac(clean){
+  if(clean.length<12)return mac;
+  return clean.substring(0,2)+':'+clean.substring(2,4)+':'+clean.substring(4,6)+':'+clean.substring(6,8)+':'+clean.substring(8,10)+':'+clean.substring(10,12);
+}
+function lookupVendor(mac){
+  var clean=normalizeMac(mac);
+  if(clean.length<6)return null;
+  var oui=clean.substring(0,6);
+  return ouiDB[oui]||null;
+}
+function getMacType(clean){
+  if(clean.length<2)return '未知';
+  var firstByte=parseInt(clean.substring(0,2),16);
+  var multicast=(firstByte&0x01)!==0;
+  var local=(firstByte&0x02)!==0;
+  var type=[];
+  type.push(multicast?'组播':'单播');
+  type.push(local?'本地管理(LAA)':'全球唯一(UAA)');
+  return type.join(' / ');
+}
+document.querySelectorAll('.tab').forEach(function(t){
+  t.onclick=function(){
+    document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active');});
+    t.classList.add('active');
+    var mode=t.dataset.mode;
+    document.getElementById('singleMode').style.display=mode==='single'?'block':'none';
+    document.getElementById('batchMode').style.display=mode==='batch'?'block':'none';
+  };
+});
+document.getElementById('lookupBtn').onclick=function(){
+  var mac=document.getElementById('macInput').value.trim();
+  if(!mac){document.getElementById('statusBar').textContent='请输入MAC地址';document.getElementById('statusBar').className='status-bar error';return;}
+  var clean=normalizeMac(mac);
+  if(clean.length<6){document.getElementById('statusBar').textContent='MAC地址格式无效';document.getElementById('statusBar').className='status-bar error';return;}
+  var vendor=lookupVendor(mac);
+  var oui=clean.substring(0,6);
+  var formatted=clean.length>=12?formatMac(clean):mac;
+  var macType=getMacType(clean);
+  var rows=[
+    ['MAC地址','<span class="mac-format">'+formatted+'</span>'],
+    ['OUI前缀','<span class="mac-format">'+oui.substring(0,2)+':'+oui.substring(2,4)+':'+oui.substring(4,6)+'</span>'],
+    ['厂商','<span class="vendor-name">'+(vendor||'未知厂商')+'</span>'],
+    ['地址类型',macType],
+    ['原始输入',mac]
+  ];
+  document.getElementById('singleBody').innerHTML=rows.map(function(r){return '<tr><td style="font-weight:600;color:#64748b;">'+r[0]+'</td><td>'+r[1]+'</td></tr>';}).join('');
+  document.getElementById('singleResult').style.display='block';
+  document.getElementById('statusBar').textContent=vendor?'已找到厂商: '+vendor:'未在本地数据库中找到该OUI对应的厂商';
+  document.getElementById('statusBar').className=vendor?'status-bar success':'status-bar info';
+};
+document.getElementById('macInput').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('lookupBtn').click();});
+document.getElementById('batchBtn').onclick=function(){
+  var lines=document.getElementById('batchInput').value.trim().split('\n').filter(function(l){return l.trim();});
+  if(!lines.length){document.getElementById('statusBar').textContent='请输入至少一个MAC地址';document.getElementById('statusBar').className='status-bar error';return;}
+  var html='';
+  lines.forEach(function(line){
+    var mac=line.trim();
+    var clean=normalizeMac(mac);
+    var oui=clean.length>=6?clean.substring(0,6):'------';
+    var vendor=clean.length>=6?(lookupVendor(mac)||'未知'):'格式无效';
+    var ouiFmt=oui.substring(0,2)+':'+oui.substring(2,4)+':'+oui.substring(4,6);
+    html+='<tr><td class="mac-format">'+(clean.length>=12?formatMac(clean):mac)+'</td><td class="mac-format">'+ouiFmt+'</td><td class="vendor-name">'+vendor+'</td></tr>';
+  });
+  document.getElementById('batchBody').innerHTML=html;
+  document.getElementById('batchResult').style.display='block';
+  document.getElementById('statusBar').textContent='共查询 '+lines.length+' 个MAC地址';
+  document.getElementById('statusBar').className='status-bar success';
+};
+initSidebar('network');
+</script>
+</body>
+</html>

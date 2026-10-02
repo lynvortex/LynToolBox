@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Protobuf编解码 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp" />
+<meta name="description" content="Protobuf编解码工具，纯前端使用protobufjs解析.proto定义，JSON与二进制互转，数据本地处理。" />
+<link rel="stylesheet" href="../assets/tool-common.css" />
+<script src="../assets/sidebar.js"></script>
+<script src="../assets/protobuf.min.js"></script>
+<style>
+  .schema-box { margin-bottom:16px; }
+  .schema-box label { font-size:0.82em; color:#64748b; font-weight:600; margin-bottom:6px; display:block; }
+  textarea.code { width:100%; padding:12px 14px; border:1px solid #e0e6ed; border-radius:8px; font-family:'Courier New',monospace; font-size:0.85em; outline:none; resize:vertical; background:#f8fafc; color:#1e293b; line-height:1.55; }
+  textarea.code:focus { border-color:#4a90e2; background:#fff; }
+  .mode-tabs { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  .mode-tab { padding:9px 20px; border:1px solid #e0e6ed; border-radius:8px; background:#f8fafc; color:#64748b; cursor:pointer; font-size:0.88em; font-weight:600; transition:all .2s; }
+  .mode-tab.active { background:#4a90e2; color:#fff; border-color:#4a90e2; }
+  .panel { display:none; }
+  .panel.active { display:block; }
+  .io-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:14px; }
+  @media (max-width:600px){ .io-grid{ grid-template-columns:1fr; } }
+  .io-pane label { font-size:0.82em; color:#64748b; font-weight:600; margin-bottom:6px; display:block; }
+  .type-row { display:flex; gap:10px; align-items:flex-end; margin-bottom:14px; flex-wrap:wrap; }
+  .type-row .form-item { flex:1; min-width:200px; margin-bottom:0; }
+  .fmt-row { display:flex; gap:8px; align-items:center; margin-bottom:10px; }
+  .fmt-row label { font-size:0.82em; color:#64748b; font-weight:600; }
+  .fmt-row select { padding:8px 12px; border:1px solid #e0e6ed; border-radius:8px; font-size:0.85em; outline:none; background:#fff; }
+  pre.output { min-height:120px; max-height:320px; font-size:0.84em; word-break:break-all; }
+</style>
+    <meta name="keywords" content="Protobuf编解码,在线Protobuf编解码,文本处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/text/protobuf-tool.html" />
+    <meta property="og:title" content="Protobuf编解码" />
+    <meta property="og:description" content="Protobuf编解码工具，纯前端使用protobufjs解析.proto定义，JSON与二进制互转，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/text/protobuf-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="Protobuf编解码" />
+    <meta itemprop="description" content="Protobuf编解码工具，纯前端使用protobufjs解析.proto定义，JSON与二进制互转，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文本处理",
+                "item": "https://box.lynvortex.top/text.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Protobuf编解码",
+                "item": "https://box.lynvortex.top/text/protobuf-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Protobuf编解码",
+        "url": "https://box.lynvortex.top/text/protobuf-tool.html",
+        "description": "protobufjs解析.proto定义，JSON与二进制互转",
+        "applicationCategory": "文本处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+  <div class="tool-container">
+    <div class="tool-header">
+      <h1>📟 Protobuf编解码</h1>
+      <p>纯前端 protobufjs 解析 .proto 定义，JSON 与二进制（Base64/Hex）互转</p>
+    </div>
+
+    <div class="schema-box">
+      <label>.proto Schema 定义</label>
+      <textarea class="code" id="schemaArea" spellcheck="false" style="min-height:140px;" placeholder="输入 .proto 定义..."></textarea>
+    </div>
+
+    <div class="btn-row" style="margin-bottom:14px;">
+      <button class="btn btn-primary" id="parseBtn">🔍 解析 Schema</button>
+      <button class="btn btn-ghost" id="sampleBtn">载入示例</button>
+    </div>
+
+    <div class="mode-tabs" id="modeTabs">
+      <div class="mode-tab active" data-mode="encode">编码（JSON → 二进制）</div>
+      <div class="mode-tab" data-mode="decode">解码（二进制 → JSON）</div>
+    </div>
+
+    <!-- 编码面板 -->
+    <div class="panel active" id="encodePanel">
+      <div class="type-row">
+        <div class="form-item">
+          <label>选择 Message 类型</label>
+          <select id="encType"></select>
+        </div>
+      </div>
+      <div class="io-grid">
+        <div class="io-pane">
+          <label>JSON 输入</label>
+          <textarea class="code" id="encInput" spellcheck="false" style="min-height:180px;" placeholder='{"name":"绘萤","age":18}'></textarea>
+        </div>
+        <div class="io-pane">
+          <label>编码结果 <span style="float:right;color:#4a90e2;cursor:pointer;font-weight:600;" id="copyEncBtn">📋 复制</span></label>
+          <pre class="output" id="encOutput"></pre>
+        </div>
+      </div>
+      <div class="fmt-row">
+        <label>输出格式：</label>
+        <select id="encFmt"><option value="base64">Base64</option><option value="hex">Hex（十六进制）</option></select>
+      </div>
+      <button class="btn btn-primary" id="encBtn">⚡ 编码</button>
+    </div>
+
+    <!-- 解码面板 -->
+    <div class="panel" id="decodePanel">
+      <div class="type-row">
+        <div class="form-item">
+          <label>选择 Message 类型</label>
+          <select id="decType"></select>
+        </div>
+      </div>
+      <div class="io-grid">
+        <div class="io-pane">
+          <label>二进制输入（Base64 或 Hex）</label>
+          <textarea class="code" id="decInput" spellcheck="false" style="min-height:180px;" placeholder="粘贴 Base64 或 Hex 字符串..."></textarea>
+        </div>
+        <div class="io-pane">
+          <label>解码结果 <span style="float:right;color:#4a90e2;cursor:pointer;font-weight:600;" id="copyDecBtn">📋 复制</span></label>
+          <pre class="output" id="decOutput"></pre>
+        </div>
+      </div>
+      <div class="fmt-row">
+        <label>输入格式：</label>
+        <select id="decFmt"><option value="auto">自动识别</option><option value="base64">Base64</option><option value="hex">Hex（十六进制）</option></select>
+      </div>
+      <button class="btn btn-primary" id="decBtn">⚡ 解码</button>
+    </div>
+
+    <div id="statusBar" class="status-bar info">输入 .proto 定义后点击「解析 Schema」</div>
+
+    <footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+  </div>
+
+  <div class="info-cards">
+    <div class="info-card">
+      <h3>📦 功能说明</h3>
+      <p>使用 protobufjs 在浏览器本地解析 .proto 定义，实现 JSON 与 Protobuf 二进制的相互转换，支持 Base64 与 Hex 两种二进制文本表示，便于调试与传输。</p>
+      <div class="feature-chips">
+        <span class="feature-chip">.proto解析</span>
+        <span class="feature-chip">JSON转二进制</span>
+        <span class="feature-chip">二进制转JSON</span>
+        <span class="feature-chip">Base64</span>
+        <span class="feature-chip">Hex</span>
+        <span class="feature-chip">离线本地</span>
+      </div>
+    </div>
+    <div class="info-card">
+      <h3>💡 使用须知</h3>
+      <ul class="tips-list">
+        <li>需先在上方输入 .proto 定义并点击「解析 Schema」以加载类型</li>
+        <li>编码前会调用 verify 校验数据，字段类型不符会给出提示</li>
+        <li>解码时自动识别 Base64 与 Hex 格式，也可手动指定</li>
+        <li>支持 proto3 语法，含 message、enum、嵌套类型与 package</li>
+        <li>所有编解码在本地完成，数据不会上传</li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <h3>✨ 绘萤者</h3>
+      <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+      <div class="tool-links">
+        <a href="https://lynvortex.top" target="_blank">完全免费</a>
+        <a href="https://lynvortex.top" target="_blank">开源精神</a>
+        <a href="https://lynvortex.top" target="_blank">极客风范</a>
+        <a href="https://lynvortex.top" target="_blank">协作共创</a>
+      </div>
+      <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+  </div>
+</div></main>
+<script>
+initSidebar('text');
+(function () {
+  'use strict';
+  var schemaArea = document.getElementById('schemaArea');
+  var statusBar = document.getElementById('statusBar');
+  var encTypeSel = document.getElementById('encType');
+  var decTypeSel = document.getElementById('decType');
+  var root = null;
+  var typeNames = [];
+
+  document.querySelectorAll('.mode-tab').forEach(function (t) {
+    t.addEventListener('click', function () {
+      document.querySelectorAll('.mode-tab').forEach(function (x) { x.classList.remove('active'); });
+      t.classList.add('active');
+      var m = t.dataset.mode;
+      document.getElementById('encodePanel').classList.toggle('active', m === 'encode');
+      document.getElementById('decodePanel').classList.toggle('active', m === 'decode');
+    });
+  });
+
+  function listTypes(ns, prefix) {
+    var types = [];
+    if (!ns.nested) return types;
+    for (var name in ns.nested) {
+      if (!Object.prototype.hasOwnProperty.call(ns.nested, name)) continue;
+      var obj = ns.nested[name];
+      var full = prefix ? prefix + '.' + name : name;
+      if (obj && typeof obj.encode === 'function' && typeof obj.decode === 'function') {
+        types.push(full);
+      }
+      if (obj && obj.nested) types = types.concat(listTypes(obj, full));
+    }
+    return types;
+  }
+
+  function populateTypes() {
+    var opts = typeNames.map(function (n) { return '<option value="' + n + '">' + n + '</option>'; }).join('');
+    if (!opts) opts = '<option value="">（未发现 message 类型）</option>';
+    encTypeSel.innerHTML = opts;
+    decTypeSel.innerHTML = opts;
+  }
+
+  function parseSchema() {
+    var src = schemaArea.value.trim();
+    if (!src) { setStatus('请输入 .proto 定义', 'error'); return; }
+    if (typeof protobuf === 'undefined') { setStatus('protobuf 库未加载，请刷新页面', 'error'); return; }
+    try {
+      var parsed = protobuf.parse(src);
+      root = parsed.root;
+      typeNames = listTypes(root, '');
+      populateTypes();
+      if (typeNames.length === 0) { setStatus('解析成功，但未发现 message 类型', 'error'); return; }
+      setStatus('解析成功 ✓，发现 ' + typeNames.length + ' 个 message 类型' + (parsed.package ? '（package: ' + parsed.package + '）' : ''), 'success');
+    } catch (err) {
+      setStatus('Schema 解析失败：' + err.message, 'error');
+    }
+  }
+
+  document.getElementById('parseBtn').addEventListener('click', parseSchema);
+
+  // Base64 / Hex 互转工具
+  function bytesToBase64(bytes) {
+    var bin = '';
+    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin);
+  }
+  function base64ToBytes(b64) {
+    var cleaned = b64.replace(/\s/g, '').replace(/[^A-Za-z0-9+/=]/g, '');
+    var bin = atob(cleaned);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+  function bytesToHex(bytes) {
+    var s = '';
+    for (var i = 0; i < bytes.length; i++) s += bytes[i].toString(16).padStart(2, '0');
+    return s;
+  }
+  function hexToBytes(hex) {
+    var cleaned = hex.replace(/\s/g, '').replace(/0x/gi, '');
+    if (cleaned.length % 2 !== 0) throw new Error('Hex 长度必须为偶数');
+    var bytes = new Uint8Array(cleaned.length / 2);
+    for (var i = 0; i < cleaned.length; i += 2) {
+      var b = parseInt(cleaned.substr(i, 2), 16);
+      if (isNaN(b)) throw new Error('无效的 Hex 字符：' + cleaned.substr(i, 2));
+      bytes[i / 2] = b;
+    }
+    return bytes;
+  }
+  function isHexStr(s) { return /^[0-9a-fA\s]+$/i.test(s.replace(/\s/g, '')) && s.replace(/\s/g, '').length % 2 === 0 && s.replace(/\s/g, '').length > 0; }
+
+  function getSelectedType(selId) {
+    var name = document.getElementById(selId).value;
+    if (!name) { setStatus('请先解析 Schema 并选择 message 类型', 'error'); return null; }
+    try { return root.lookupType(name); }
+    catch (e) { setStatus('查找类型失败：' + e.message, 'error'); return null; }
+  }
+
+  // 编码
+  document.getElementById('encBtn').addEventListener('click', function () {
+    if (!root) { setStatus('请先解析 Schema', 'error'); return; }
+    var type = getSelectedType('encType');
+    if (!type) return;
+    var input = document.getElementById('encInput').value.trim();
+    if (!input) { setStatus('请输入 JSON 数据', 'error'); return; }
+    var obj;
+    try { obj = JSON.parse(input); }
+    catch (e) { setStatus('JSON 解析失败：' + e.message, 'error'); return; }
+    try {
+      var verr = type.verify(obj);
+      if (verr) { setStatus('数据校验失败：' + verr, 'error'); return; }
+      var buffer = type.encode(obj).finish();
+      var fmt = document.getElementById('encFmt').value;
+      var out = fmt === 'hex' ? bytesToHex(buffer) : bytesToBase64(buffer);
+      document.getElementById('encOutput').textContent = out + '\n\n（' + buffer.length + ' 字节）';
+      setStatus('编码成功 ✓（' + buffer.length + ' 字节，' + fmt.toUpperCase() + '）', 'success');
+    } catch (err) {
+      setStatus('编码失败：' + err.message, 'error');
+    }
+  });
+
+  // 解码
+  document.getElementById('decBtn').addEventListener('click', function () {
+    if (!root) { setStatus('请先解析 Schema', 'error'); return; }
+    var type = getSelectedType('decType');
+    if (!type) return;
+    var input = document.getElementById('decInput').value.trim();
+    if (!input) { setStatus('请输入 Base64 或 Hex 字符串', 'error'); return; }
+    try {
+      var fmt = document.getElementById('decFmt').value;
+      var bytes;
+      if (fmt === 'base64') bytes = base64ToBytes(input);
+      else if (fmt === 'hex') bytes = hexToBytes(input);
+      else {
+        // 自动识别：含非 hex 字符则视为 base64
+        bytes = isHexStr(input) ? hexToBytes(input) : base64ToBytes(input);
+      }
+      var decoded = type.decode(bytes);
+      var obj = (typeof decoded.toJSON === 'function') ? decoded.toJSON() : JSON.parse(JSON.stringify(decoded));
+      document.getElementById('decOutput').textContent = JSON.stringify(obj, null, 2);
+      setStatus('解码成功 ✓（' + bytes.length + ' 字节）', 'success');
+    } catch (err) {
+      setStatus('解码失败：' + err.message, 'error');
+    }
+  });
+
+  // 复制
+  function copyFrom(elId) {
+    var text = document.getElementById(elId).textContent;
+    if (!text) { setStatus('没有可复制的内容', 'error'); return; }
+    navigator.clipboard.writeText(text).then(function () { setStatus('已复制到剪贴板 ✓', 'success'); })
+      .catch(function () { var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); setStatus('已复制到剪贴板 ✓', 'success'); });
+  }
+  document.getElementById('copyEncBtn').addEventListener('click', function () { copyFrom('encOutput'); });
+  document.getElementById('copyDecBtn').addEventListener('click', function () { copyFrom('decOutput'); });
+
+  document.getElementById('sampleBtn').addEventListener('click', function () {
+    schemaArea.value = SAMPLE_SCHEMA;
+    parseSchema();
+    document.getElementById('encInput').value = '{\n  "name": "绘萤",\n  "age": 18,\n  "active": true,\n  "scores": [95, 88, 76]\n}';
+  });
+
+  var SAMPLE_SCHEMA = 'syntax = "proto3";\n\npackage huanying;\n\nmessage Person {\n  string name = 1;\n  int32 age = 2;\n  bool active = 3;\n  repeated int32 scores = 4;\n}\n\nmessage Address {\n  string city = 1;\n  string street = 2;\n}';
+
+  // 初始化
+  schemaArea.value = SAMPLE_SCHEMA;
+  parseSchema();
+  document.getElementById('encInput').value = '{\n  "name": "绘萤",\n  "age": 18,\n  "active": true,\n  "scores": [95, 88, 76]\n}';
+})();
+</script>
+</body>
+</html>

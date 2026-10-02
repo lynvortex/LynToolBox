@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>视频播放器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="通用视频播放器，支持本地视频播放、倍速、截图、循环等功能，纯前端无依赖。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+        .player-box { background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 18px; position: relative; }
+        video { width: 100%; display: block; max-height: 500px; background: #000; }
+        .controls { padding: 14px; background: #1a1a2e; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .controls button { background: #4a90e2; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.88em; }
+        .controls button:hover { background: #3a7bd5; }
+        .speed-select { background: #2c3e50; color: #fff; border: 1px solid #4a90e2; padding: 6px 10px; border-radius: 6px; }
+        .progress-bar { flex: 1; min-width: 200px; height: 6px; background: #2c3e50; border-radius: 3px; cursor: pointer; position: relative; }
+        .progress-fill { height: 100%; background: #4a90e2; border-radius: 3px; width: 0%; }
+        .time-display { color: #94a3b8; font-size: 0.82em; font-family: 'Courier New', monospace; }
+        .upload-area { border: 2px dashed #e0e6ed; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.2s; }
+        .upload-area:hover { border-color: #4a90e2; background: #f8fafc; }
+        .upload-area.drag { border-color: #4a90e2; background: #eff6ff; }
+        .info-display { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 18px; }
+        .info-item { background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 10px; padding: 12px; text-align: center; }
+        .info-item .iv { font-weight: 700; color: #2c3e50; font-size: 1.05em; }
+        .info-item .il { font-size: 0.78em; color: #94a3b8; margin-top: 2px; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="视频播放器,在线视频播放器,音视频处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/media/video-player-tool.html" />
+    <meta property="og:title" content="视频播放器" />
+    <meta property="og:description" content="通用视频播放器，支持本地视频播放、倍速、截图、循环等功能，纯前端无依赖。" />
+    <meta property="og:url" content="https://box.lynvortex.top/media/video-player-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="视频播放器" />
+    <meta itemprop="description" content="通用视频播放器，支持本地视频播放、倍速、截图、循环等功能，纯前端无依赖。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "音视频处理",
+                "item": "https://box.lynvortex.top/media.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "视频播放器",
+                "item": "https://box.lynvortex.top/media/video-player-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "视频播放器",
+        "url": "https://box.lynvortex.top/media/video-player-tool.html",
+        "description": "本地视频播放器，支持倍速播放、截图、全屏与循环",
+        "applicationCategory": "音视频处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🎬 视频播放器</h1>
+                <p>本地视频播放，支持倍速、截图、循环等功能</p>
+            </div>
+
+            <div class="upload-area" id="uploadArea">
+                <p style="font-size:1.2em;color:#64748b;">📁 点击或拖拽视频文件到此处</p>
+                <p style="font-size:0.82em;color:#94a3b8;margin-top:8px;">支持 MP4 / WebM / OGG / MOV 等格式</p>
+                <input type="file" id="fileInput" accept="video/*" style="display:none;" />
+            </div>
+
+            <div id="playerSection" style="display:none;">
+                <div class="player-box">
+                    <video id="video" controls></video>
+                    <div class="controls">
+                        <button id="playPause">▶ 播放</button>
+                        <button id="screenshot">📸 截图</button>
+                        <button id="loopBtn">🔁 循环</button>
+                        <select class="speed-select" id="speed">
+                            <option value="0.25">0.25x</option><option value="0.5">0.5x</option>
+                            <option value="0.75">0.75x</option><option value="1" selected>1x</option>
+                            <option value="1.25">1.25x</option><option value="1.5">1.5x</option>
+                            <option value="2">2x</option><option value="3">3x</option><option value="4">4x</option>
+                        </select>
+                        <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+                        <span class="time-display" id="timeDisplay">00:00 / 00:00</span>
+                    </div>
+                </div>
+                <div class="info-display" id="infoDisplay"></div>
+            </div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 视频播放器</h3>
+                <p>本地视频播放多功能控制</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">倍速播放</span>
+                    <span class="feature-chip">视频截图</span>
+                    <span class="feature-chip">循环播放</span>
+                    <span class="feature-chip">离线可用</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>支持拖拽上传视频文件</li>
+                    <li>0.25x~4x倍速播放</li>
+                    <li>一键截图保存当前帧为PNG</li>
+                    <li>所有处理在浏览器本地完成</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+var video=document.getElementById('video');
+var uploadArea=document.getElementById('uploadArea');
+var fileInput=document.getElementById('fileInput');
+
+uploadArea.onclick=function(){fileInput.click();};
+uploadArea.ondragover=function(e){e.preventDefault();this.classList.add('drag');};
+uploadArea.ondragleave=function(){this.classList.remove('drag');};
+uploadArea.ondrop=function(e){e.preventDefault();this.classList.remove('drag');if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);};
+fileInput.onchange=function(){if(this.files[0])loadFile(this.files[0]);};
+
+function loadFile(file){
+    var url=URL.createObjectURL(file);
+    video.src=url;
+    document.getElementById('playerSection').style.display='block';
+    uploadArea.style.display='none';
+    video.onloadedmetadata=function(){
+        var info=[
+            ['文件名',file.name.length>20?file.name.slice(0,18)+'...':file.name],
+            ['大小',(file.size/1048576).toFixed(2)+' MB'],
+            ['时长',formatTime(video.duration)],
+            ['分辨率',video.videoWidth+'×'+video.videoHeight],
+            ['类型',file.type||'未知']
+        ];
+        document.getElementById('infoDisplay').innerHTML=info.map(function(i){
+            return '<div class="info-item"><div class="iv">'+i[1]+'</div><div class="il">'+i[0]+'</div></div>';
+        }).join('');
+    };
+}
+
+function formatTime(s){if(isNaN(s))return'00:00';var m=Math.floor(s/60),sec=Math.floor(s%60);return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');}
+
+document.getElementById('playPause').onclick=function(){if(video.paused){video.play();this.textContent='⏸ 暂停';}else{video.pause();this.textContent='▶ 播放';}};
+video.onplay=function(){document.getElementById('playPause').textContent='⏸ 暂停';};
+video.onpause=function(){document.getElementById('playPause').textContent='▶ 播放';};
+
+document.getElementById('speed').onchange=function(){video.playbackRate=parseFloat(this.value);};
+
+document.getElementById('loopBtn').onclick=function(){video.loop=!video.loop;this.style.background=video.loop?'#22c55e':'';this.textContent=video.loop?'🔁 循环开':'🔁 循环';};
+
+video.ontimeupdate=function(){
+    var pct=video.currentTime/video.duration*100;
+    document.getElementById('progressFill').style.width=pct+'%';
+    document.getElementById('timeDisplay').textContent=formatTime(video.currentTime)+' / '+formatTime(video.duration);
+};
+
+document.getElementById('progressBar').onclick=function(e){
+    var rect=this.getBoundingClientRect();
+    video.currentTime=(e.clientX-rect.left)/rect.width*video.duration;
+};
+
+document.getElementById('screenshot').onclick=function(){
+    var canvas=document.createElement('canvas');
+    canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+    canvas.getContext('2d').drawImage(video,0,0);
+    canvas.toBlob(function(blob){
+        var a=document.createElement('a');
+        a.href=URL.createObjectURL(blob);
+        a.download='screenshot_'+Date.now()+'.png';
+        a.click();
+    });
+};
+initSidebar('media');
+</script>
+</body>
+</html>

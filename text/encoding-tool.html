@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>文本编码转换 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp" />
+<meta name="description" content="文本编码转换工具，纯前端在UTF-8/Shift-JIS/EUC-JP/Unicode间互转，自动检测编码，数据本地处理。" />
+<link rel="stylesheet" href="../assets/tool-common.css" />
+<script src="../assets/sidebar.js"></script>
+<script src="../assets/encoding-jp.min.js"></script>
+<style>
+  .file-drop { border:2px dashed #cbd5e1; border-radius:10px; padding:18px; text-align:center; color:#64748b; background:#f8fafc; cursor:pointer; transition:all .2s; margin-bottom:14px; }
+  .file-drop:hover, .file-drop.dragover { border-color:#4a90e2; background:#ebf5ff; color:#4a90e2; }
+  .file-drop small { display:block; margin-top:4px; color:#94a3b8; }
+  .enc-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px; }
+  @media (max-width:600px){ .enc-grid{ grid-template-columns:1fr; } }
+  .io-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:16px; }
+  @media (max-width:600px){ .io-grid{ grid-template-columns:1fr; } }
+  .io-pane label { font-size:0.82em; color:#64748b; font-weight:600; margin-bottom:6px; display:block; }
+  textarea.code { width:100%; min-height:180px; padding:12px 14px; border:1px solid #e0e6ed; border-radius:8px; font-family:'Courier New',monospace; font-size:0.88em; outline:none; resize:vertical; background:#f8fafc; color:#1e293b; line-height:1.6; }
+  textarea.code:focus { border-color:#4a90e2; background:#fff; }
+  textarea.code[readonly]{ background:#0f172a; color:#e2e8f0; }
+  .info-line { font-size:0.82em; color:#64748b; margin-bottom:14px; padding:8px 12px; background:#f1f5f9; border-radius:6px; }
+  .info-line strong { color:#4a90e2; font-family:'Consolas',monospace; }
+  .hex-box { margin-top:8px; }
+  .hex-box label { font-size:0.78em; color:#94a3b8; margin-bottom:4px; display:block; }
+  pre.output { min-height:60px; max-height:160px; font-size:0.78em; }
+</style>
+    <meta name="keywords" content="文本编码转换,在线文本编码转换,文本处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/text/encoding-tool.html" />
+    <meta property="og:title" content="文本编码转换" />
+    <meta property="og:description" content="文本编码转换工具，纯前端在UTF-8/Shift-JIS/EUC-JP/Unicode间互转，自动检测编码，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/text/encoding-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="文本编码转换" />
+    <meta itemprop="description" content="文本编码转换工具，纯前端在UTF-8/Shift-JIS/EUC-JP/Unicode间互转，自动检测编码，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文本处理",
+                "item": "https://box.lynvortex.top/text.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "文本编码转换",
+                "item": "https://box.lynvortex.top/text/encoding-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "文本编码转换",
+        "url": "https://box.lynvortex.top/text/encoding-tool.html",
+        "description": "UTF-8/Shift-JIS/EUC-JP间互转，自动检测编码",
+        "applicationCategory": "文本处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+  <div class="tool-container">
+    <div class="tool-header">
+      <h1>🔣 文本编码转换</h1>
+      <p>纯前端在 UTF-8 / Shift-JIS / EUC-JP / Unicode 间互转，自动检测编码，数据本地处理</p>
+    </div>
+
+    <div class="file-drop" id="fileDrop">
+      📂 点击选择文件或拖拽到此处（读取原始字节进行编码转换）
+      <input type="file" id="fileInput" style="display:none;" />
+      <small id="fileHint">未选择文件时，将转换下方输入的文本</small>
+    </div>
+
+    <div class="enc-grid">
+      <div class="form-item">
+        <label>源编码</label>
+        <select id="srcEnc">
+          <option value="auto">自动检测</option>
+          <option value="UTF8">UTF-8</option>
+          <option value="SJIS">Shift-JIS</option>
+          <option value="EUCJP">EUC-JP</option>
+          <option value="UNICODE">Unicode (UTF-16)</option>
+        </select>
+      </div>
+      <div class="form-item">
+        <label>目标编码</label>
+        <select id="dstEnc">
+          <option value="UTF8">UTF-8</option>
+          <option value="SJIS">Shift-JIS</option>
+          <option value="EUCJP">EUC-JP</option>
+          <option value="UNICODE">Unicode (UTF-16)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="io-grid">
+      <div class="io-pane">
+        <label>输入文本</label>
+        <textarea class="code" id="inputArea" spellcheck="false" placeholder="输入文本，或上传文件后此处显示文件原始字节解码..."></textarea>
+      </div>
+      <div class="io-pane">
+        <label>输出文本 <span style="float:right;color:#4a90e2;cursor:pointer;font-weight:600;" id="copyBtn">📋 复制</span></label>
+        <textarea class="code" id="outputArea" spellcheck="false" readonly placeholder="转换结果将显示在这里..."></textarea>
+      </div>
+    </div>
+
+    <div class="info-line" id="infoLine">检测到的编码：<strong id="detectedEnc">—</strong>　|　目标字节大小：<strong id="dstSize">—</strong></div>
+
+    <div class="hex-box">
+      <label>目标编码字节预览（Hex，前 256 字节）</label>
+      <pre class="output" id="hexPreview">—</pre>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="convertBtn">🔄 转换</button>
+      <button class="btn btn-outline" id="downloadBtn">⬇️ 下载转换后文件</button>
+      <button class="btn btn-ghost" id="clearBtn">🗑️ 清空</button>
+    </div>
+
+    <div id="statusBar" class="status-bar info">输入文本或上传文件，选择编码后点击「转换」</div>
+
+    <footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+  </div>
+
+  <div class="info-cards">
+    <div class="info-card">
+      <h3>📦 功能说明</h3>
+      <p>使用 encoding-japanese 在浏览器本地实现 UTF-8、Shift-JIS、EUC-JP、Unicode(UTF-16) 之间的相互转换，支持上传文件读取原始字节并自动检测编码，转换后可下载为目标编码文件。</p>
+      <div class="feature-chips">
+        <span class="feature-chip">UTF-8</span>
+        <span class="feature-chip">Shift-JIS</span>
+        <span class="feature-chip">EUC-JP</span>
+        <span class="feature-chip">自动检测</span>
+        <span class="feature-chip">文件上传</span>
+        <span class="feature-chip">离线本地</span>
+      </div>
+    </div>
+    <div class="info-card">
+      <h3>💡 使用须知</h3>
+      <ul class="tips-list">
+        <li>上传文件时按原始字节读取，源编码选「自动检测」可识别常见编码</li>
+        <li>未上传文件时转换输入框文本，源编码决定文本的编码方式</li>
+        <li>Shift-JIS / EUC-JP 主要面向日文，部分中文或特殊字符可能无法表示</li>
+        <li>输出文本为按源编码解码后的可读内容，可下载为目标编码字节文件</li>
+        <li>所有转换在本地完成，文件不会上传到服务器</li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <h3>✨ 绘萤者</h3>
+      <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+      <div class="tool-links">
+        <a href="https://lynvortex.top" target="_blank">完全免费</a>
+        <a href="https://lynvortex.top" target="_blank">开源精神</a>
+        <a href="https://lynvortex.top" target="_blank">极客风范</a>
+        <a href="https://lynvortex.top" target="_blank">协作共创</a>
+      </div>
+      <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+  </div>
+</div></main>
+<script>
+initSidebar('text');
+(function () {
+  'use strict';
+  var inputArea = document.getElementById('inputArea');
+  var outputArea = document.getElementById('outputArea');
+  var statusBar = document.getElementById('statusBar');
+  var srcEncSel = document.getElementById('srcEnc');
+  var dstEncSel = document.getElementById('dstEnc');
+  var detectedEnc = document.getElementById('detectedEnc');
+  var dstSize = document.getElementById('dstSize');
+  var hexPreview = document.getElementById('hexPreview');
+  var fileInput = document.getElementById('fileInput');
+  var fileDrop = document.getElementById('fileDrop');
+  var fileHint = document.getElementById('fileHint');
+  var fileBytes = null; // Uint8Array | null
+  var lastTargetBytes = null;
+
+  // 编码名映射/归一化
+  function normalizeEnc(enc) {
+    if (!enc) return 'UTF8';
+    var u = String(enc).toUpperCase();
+    if (u === 'UTF16' || u === 'UTF16BE' || u === 'UTF16LE' || u === 'UNICODE') return 'UNICODE';
+    if (u === 'SHIFT_JIS' || u === 'SHIFT-JIS' || u === 'SJIS') return 'SJIS';
+    if (u === 'EUC-JP' || u === 'EUCJP') return 'EUCJP';
+    if (u === 'UTF-8' || u === 'UTF8') return 'UTF8';
+    if (u === 'ASCII' || u === 'JIS') return u;
+    return u;
+  }
+  function encLabel(enc) {
+    var m = { 'UTF8': 'UTF-8', 'SJIS': 'Shift-JIS', 'EUCJP': 'EUC-JP', 'UNICODE': 'Unicode (UTF-16)', 'ASCII': 'ASCII', 'JIS': 'JIS (ISO-2022-JP)' };
+    return m[enc] || enc;
+  }
+  function bytesToHex(bytes, max) {
+    var n = Math.min(bytes.length, max || 256);
+    var parts = [];
+    for (var i = 0; i < n; i++) parts.push(bytes[i].toString(16).padStart(2, '0'));
+    var s = parts.join(' ');
+    if (bytes.length > n) s += ' …（共 ' + bytes.length + ' 字节，已截断）';
+    return s || '(空)';
+  }
+
+  // 文件上传
+  fileDrop.addEventListener('click', function () { fileInput.click(); });
+  fileInput.addEventListener('change', function () {
+    if (fileInput.files[0]) loadFile(fileInput.files[0]);
+    fileInput.value = '';
+  });
+  ['dragover', 'dragenter'].forEach(function (ev) { fileDrop.addEventListener(ev, function (e) { e.preventDefault(); fileDrop.classList.add('dragover'); }); });
+  ['dragleave', 'drop'].forEach(function (ev) { fileDrop.addEventListener(ev, function (e) { e.preventDefault(); fileDrop.classList.remove('dragover'); }); });
+  fileDrop.addEventListener('drop', function (e) { if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); });
+
+  function loadFile(file) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      fileBytes = new Uint8Array(reader.result);
+      fileHint.textContent = '已加载文件：' + file.name + '（' + fileBytes.length + ' 字节）— 转换将使用文件原始字节';
+      // 预览：尝试解码显示在输入框
+      try {
+        var det = Encoding.detect(Array.from(fileBytes));
+        var eff = normalizeEnc(det || 'UTF8');
+        var preview = Encoding.convert(Array.from(fileBytes), { from: eff, to: 'UNICODE', type: 'string' });
+        inputArea.value = preview.slice(0, 5000);
+      } catch (e) { inputArea.value = '(无法预览此文件的文本)'; }
+      setStatus('文件已加载，点击「转换」', 'info');
+    };
+    reader.onerror = function () { setStatus('文件读取失败', 'error'); };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function convert() {
+    if (typeof Encoding === 'undefined') { setStatus('encoding 库未加载，请刷新页面', 'error'); return; }
+    try {
+      // 1. 获取输入字节
+      var inputBytes;
+      if (fileBytes) {
+        inputBytes = fileBytes;
+      } else {
+        var text = inputArea.value;
+        if (!text) { setStatus('请输入文本或上传文件', 'error'); return; }
+        var srcRaw = srcEncSel.value;
+        var srcEnc = srcRaw === 'auto' ? 'UTF8' : srcRaw;
+        // 将文本编码为源编码字节
+        var codes = Encoding.stringToCode(text);
+        var arr = Encoding.convert(codes, { from: 'UNICODE', to: srcEnc });
+        inputBytes = new Uint8Array(arr);
+      }
+
+      // 2. 确定有效源编码（AUTO 检测）
+      var srcVal = srcEncSel.value;
+      var effSource;
+      if (srcVal === 'auto') {
+        var det = Encoding.detect(Array.from(inputBytes));
+        effSource = normalizeEnc(det || 'UTF8');
+        detectedEnc.textContent = det ? (det + ' → ' + encLabel(effSource)) : '未能识别（按 UTF-8 处理）';
+      } else {
+        effSource = normalizeEnc(srcVal);
+        detectedEnc.textContent = '手动指定：' + encLabel(effSource);
+      }
+
+      // 3. 解码为可读文本（输出）
+      var readable = Encoding.convert(Array.from(inputBytes), { from: effSource, to: 'UNICODE', type: 'string' });
+      outputArea.value = readable;
+
+      // 4. 转换为目标编码字节
+      var dstEnc = normalizeEnc(dstEncSel.value);
+      var dstArr = Encoding.convert(Array.from(inputBytes), { from: effSource, to: dstEnc });
+      lastTargetBytes = new Uint8Array(dstArr);
+      dstSize.textContent = lastTargetBytes.length + ' 字节';
+      hexPreview.textContent = bytesToHex(lastTargetBytes, 256);
+
+      setStatus('转换成功 ✓（' + encLabel(effSource) + ' → ' + encLabel(dstEnc) + '）', 'success');
+    } catch (err) {
+      setStatus('转换失败：' + err.message, 'error');
+    }
+  }
+
+  document.getElementById('convertBtn').addEventListener('click', convert);
+  document.getElementById('copyBtn').addEventListener('click', function () {
+    if (!outputArea.value) { setStatus('没有可复制的内容', 'error'); return; }
+    navigator.clipboard.writeText(outputArea.value).then(function () { setStatus('已复制到剪贴板 ✓', 'success'); })
+      .catch(function () { outputArea.select(); document.execCommand('copy'); setStatus('已复制到剪贴板 ✓', 'success'); });
+  });
+  document.getElementById('downloadBtn').addEventListener('click', function () {
+    if (!lastTargetBytes) { setStatus('请先点击「转换」', 'error'); return; }
+    var ext = { 'UTF8': 'txt', 'SJIS': 'txt', 'EUCJP': 'txt', 'UNICODE': 'txt' };
+    var blob = new Blob([lastTargetBytes], { type: 'application/octet-stream' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'converted-' + dstEncSel.value.toLowerCase() + '.' + (ext[dstEncSel.value] || 'txt');
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1500);
+    setStatus('已下载转换后文件 ✓', 'success');
+  });
+  document.getElementById('clearBtn').addEventListener('click', function () {
+    inputArea.value = ''; outputArea.value = ''; fileBytes = null; lastTargetBytes = null;
+    fileHint.textContent = '未选择文件时，将转换下方输入的文本';
+    detectedEnc.textContent = '—'; dstSize.textContent = '—'; hexPreview.textContent = '—';
+    setStatus('已清空', 'info');
+  });
+
+  // 输入框变化时清除文件状态（以输入框为准）
+  inputArea.addEventListener('input', function () {
+    if (fileBytes) { fileBytes = null; fileHint.textContent = '未选择文件时，将转换下方输入的文本'; }
+  });
+
+  // 初始示例
+  inputArea.value = 'こんにちは、绘萤工具箱！\nHello, 世界。\n编码转换测试文本。';
+})();
+</script>
+</body>
+</html>

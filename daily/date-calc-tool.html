@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>日期计算器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="日期计算器，计算两个日期差值、日期加减天数、工作日计算，纯前端无依赖。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+        .sub-tabs { display: flex; gap: 8px; margin-bottom: 22px; }
+        .sub-tab { padding: 9px 20px; border-radius: 8px; border: 1px solid #e0e6ed; background: #f8fafc; color: #64748b; cursor: pointer; font-size: 0.88em; font-weight: 600; }
+        .sub-tab.active { background: #4a90e2; color: #fff; border-color: #4a90e2; }
+        .calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
+        @media (max-width: 600px) { .calc-grid { grid-template-columns: 1fr; } }
+        .calc-grid .form-item input { padding: 11px 14px; border: 1px solid #e0e6ed; border-radius: 8px; font-size: 0.95em; outline: none; }
+        .result-card { background: linear-gradient(135deg, #4a90e2 0%, #3a7bd5 100%); color: #fff; border-radius: 14px; padding: 26px; text-align: center; }
+        .result-big { font-size: 2.6em; font-weight: 700; font-family: 'Courier New', monospace; line-height: 1.2; }
+        .result-sub { font-size: 0.9em; opacity: 0.9; margin-top: 8px; }
+        .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 16px; }
+        .detail-item { background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 10px; padding: 14px; text-align: center; }
+        .detail-item .dv { font-size: 1.4em; font-weight: 700; color: #2c3e50; font-family: 'Courier New', monospace; }
+        .detail-item .dl { font-size: 0.78em; color: #94a3b8; margin-top: 4px; }
+        .add-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; margin-bottom: 18px; }
+        @media (max-width: 600px) { .add-row { grid-template-columns: 1fr; } }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="日期计算器,在线日期计算器,日常通用,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/daily/date-calc-tool.html" />
+    <meta property="og:title" content="日期计算器" />
+    <meta property="og:description" content="日期计算器，计算两个日期差值、日期加减天数、工作日计算，纯前端无依赖。" />
+    <meta property="og:url" content="https://box.lynvortex.top/daily/date-calc-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="日期计算器" />
+    <meta itemprop="description" content="日期计算器，计算两个日期差值、日期加减天数、工作日计算，纯前端无依赖。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "日常通用",
+                "item": "https://box.lynvortex.top/daily.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "日期计算器",
+                "item": "https://box.lynvortex.top/daily/date-calc-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "日期计算器",
+        "url": "https://box.lynvortex.top/daily/date-calc-tool.html",
+        "description": "计算日期差、日期加减、工作日计算",
+        "applicationCategory": "日常通用",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>📅 日期计算器</h1>
+                <p>计算日期差值、日期加减天数、工作日推算，纯前端无依赖</p>
+            </div>
+
+            <div class="sub-tabs">
+                <div class="sub-tab active" data-sub="diff">日期差值</div>
+                <div class="sub-tab" data-sub="add">日期加减</div>
+                <div class="sub-tab" data-sub="workday">工作日计算</div>
+            </div>
+
+            <div id="diffPanel">
+                <div class="calc-grid">
+                    <div class="form-item"><label>开始日期</label><input type="date" id="diffStart" /></div>
+                    <div class="form-item"><label>结束日期</label><input type="date" id="diffEnd" /></div>
+                </div>
+                <div class="result-card">
+                    <div class="result-big" id="diffDays">—</div>
+                    <div class="result-sub" id="diffSub">选择两个日期计算差值</div>
+                </div>
+                <div class="detail-grid" id="diffDetail" style="display:none;"></div>
+            </div>
+
+            <div id="addPanel" style="display:none;">
+                <div class="add-row">
+                    <div class="form-item"><label>基准日期</label><input type="date" id="addBase" /></div>
+                    <div class="form-item"><label>加减天数</label><input type="number" id="addDays" value="30" /></div>
+                    <button class="btn btn-primary" id="addCalc">计算</button>
+                </div>
+                <div class="result-card">
+                    <div class="result-big" id="addResult">—</div>
+                    <div class="result-sub" id="addSub">输入天数后点击计算</div>
+                </div>
+            </div>
+
+            <div id="workPanel" style="display:none;">
+                <div class="calc-grid">
+                    <div class="form-item"><label>开始日期</label><input type="date" id="workStart" /></div>
+                    <div class="form-item"><label>结束日期</label><input type="date" id="workEnd" /></div>
+                </div>
+                <div class="form-item" style="margin-bottom:18px;"><label>排除的星期（周末默认排除周六日）</label>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:0.85em;color:#475569;">
+                        <label><input type="checkbox" id="incSat" checked/> 含周六</label>
+                        <label><input type="checkbox" id="incSun" checked/> 含周日</label>
+                    </div>
+                </div>
+                <div class="result-card">
+                    <div class="result-big" id="workDays">—</div>
+                    <div class="result-sub" id="workSub">计算区间内工作日天数</div>
+                </div>
+            </div>
+
+            <div id="statusBar" class="status-bar info">所有计算在浏览器本地完成</div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 日期计算器</h3>
+                <p>计算两个日期间隔或进行日期加减</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">日期差</span>
+                    <span class="feature-chip">日期加减</span>
+                    <span class="feature-chip">间隔天数</span>
+                    <span class="feature-chip">离线可用</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>支持计算两个日期之间的年月日时分秒间隔</li>
+                    <li>支持对指定日期加减天数</li>
+                    <li>自动处理闰年和月份天数</li>
+                    <li>纯前端计算，无需网络</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const today = new Date().toISOString().slice(0, 10);
+    document.getElementById('diffStart').value = today;
+    const d2 = new Date(); d2.setDate(d2.getDate() + 100);
+    document.getElementById('diffEnd').value = d2.toISOString().slice(0, 10);
+    document.getElementById('addBase').value = today;
+    document.getElementById('workStart').value = today;
+    const d3 = new Date(); d3.setMonth(d3.getMonth() + 1);
+    document.getElementById('workEnd').value = d3.toISOString().slice(0, 10);
+
+    document.querySelectorAll('.sub-tab').forEach(t => t.addEventListener('click', () => {
+        document.querySelectorAll('.sub-tab').forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+        const s = t.dataset.sub;
+        document.getElementById('diffPanel').style.display = s === 'diff' ? 'block' : 'none';
+        document.getElementById('addPanel').style.display = s === 'add' ? 'block' : 'none';
+        document.getElementById('workPanel').style.display = s === 'workday' ? 'block' : 'none';
+    }));
+
+    const DAY = 86400000;
+    const calcDiff = () => {
+        const s = new Date(document.getElementById('diffStart').value);
+        const e = new Date(document.getElementById('diffEnd').value);
+        if (isNaN(s) || isNaN(e)) return;
+        const ms = e - s;
+        const days = Math.round(ms / DAY);
+        document.getElementById('diffDays').textContent = Math.abs(days) + ' 天';
+        document.getElementById('diffSub').textContent = days >= 0 ? '结束日期晚于开始日期' : '结束日期早于开始日期（负值）';
+        const detail = document.getElementById('diffDetail');
+        detail.style.display = 'grid';
+        const weeks = Math.floor(Math.abs(days) / 7);
+        const months = Math.abs(Math.round((e.getFullYear() - s.getFullYear()) * 12 + (e.getMonth() - s.getMonth())));
+        const years = Math.abs(e.getFullYear() - s.getFullYear());
+        detail.innerHTML = [
+            ['周', weeks], ['月（约）', months], ['年（约）', years], ['小时', Math.abs(days) * 24], ['分钟', Math.abs(days) * 1440]
+        ].map(([l, v]) => `<div class="detail-item"><div class="dv">${v.toLocaleString()}</div><div class="dl">${l}</div></div>`).join('');
+    };
+    [document.getElementById('diffStart'), document.getElementById('diffEnd')].forEach(el => el.addEventListener('change', calcDiff));
+    calcDiff();
+
+    document.getElementById('addCalc').addEventListener('click', () => {
+        const base = new Date(document.getElementById('addBase').value);
+        const days = parseInt(document.getElementById('addDays').value, 10);
+        if (isNaN(base) || isNaN(days)) return;
+        const r = new Date(base); r.setDate(r.getDate() + days);
+        const wd = ['日', '一', '二', '三', '四', '五', '六'][r.getDay()];
+        document.getElementById('addResult').textContent = r.getFullYear() + '-' + String(r.getMonth() + 1).padStart(2, '0') + '-' + String(r.getDate()).padStart(2, '0');
+        document.getElementById('addSub').textContent = `星期${wd} · ${days >= 0 ? '加 ' + days : '减 ' + Math.abs(days)} 天后的日期`;
+    });
+
+    const calcWork = () => {
+        const s = new Date(document.getElementById('workStart').value);
+        const e = new Date(document.getElementById('workEnd').value);
+        if (isNaN(s) || isNaN(e)) return;
+        const incSat = document.getElementById('incSat').checked;
+        const incSun = document.getElementById('incSun').checked;
+        let count = 0, total = 0;
+        const cur = new Date(s);
+        while (cur <= e) {
+            total++;
+            const wd = cur.getDay();
+            const isWeekend = (wd === 6 && !incSat) || (wd === 0 && !incSun);
+            if (!isWeekend) count++;
+            cur.setDate(cur.getDate() + 1);
+        }
+        document.getElementById('workDays').textContent = count + ' 天';
+        document.getElementById('workSub').textContent = `区间共 ${total} 天，${incSat || incSun ? '含' : '不含'}周末`;
+    };
+    ['workStart', 'workEnd', 'incSat', 'incSun'].forEach(id => document.getElementById(id).addEventListener('change', calcWork));
+    calcWork();
+
+    initSidebar('daily');
+</script>
+</body>
+</html>

@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GIF制作分解工具-绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="GIF制作分解工具，多张图片合成GIF动画，或上传GIF逐帧分解为PNG图片。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <script src="../assets/gif.js"></script>
+    <script src="../assets/sidebar.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'PingFang SC', -apple-system, sans-serif; background: #f4f7f9; margin: 0; display: flex; height: 100vh; overflow: hidden; color: #333; }
+
+        .mobile-header { display: none; position: fixed; top: 0; left: 0; right: 0; height: 60px; background: #fff; padding: 0 20px; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.05); z-index: 1000; }
+        .mobile-brand { font-size: 1.2em; font-weight: bold; color: #2c3e50; }
+        .menu-toggle { font-size: 24px; cursor: pointer; background: none; border: none; color: #4ae2b7; }
+
+        .sidebar { width: 240px; background: #fff; border-right: 1px solid #e1e4e8; display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02); transition: transform 0.3s; z-index: 1001; flex-shrink: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item { display: block; padding: 14px 22px; color: #606266; text-decoration: none; transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em; }
+        .category-item:hover, .category-item.active { background: #e6faf4; color: #4ae2b7; border-left-color: #4ae2b7; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+        .tool-container { width: 100%; max-width: 960px; background: #fff; border-radius: 12px; padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06); }
+        .tool-header { text-align: center; margin-bottom: 28px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+        .tab-bar { display: flex; border-bottom: 2px solid #f0f2f5; margin-bottom: 24px; gap: 4px; }
+        .tab-btn { padding: 10px 22px; border: none; background: none; font-size: 0.92em; font-family: inherit; color: #94a3b8; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; font-weight: 500; transition: all 0.2s; }
+        .tab-btn.active { color: #4ae2b7; border-bottom-color: #4ae2b7; }
+        .tab-btn:hover:not(.active) { color: #64748b; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        .upload-area { border: 2px dashed #e0e6ed; border-radius: 8px; padding: 30px; text-align: center; margin-bottom: 20px; transition: all 0.2s; cursor: pointer; background: #f8fafc; }
+        .upload-area:hover { border-color: #4ae2b7; background: #e6faf4; }
+        .upload-area.dragover { border-color: #4ae2b7; background: #d1f7ec; }
+        .upload-icon { font-size: 3em; margin-bottom: 10px; color: #cbd5e1; }
+        .upload-text { color: #64748b; font-size: 0.92em; }
+        .upload-hint { color: #94a3b8; font-size: 0.8em; margin-top: 8px; }
+        .upload-input { display: none; }
+
+        .param-group { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+        @media (max-width: 600px) { .param-group { grid-template-columns: 1fr; } }
+        .param-item label { display: block; font-size: 0.85em; color: #64748b; margin-bottom: 6px; font-weight: 500; }
+        .param-item input, .param-item select { width: 100%; padding: 10px 12px; border: 1px solid #e0e6ed; border-radius: 8px; font-size: 0.92em; font-family: inherit; outline: none; transition: border-color 0.2s; background: #fff; }
+        .param-item input:focus, .param-item select:focus { border-color: #4ae2b7; }
+        .param-hint { font-size: 0.75em; color: #c0c4cc; margin-top: 4px; }
+        .param-item.full { grid-column: 1 / -1; }
+
+        .action-row { display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em; font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap; }
+        .btn-primary { background: #4ae2b7; color: white; }
+        .btn-primary:hover { background: #3ac9a0; }
+        .btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .btn-secondary { background: #f0f2f5; color: #606266; }
+        .btn-secondary:hover { background: #e1e4e8; }
+        .btn-outline { background: transparent; color: #4ae2b7; border: 1px solid #4ae2b7; }
+        .btn-outline:hover { background: #4ae2b7; color: white; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-success:hover { background: #059669; }
+        .btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+        .btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+
+        .status-bar { min-height: 20px; font-size: 0.85em; padding: 8px 12px; border-radius: 6px; margin-bottom: 16px; }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+
+        .progress-bar { display: none; height: 8px; background: #f0f2f5; border-radius: 4px; overflow: hidden; margin-bottom: 16px; }
+        .progress-bar .progress-fill { height: 100%; background: linear-gradient(90deg, #4ae2b7, #3ac9a0); width: 0%; transition: width 0.2s; }
+
+        .frame-list { display: none; margin-bottom: 16px; }
+        .frame-list-title { font-size: 0.95em; font-weight: 600; color: #2c3e50; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+        .frame-list-title .hint { font-size: 0.8em; color: #94a3b8; font-weight: 400; }
+        .frame-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
+        .frame-card { border: 1px solid #e0e6ed; border-radius: 8px; overflow: hidden; background: #fff; }
+        .frame-card img { width: 100%; height: 100px; object-fit: contain; background: repeating-conic-gradient(#f1f5f9 0% 25%, #fff 0% 50%) 50% / 16px 16px; display: block; }
+        .frame-card .frame-meta { padding: 6px 8px; font-size: 0.74em; color: #64748b; display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+        .frame-card .frame-no { font-weight: 600; color: #334155; }
+        .frame-card .frame-actions { display: flex; gap: 4px; }
+        .frame-card .frame-actions button { border: 1px solid #e0e6ed; background: #fff; border-radius: 4px; cursor: pointer; color: #64748b; font-size: 0.8em; padding: 1px 5px; }
+        .frame-card .frame-actions button:hover { background: #f1f5f9; color: #2c3e50; }
+
+        .result-section { display: none; text-align: center; margin-top: 20px; padding: 20px; background: #f8fafc; border-radius: 8px; border: 1px solid #e0e6ed; }
+        .result-section img { max-width: 100%; max-height: 320px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 14px; background: repeating-conic-gradient(#f1f5f9 0% 25%, #fff 0% 50%) 50% / 16px 16px; }
+
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+
+        .info-cards { width: 100%; display: flex; flex-direction: column; gap: 18px; margin-top: 4px; }
+        .info-card { background: #fff; border-radius: 12px; padding: 22px 24px; box-shadow: 0 4px 25px rgba(0,0,0,0.06); border: 1px solid #f0f2f5; }
+        .info-card h3 { margin: 0 0 10px 0; font-size: 1em; color: #2c3e50; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+        .info-card p { margin: 0 0 10px 0; font-size: 0.82em; color: #64748b; }
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip { background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 12px; font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace; }
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a { font-size: 0.85em; color: #4ae2b7; text-decoration: none; padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s; }
+        .tool-links a:hover { background: #e2e8f0; }
+
+        @media (max-width: 768px) {
+            body { display: block; height: auto; overflow: auto; }
+            .mobile-header { display: flex; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .close-sidebar { display: block; }
+            .main-content { display: block; }
+            .main-scroll { padding: 72px 16px 32px; gap: 20px; }
+            .tool-container { padding: 24px 16px; border-radius: 10px; }
+            .tool-header h1 { font-size: 1.3em; }
+            .overlay.active { display: block; }
+        }
+        @media (max-width: 380px) { .tool-header h1 { font-size: 1.1em; } }
+
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+    </style>
+    <meta name="keywords" content="GIF制作/分解,在线GIF制作/分解,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/gif-tool.html" />
+    <meta property="og:title" content="GIF制作分解工具" />
+    <meta property="og:description" content="GIF制作分解工具，多张图片合成GIF动画，或上传GIF逐帧分解为PNG图片。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/gif-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="GIF制作分解工具" />
+    <meta itemprop="description" content="GIF制作分解工具，多张图片合成GIF动画，或上传GIF逐帧分解为PNG图片。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "GIF制作/分解",
+                "item": "https://box.lynvortex.top/image/gif-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "GIF制作/分解",
+        "url": "https://box.lynvortex.top/image/gif-tool.html",
+        "description": "多图合成GIF动画，GIF逐帧分解为PNG",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+    <main class="main-content">
+        <div class="main-scroll">
+
+            <div class="tool-container">
+                <div class="tool-header">
+                    <h1>🎞️ GIF 制作 / 分解工具</h1>
+                    <p>多图合成 GIF 动画，或上传 GIF 逐帧分解为 PNG，纯前端处理</p>
+                </div>
+
+                <div class="tab-bar">
+                    <button class="tab-btn active" onclick="switchTab('compose', this)">✨ 合成 GIF</button>
+                    <button class="tab-btn" onclick="switchTab('decompose', this)">🔍 分解 GIF</button>
+                </div>
+
+                <!-- 合成面板 -->
+                <div class="tab-panel active" id="panel-compose">
+                    <div class="upload-area" id="composeUpload">
+                        <div class="upload-icon">🖼️</div>
+                        <div class="upload-text">点击或拖拽多张图片到此处（按顺序作为帧）</div>
+                        <div class="upload-hint">支持 JPG、PNG、WEBP 等格式</div>
+                        <input type="file" id="composeInput" class="upload-input" accept="image/*" multiple>
+                    </div>
+
+                    <div class="param-group">
+                        <div class="param-item">
+                            <label>帧延迟（毫秒）</label>
+                            <input type="number" id="frameDelay" value="200" min="20" max="10000" step="10">
+                            <div class="param-hint">每帧显示时长，1000ms = 1秒</div>
+                        </div>
+                        <div class="param-item">
+                            <label>循环次数</label>
+                            <select id="repeatCount">
+                                <option value="0" selected>无限循环</option>
+                                <option value="1">循环 1 次</option>
+                                <option value="3">循环 3 次</option>
+                                <option value="5">循环 5 次</option>
+                            </select>
+                            <div class="param-hint">0 表示无限循环播放</div>
+                        </div>
+                        <div class="param-item">
+                            <label>输出宽度（px）</label>
+                            <input type="number" id="outWidth" value="" min="1" max="2000" placeholder="留空=首图宽度">
+                            <div class="param-hint">所有帧统一缩放到此宽度</div>
+                        </div>
+                        <div class="param-item">
+                            <label>输出高度（px）</label>
+                            <input type="number" id="outHeight" value="" min="1" max="2000" placeholder="留空=首图高度">
+                            <div class="param-hint">所有帧统一缩放到此高度</div>
+                        </div>
+                        <div class="param-item">
+                            <label>画质（quality）</label>
+                            <select id="quality">
+                                <option value="20">高画质（20，文件较大）</option>
+                                <option value="10" selected>标准（10）</option>
+                                <option value="5">较低（5，文件较小）</option>
+                                <option value="1">最低（1，文件最小）</option>
+                            </select>
+                            <div class="param-hint">数值越小画质越好但文件越大</div>
+                        </div>
+                        <div class="param-item">
+                            <label>背景色</label>
+                            <select id="bgColor">
+                                <option value="#ffffff" selected>白色</option>
+                                <option value="#000000">黑色</option>
+                                <option value="#f0f0f0">浅灰</option>
+                            </select>
+                            <div class="param-hint">透明区域填充色（GIF 仅支持索引透明）</div>
+                        </div>
+                    </div>
+
+                    <div class="action-row">
+                        <button class="btn btn-primary" id="composeBtn" onclick="composeGif()">🎞️ 生成 GIF</button>
+                        <button class="btn btn-secondary" onclick="resetCompose()">🔄 清空</button>
+                    </div>
+
+                    <div class="progress-bar" id="composeProgress">
+                        <div class="progress-fill" id="composeProgressFill"></div>
+                    </div>
+
+                    <div class="frame-list" id="composeFrameList">
+                        <div class="frame-list-title">
+                            <span>帧列表（<span id="composeFrameCount">0</span>）</span>
+                            <span class="hint">按上传顺序作为动画帧</span>
+                        </div>
+                        <div class="frame-grid" id="composeFrameGrid"></div>
+                    </div>
+
+                    <div class="result-section" id="composeResult">
+                        <img id="composeResultImg" src="" alt="生成的GIF">
+                        <br>
+                        <button class="btn btn-success" onclick="downloadComposed()">💾 下载 GIF</button>
+                    </div>
+                </div>
+
+                <!-- 分解面板 -->
+                <div class="tab-panel" id="panel-decompose">
+                    <div class="upload-area" id="decomposeUpload">
+                        <div class="upload-icon">🎞️</div>
+                        <div class="upload-text">点击或拖拽 GIF 文件到此处</div>
+                        <div class="upload-hint">将逐帧分解为 PNG 图片</div>
+                        <input type="file" id="decomposeInput" class="upload-input" accept="image/gif">
+                    </div>
+
+                    <div class="action-row">
+                        <button class="btn btn-primary" id="decomposeBtn" onclick="decomposeGif()">🔍 开始分解</button>
+                        <button class="btn btn-success" id="downloadAllFramesBtn" onclick="downloadAllFrames()" style="display:none;">📦 下载全部 PNG</button>
+                        <button class="btn btn-secondary" onclick="resetDecompose()">🔄 清空</button>
+                    </div>
+
+                    <div class="progress-bar" id="decomposeProgress">
+                        <div class="progress-fill" id="decomposeProgressFill"></div>
+                    </div>
+
+                    <div class="frame-list" id="decomposeFrameList">
+                        <div class="frame-list-title">
+                            <span>分解结果（<span id="decomposeFrameCount">0</span> 帧）</span>
+                            <span class="hint" id="decomposeInfo"></span>
+                        </div>
+                        <div class="frame-grid" id="decomposeFrameGrid"></div>
+                    </div>
+                </div>
+
+                <div class="status-bar info" id="statusBar">请选择功能开始使用</div>
+
+                <footer class="footer">
+                    &copy; 2026 绘萤者-Lynvortex &middot; 美梦多彩 理想自由
+                    <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4ae2b7;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4ae2b7;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+                </footer>
+            </div>
+
+            <div class="info-cards">
+                <div class="info-card">
+                    <h3>🎞️ GIF 工具功能</h3>
+                    <p>合成：多张图片按顺序生成 GIF 动画；分解：手动解析 GIF 二进制，逐帧导出 PNG</p>
+                    <div class="tld-chips">
+                        <span class="tld-chip">多图合成</span>
+                        <span class="tld-chip">逐帧分解</span>
+                        <span class="tld-chip">LZW解码</span>
+                        <span class="tld-chip">gif.js</span>
+                        <span class="tld-chip">纯前端</span>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <h3>💡 使用须知</h3>
+                    <ul class="tips-list">
+                        <li>合成：上传多张图片，设置帧延迟、尺寸、画质后生成 GIF</li>
+                        <li>分解：上传 GIF 文件，内联解析器解析 GIF89a/87a 二进制格式并逐帧渲染</li>
+                        <li>分解功能完全自实现 GIF 解析（LZW 解码、全局/局部颜色表、disposal 处理、隔行扫描）</li>
+                        <li>GIF 最多支持 256 色，渐变丰富的图片可能有色阶损失</li>
+                        <li>所有处理均在浏览器本地完成，文件不会上传到任何服务器</li>
+                    </ul>
+                </div>
+                <div class="info-card">
+                    <h3>✨ 绘萤者</h3>
+                    <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                    <div class="tool-links">
+                        <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                        <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                        <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                        <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                    </div>
+                    <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                        绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        const setStatus = function(msg, type) {
+            type = type || 'info';
+            const bar = document.getElementById('statusBar');
+            bar.textContent = msg;
+            bar.className = 'status-bar ' + type;
+        };
+
+        const switchTab = function(name, btn) {
+            document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+            document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+            document.getElementById('panel-' + name).classList.add('active');
+            btn.classList.add('active');
+            setStatus(name === 'compose' ? '上传多张图片合成 GIF 动画' : '上传 GIF 文件逐帧分解为 PNG', 'info');
+        };
+
+        // ============ 合成功能 ============
+        let composeImages = []; // { id, name, dataUrl, width, height }
+        let composedBlobUrl = null;
+
+        const composeUpload = document.getElementById('composeUpload');
+        const composeInput = document.getElementById('composeInput');
+        composeUpload.addEventListener('click', function() { composeInput.click(); });
+        composeUpload.addEventListener('dragover', function(e) { e.preventDefault(); composeUpload.classList.add('dragover'); });
+        composeUpload.addEventListener('dragleave', function() { composeUpload.classList.remove('dragover'); });
+        composeUpload.addEventListener('drop', function(e) {
+            e.preventDefault();
+            composeUpload.classList.remove('dragover');
+            if (e.dataTransfer.files && e.dataTransfer.files.length) addComposeFiles(e.dataTransfer.files);
+        });
+        composeInput.addEventListener('change', function() {
+            if (composeInput.files && composeInput.files.length) addComposeFiles(composeInput.files);
+            composeInput.value = '';
+        });
+
+        const addComposeFiles = function(files) {
+            let added = 0;
+            let pending = 0;
+            const done = function() {
+                pending--;
+                if (pending === 0) {
+                    renderComposeFrames();
+                    if (added > 0) setStatus('已添加 ' + added + ' 张图片，点击"生成 GIF"', 'info');
+                }
+            };
+            for (let i = 0; i < files.length; i++) {
+                const f = files[i];
+                if (!f.type.startsWith('image/')) continue;
+                added++;
+                pending++;
+                const id = 'c' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+                const item = { id: id, name: f.name, dataUrl: null, width: 0, height: 0 };
+                composeImages.push(item);
+                const reader = new FileReader();
+                reader.onload = (function(it) {
+                    return function(e) {
+                        it.dataUrl = e.target.result;
+                        const img = new Image();
+                        img.onload = function() { it.width = img.naturalWidth; it.height = img.naturalHeight; done(); };
+                        img.onerror = function() { done(); };
+                        img.src = it.dataUrl;
+                    };
+                })(item);
+                reader.readAsDataURL(f);
+            }
+            if (added === 0) setStatus('未识别到有效图片文件', 'error');
+        };
+
+        const renderComposeFrames = function() {
+            const list = document.getElementById('composeFrameList');
+            const grid = document.getElementById('composeFrameGrid');
+            document.getElementById('composeFrameCount').textContent = composeImages.length;
+            if (composeImages.length === 0) { list.style.display = 'none'; return; }
+            list.style.display = 'block';
+            let html = '';
+            composeImages.forEach(function(item, idx) {
+                html += '<div class="frame-card">' +
+                    (item.dataUrl ? '<img src="' + window.escapeHtml(item.dataUrl) + '" alt="帧' + (idx+1) + '">' : '<img alt="加载中">') +
+                    '<div class="frame-meta"><span class="frame-no">#' + (idx + 1) + '</span>' +
+                    '<div class="frame-actions"><button onclick="removeComposeFrame(\'' + item.id + '\')" title="删除">✕</button></div></div>' +
+                '</div>';
+            });
+            grid.innerHTML = html;
+        };
+
+        const removeComposeFrame = function(id) {
+            composeImages = composeImages.filter(function(i) { return i.id !== id; });
+            renderComposeFrames();
+            setStatus('已移除该帧', 'info');
+        };
+
+        const resetCompose = function() {
+            composeImages = [];
+            if (composedBlobUrl) { URL.revokeObjectURL(composedBlobUrl); composedBlobUrl = null; }
+            renderComposeFrames();
+            document.getElementById('composeResult').style.display = 'none';
+            document.getElementById('composeResultImg').src = '';
+            document.getElementById('composeProgress').style.display = 'none';
+            document.getElementById('composeProgressFill').style.width = '0%';
+            setStatus('已清空', 'info');
+        };
+
+        const composeGif = function() {
+            const ready = composeImages.filter(function(i) { return i.dataUrl && i.width; });
+            if (ready.length === 0) {
+                setStatus('请先上传至少一张图片', 'error');
+                return;
+            }
+            if (typeof GIF === 'undefined') {
+                setStatus('gif.js 库未加载，请刷新页面重试', 'error');
+                return;
+            }
+            const btn = document.getElementById('composeBtn');
+            btn.disabled = true;
+            btn.textContent = '生成中...';
+
+            const delay = Math.max(20, parseInt(document.getElementById('frameDelay').value, 10) || 200);
+            const repeat = parseInt(document.getElementById('repeatCount').value, 10) || 0;
+            const quality = parseInt(document.getElementById('quality').value, 10) || 10;
+            const bg = document.getElementById('bgColor').value;
+            let w = parseInt(document.getElementById('outWidth').value, 10);
+            let h = parseInt(document.getElementById('outHeight').value, 10);
+            if (!w || w < 1) w = ready[0].width;
+            if (!h || h < 1) h = ready[0].height;
+            // 限制最大尺寸避免性能问题
+            w = Math.min(w, 1280);
+            h = Math.min(h, 1280);
+
+            const progress = document.getElementById('composeProgress');
+            const fill = document.getElementById('composeProgressFill');
+            progress.style.display = 'block';
+            fill.style.width = '0%';
+            document.getElementById('composeResult').style.display = 'none';
+            setStatus('正在合成 GIF（' + ready.length + ' 帧，' + w + '×' + h + '）...', 'info');
+
+            // 先把所有图片加载为 canvas（预缩放）
+            let loaded = 0;
+            const canvases = new Array(ready.length);
+            const loadOne = function(i) {
+                const img = new Image();
+                img.onload = function() {
+                    const c = document.createElement('canvas');
+                    c.width = w;
+                    c.height = h;
+                    const cx = c.getContext('2d');
+                    cx.fillStyle = bg;
+                    cx.fillRect(0, 0, w, h);
+                    // contain 适配
+                    const ratio = img.naturalWidth / img.naturalHeight;
+                    const targetRatio = w / h;
+                    let dw, dh;
+                    if (ratio > targetRatio) { dw = w; dh = w / ratio; }
+                    else { dh = h; dw = h * ratio; }
+                    cx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+                    canvases[i] = c;
+                    loaded++;
+                    if (loaded === ready.length) startCompose();
+                };
+                img.onerror = function() {
+                    // 失败用空白画布
+                    const c = document.createElement('canvas');
+                    c.width = w; c.height = h;
+                    const cx = c.getContext('2d');
+                    cx.fillStyle = bg;
+                    cx.fillRect(0, 0, w, h);
+                    canvases[i] = c;
+                    loaded++;
+                    if (loaded === ready.length) startCompose();
+                };
+                img.src = ready[i].dataUrl;
+            };
+            for (let i = 0; i < ready.length; i++) loadOne(i);
+
+            const startCompose = function() {
+                try {
+                    const gif = new GIF({
+                        workers: 2,
+                        quality: quality,
+                        width: w,
+                        height: h,
+                        workerScript: '../assets/gif.worker.js',
+                        repeat: repeat,
+                        background: bg,
+                        dither: false
+                    });
+                    canvases.forEach(function(c, i) {
+                        const cx = c.getContext('2d');
+                        gif.addFrame(cx, { delay: delay, copy: true });
+                    });
+                    gif.on('progress', function(p) {
+                        fill.style.width = (p * 100).toFixed(1) + '%';
+                    });
+                    gif.on('finished', function(blob) {
+                        if (composedBlobUrl) URL.revokeObjectURL(composedBlobUrl);
+                        composedBlobUrl = URL.createObjectURL(blob);
+                        const img = document.getElementById('composeResultImg');
+                        img.src = composedBlobUrl;
+                        img.onload = function() {
+                            document.getElementById('composeResult').style.display = 'block';
+                        };
+                        btn.disabled = false;
+                        btn.textContent = '🎞️ 生成 GIF';
+                        fill.style.width = '100%';
+                        setTimeout(function() { progress.style.display = 'none'; }, 800);
+                        setStatus('GIF 合成成功！大小 ' + (blob.size / 1024).toFixed(1) + ' KB', 'success');
+                    });
+                    gif.render();
+                } catch (err) {
+                    btn.disabled = false;
+                    btn.textContent = '🎞️ 生成 GIF';
+                    progress.style.display = 'none';
+                    setStatus('合成失败：' + (err && err.message ? err.message : err), 'error');
+                }
+            };
+        };
+
+        const downloadComposed = function() {
+            if (!composedBlobUrl) { setStatus('请先生成 GIF', 'error'); return; }
+            const a = document.createElement('a');
+            a.href = composedBlobUrl;
+            a.download = 'animation_' + Date.now() + '.gif';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setStatus('开始下载 GIF 文件', 'success');
+        };
+
+        // ============ 分解功能 ============
+        let decomposeFile = null;
+        let decomposedFrames = []; // { dataUrl, delay }
+
+        const decomposeUpload = document.getElementById('decomposeUpload');
+        const decomposeInput = document.getElementById('decomposeInput');
+        decomposeUpload.addEventListener('click', function() { decomposeInput.click(); });
+        decomposeUpload.addEventListener('dragover', function(e) { e.preventDefault(); decomposeUpload.classList.add('dragover'); });
+        decomposeUpload.addEventListener('dragleave', function() { decomposeUpload.classList.remove('dragover'); });
+        decomposeUpload.addEventListener('drop', function(e) {
+            e.preventDefault();
+            decomposeUpload.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) handleDecomposeFile(file);
+        });
+        decomposeInput.addEventListener('change', function() {
+            if (decomposeInput.files && decomposeInput.files[0]) handleDecomposeFile(decomposeInput.files[0]);
+            decomposeInput.value = '';
+        });
+
+        const handleDecomposeFile = function(file) {
+            if (file.type !== 'image/gif' && !/\.gif$/i.test(file.name)) {
+                setStatus('请上传 GIF 格式文件', 'error');
+                return;
+            }
+            decomposeFile = file;
+            setStatus('已选择 GIF：' + file.name + '（' + (file.size / 1024).toFixed(1) + ' KB），点击"开始分解"', 'info');
+        };
+
+        const decomposeGif = function() {
+            if (!decomposeFile) { setStatus('请先上传 GIF 文件', 'error'); return; }
+            const btn = document.getElementById('decomposeBtn');
+            btn.disabled = true;
+            btn.textContent = '解析中...';
+            const progress = document.getElementById('decomposeProgress');
+            const fill = document.getElementById('decomposeProgressFill');
+            progress.style.display = 'block';
+            fill.style.width = '10%';
+            setStatus('正在读取并解析 GIF 二进制...', 'info');
+            decomposedFrames = [];
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    fill.style.width = '30%';
+                    const gifData = parseGIF(e.target.result);
+                    fill.style.width = '60%';
+                    setStatus('解析到 ' + gifData.frames.length + ' 帧，正在渲染...', 'info');
+                    const images = renderGifFrames(gifData);
+                    decomposedFrames = images;
+                    fill.style.width = '100%';
+                    renderDecomposedFrames(gifData);
+                    btn.disabled = false;
+                    btn.textContent = '🔍 开始分解';
+                    setTimeout(function() { progress.style.display = 'none'; }, 600);
+                    setStatus('分解完成，共 ' + images.length + ' 帧', 'success');
+                } catch (err) {
+                    btn.disabled = false;
+                    btn.textContent = '🔍 开始分解';
+                    progress.style.display = 'none';
+                    setStatus('解析失败：' + (err && err.message ? err.message : err), 'error');
+                }
+            };
+            reader.onerror = function() {
+                btn.disabled = false;
+                btn.textContent = '🔍 开始分解';
+                progress.style.display = 'none';
+                setStatus('文件读取失败', 'error');
+            };
+            reader.readAsArrayBuffer(decomposeFile);
+        };
+
+        // ====== 内联 GIF 二进制解析器 ======
+        // 读取器：封装字节流读取
+        const ByteReader = function(bytes) {
+            this.bytes = bytes;
+            this.pos = 0;
+        };
+        ByteReader.prototype.readByte = function() { return this.bytes[this.pos++]; };
+        ByteReader.prototype.readUint16LE = function() {
+            const v = this.bytes[this.pos] | (this.bytes[this.pos + 1] << 8);
+            this.pos += 2;
+            return v;
+        };
+        ByteReader.prototype.readBytes = function(n) {
+            const arr = this.bytes.subarray(this.pos, this.pos + n);
+            this.pos += n;
+            return arr;
+        };
+        // 读取一个子块序列（每块第一字节为长度，0 表示结束），返回拼接的字节数组
+        ByteReader.prototype.readSubBlocks = function() {
+            const parts = [];
+            let total = 0;
+            while (true) {
+                const size = this.bytes[this.pos++];
+                if (size === 0) break;
+                parts.push(this.bytes.subarray(this.pos, this.pos + size));
+                this.pos += size;
+                total += size;
+            }
+            const out = new Uint8Array(total);
+            let offset = 0;
+            for (let i = 0; i < parts.length; i++) {
+                out.set(parts[i], offset);
+                offset += parts[i].length;
+            }
+            return out;
+        };
+
+        // LZW 解码（GIF 变体，LSB 优先）
+        const lzwDecode = function(minCodeSize, data) {
+            const clearCode = 1 << minCodeSize;
+            const endCode = clearCode + 1;
+            let codeSize = minCodeSize + 1;
+            let dict = [];
+            const initDict = function() {
+                dict = [];
+                for (let i = 0; i < clearCode; i++) dict.push(String.fromCharCode(i));
+                dict.push(''); // clear 占位
+                dict.push(''); // end 占位
+                codeSize = minCodeSize + 1;
+            };
+            initDict();
+            const output = [];
+            let buffer = 0;
+            let bufferBits = 0;
+            let dataPos = 0;
+            let prevCode = null;
+            const readCode = function() {
+                while (bufferBits < codeSize) {
+                    if (dataPos >= data.length) return -1;
+                    buffer |= data[dataPos] << bufferBits;
+                    bufferBits += 8;
+                    dataPos++;
+                }
+                const code = buffer & ((1 << codeSize) - 1);
+                buffer >>>= codeSize;
+                bufferBits -= codeSize;
+                return code;
+            };
+            while (true) {
+                const code = readCode();
+                if (code === -1) break;
+                if (code === clearCode) { initDict(); prevCode = null; continue; }
+                if (code === endCode) break;
+                let entry;
+                if (code < dict.length) {
+                    entry = dict[code];
+                } else if (code === dict.length && prevCode !== null) {
+                    entry = dict[prevCode] + dict[prevCode].charAt(0);
+                } else {
+                    // 数据异常，终止
+                    break;
+                }
+                for (let i = 0; i < entry.length; i++) output.push(entry.charCodeAt(i));
+                if (prevCode !== null) {
+                    dict.push(dict[prevCode] + entry.charAt(0));
+                    if (dict.length === (1 << codeSize) && codeSize < 12) {
+                        codeSize++;
+                    }
+                }
+                prevCode = code;
+            }
+            return output;
+        };
+
+        // 隔行扫描行映射：deinterlaceMap[显示行y] = 源行
+        const buildDeinterlaceMap = function(height) {
+            const map = new Array(height);
+            let srcY = 0;
+            for (let y = 0; y < height; y += 8) map[y] = srcY++;
+            for (let y = 4; y < height; y += 8) map[y] = srcY++;
+            for (let y = 2; y < height; y += 4) map[y] = srcY++;
+            for (let y = 1; y < height; y += 2) map[y] = srcY++;
+            return map;
+        };
+
+        // 解析 GIF，返回 { width, height, globalColorTable, bgColorIndex, frames: [...] }
+        const parseGIF = function(arrayBuffer) {
+            const bytes = new Uint8Array(arrayBuffer);
+            const r = new ByteReader(bytes);
+            // Header
+            const sig = String.fromCharCode(bytes[0], bytes[1], bytes[2]);
+            const ver = String.fromCharCode(bytes[3], bytes[4], bytes[5]);
+            if (sig !== 'GIF' || (ver !== '87a' && ver !== '89a')) {
+                throw new Error('非有效 GIF 文件（签名: ' + sig + ver + '）');
+            }
+            r.pos = 6;
+            // Logical Screen Descriptor
+            const width = r.readUint16LE();
+            const height = r.readUint16LE();
+            const packed = r.readByte();
+            const gctFlag = (packed & 0x80) !== 0;
+            const gctSize = 2 << (packed & 0x07);
+            const bgColorIndex = r.readByte();
+            r.readByte(); // pixel aspect ratio
+            // Global Color Table
+            let gct = null;
+            if (gctFlag) {
+                gct = [];
+                const raw = r.readBytes(gctSize * 3);
+                for (let i = 0; i < gctSize; i++) {
+                    gct.push([raw[i * 3], raw[i * 3 + 1], raw[i * 3 + 2]]);
+                }
+            }
+            const frames = [];
+            let gce = null; // 待消费的图形控制扩展
+            while (r.pos < bytes.length) {
+                const blockType = r.readByte();
+                if (blockType === 0x3B) break; // Trailer
+                if (blockType === 0x21) { // Extension Introducer
+                    const label = r.readByte();
+                    if (label === 0xF9) { // Graphic Control Extension
+                        r.readByte(); // block size (4)
+                        const gcePacked = r.readByte();
+                        const disposalMethod = (gcePacked >> 2) & 0x07;
+                        const transparentFlag = (gcePacked & 0x01) !== 0;
+                        const delay = r.readUint16LE();
+                        const transparentIndex = r.readByte();
+                        r.readByte(); // terminator
+                        gce = { delay: delay, disposalMethod: disposalMethod, transparentFlag: transparentFlag, transparentIndex: transparentIndex };
+                    } else {
+                        // 跳过其它扩展（注释、应用扩展 NETSCAPE2.0 等）
+                        r.readSubBlocks();
+                    }
+                } else if (blockType === 0x2C) { // Image Descriptor
+                    const left = r.readUint16LE();
+                    const top = r.readUint16LE();
+                    const imgW = r.readUint16LE();
+                    const imgH = r.readUint16LE();
+                    const imgPacked = r.readByte();
+                    const lctFlag = (imgPacked & 0x80) !== 0;
+                    const interlace = (imgPacked & 0x40) !== 0;
+                    const lctSize = 2 << (imgPacked & 0x07);
+                    let lct = null;
+                    if (lctFlag) {
+                        lct = [];
+                        const raw = r.readBytes(lctSize * 3);
+                        for (let i = 0; i < lctSize; i++) {
+                            lct.push([raw[i * 3], raw[i * 3 + 1], raw[i * 3 + 2]]);
+                        }
+                    }
+                    const colorTable = lct || gct;
+                    const minCodeSize = r.readByte();
+                    const compressed = r.readSubBlocks();
+                    const pixels = lzwDecode(minCodeSize, compressed);
+                    frames.push({
+                        left: left, top: top, width: imgW, height: imgH,
+                        pixels: pixels, colorTable: colorTable, interlace: interlace,
+                        delay: gce ? gce.delay : 0,
+                        disposalMethod: gce ? gce.disposalMethod : 0,
+                        transparentFlag: gce ? gce.transparentFlag : false,
+                        transparentIndex: gce ? gce.transparentIndex : 0
+                    });
+                    gce = null; // 消费掉
+                } else {
+                    // 未知块，跳过以防死循环
+                    break;
+                }
+            }
+            return { width: width, height: height, globalColorTable: gct, bgColorIndex: bgColorIndex, frames: frames };
+        };
+
+        // 渲染所有帧到合成图像（处理 disposal 与透明），返回 [{ dataUrl, delay }]
+        const renderGifFrames = function(gif) {
+            const { width, height, globalColorTable, bgColorIndex, frames } = gif;
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            // 用背景色初始化
+            if (globalColorTable && bgColorIndex < globalColorTable.length) {
+                const bg = globalColorTable[bgColorIndex];
+                ctx.fillStyle = 'rgb(' + bg[0] + ',' + bg[1] + ',' + bg[2] + ')';
+                ctx.fillRect(0, 0, width, height);
+            }
+            const results = [];
+            let prevDisposal = 0;
+            let prevFrame = null;
+            let savedState = null;
+
+            frames.forEach(function(frame) {
+                // 应用上一帧的 disposal
+                if (prevDisposal === 2 && prevFrame) {
+                    ctx.clearRect(prevFrame.left, prevFrame.top, prevFrame.width, prevFrame.height);
+                    if (globalColorTable && bgColorIndex < globalColorTable.length) {
+                        const bg = globalColorTable[bgColorIndex];
+                        ctx.fillStyle = 'rgb(' + bg[0] + ',' + bg[1] + ',' + bg[2] + ')';
+                        ctx.fillRect(prevFrame.left, prevFrame.top, prevFrame.width, prevFrame.height);
+                    }
+                } else if (prevDisposal === 3 && savedState) {
+                    ctx.putImageData(savedState, 0, 0);
+                    savedState = null;
+                }
+                // 若当前 disposal 为 3，保存绘制前状态
+                if (frame.disposalMethod === 3) {
+                    savedState = ctx.getImageData(0, 0, width, height);
+                }
+                // 构建本帧 ImageData
+                const frameCanvas = document.createElement('canvas');
+                frameCanvas.width = frame.width;
+                frameCanvas.height = frame.height;
+                const fctx = frameCanvas.getContext('2d');
+                const imageData = fctx.createImageData(frame.width, frame.height);
+                const data = imageData.data;
+                const colorTable = frame.colorTable || globalColorTable;
+                const map = frame.interlace ? buildDeinterlaceMap(frame.height) : null;
+                const totalPixels = frame.width * frame.height;
+                for (let y = 0; y < frame.height; y++) {
+                    const srcY = map ? map[y] : y;
+                    for (let x = 0; x < frame.width; x++) {
+                        const pixelIdx = srcY * frame.width + x;
+                        const colorIdx = pixelIdx < frame.pixels.length ? frame.pixels[pixelIdx] : 0;
+                        const dstIdx = (y * frame.width + x) * 4;
+                        if (frame.transparentFlag && colorIdx === frame.transparentIndex) {
+                            data[dstIdx] = 0; data[dstIdx + 1] = 0; data[dstIdx + 2] = 0; data[dstIdx + 3] = 0;
+                        } else if (colorTable && colorIdx < colorTable.length) {
+                            const c = colorTable[colorIdx];
+                            data[dstIdx] = c[0];
+                            data[dstIdx + 1] = c[1];
+                            data[dstIdx + 2] = c[2];
+                            data[dstIdx + 3] = 255;
+                        } else {
+                            data[dstIdx + 3] = 0;
+                        }
+                    }
+                }
+                fctx.putImageData(imageData, 0, 0);
+                ctx.drawImage(frameCanvas, frame.left, frame.top);
+                // 捕获合成结果
+                results.push({ dataUrl: canvas.toDataURL('image/png'), delay: frame.delay });
+                prevDisposal = frame.disposalMethod;
+                prevFrame = frame;
+            });
+            return results;
+        };
+
+        const renderDecomposedFrames = function(gifData) {
+            const list = document.getElementById('decomposeFrameList');
+            const grid = document.getElementById('decomposeFrameGrid');
+            document.getElementById('decomposeFrameCount').textContent = decomposedFrames.length;
+            document.getElementById('decomposeInfo').textContent =
+                gifData.width + '×' + gifData.height + 'px';
+            if (decomposedFrames.length === 0) {
+                list.style.display = 'none';
+                document.getElementById('downloadAllFramesBtn').style.display = 'none';
+                return;
+            }
+            list.style.display = 'block';
+            document.getElementById('downloadAllFramesBtn').style.display = 'inline-block';
+            let html = '';
+            decomposedFrames.forEach(function(f, idx) {
+                const delayStr = f.delay ? (f.delay + 'ms') : '--';
+                html += '<div class="frame-card">' +
+                    '<img src="' + window.escapeHtml(f.dataUrl) + '" alt="帧' + (idx + 1) + '">' +
+                    '<div class="frame-meta"><span class="frame-no">#' + (idx + 1) + '</span><span>' + delayStr + '</span>' +
+                    '<div class="frame-actions"><button onclick="downloadFrame(' + idx + ')" title="下载 PNG">💾</button></div></div>' +
+                '</div>';
+            });
+            grid.innerHTML = html;
+        };
+
+        const downloadFrame = function(idx) {
+            if (!decomposedFrames[idx]) return;
+            const a = document.createElement('a');
+            a.href = decomposedFrames[idx].dataUrl;
+            a.download = 'frame_' + (idx + 1) + '.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setStatus('开始下载第 ' + (idx + 1) + ' 帧', 'success');
+        };
+
+        const downloadAllFrames = function() {
+            if (decomposedFrames.length === 0) return;
+            setStatus('开始下载全部 ' + decomposedFrames.length + ' 帧（间隔 300ms）...', 'info');
+            decomposedFrames.forEach(function(f, idx) {
+                setTimeout(function() {
+                    const a = document.createElement('a');
+                    a.href = f.dataUrl;
+                    a.download = 'frame_' + (idx + 1) + '.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }, idx * 300);
+            });
+        };
+
+        const resetDecompose = function() {
+            decomposeFile = null;
+            decomposedFrames = [];
+            document.getElementById('decomposeFrameList').style.display = 'none';
+            document.getElementById('decomposeFrameGrid').innerHTML = '';
+            document.getElementById('downloadAllFramesBtn').style.display = 'none';
+            document.getElementById('decomposeProgress').style.display = 'none';
+            setStatus('已清空', 'info');
+        };
+
+        // 初始化共享侧边栏
+        initSidebar('image');
+    </script>
+</body>
+</html>

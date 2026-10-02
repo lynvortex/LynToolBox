@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>颜色方案生成器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="颜色方案生成器，从主色生成互补色、类似色、三角色、分裂互补色、四角色、单色系配色方案与调色板，HSL色环可视化，一键复制与导出CSS变量。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', -apple-system, sans-serif;
+            background: #f4f7f9;
+            margin: 0;
+            display: flex;
+            height: 100vh; overflow: hidden;
+            color: #333;
+        }
+
+        .mobile-header {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: #fff; padding: 0 20px; align-items: center;
+            justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+        }
+        .mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+        .mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+        .menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #4a90e2; }
+
+        .sidebar {
+            width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+            display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+            transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+            position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item {
+            display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+            transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+        }
+        .category-item:hover, .category-item.active { background: #ebf5ff; color: #4a90e2; border-left-color: #4a90e2; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+        .tool-container {
+            width: 100%;
+            max-width: 960px;
+            background: #fff; border-radius: 12px;
+            padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+        }
+        .tool-header { text-align: center; margin-bottom: 24px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+        /* 主色输入 + 色环 */
+        .top-row { display: grid; grid-template-columns: 1fr 220px; gap: 24px; margin-bottom: 22px; align-items: center; }
+        @media (max-width: 640px) { .top-row { grid-template-columns: 1fr; } }
+
+        .base-panel { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+        .base-swatch {
+            width: 84px; height: 84px; border-radius: 14px; border: 1px solid #e0e6ed;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.08); flex-shrink: 0;
+        }
+        .base-inputs { display: flex; flex-direction: column; gap: 8px; }
+        .base-inputs label { font-size: 0.8em; color: #64748b; font-weight: 600; }
+        .color-pick-row { display: flex; align-items: center; gap: 8px; }
+        input[type="color"].hex-picker { width: 46px; height: 38px; padding: 2px; border: 1px solid #e0e6ed; border-radius: 8px; background: #fff; cursor: pointer; }
+        input[type="text"].hex-text {
+            width: 120px; padding: 9px 12px; border: 1px solid #e0e6ed; border-radius: 8px;
+            font-family: 'Consolas', monospace; font-size: 0.92em; color: #1e293b; outline: none; text-transform: uppercase;
+        }
+        input[type="text"].hex-text:focus { border-color: #4a90e2; }
+        .base-values { font-family: 'Consolas', monospace; font-size: 0.8em; color: #475569; line-height: 1.6; }
+        .base-values span { color: #4a90e2; }
+
+        /* 色环 */
+        .wheel-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .wheel {
+            position: relative; width: 200px; height: 200px; border-radius: 50%;
+            background: conic-gradient(from 0deg,
+                hsl(0,100%,50%), hsl(30,100%,50%), hsl(60,100%,50%), hsl(90,100%,50%),
+                hsl(120,100%,50%), hsl(150,100%,50%), hsl(180,100%,50%), hsl(210,100%,50%),
+                hsl(240,100%,50%), hsl(270,100%,50%), hsl(300,100%,50%), hsl(330,100%,50%), hsl(360,100%,50%));
+            box-shadow: 0 4px 18px rgba(0,0,0,0.12);
+        }
+        .wheel::after {
+            content: ''; position: absolute; inset: 34px; border-radius: 50%; background: #fff;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+        }
+        .marker {
+            position: absolute; width: 20px; height: 20px; border-radius: 50%;
+            border: 3px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.35), 0 2px 5px rgba(0,0,0,0.25);
+            transform: translate(-50%, -50%); z-index: 2; cursor: pointer;
+        }
+        .marker.base { width: 26px; height: 26px; border-width: 4px; }
+        .wheel-legend { font-size: 0.76em; color: #94a3b8; text-align: center; }
+
+        /* 方案区 */
+        .scheme-section { margin-bottom: 18px; border: 1px solid #eef1f5; border-radius: 12px; padding: 14px 16px; transition: border-color 0.2s; }
+        .scheme-section.selected { border-color: #4a90e2; background: #f8fbff; }
+        .scheme-title {
+            font-size: 0.9em; font-weight: 600; color: #2c3e50; margin-bottom: 10px;
+            display: flex; align-items: center; gap: 8px; cursor: pointer;
+        }
+        .scheme-title .hint { margin-left: auto; font-size: 0.82em; color: #94a3b8; font-weight: 400; }
+        .scheme-title .sel-dot { width: 8px; height: 8px; border-radius: 50%; background: #4a90e2; opacity: 0; transition: opacity 0.2s; }
+        .scheme-section.selected .sel-dot { opacity: 1; }
+        .scheme-row { display: flex; gap: 10px; flex-wrap: wrap; }
+        .swatch {
+            width: 116px; border-radius: 10px; overflow: hidden; border: 1px solid #e0e6ed;
+            cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; flex-shrink: 0;
+        }
+        .swatch:hover { transform: translateY(-3px); box-shadow: 0 8px 18px rgba(0,0,0,0.12); }
+        .swatch-color { height: 64px; }
+        .swatch-info { padding: 6px 9px; background: #fff; font-size: 0.72em; font-family: 'Consolas', monospace; color: #475569; line-height: 1.5; }
+        .swatch-info .si-hex { font-weight: 700; color: #1e293b; }
+        .swatch-info .si-rgb, .swatch-info .si-hsl { color: #64748b; }
+
+        /* 导出 */
+        .export-box { margin-top: 8px; }
+        .code-box {
+            background: #0f172a; border-radius: 10px; padding: 16px 18px; margin-bottom: 14px;
+            display: flex; align-items: flex-start; gap: 12px;
+        }
+        .code-box pre {
+            margin: 0; flex: 1; color: #e2e8f0; font-family: 'Consolas', monospace;
+            font-size: 0.84em; line-height: 1.6; white-space: pre-wrap; word-break: break-all; max-height: 220px; overflow: auto;
+        }
+
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em;
+            font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap;
+        }
+        .btn-primary { background: #4a90e2; color: white; }
+        .btn-primary:hover { background: #3a7bd5; }
+        .btn-outline { background: transparent; color: #4a90e2; border: 1px solid #4a90e2; }
+        .btn-outline:hover { background: #4a90e2; color: white; }
+        .btn-copy {
+            padding: 8px 14px; font-size: 0.82em; background: rgba(255,255,255,0.12); color: #e2e8f0;
+            border: 1px solid rgba(255,255,255,0.25); border-radius: 7px; cursor: pointer; font-family: inherit; flex-shrink: 0;
+        }
+        .btn-copy:hover { background: rgba(255,255,255,0.22); }
+
+        .status-bar {
+            min-height: 20px; font-size: 0.85em;
+            padding: 8px 12px; border-radius: 6px; margin-bottom: 16px;
+        }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+        .footer p { margin: 0; }
+        .footer a { color: #4a90e2; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+
+        .info-cards { width: 100%; max-width: 960px; display: flex; flex-direction: column; gap: 18px; margin-top: 4px; }
+        .info-card { background: #fff; border-radius: 12px; padding: 22px 24px; box-shadow: 0 4px 25px rgba(0,0,0,0.06); border: 1px solid #f0f2f5; }
+        .info-card h3 { margin: 0 0 10px 0; font-size: 1em; color: #2c3e50; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+        .info-card p { margin: 0 0 10px 0; font-size: 0.82em; color: #64748b; }
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip { background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 12px; font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace; }
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a { font-size: 0.85em; color: #4a90e2; text-decoration: none; padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s; }
+        .tool-links a:hover { background: #e2e8f0; }
+
+        @media (max-width: 768px) {
+            body { display: block; height: auto; overflow: auto; }
+            .mobile-header { display: flex; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .close-sidebar { display: block; }
+            .main-content { display: block; }
+            .main-scroll { padding: 72px 16px 32px; gap: 20px; }
+            .tool-container { padding: 24px 16px; border-radius: 10px; }
+            .tool-header h1 { font-size: 1.3em; }
+            .overlay.active { display: block; }
+        }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="颜色方案生成器,在线颜色方案生成器,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/color-scheme-tool.html" />
+    <meta property="og:title" content="颜色方案生成器" />
+    <meta property="og:description" content="颜色方案生成器，从主色生成互补色、类似色、三角色、分裂互补色、四角色、单色系配色方案与调色板，HSL色环可视化，一键复制与导出CSS变量。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/color-scheme-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="颜色方案生成器" />
+    <meta itemprop="description" content="颜色方案生成器，从主色生成互补色、类似色、三角色、分裂互补色、四角色、单色系配色方案与调色板，HSL色环可视化，一键复制与导出CSS变量。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "颜色方案生成器",
+                "item": "https://box.lynvortex.top/work/color-scheme-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "颜色方案生成器",
+        "url": "https://box.lynvortex.top/work/color-scheme-tool.html",
+        "description": "从主色生成互补色、类似色、三角色等配色方案",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🎨 颜色方案生成器</h1>
+                <p>从主色一键生成互补色 / 类似色 / 三角色 / 分裂互补 / 四角色 / 单色系配色方案</p>
+            </div>
+
+            <div class="top-row">
+                <div class="base-panel">
+                    <div class="base-swatch" id="baseSwatch"></div>
+                    <div class="base-inputs">
+                        <label>主色</label>
+                        <div class="color-pick-row">
+                            <input type="color" class="hex-picker" id="colorPicker" value="#4a90e2">
+                            <input type="text" class="hex-text" id="hexInput" value="#4A90E2" maxlength="7">
+                        </div>
+                        <div class="base-values" id="baseValues"></div>
+                    </div>
+                </div>
+                <div class="wheel-wrap">
+                    <div class="wheel" id="wheel"></div>
+                    <div class="wheel-legend">HSL 色环 · 点击方案标题切换标记</div>
+                </div>
+            </div>
+
+            <div id="schemesArea"></div>
+
+            <div class="export-box">
+                <div class="ctrl-row" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                    <label style="font-size:0.85em;color:#64748b;font-weight:600;">导出完整调色板（CSS 变量）</label>
+                </div>
+                <div class="code-box">
+                    <pre id="exportCode"></pre>
+                    <button type="button" class="btn-copy" id="copyExportBtn">📋 复制</button>
+                </div>
+            </div>
+
+            <div id="statusBar" class="status-bar info">选择主色即可生成配色方案，点击色块复制 HEX</div>
+
+            <footer class="footer">
+                &copy; 2026 绘萤者-Lynvortex &middot; 美梦多彩 理想自由
+                <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 配色方案</h3>
+                <p>基于 HSL 色彩空间从主色推导出的常见配色关系</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">互补色 180°</span>
+                    <span class="tld-chip">类似色 ±30°</span>
+                    <span class="tld-chip">三角色 120°</span>
+                    <span class="tld-chip">分裂互补</span>
+                    <span class="tld-chip">四角色 90°</span>
+                    <span class="tld-chip">单色系</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用提示</h3>
+                <ul class="tips-list">
+                    <li>支持色板选择器或直接输入 HEX（如 <code>#4A90E2</code>）</li>
+                    <li>每个色块显示 HEX / RGB / HSL，点击即可复制 HEX</li>
+                    <li>点击任一方案标题，可在色环上高亮该方案的色相位置</li>
+                    <li>所有计算在浏览器本地完成，<strong>数据不上传</strong></li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    initSidebar('work');
+
+    var statusBar = document.getElementById('statusBar');
+    function copyText(text, onSuccess) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function () { onSuccess && onSuccess(); }).catch(function () { fallbackCopy(text, onSuccess); });
+        } else { fallbackCopy(text, onSuccess); }
+    }
+    function fallbackCopy(text, onSuccess) {
+        var ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) { } document.body.removeChild(ta); onSuccess && onSuccess();
+    }
+
+    /* ---- 颜色转换 ---- */
+    function normalizeHex(hex) {
+        hex = String(hex).trim().replace(/^#/, '');
+        if (hex.length === 3) hex = hex.split('').map(function (c) { return c + c; }).join('');
+        if (!/^[0-9a-fA-F]{6}$/.test(hex)) return null;
+        return '#' + hex.toUpperCase();
+    }
+    function hexToRgb(hex) {
+        var n = normalizeHex(hex); if (!n) return { r: 0, g: 0, b: 0 };
+        var h = n.slice(1);
+        return { r: parseInt(h.substr(0, 2), 16), g: parseInt(h.substr(2, 2), 16), b: parseInt(h.substr(4, 2), 16) };
+    }
+    function rgbToHex(r, g, b) {
+        var f = function (v) { v = Math.max(0, Math.min(255, Math.round(v))); var s = v.toString(16); return s.length < 2 ? '0' + s : s; };
+        return ('#' + f(r) + f(g) + f(b)).toUpperCase();
+    }
+    function rgbToHsl(r, g, b) {
+        r /= 255; g /= 255; b /= 255;
+        var max = Math.max(r, g, b), min = Math.min(r, g, b);
+        var h, s, l = (max + min) / 2;
+        if (max === min) { h = 0; s = 0; }
+        else {
+            var d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) {
+                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                case g: h = (b - r) / d + 2; break;
+                case b: h = (r - g) / d + 4; break;
+            }
+            h /= 6;
+        }
+        return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
+    }
+    function hslToRgb(h, s, l) {
+        h = ((h % 360) + 360) % 360 / 360; s = Math.max(0, Math.min(100, s)) / 100; l = Math.max(0, Math.min(100, l)) / 100;
+        var r, g, b;
+        if (s === 0) { r = g = b = l; }
+        else {
+            var hue2rgb = function (p, q, t) {
+                if (t < 0) t += 1; if (t > 1) t -= 1;
+                if (t < 1 / 6) return p + (q - p) * 6 * t;
+                if (t < 1 / 2) return q;
+                if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+                return p;
+            };
+            var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            var p = 2 * l - q;
+            r = hue2rgb(p, q, h + 1 / 3);
+            g = hue2rgb(p, q, h);
+            b = hue2rgb(p, q, h - 1 / 3);
+        }
+        return { r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255) };
+    }
+    function hslToHex(h, s, l) { var rgb = hslToRgb(h, s, l); return rgbToHex(rgb.r, rgb.g, rgb.b); }
+    function relLum(r, g, b) {
+        var a = [r, g, b].map(function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+        return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
+    }
+
+    /* ---- 方案生成 ---- */
+    var SCHEMES = [
+        { key: 'complementary', name: '互补色', desc: '色环上相对 180°', angles: [0, 180] },
+        { key: 'analogous', name: '类似色', desc: '相邻 ±30°', angles: [-30, 0, 30] },
+        { key: 'triadic', name: '三角色', desc: '等距 120° 间隔', angles: [0, 120, 240] },
+        { key: 'splitComplementary', name: '分裂互补色', desc: '互补色两侧 ±30°', angles: [0, 150, 210] },
+        { key: 'tetradic', name: '四角色', desc: '等距 90° 间隔', angles: [0, 90, 180, 270] },
+        { key: 'monochromatic', name: '单色系', desc: '同色相明度变化', mono: true }
+    ];
+
+    function genSchemes(hex) {
+        var rgb = hexToRgb(hex);
+        var hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+        var h = hsl.h, s = hsl.s, l = hsl.l;
+        function col(hue, sat, lum) { return { h: ((hue % 360) + 360) % 360, s: Math.max(0, Math.min(100, sat)), l: Math.max(0, Math.min(100, lum)) }; }
+        var out = { base: col(h, s, l) };
+        SCHEMES.forEach(function (sc) {
+            if (sc.mono) {
+                out[sc.key] = [
+                    col(h, s, Math.max(10, l - 40)),
+                    col(h, s, Math.max(20, l - 20)),
+                    col(h, s, l),
+                    col(h, s, Math.min(90, l + 20)),
+                    col(h, s, Math.min(95, l + 40))
+                ];
+            } else {
+                out[sc.key] = sc.angles.map(function (a) { return col(h + a, s, l); });
+            }
+        });
+        return out;
+    }
+
+    /* ---- 状态 ---- */
+    var baseHex = '#4A90E2';
+    var selectedScheme = 'complementary';
+
+    var colorPicker = document.getElementById('colorPicker');
+    var hexInput = document.getElementById('hexInput');
+    var baseSwatch = document.getElementById('baseSwatch');
+    var baseValues = document.getElementById('baseValues');
+    var schemesArea = document.getElementById('schemesArea');
+    var exportCode = document.getElementById('exportCode');
+
+    function setBase(hex) {
+        var n = normalizeHex(hex);
+        if (!n) { setStatus('HEX 格式不正确，请输入如 #4A90E2 的颜色值', 'error'); return false; }
+        baseHex = n;
+        colorPicker.value = n.toLowerCase();
+        hexInput.value = n;
+        render();
+        return true;
+    }
+
+    function renderSwatchInfo(c) {
+        var hex = hslToHex(c.h, c.s, c.l);
+        var rgb = hslToRgb(c.h, c.s, c.l);
+        var textColor = relLum(rgb.r, rgb.g, rgb.b) > 0.5 ? '#1e293b' : '#ffffff';
+        return { hex: hex, rgb: rgb, hsl: c, textColor: textColor };
+    }
+
+    function renderBase() {
+        baseSwatch.style.background = baseHex;
+        var rgb = hexToRgb(baseHex);
+        var hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+        baseValues.innerHTML =
+            'HEX <span>' + escapeHtml(baseHex) + '</span><br>' +
+            'RGB <span>' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + '</span><br>' +
+            'HSL <span>' + hsl.h + '°, ' + hsl.s + '%, ' + hsl.l + '%</span>';
+    }
+
+    function renderSchemes(schemes) {
+        var html = '';
+        SCHEMES.forEach(function (sc) {
+            var colors = schemes[sc.key];
+            html += '<div class="scheme-section' + (selectedScheme === sc.key ? ' selected' : '') + '" data-scheme="' + sc.key + '">';
+            html += '<div class="scheme-title"><span class="sel-dot"></span>' + escapeHtml(sc.name) + '<span class="hint">' + escapeHtml(sc.desc) + ' · 点击在色环高亮</span></div>';
+            html += '<div class="scheme-row">';
+            colors.forEach(function (c, i) {
+                var info = renderSwatchInfo(c);
+                html += '<div class="swatch" data-hex="' + escapeHtml(info.hex) + '" title="点击复制 ' + escapeHtml(info.hex) + '">' +
+                    '<div class="swatch-color" style="background:' + escapeHtml(info.hex) + ';"></div>' +
+                    '<div class="swatch-info">' +
+                    '<div class="si-hex">' + escapeHtml(info.hex) + '</div>' +
+                    '<div class="si-rgb">rgb(' + info.rgb.r + ',' + info.rgb.g + ',' + info.rgb.b + ')</div>' +
+                    '<div class="si-hsl">hsl(' + info.h.h + ',' + info.h.s + '%,' + info.h.l + '%)</div>' +
+                    '</div></div>';
+            });
+            html += '</div></div>';
+        });
+        schemesArea.innerHTML = html;
+    }
+
+    function renderWheel(schemes) {
+        var wheel = document.getElementById('wheel');
+        // 清除旧 marker
+        wheel.querySelectorAll('.marker').forEach(function (m) { m.remove(); });
+        var cx = 100, cy = 100, r = 82;
+        function place(c, isBase) {
+            var theta = c.h * Math.PI / 180;
+            var x = cx + r * Math.sin(theta);
+            var y = cy - r * Math.cos(theta);
+            var m = document.createElement('div');
+            m.className = 'marker' + (isBase ? ' base' : '');
+            m.style.left = x + 'px';
+            m.style.top = y + 'px';
+            m.style.background = hslToHex(c.h, c.s, c.l);
+            m.title = hslToHex(c.h, c.s, c.l);
+            wheel.appendChild(m);
+        }
+        place(schemes.base, true);
+        schemes[selectedScheme].forEach(function (c) { place(c, false); });
+    }
+
+    function renderExport(schemes) {
+        var lines = [':root {'];
+        lines.push('  --color-base: ' + hslToHex(schemes.base.h, schemes.base.s, schemes.base.l) + ';');
+        SCHEMES.forEach(function (sc) {
+            schemes[sc.key].forEach(function (c, i) {
+                var name = sc.key.replace(/([A-Z])/g, '-$1').toLowerCase();
+                lines.push('  --' + name + '-' + (i + 1) + ': ' + hslToHex(c.h, c.s, c.l) + ';');
+            });
+        });
+        lines.push('}');
+        exportCode.textContent = lines.join('\n');
+    }
+
+    function render() {
+        var schemes = genSchemes(baseHex);
+        renderBase();
+        renderSchemes(schemes);
+        renderWheel(schemes);
+        renderExport(schemes);
+    }
+
+    /* ---- 事件 ---- */
+    colorPicker.addEventListener('input', function () { setBase(this.value); });
+    hexInput.addEventListener('input', function () {
+        var v = this.value.trim();
+        if (normalizeHex(v)) setBase(v);
+    });
+    hexInput.addEventListener('change', function () {
+        if (!normalizeHex(this.value)) { this.value = baseHex; setStatus('HEX 格式不正确，已恢复', 'error'); }
+    });
+
+    schemesArea.addEventListener('click', function (e) {
+        var sw = e.target.closest('.swatch');
+        if (sw) {
+            var hex = sw.dataset.hex;
+            copyText(hex, function () { setStatus('已复制 ' + hex, 'success'); });
+            return;
+        }
+        var sec = e.target.closest('.scheme-section');
+        if (sec) {
+            selectedScheme = sec.dataset.scheme;
+            render();
+        }
+    });
+
+    document.getElementById('copyExportBtn').addEventListener('click', function () {
+        copyText(exportCode.textContent, function () { setStatus('调色板 CSS 变量已复制到剪贴板', 'success'); });
+    });
+
+    /* 初始化 */
+    render();
+    setStatus('已生成配色方案，点击色块复制 HEX', 'info');
+</script>
+</body>
+</html>

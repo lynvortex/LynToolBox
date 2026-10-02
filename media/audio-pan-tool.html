@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>声道平衡与交换 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线音频声道工具，左右声道平衡调节、声道交换、仅左/仅右提取、合并单声道，实时试听并导出WAV，纯前端本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="声道平衡,声道交换,左右声道,单声道提取,立体声,pan,声音处理,音视频工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/media/audio-pan-tool.html"/>
+<meta property="og:title" content="声道平衡与交换"/>
+<meta property="og:description" content="声道平衡/交换/提取/合并单声道。"/>
+<meta property="og:url" content="https://box.lynvortex.top/media/audio-pan-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="声道平衡与交换"/>
+<meta itemprop="description" content="声道平衡/交换/提取/合并单声道。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"音视频处理","item":"https://box.lynvortex.top/media.html"},{"@type":"ListItem","position":3,"name":"声道平衡与交换","item":"https://box.lynvortex.top/media/audio-pan-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"声道平衡与交换","url":"https://box.lynvortex.top/media/audio-pan-tool.html","description":"音频声道平衡交换工具","applicationCategory":"音视频工具","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>🎧 声道平衡与交换</h1>
+        <p>左右平衡 / 声道交换 / 单边提取 / 合并单声道</p>
+    </div>
+    <div class="upload-zone" id="dropZone">
+        <p style="margin:0;color:#64748b;">🎵 点击选择或拖入音频文件</p>
+        <input type="file" id="fileInput" accept="audio/*" style="display:none;"/>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>声道模式</label>
+            <select id="mode">
+                <option value="pan">平衡调节（左右声像）</option>
+                <option value="swap">交换左右声道</option>
+                <option value="left">仅保留左声道（双声道播）</option>
+                <option value="right">仅保留右声道（双声道播）</option>
+                <option value="mono">合并为单声道</option>
+            </select>
+        </div>
+        <div class="form-item"><label>平衡值（仅平衡模式）</label><input type="range" id="pan" min="-100" max="100" value="0"/><span class="hint" id="panv">居中</span></div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="runBtn" disabled>⚙️ 应用处理</button>
+        <button class="btn btn-outline" id="dlBtn" disabled>下载 WAV</button>
+        <button class="btn btn-ghost" id="origBtn" disabled>播放原声对比</button>
+    </div>
+    <div class="status-bar info" id="statusBar">请先选择音频文件</div>
+    <audio id="player" controls style="width:100%;display:none;margin-bottom:12px;"></audio>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 声道平衡与交换</h3>
+        <p>矩阵重排声道采样，支持五种常用声道操作。</p>
+        <div class="feature-chips"><span class="feature-chip">声像平衡</span><span class="feature-chip">L/R交换</span><span class="feature-chip">单边提取</span><span class="feature-chip">合并单声道</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>外语/伴奏双声道素材可用「单边提取」快速分离</li>
+            <li>老磁带/录像带 rip 常见左右反相，用「交换」修正</li>
+            <li>单声道文件建议「合并」以兼容单耳播放设备</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+var audioBuf = null, outBlob = null;
+var dropZone = document.getElementById('dropZone'), fileInput = document.getElementById('fileInput');
+dropZone.onclick = function(){ fileInput.click(); };
+dropZone.ondragover = function(e){ e.preventDefault(); };
+dropZone.ondrop = function(e){ e.preventDefault(); if (e.dataTransfer.files[0]) loadAudio(e.dataTransfer.files[0]); };
+fileInput.onchange = function(){ if (fileInput.files[0]) loadAudio(fileInput.files[0]); };
+
+function loadAudio(f) {
+    setStatus('正在解码：' + f.name + ' …', 'info');
+    var fr = new FileReader();
+    fr.onload = function() {
+        var ctx = new AudioContext();
+        ctx.decodeAudioData(fr.result).then(function(buf) {
+            audioBuf = buf;
+            document.getElementById('runBtn').disabled = false;
+            document.getElementById('origBtn').disabled = false;
+            setStatus('解码完成：' + buf.numberOfChannels + ' 声道 / ' + buf.duration.toFixed(1) + ' 秒 / ' + buf.sampleRate + ' Hz', 'success');
+        }).catch(function(e){ setStatus('解码失败：' + e.message, 'error'); });
+    };
+    fr.readAsArrayBuffer(f);
+}
+
+document.getElementById('pan').oninput = function() {
+    var v = parseInt(this.value);
+    document.getElementById('panv').textContent = v === 0 ? '居中' : (v < 0 ? '左 ' + Math.abs(v) + '%' : '右 ' + v + '%');
+};
+
+document.getElementById('runBtn').onclick = function() {
+    if (!audioBuf) return;
+    var mode = document.getElementById('mode').value;
+    var pan = parseInt(document.getElementById('pan').value) / 100;
+    var ch = audioBuf.numberOfChannels;
+    var L = audioBuf.getChannelData(0);
+    var R = ch > 1 ? audioBuf.getChannelData(1) : L;
+    var len = audioBuf.length;
+    var rate = audioBuf.sampleRate;
+
+    var outCh = mode === 'mono' ? 1 : 2;
+    var ab = new ArrayBuffer(44 + len * outCh * 2);
+    var v = new DataView(ab);
+    var w = function(off, s){ for (var i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i)); };
+    w(0, 'RIFF'); v.setUint32(4, 36 + len * outCh * 2, true); w(8, 'WAVE');
+    w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true);
+    v.setUint16(22, outCh, true); v.setUint32(24, rate, true);
+    v.setUint32(28, rate * outCh * 2, true); v.setUint16(32, outCh * 2, true); v.setUint16(34, 16, true);
+    w(36, 'data'); v.setUint32(40, len * outCh * 2, true);
+
+    var lg = pan <= 0 ? 1 : 1 - pan;
+    var rg = pan >= 0 ? 1 : 1 + pan;
+    var off = 44;
+    for (var i = 0; i < len; i++) {
+        var sL, sR;
+        if (mode === 'pan') { sL = L[i] * lg; sR = R[i] * rg; }
+        else if (mode === 'swap') { sL = R[i]; sR = L[i]; }
+        else if (mode === 'left') { sL = L[i]; sR = L[i]; }
+        else if (mode === 'right') { sL = R[i]; sR = R[i]; }
+        else { sL = sR = (L[i] + R[i]) / 2; }
+        var c0 = Math.max(-1, Math.min(1, sL));
+        v.setInt16(off, c0 < 0 ? c0 * 0x8000 : c0 * 0x7FFF, true);
+        off += 2;
+        if (outCh === 2) {
+            var c1 = Math.max(-1, Math.min(1, sR));
+            v.setInt16(off, c1 < 0 ? c1 * 0x8000 : c1 * 0x7FFF, true);
+            off += 2;
+        }
+    }
+    outBlob = new Blob([ab], { type: 'audio/wav' });
+    var player = document.getElementById('player');
+    player.src = URL.createObjectURL(outBlob);
+    player.style.display = 'block';
+    player.play();
+    document.getElementById('dlBtn').disabled = false;
+    setStatus('处理完成，正在试听（模式：' + document.getElementById('mode').selectedOptions[0].text + '）', 'success');
+};
+
+document.getElementById('origBtn').onclick = function() {
+    if (!audioBuf) return;
+    var fr = new FileReader();
+    var player = document.getElementById('player');
+    encodeOrig(function(blob) {
+        player.src = URL.createObjectURL(blob);
+        player.style.display = 'block';
+        player.play();
+        setStatus('正在播放原始音频', 'info');
+    });
+};
+function encodeOrig(cb) {
+    var ch = audioBuf.numberOfChannels, len = audioBuf.length, rate = audioBuf.sampleRate;
+    var bytes = 44 + len * ch * 2;
+    var ab = new ArrayBuffer(bytes), v = new DataView(ab);
+    var w = function(off, s){ for (var i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i)); };
+    w(0, 'RIFF'); v.setUint32(4, bytes - 8, true); w(8, 'WAVE');
+    w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true);
+    v.setUint16(22, ch, true); v.setUint32(24, rate, true);
+    v.setUint32(28, rate * ch * 2, true); v.setUint16(32, ch * 2, true); v.setUint16(34, 16, true);
+    w(36, 'data'); v.setUint32(40, len * ch * 2, true);
+    var chans = [];
+    for (var c = 0; c < ch; c++) chans.push(audioBuf.getChannelData(c));
+    var off = 44;
+    for (var i = 0; i < len; i++) {
+        for (var c = 0; c < ch; c++) {
+            var s = Math.max(-1, Math.min(1, chans[c][i]));
+            v.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+            off += 2;
+        }
+    }
+    cb(new Blob([ab], { type: 'audio/wav' }));
+}
+
+document.getElementById('dlBtn').onclick = function() {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(outBlob);
+    a.download = 'channels.wav';
+    a.click();
+};
+initSidebar('media');
+</script>
+</body>
+</html>

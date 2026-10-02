@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTTP状态码速查 - 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="HTTP状态码速查，HTTP状态码分类检索，附带详细说明。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+* { box-sizing: border-box; }
+body {
+    font-family: 'PingFang SC', -apple-system, sans-serif;
+    background: #f4f7f9;
+    margin: 0;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    color: #333;
+}
+
+.mobile-header {
+    display: none;
+    position: fixed; top: 0; left: 0; right: 0; height: 60px;
+    background: #fff; padding: 0 20px; align-items: center;
+    justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+}
+.mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+.mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+.menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #4a90e2; }
+
+.sidebar {
+    width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+    display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+    transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+}
+.brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+.brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+.brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+.brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+.close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+.category-list { padding: 16px 0; flex: 1; }
+.category-item {
+    display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+    transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+}
+.category-item:hover, .category-item.active { background: #ebf5ff; color: #4a90e2; border-left-color: #4a90e2; }
+
+.main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+.tool-container {
+    width: 100%;
+    max-width: 960px;
+    background: #fff; border-radius: 12px;
+    padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+}
+.tool-header { text-align: center; margin-bottom: 28px; }
+.tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+.tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+.btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em; font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap; }
+.btn-primary { background: #4a90e2; color: white; }
+.btn-primary:hover { background: #3a7bd5; }
+.btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+.btn-outline { background: transparent; color: #4a90e2; border: 1px solid #4a90e2; }
+.btn-outline:hover { background: #4a90e2; color: white; }
+.btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+.btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+
+.status-bar { min-height: 20px; font-size: 0.85em; padding: 8px 12px; border-radius: 6px; margin-bottom: 16px; }
+.status-bar.success { color: #16a34a; background: #f0fdf4; }
+.status-bar.error { color: #ef4444; background: #fef2f2; }
+.status-bar.info { color: #64748b; background: #f8fafc; }
+
+.info-cards { width: 100%; max-width: 960px; display: flex; flex-direction: column; gap: 18px; }
+.info-card { background: #fff; border-radius: 12px; padding: 22px 24px; box-shadow: 0 4px 25px rgba(0,0,0,0.06); border: 1px solid #f0f2f5; }
+.info-card h3 { margin: 0 0 10px 0; font-size: 1em; color: #2c3e50; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.info-card p { margin: 0 0 10px 0; font-size: 0.82em; color: #64748b; }
+
+.footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+.footer p { margin: 0; }
+        .footer a { color: #4a90e2; text-decoration: none; }
+
+.overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+
+@media (max-width: 768px) {
+    body { display: block; height: auto; overflow: auto; }
+    .mobile-header { display: flex; }
+    .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+    .sidebar.active { transform: translateX(0); }
+    .close-sidebar { display: block; }
+    .main-content { display: block; }
+    .main-scroll { padding: 72px 16px 32px; gap: 20px;  }
+    .tool-container { padding: 24px 16px; border-radius: 10px; }
+    .tool-header h1 { font-size: 1.3em; }
+    .overlay.active { display: block; }
+}
+        .search-bar input:focus { border-color: #4a90e2; }
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .tab {
+            padding: 8px 18px;
+            border-radius: 20px;
+            border: 1px solid #e0e6ed;
+            background: #fff;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 500;
+            transition: all 0.2s;
+            color: #64748b;
+        }
+        .tab:hover { border-color: #4a90e2; color: #4a90e2; }
+        .tab.active {
+            background: #4a90e2;
+            color: #fff;
+            border-color: #4a90e2;
+        }
+        .tab .count {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            padding: 0 8px;
+            margin-left: 4px;
+            font-size: 0.8em;
+        }
+        .tab.active .count { background: rgba(255,255,255,0.3); }
+        .status-list { display: flex; flex-direction: column; gap: 8px; }
+        .status-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 18px;
+            border-radius: 10px;
+            border: 1px solid #f0f2f5;
+            transition: all 0.2s;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .status-item:hover { border-color: #e0e6ed; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .status-code {
+            font-family: 'Consolas', monospace;
+            font-size: 1.2em;
+            font-weight: 700;
+            min-width: 70px;
+        }
+        .status-name {
+            font-weight: 600;
+            color: #2c3e50;
+            min-width: 180px;
+            padding: 0 16px;
+        }
+        .status-desc {
+            color: #64748b;
+            font-size: 0.85em;
+            flex: 1;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .badge-1xx { background: #e0f2fe; color: #0369a1; }
+        .badge-2xx { background: #dcfce7; color: #15803d; }
+        .badge-3xx { background: #fef3c7; color: #b45309; }
+        .badge-4xx { background: #ffe4e6; color: #be123c; }
+        .badge-5xx { background: #f3e8ff; color: #7e22ce; }
+        .no-result {
+            text-align: center;
+            padding: 30px;
+            color: #94a3b8;
+            font-size: 0.9em;
+        }
+        .footer a { color: #4a90e2; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+        .info-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1em;
+            color: #2c3e50;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .info-card p {
+            margin: 0 0 10px 0;
+            font-size: 0.82em;
+            color: #64748b;
+        }
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a {
+            font-size: 0.85em; color: #4a90e2; text-decoration: none;
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s;
+        }
+        .tool-links a:hover { background: #e2e8f0; }
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip {
+            background: #e0f2fe; color: #0369a1;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace;
+        }
+            .overlay.active { display: block; }
+            .status-item { flex-wrap: wrap; gap: 6px; }
+            .status-code { min-width: auto; }
+            .status-name { min-width: auto; padding: 0 10px 0 0; }
+            .status-desc { width: 100%; padding-top: 4px; }
+        }
+</style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="HTTP状态码速查,在线HTTP状态码速查,网络工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/network/http-status-tool.html" />
+    <meta property="og:title" content="HTTP状态码速查" />
+    <meta property="og:description" content="HTTP状态码速查，HTTP状态码分类检索，附带详细说明。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/network/http-status-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="HTTP状态码速查" />
+    <meta itemprop="description" content="HTTP状态码速查，HTTP状态码分类检索，附带详细说明。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "网络工具",
+                "item": "https://box.lynvortex.top/network.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "HTTP状态码速查",
+                "item": "https://box.lynvortex.top/network/http-status-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "HTTP状态码速查",
+        "url": "https://box.lynvortex.top/network/http-status-tool.html",
+        "description": "HTTP状态码分类检索，附带详细说明",
+        "applicationCategory": "网络工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+    <main class="main-content">
+        <div class="main-scroll">
+
+            <div class="tool-container">
+                <div class="tool-header">
+                    <h1>HTTP 状态码速查</h1>
+                    <p>快速查询 HTTP 状态码的含义、分类与说明</p>
+                </div>
+
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="搜索状态码编号或名称..." oninput="renderStatuses()" spellcheck="false">
+                </div>
+
+                <div class="tabs" id="tabContainer">
+                    <button class="tab active" data-category="all" onclick="switchTab('all')">全部 <span class="count" id="countAll"></span></button>
+                    <button class="tab" data-category="1xx" onclick="switchTab('1xx')">1xx 信息 <span class="count" id="count1xx"></span></button>
+                    <button class="tab" data-category="2xx" onclick="switchTab('2xx')">2xx 成功 <span class="count" id="count2xx"></span></button>
+                    <button class="tab" data-category="3xx" onclick="switchTab('3xx')">3xx 重定向 <span class="count" id="count3xx"></span></button>
+                    <button class="tab" data-category="4xx" onclick="switchTab('4xx')">4xx 客户端错误 <span class="count" id="count4xx"></span></button>
+                    <button class="tab" data-category="5xx" onclick="switchTab('5xx')">5xx 服务端错误 <span class="count" id="count5xx"></span></button>
+                </div>
+
+                <div id="statusList" class="status-list"></div>
+
+                <footer class="footer">
+                    &copy; 2026 绘萤者-Lynvortex &middot; 美梦多彩 理想自由
+            <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+                </footer>
+            </div>
+
+            <div class="info-cards">
+                <div class="info-card">
+                    <h3>状态码分类</h3>
+                    <p>HTTP 状态码由三位数字组成，首位数字表示响应类别：</p>
+                    <div class="tld-chips">
+                        <span class="tld-chip" style="background:#e0f2fe;color:#0369a1;">1xx 信息</span>
+                        <span class="tld-chip" style="background:#dcfce7;color:#15803d;">2xx 成功</span>
+                        <span class="tld-chip" style="background:#fef3c7;color:#b45309;">3xx 重定向</span>
+                        <span class="tld-chip" style="background:#ffe4e6;color:#be123c;">4xx 客户端错误</span>
+                        <span class="tld-chip" style="background:#f3e8ff;color:#7e22ce;">5xx 服务端错误</span>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <h3>使用须知</h3>
+                    <ul class="tips-list">
+                        <li>点击分类 Tab 可按类别筛选状态码</li>
+                        <li>在搜索框中输入编号或名称可快速定位</li>
+                        <li>数据覆盖常见的 HTTP 标准状态码，包括 RFC 文档定义</li>
+                        <li>全部数据在浏览器本地存储，无需网络请求</li>
+                    </ul>
+                </div>
+                <div class="info-card">
+                    <h3>绘萤者</h3>
+                    <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                    <div class="tool-links">
+                        <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                        <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                        <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                        <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                    </div>
+                    <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                        绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        const STATUS_CODES = [
+            // 1xx 信息
+            { code: 100, name: 'Continue', desc: '继续。客户端应继续其请求', category: '1xx' },
+            { code: 101, name: 'Switching Protocols', desc: '切换协议。服务器根据客户端的请求切换协议', category: '1xx' },
+            { code: 102, name: 'Processing', desc: '处理中。服务器已收到并正在处理请求，但无响应可用', category: '1xx' },
+            { code: 103, name: 'Early Hints', desc: '早期提示。服务器在最终响应之前发送一些响应头', category: '1xx' },
+
+            // 2xx 成功
+            { code: 200, name: 'OK', desc: '请求成功。请求所希望的响应头或数据体将随此响应返回', category: '2xx' },
+            { code: 201, name: 'Created', desc: '已创建。请求成功且服务器已创建了新的资源', category: '2xx' },
+            { code: 202, name: 'Accepted', desc: '已接受。请求已被接受，但尚未处理完成', category: '2xx' },
+            { code: 203, name: 'Non-Authoritative Info', desc: '非授权信息。请求成功，但实体头信息不是来自原始服务器', category: '2xx' },
+            { code: 204, name: 'No Content', desc: '无内容。服务器成功处理请求，但不需要返回实体内容', category: '2xx' },
+            { code: 205, name: 'Reset Content', desc: '重置内容。服务器成功处理请求，要求客户端重置文档视图', category: '2xx' },
+            { code: 206, name: 'Partial Content', desc: '部分内容。服务器成功处理了部分 GET 请求', category: '2xx' },
+            { code: 207, name: 'Multi-Status', desc: '多状态。代表多个独立操作的状态信息', category: '2xx' },
+            { code: 208, name: 'Already Reported', desc: '已报告。DAV 绑定成员的内部成员已在此响应中列出', category: '2xx' },
+            { code: 226, name: 'IM Used', desc: '使用了实例操作。服务器已完成对资源的 GET 请求并应用了实例操作', category: '2xx' },
+
+            // 3xx 重定向
+            { code: 300, name: 'Multiple Choices', desc: '多种选择。被请求的资源有多个可供选择的响应', category: '3xx' },
+            { code: 301, name: 'Moved Permanently', desc: '永久移动。请求的资源已被永久移动到新的 URI', category: '3xx' },
+            { code: 302, name: 'Found', desc: '临时移动。请求的资源临时从不同的 URI 响应', category: '3xx' },
+            { code: 303, name: 'See Other', desc: '查看其他。对应当前请求的响应可以在另一个 URI 上找到', category: '3xx' },
+            { code: 304, name: 'Not Modified', desc: '未修改。资源未被修改，客户端可以使用缓存的版本', category: '3xx' },
+            { code: 305, name: 'Use Proxy', desc: '使用代理。被请求的资源必须通过指定的代理才能访问', category: '3xx' },
+            { code: 307, name: 'Temporary Redirect', desc: '临时重定向。请求的资源临时从不同的 URI 响应', category: '3xx' },
+            { code: 308, name: 'Permanent Redirect', desc: '永久重定向。请求的资源已被永久移动到新 URI', category: '3xx' },
+
+            // 4xx 客户端错误
+            { code: 400, name: 'Bad Request', desc: '错误请求。服务器无法理解请求的语法', category: '4xx' },
+            { code: 401, name: 'Unauthorized', desc: '未授权。请求要求身份验证', category: '4xx' },
+            { code: 402, name: 'Payment Required', desc: '需要付款。保留给将来使用', category: '4xx' },
+            { code: 403, name: 'Forbidden', desc: '禁止访问。服务器拒绝请求', category: '4xx' },
+            { code: 404, name: 'Not Found', desc: '未找到。服务器找不到请求的资源', category: '4xx' },
+            { code: 405, name: 'Method Not Allowed', desc: '方法不允许。请求方法不被允许', category: '4xx' },
+            { code: 406, name: 'Not Acceptable', desc: '不可接受。服务器无法生成符合客户端要求的响应', category: '4xx' },
+            { code: 407, name: 'Proxy Auth Required', desc: '需要代理认证。请求需要代理的身份认证', category: '4xx' },
+            { code: 408, name: 'Request Timeout', desc: '请求超时。服务器等待客户端发送请求时超时', category: '4xx' },
+            { code: 409, name: 'Conflict', desc: '冲突。请求与服务器的当前状态冲突', category: '4xx' },
+            { code: 410, name: 'Gone', desc: '已删除。被请求的资源已永久删除', category: '4xx' },
+            { code: 411, name: 'Length Required', desc: '需要内容长度。请求缺少 Content-Length 头', category: '4xx' },
+            { code: 412, name: 'Precondition Failed', desc: '前提条件失败。请求头中的前提条件评估为假', category: '4xx' },
+            { code: 413, name: 'Payload Too Large', desc: '请求实体过大。请求体超过了服务器允许的大小', category: '4xx' },
+            { code: 414, name: 'URI Too Long', desc: '请求 URI 过长。请求的 URI 超过了服务器允许的长度', category: '4xx' },
+            { code: 415, name: 'Unsupported Media Type', desc: '不支持的媒体类型。请求的格式不受支持', category: '4xx' },
+            { code: 416, name: 'Range Not Satisfiable', desc: '范围无法满足。请求的范围无效', category: '4xx' },
+            { code: 417, name: 'Expectation Failed', desc: '期望失败。服务器无法满足 Expect 请求头的要求', category: '4xx' },
+            { code: 418, name: "I'm a Teapot", desc: '我是茶壶。服务器拒绝用茶壶煮咖啡的尝试', category: '4xx' },
+            { code: 421, name: 'Misdirected Request', desc: '错向请求。请求被发送到无法产生响应的服务器', category: '4xx' },
+            { code: 422, name: 'Unprocessable Entity', desc: '无法处理的实体。请求格式正确但语义错误', category: '4xx' },
+            { code: 423, name: 'Locked', desc: '已锁定。资源被锁定', category: '4xx' },
+            { code: 424, name: 'Failed Dependency', desc: '依赖失败。由于先前的请求失败导致当前请求失败', category: '4xx' },
+            { code: 425, name: 'Too Early', desc: '太早。服务器不愿意冒重放攻击的风险处理请求', category: '4xx' },
+            { code: 426, name: 'Upgrade Required', desc: '需要升级。客户端应切换到其他协议', category: '4xx' },
+            { code: 428, name: 'Precondition Required', desc: '需要前提条件。请求应包含条件头', category: '4xx' },
+            { code: 429, name: 'Too Many Requests', desc: '请求过多。用户在给定时间内发送了太多请求', category: '4xx' },
+            { code: 431, name: 'Request Header Fields Too Large', desc: '请求头字段过大。请求头字段超过服务器限制', category: '4xx' },
+            { code: 451, name: 'Unavailable For Legal Reasons', desc: '因法律原因不可用。由于法律审查被阻止', category: '4xx' },
+
+            // 5xx 服务端错误
+            { code: 500, name: 'Internal Server Error', desc: '服务器内部错误。服务器遇到了意外情况', category: '5xx' },
+            { code: 501, name: 'Not Implemented', desc: '未实现。服务器不支持请求所需的功能', category: '5xx' },
+            { code: 502, name: 'Bad Gateway', desc: '网关错误。服务器作为网关或代理时收到无效响应', category: '5xx' },
+            { code: 503, name: 'Service Unavailable', desc: '服务不可用。服务器暂时无法处理请求', category: '5xx' },
+            { code: 504, name: 'Gateway Timeout', desc: '网关超时。服务器作为网关时未及时收到响应', category: '5xx' },
+            { code: 505, name: 'HTTP Version Not Supported', desc: 'HTTP 版本不支持。服务器不支持请求使用的 HTTP 协议版本', category: '5xx' },
+            { code: 506, name: 'Variant Also Negotiates', desc: '变体也协商。服务器存在内部配置错误', category: '5xx' },
+            { code: 507, name: 'Insufficient Storage', desc: '存储空间不足。服务器无法存储完成请求所需的内容', category: '5xx' },
+            { code: 508, name: 'Loop Detected', desc: '检测到循环。服务器在处理请求时检测到无限循环', category: '5xx' },
+            { code: 510, name: 'Not Extended', desc: '未扩展。服务器需要对请求进行进一步扩展才能处理', category: '5xx' },
+            { code: 511, name: 'Network Auth Required', desc: '需要网络认证。客户端需要进行网络身份验证', category: '5xx' }
+        ];
+
+        let currentCategory = 'all';
+
+        const getBadgeClass = function(category) {
+            const map = { '1xx': 'badge-1xx', '2xx': 'badge-2xx', '3xx': 'badge-3xx', '4xx': 'badge-4xx', '5xx': 'badge-5xx' };
+            return map[category] || 'badge-1xx';
+        };
+
+        const switchTab = function(category) {
+            currentCategory = category;
+            document.querySelectorAll('.tab').forEach(function(tab) {
+                tab.classList.toggle('active', tab.getAttribute('data-category') === category);
+            });
+            renderStatuses();
+        };
+
+        const renderStatuses = function() {
+            const search = document.getElementById('searchInput').value.trim().toLowerCase();
+            const list = document.getElementById('statusList');
+
+            let filtered = STATUS_CODES;
+            if (currentCategory !== 'all') {
+                filtered = filtered.filter(function(s) { return s.category === currentCategory; });
+            }
+            if (search) {
+                filtered = filtered.filter(function(s) {
+                    return String(s.code).includes(search) ||
+                           s.name.toLowerCase().includes(search) ||
+                           s.desc.toLowerCase().includes(search);
+                });
+            }
+
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="no-result">没有匹配的状态码</div>';
+                return;
+            }
+
+            let html = '';
+            filtered.forEach(function(s) {
+                html += '<div class="status-item">' +
+                    '<span class="status-badge ' + getBadgeClass(s.category) + '">' + s.category + '</span>' +
+                    '<span class="status-code">' + s.code + '</span>' +
+                    '<span class="status-name">' + window.escapeHtml(s.name) + '</span>' +
+                    '<span class="status-desc">' + window.escapeHtml(s.desc) + '</span>' +
+                    '</div>';
+            });
+            list.innerHTML = html;
+        };
+
+        // 更新计数
+        const updateCounts = function() {
+            document.getElementById('countAll').textContent = STATUS_CODES.length;
+            ['1xx','2xx','3xx','4xx','5xx'].forEach(function(cat) {
+                let count = STATUS_CODES.filter(function(s) { return s.category === cat; }).length;
+                document.getElementById('count' + cat).textContent = count;
+            });
+        };
+
+        updateCounts();
+        renderStatuses();
+
+        initSidebar('network');
+    </script>
+</body>
+</html>

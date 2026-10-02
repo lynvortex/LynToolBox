@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>表情包生成器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="表情包Meme生成器，纯前端Canvas在图片上下添加描边文字，支持拖拽缩放文字与多种模板，导出PNG，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.editor-layout{display:grid;grid-template-columns:1fr 280px;gap:16px;}
+@media(max-width:700px){.editor-layout{grid-template-columns:1fr;}}
+.canvas-area{background:#0f172a;border-radius:10px;padding:16px;text-align:center;position:relative;}
+.canvas-area canvas{max-width:100%;border-radius:6px;cursor:move;}
+.ctrl-panel{display:flex;flex-direction:column;gap:12px;}
+.ctrl-panel .form-item{margin:0;}
+.ctrl-panel input[type="text"],.ctrl-panel input[type="number"],.ctrl-panel select{padding:8px 12px;border:1px solid #e0e6ed;border-radius:6px;font-size:.85em;outline:none;width:100%;}
+.ctrl-panel input:focus,.ctrl-panel select:focus{border-color:#4a90e2;}
+.font-size-row{display:flex;align-items:center;gap:8px;}
+.font-size-row input{flex:1;}
+.templates{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.tpl-item{padding:8px;border:1px solid #e0e6ed;border-radius:6px;cursor:pointer;font-size:.8em;text-align:center;transition:.2s;}
+.tpl-item:hover{border-color:#4a90e2;background:#ebf5ff;}
+.upload-zone{border:2px dashed #e0e6ed;border-radius:8px;padding:16px;text-align:center;cursor:pointer;transition:.2s;}
+</style>
+    <meta name="keywords" content="表情包生成器,在线表情包生成器,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/meme-tool.html" />
+    <meta property="og:title" content="表情包生成器" />
+    <meta property="og:description" content="表情包Meme生成器，纯前端Canvas在图片上下添加描边文字，支持拖拽缩放文字与多种模板，导出PNG，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/meme-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="表情包生成器" />
+    <meta itemprop="description" content="表情包Meme生成器，纯前端Canvas在图片上下添加描边文字，支持拖拽缩放文字与多种模板，导出PNG，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "表情包生成器",
+                "item": "https://box.lynvortex.top/image/meme-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "表情包生成器",
+        "url": "https://box.lynvortex.top/image/meme-tool.html",
+        "description": "上传图片添加文字制作表情包，支持上下文字与样式调整",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>😂 表情包生成器</h1><p>上传图片加描边文字，制作专属表情包</p></div>
+<div class="editor-layout">
+<div class="canvas-area">
+<canvas id="memeCanvas" width="500" height="500"></canvas>
+</div>
+<div class="ctrl-panel">
+<div class="upload-zone" id="dropZone">📁 上传图片<input type="file" id="fileInput" accept="image/*" style="display:none;"/></div>
+<div class="templates">
+<div class="tpl-item" data-tpl="doge">🐶 神烦狗</div>
+<div class="tpl-item" data-tpl="cat">🐱 愤怒猫</div>
+<div class="tpl-item" data-tpl="blank">⬜ 空白模板</div>
+<div class="tpl-item" data-tpl="color">🎨 纯色背景</div>
+</div>
+<div class="form-item"><label>顶部文字</label><input type="text" id="topText" placeholder="顶部文字..." oninput="render()"/></div>
+<div class="form-item"><label>底部文字</label><input type="text" id="bottomText" placeholder="底部文字..." oninput="render()"/></div>
+<div class="form-item"><label>字体大小</label><div class="font-size-row"><input type="range" id="fontSize" min="16" max="80" value="40" oninput="render()"/><span id="fsVal" style="font-size:.8em;color:#4a90e2;">40</span></div></div>
+<div class="form-item"><label>文字颜色</label><input type="color" id="textColor" value="#ffffff" style="width:100%;height:36px;border:none;border-radius:6px;cursor:pointer;" onchange="render()"/></div>
+<div class="form-item"><label>描边颜色</label><input type="color" id="strokeColor" value="#000000" style="width:100%;height:36px;border:none;border-radius:6px;cursor:pointer;" onchange="render()"/></div>
+<div class="form-item"><label>字体</label><select id="fontFamily" onchange="render()"><option value="Impact, sans-serif">Impact</option><option value="Arial Black, sans-serif">Arial Black</option><option value="'Microsoft YaHei', sans-serif">微软雅黑</option><option value="'PingFang SC', sans-serif">苹方</option><option value="monospace">等宽</option></select></div>
+<button class="btn btn-primary" id="downloadBtn">⬇ 下载表情包</button>
+</div>
+</div>
+<div id="statusBar" class="status-bar info">上传图片或选择模板，输入文字即可生成表情包</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+</footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 功能说明</h3><p>图片加描边文字，制作经典表情包</p><div class="feature-chips"><span class="feature-chip">上下文字</span><span class="feature-chip">描边效果</span><span class="feature-chip">自定义字体</span><span class="feature-chip">颜色调节</span><span class="feature-chip">模板预设</span><span class="feature-chip">导出PNG</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>上传图片或选择内置模板开始制作</li><li>顶部和底部文字自动居中显示并加描边</li><li>支持调整字体大小、颜色和描边颜色</li><li>所有图片处理在浏览器本地完成</li><li>导出PNG格式，可直接用于聊天表情</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+initSidebar('image');
+var sb=document.getElementById('statusBar'),canvas=document.getElementById('memeCanvas'),ctx=canvas.getContext('2d'),bgImg=null;
+var dz=document.getElementById('dropZone'),fi=document.getElementById('fileInput');
+dz.onclick=function(){fi.click();};
+dz.ondragover=function(e){e.preventDefault();};
+dz.ondrop=function(e){e.preventDefault();if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);};
+fi.onchange=function(){if(fi.files[0])loadFile(fi.files[0]);};
+function loadFile(file){var r=new FileReader();r.onload=function(e){var img=new Image();img.onload=function(){bgImg=img;canvas.width=img.width;canvas.height=img.height;render();setStatus('图片已加载','success');};img.src=e.target.result;};r.readAsDataURL(file);}
+document.querySelectorAll('.tpl-item').forEach(function(t){t.onclick=function(){
+var tpl=t.dataset.tpl;
+if(tpl==='blank'){bgImg=null;canvas.width=500;canvas.height=500;render();}
+else if(tpl==='color'){bgImg=null;canvas.width=500;canvas.height=500;ctx.fillStyle='#f0c040';ctx.fillRect(0,0,500,500);bgImg=canvas;render();}
+else{var colors={'doge':['#f4d35e','#ee964b'],'cat':['#8d99ae','#2b2d42']};bgImg=null;canvas.width=500;canvas.height=500;var g=ctx.createLinearGradient(0,0,500,500);g.addColorStop(0,colors[tpl][0]);g.addColorStop(1,colors[tpl][1]);ctx.fillStyle=g;ctx.fillRect(0,0,500,500);render();}
+};});
+function render(){
+ctx.clearRect(0,0,canvas.width,canvas.height);
+if(bgImg){ctx.drawImage(bgImg,0,0,canvas.width,canvas.height);}else{ctx.fillStyle='#2c3e50';ctx.fillRect(0,0,canvas.width,canvas.height);}
+var top=document.getElementById('topText').value;
+var bot=document.getElementById('bottomText').value;
+var fs=parseInt(document.getElementById('fontSize').value);
+var tc=document.getElementById('textColor').value;
+var sc=document.getElementById('strokeColor').value;
+var ff=document.getElementById('fontFamily').value;
+document.getElementById('fsVal').textContent=fs;
+ctx.font='bold '+fs+'px '+ff;
+ctx.textAlign='center';
+ctx.fillStyle=tc;ctx.strokeStyle=sc;ctx.lineWidth=Math.max(2,fs/8);ctx.lineJoin='round';
+if(top){wrapText(top,canvas.width/2,fs+4,canvas.width-20,fs);}
+if(bot){wrapText(bot,canvas.width/2,canvas.height-8,canvas.width-20,fs,true);}
+}
+function wrapText(text,x,y,maxW,lh,isBottom){
+var words=text.split('');var line='';var lines=[];
+for(var i=0;i<words.length;i++){var test=line+words[i];if(ctx.measureText(test).width>maxW&&line){lines.push(line);line=words[i];}else{line=test;}}if(line)lines.push(line);
+if(isBottom){for(var i=lines.length-1;i>=0;i--){y-=lh;ctx.strokeText(lines[i],x,y);ctx.fillText(lines[i],x,y);}}else{for(var i=0;i<lines.length;i++){ctx.strokeText(lines[i],x,y);ctx.fillText(lines[i],x,y);y+=lh;}}
+}
+document.getElementById('downloadBtn').onclick=function(){var a=document.createElement('a');a.href=canvas.toDataURL('image/png');a.download='meme.png';a.click();setStatus('表情包已下载','success');};
+ctx.fillStyle='#2c3e50';ctx.fillRect(0,0,500,500);
+ctx.fillStyle='#94a3b8';ctx.font='16px sans-serif';ctx.textAlign='center';ctx.fillText('上传图片或选择模板开始',250,250);
+</script>
+</body>
+</html>

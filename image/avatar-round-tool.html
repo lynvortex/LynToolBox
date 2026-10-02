@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>圆角头像 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线圆形/圆角头像裁剪工具，支持圆形、圆角方形、胶囊形，自定义背景色与输出尺寸，导出透明PNG，纯前端本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<style>
+.canvas-wrap canvas{max-width:280px;max-height:280px;}
+.checker{background:repeating-conic-gradient(#e2e8f0 0% 25%, #fff 0% 50%) 50% / 16px 16px;}
+</style>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="圆角头像,圆形头像,头像裁剪,透明PNG,胶囊头像,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/image/avatar-round-tool.html"/>
+<meta property="og:title" content="圆角头像"/>
+<meta property="og:description" content="圆形/圆角/胶囊头像裁剪，导出透明PNG。"/>
+<meta property="og:url" content="https://box.lynvortex.top/image/avatar-round-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="圆角头像"/>
+<meta itemprop="description" content="圆形/圆角/胶囊头像裁剪，导出透明PNG。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"图像工具","item":"https://box.lynvortex.top/image.html"},{"@type":"ListItem","position":3,"name":"圆角头像","item":"https://box.lynvortex.top/image/round-avatar-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"圆角头像","url":"https://box.lynvortex.top/image/avatar-round-tool.html","description":"圆形圆角头像裁剪工具","applicationCategory":"图像工具","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>⭕ 圆角头像</h1>
+        <p>圆形 / 圆角 / 胶囊形裁剪，可导出透明背景 PNG</p>
+    </div>
+    <div class="upload-zone" id="dropZone">
+        <p style="margin:0;color:#64748b;">🖼️ 点击选择或拖入头像图片</p>
+        <input type="file" id="fileInput" accept="image/*" style="display:none;"/>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>形状</label>
+            <select id="shape"><option value="circle">圆形</option><option value="rounded">圆角方形</option><option value="capsule">胶囊形</option><option value="squircle">超椭圆（iOS风）</option></select>
+        </div>
+        <div class="form-item"><label>输出尺寸</label>
+            <select id="size"><option value="200">200 × 200</option><option value="400" selected>400 × 400</option><option value="800">800 × 800</option><option value="1024">1024 × 1024</option></select>
+        </div>
+        <div class="form-item"><label>圆角比例（圆角方形）</label><input type="range" id="rr" min="5" max="50" value="25"/><span class="hint" id="rrv">25%</span></div>
+        <div class="form-item"><label>背景</label>
+            <select id="bgMode"><option value="transparent">透明</option><option value="color">纯色</option></select>
+        </div>
+        <div class="form-item"><label>背景颜色</label><input type="color" id="bg" value="#ffffff" style="height:40px;"/></div>
+        <div class="form-item"><label>输出格式</label>
+            <select id="fmt"><option value="png">PNG（支持透明）</option><option value="jpg">JPG（白色底）</option></select>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-outline" id="dlBtn" disabled>下载图片</button>
+    </div>
+    <div class="status-bar info" id="statusBar">请先选择头像图片</div>
+    <div class="canvas-wrap">
+        <div class="canvas-box"><div class="checker" style="border-radius:8px;display:inline-block;"><canvas id="outCanvas"></canvas></div><div class="cl">裁剪效果（棋盘格=透明）</div></div>
+    </div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 圆角头像</h3>
+        <p>形状蒙版裁剪 + 可选背景，产出适用于 App/网页的规范头像。</p>
+        <div class="feature-chips"><span class="feature-chip">圆形</span><span class="feature-chip">圆角</span><span class="feature-chip">胶囊</span><span class="feature-chip">超椭圆</span><span class="feature-chip">透明PNG</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>需要透明背景时请选择 PNG 格式</li>
+            <li>超椭圆（Squircle）是 iOS 图标的连续圆角风格</li>
+            <li>图片自动居中裁剪为正方形</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+var srcImg = null, outCanvas = document.getElementById('outCanvas');
+var dropZone = document.getElementById('dropZone'), fileInput = document.getElementById('fileInput');
+dropZone.onclick = function(){ fileInput.click(); };
+dropZone.ondragover = function(e){ e.preventDefault(); };
+dropZone.ondrop = function(e){ e.preventDefault(); if (e.dataTransfer.files[0]) loadImg(e.dataTransfer.files[0]); };
+fileInput.onchange = function(){ if (fileInput.files[0]) loadImg(fileInput.files[0]); };
+
+function loadImg(f) {
+    var img = new Image();
+    img.onload = function(){ srcImg = img; render(); setStatus('图片已加载：' + img.width + ' × ' + img.height, 'success'); document.getElementById('dlBtn').disabled = false; };
+    img.src = URL.createObjectURL(f);
+}
+
+function squirclePath(ctx, x, y, w) {
+    var n = 4.5, hw = w / 2, cx = x + hw, cy = y + hw;
+    ctx.beginPath();
+    var steps = 90;
+    for (var i = 0; i <= steps; i++) {
+        var t = i / steps * Math.PI * 2;
+        var c = Math.cos(t), s = Math.sin(t);
+        var px = cx + hw * Math.sign(c) * Math.pow(Math.abs(c), 2 / n);
+        var py = cy + hw * Math.sign(s) * Math.pow(Math.abs(s), 2 / n);
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+}
+
+function render() {
+    if (!srcImg) return;
+    var size = parseInt(document.getElementById('size').value);
+    var shape = document.getElementById('shape').value;
+    document.getElementById('rrv').textContent = document.getElementById('rr').value + '%';
+    outCanvas.width = size; outCanvas.height = size;
+    var ctx = outCanvas.getContext('2d');
+    ctx.clearRect(0, 0, size, size);
+    if (document.getElementById('bgMode').value === 'color') {
+        ctx.fillStyle = document.getElementById('bg').value;
+        ctx.fillRect(0, 0, size, size);
+    }
+    ctx.save();
+    if (shape === 'circle') {
+        ctx.beginPath(); ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2); ctx.clip();
+    } else if (shape === 'rounded') {
+        var r = parseInt(document.getElementById('rr').value) / 100 * size / 2;
+        ctx.beginPath();
+        ctx.moveTo(r, 0);
+        ctx.arcTo(size, 0, size, size, r);
+        ctx.arcTo(size, size, 0, size, r);
+        ctx.arcTo(0, size, 0, 0, r);
+        ctx.arcTo(0, 0, size, 0, r);
+        ctx.closePath(); ctx.clip();
+    } else if (shape === 'capsule') {
+        var rc = size / 2;
+        ctx.beginPath();
+        ctx.moveTo(rc, 0);
+        ctx.arcTo(size, 0, size, size, rc);
+        ctx.arcTo(size, size, 0, size, rc);
+        ctx.arcTo(0, size, 0, 0, rc);
+        ctx.arcTo(0, 0, size, 0, rc);
+        ctx.closePath(); ctx.clip();
+    } else {
+        squirclePath(ctx, 0, 0, size); ctx.clip();
+    }
+    var side = Math.max(srcImg.width, srcImg.height);
+    var sx = (srcImg.width - side) / 2, sy = (srcImg.height - side) / 2;
+    ctx.drawImage(srcImg, sx, sy, side, side, 0, 0, size, size);
+    ctx.restore();
+}
+
+['shape', 'size', 'bgMode', 'bg', 'fmt'].forEach(function(id) {
+    document.getElementById(id).onchange = function(){ if (srcImg) render(); };
+});
+document.getElementById('rr').oninput = function(){ if (srcImg) render(); };
+document.getElementById('dlBtn').onclick = function() {
+    var fmt = document.getElementById('fmt').value;
+    var mime = fmt === 'jpg' ? 'image/jpeg' : 'image/png';
+    if (fmt === 'jpg') {
+        var t = document.createElement('canvas'); t.width = outCanvas.width; t.height = outCanvas.height;
+        var tc = t.getContext('2d');
+        tc.fillStyle = '#fff'; tc.fillRect(0, 0, t.width, t.height);
+        tc.drawImage(outCanvas, 0, 0);
+        t.toBlob(save, mime, 0.92);
+    } else {
+        outCanvas.toBlob(save, mime);
+    }
+};
+function save(b) {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(b);
+    a.download = 'avatar-round.png';
+    a.click();
+}
+initSidebar('image');
+</script>
+</body>
+</html>

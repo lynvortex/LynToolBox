@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>音乐合成器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="网页音乐合成器，纯前端使用Tone.js合成乐器音色，提供键盘弹奏与音色选择，数据本地处理" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <script src="../assets/sidebar.js"></script>
+    <script src="../assets/tone.min.js"></script>
+    <style>
+        .ctrl-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+        @media (max-width: 600px) { .ctrl-grid { grid-template-columns: 1fr; } }
+        .piano-scroll { overflow-x: auto; padding: 12px 4px 18px; -webkit-overflow-scrolling: touch; }
+        .piano { position: relative; width: 336px; height: 172px; margin: 0 auto; }
+        .white-row { display: flex; height: 172px; }
+        .key { user-select: none; -webkit-user-select: none; cursor: pointer; transition: background 0.06s; touch-action: none; }
+        .key.white { width: 42px; height: 172px; background: linear-gradient(#ffffff,#eef2f7); border: 1px solid #cbd5e1; border-radius: 0 0 6px 6px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 10px; box-shadow: inset 0 -3px 0 #e2e8f0; }
+        .key.black { position: absolute; top: 0; width: 28px; height: 104px; background: linear-gradient(#334155,#0f172a); border-radius: 0 0 4px 4px; z-index: 2; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 8px; box-shadow: 0 3px 4px rgba(0,0,0,0.4); }
+        .key .letter { font-size: 0.72em; font-weight: 700; }
+        .key .note { font-size: 0.66em; margin-top: 2px; }
+        .key.white .letter { color: #4a90e2; }
+        .key.white .note { color: #94a3b8; }
+        .key.black .letter { color: #e2e8f0; }
+        .key.black .note { color: #94a3b8; }
+        .key.active.white { background: linear-gradient(#bfdbfe,#7dd3fc); box-shadow: inset 0 -3px 0 #38bdf8; }
+        .key.active.black { background: linear-gradient(#1d4ed8,#1e3a8a); }
+        .kbd-hint { text-align: center; color: #64748b; font-size: 0.82em; margin: 6px 0 4px; }
+        .kbd-hint b { color: #4a90e2; }
+        .now-playing { text-align: center; min-height: 22px; font-size: 0.88em; color: #2c3e50; margin-bottom: 10px; font-family: 'Courier New', monospace; }
+        .vol-row { display: flex; align-items: center; gap: 10px; margin-top: 4px; font-size: 0.85em; color: #475569; }
+        .vol-row input { flex: 1; }
+        .vol-row .val { min-width: 44px; text-align: right; color: #4a90e2; font-weight: 600; }
+    </style>
+    <meta name="keywords" content="音乐合成器,在线音乐合成器,音视频处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/media/synth-tool.html" />
+    <meta property="og:title" content="音乐合成器" />
+    <meta property="og:description" content="网页音乐合成器，纯前端使用Tone.js合成乐器音色，提供键盘弹奏与音色选择，数据本地处理" />
+    <meta property="og:url" content="https://box.lynvortex.top/media/synth-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="音乐合成器" />
+    <meta itemprop="description" content="网页音乐合成器，纯前端使用Tone.js合成乐器音色，提供键盘弹奏与音色选择，数据本地处理" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "音视频处理",
+                "item": "https://box.lynvortex.top/media.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "音乐合成器",
+                "item": "https://box.lynvortex.top/media/synth-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "音乐合成器",
+        "url": "https://box.lynvortex.top/media/synth-tool.html",
+        "description": "基于Tone.js合成多种乐器音色，提供键盘弹奏与音色波形选择",
+        "applicationCategory": "音视频处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🎹 音乐合成器</h1>
+                <p>基于 Tone.js 合成多种乐器音色，支持鼠标与键盘弹奏，纯前端本地发声</p>
+            </div>
+
+            <div class="ctrl-grid">
+                <div class="form-item">
+                    <label>音色</label>
+                    <select id="typeSel">
+                        <option value="Synth" selected>Synth（合成）</option>
+                        <option value="PolySynth">PolySynth（和弦）</option>
+                        <option value="AMSynth">AMSynth（调幅）</option>
+                        <option value="FMSynth">FMSynth（调频）</option>
+                    </select>
+                </div>
+                <div class="form-item">
+                    <label>波形</label>
+                    <select id="waveSel">
+                        <option value="sine">sine（正弦）</option>
+                        <option value="square">square（方波）</option>
+                        <option value="triangle" selected>triangle（三角）</option>
+                        <option value="sawtooth">sawtooth（锯齿）</option>
+                    </select>
+                </div>
+                <div class="form-item">
+                    <label>八度</label>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <button class="btn btn-outline" id="octDown" style="padding:8px 14px;">－</button>
+                        <span id="octVal" style="flex:1;text-align:center;font-weight:600;color:#4a90e2;font-family:'Courier New',monospace;">C4</span>
+                        <button class="btn btn-outline" id="octUp" style="padding:8px 14px;">＋</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="now-playing" id="nowPlaying">点击琴键或按键盘弹奏</div>
+
+            <div class="piano-scroll">
+                <div class="piano" id="piano">
+                    <div class="white-row" id="whiteRow"></div>
+                </div>
+            </div>
+            <div class="kbd-hint">键盘映射：白键 <b>A S D F G H J K</b>（C D E F G A B C）｜黑键 <b>W E T Y U</b>（C# D# F# G# A#）</div>
+
+            <div class="vol-row">
+                <span>🔊 音量</span>
+                <input type="range" id="volSlider" min="0" max="100" value="70" />
+                <span class="val" id="volVal">70%</span>
+            </div>
+
+            <div id="statusBar" class="status-bar info">准备就绪，首次弹奏会激活音频引擎</div>
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 功能说明</h3>
+                <p>使用 Tone.js 合成四种音色，支持鼠标点击与电脑键盘弹奏，可切换波形与八度，PolySynth 支持和弦。</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">钢琴键盘</span>
+                    <span class="feature-chip">多音色</span>
+                    <span class="feature-chip">和弦</span>
+                    <span class="feature-chip">波形切换</span>
+                    <span class="feature-chip">键盘映射</span>
+                    <span class="feature-chip">离线本地</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>首次弹奏需点击页面或按键以激活浏览器音频引擎</li>
+                    <li>键盘映射：A-K 为白键，W/E/T/Y/U 为黑键</li>
+                    <li>PolySynth 可同时按下多个键演奏和弦，其余音色为单声部</li>
+                    <li>所有合成与发声均在浏览器本地完成，无需联网</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const setStatus = (m, t) => { const s = document.getElementById('statusBar'); s.textContent = m; s.className = 'status-bar ' + (t || 'info'); };
+    const typeSel = document.getElementById('typeSel');
+    const waveSel = document.getElementById('waveSel');
+    const octVal = document.getElementById('octVal');
+    const nowPlaying = document.getElementById('nowPlaying');
+
+    if (typeof Tone === 'undefined') {
+        setStatus('Tone.js 加载失败，请检查网络后刷新页面', 'error');
+    }
+
+    let synth = null, started = false, baseOctave = 4;
+    const heldSet = new Set();
+    const heldStack = [];
+    let letterMap = {}; // letter -> entry
+
+    const WHITE = [
+        { name: 'C',  letter: 'A' },
+        { name: 'D',  letter: 'S' },
+        { name: 'E',  letter: 'D' },
+        { name: 'F',  letter: 'F' },
+        { name: 'G',  letter: 'G' },
+        { name: 'A',  letter: 'H' },
+        { name: 'B',  letter: 'J' },
+        { name: 'C2', letter: 'K' }
+    ];
+    const BLACK = [
+        { name: 'C#', afterWhite: 0, letter: 'W' },
+        { name: 'D#', afterWhite: 1, letter: 'E' },
+        { name: 'F#', afterWhite: 3, letter: 'T' },
+        { name: 'G#', afterWhite: 4, letter: 'Y' },
+        { name: 'A#', afterWhite: 5, letter: 'U' }
+    ];
+    const WHITE_W = 42, BLACK_W = 28;
+
+    function resolveNote(name) {
+        if (name === 'C2') return 'C' + (baseOctave + 1);
+        return name + baseOctave;
+    }
+
+    function isPoly() { return typeSel.value === 'PolySynth'; }
+
+    function buildSynth() {
+        releaseAll();
+        if (synth) { try { synth.dispose(); } catch (e) {} synth = null; }
+        const wave = waveSel.value;
+        const opts = {
+            oscillator: { type: wave },
+            envelope: { attack: 0.02, decay: 0.2, sustain: 0.5, release: 0.7 }
+        };
+        try {
+            if (typeSel.value === 'PolySynth') {
+                synth = new Tone.PolySynth(Tone.Synth, opts).toDestination();
+            } else if (typeSel.value === 'AMSynth') {
+                synth = new Tone.AMSynth(opts).toDestination();
+            } else if (typeSel.value === 'FMSynth') {
+                synth = new Tone.FMSynth(opts).toDestination();
+            } else {
+                synth = new Tone.Synth(opts).toDestination();
+            }
+        } catch (e) {
+            setStatus('音色初始化失败：' + (e.message || e), 'error');
+        }
+    }
+
+    function releaseAll() {
+        heldSet.clear();
+        heldStack.length = 0;
+        if (synth) {
+            try {
+                if (typeof synth.releaseAll === 'function') synth.releaseAll();
+                else synth.triggerRelease();
+            } catch (e) {}
+        }
+        document.querySelectorAll('.key.active').forEach(k => k.classList.remove('active'));
+        Object.values(letterMap).forEach(en => { en.held = false; });
+        nowPlaying.textContent = '点击琴键或按键盘弹奏';
+    }
+
+    function pressNote(note) {
+        if (heldSet.has(note)) return;
+        heldSet.add(note);
+        heldStack.push(note);
+        try {
+            if (isPoly()) synth.triggerAttack(note, Tone.now());
+            else synth.triggerAttack(note);
+        } catch (e) {}
+        nowPlaying.textContent = '🎵 正在演奏：' + note;
+    }
+
+    function releaseNote(note) {
+        if (!heldSet.has(note)) return;
+        heldSet.delete(note);
+        const idx = heldStack.lastIndexOf(note);
+        if (idx >= 0) heldStack.splice(idx, 1);
+        try {
+            if (isPoly()) {
+                synth.triggerRelease(note);
+            } else {
+                if (heldStack.length === 0) synth.triggerRelease();
+                else if (typeof synth.setNote === 'function') synth.setNote(heldStack[heldStack.length - 1]);
+            }
+        } catch (e) {}
+        if (heldStack.length === 0) nowPlaying.textContent = '点击琴键或按键盘弹奏';
+        else nowPlaying.textContent = '🎵 正在演奏：' + heldStack[heldStack.length - 1];
+    }
+
+    async function ensureStart() {
+        if (started) return;
+        try { await Tone.start(); started = true; } catch (e) {}
+    }
+
+    function renderPiano() {
+        const whiteRow = document.getElementById('whiteRow');
+        whiteRow.innerHTML = '';
+        // 移除旧黑键
+        document.querySelectorAll('.piano > .key.black').forEach(k => k.remove());
+        letterMap = {};
+
+        WHITE.forEach(w => {
+            const el = document.createElement('div');
+            el.className = 'key white';
+            const note = resolveNote(w.name);
+            el.innerHTML = '<span class="letter">' + w.letter + '</span><span class="note">' + note + '</span>';
+            const entry = { name: w.name, note, letter: w.letter.toLowerCase(), el, held: false };
+            bindKey(el, entry);
+            letterMap[entry.letter] = entry;
+            whiteRow.appendChild(el);
+        });
+        BLACK.forEach(b => {
+            const el = document.createElement('div');
+            el.className = 'key black';
+            const note = resolveNote(b.name);
+            el.style.left = (WHITE_W * (b.afterWhite + 1) - BLACK_W / 2) + 'px';
+            el.innerHTML = '<span class="letter">' + b.letter + '</span><span class="note">' + note + '</span>';
+            const entry = { name: b.name, note, letter: b.letter.toLowerCase(), el, held: false };
+            bindKey(el, entry);
+            letterMap[entry.letter] = entry;
+            document.getElementById('piano').appendChild(el);
+        });
+        octVal.textContent = 'C' + baseOctave;
+    }
+
+    function bindKey(el, entry) {
+        const down = (e) => { e.preventDefault(); handlePress(entry); };
+        const up = () => { handleRelease(entry); };
+        el.addEventListener('mousedown', down);
+        el.addEventListener('touchstart', down, { passive: false });
+        el.addEventListener('mouseup', up);
+        el.addEventListener('mouseleave', up);
+        el.addEventListener('touchend', up);
+        el.addEventListener('touchcancel', up);
+    }
+
+    async function handlePress(entry) {
+        if (entry.held) return;
+        await ensureStart();
+        if (!synth) buildSynth();
+        entry.held = true;
+        entry.el.classList.add('active');
+        pressNote(entry.note);
+    }
+    function handleRelease(entry) {
+        if (!entry.held) return;
+        entry.held = false;
+        entry.el.classList.remove('active');
+        releaseNote(entry.note);
+    }
+
+    // 键盘事件
+    document.addEventListener('keydown', (e) => {
+        if (e.repeat) return;
+        const tag = (e.target && e.target.tagName) || '';
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        const entry = letterMap[(e.key || '').toLowerCase()];
+        if (!entry) return;
+        e.preventDefault();
+        handlePress(entry);
+    });
+    document.addEventListener('keyup', (e) => {
+        const tag = (e.target && e.target.tagName) || '';
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        const entry = letterMap[(e.key || '').toLowerCase()];
+        if (!entry) return;
+        handleRelease(entry);
+    });
+    // 全局鼠标抬起，防止离开琴键时未释放
+    window.addEventListener('mouseup', () => {
+        Object.values(letterMap).forEach(en => { if (en.held) handleRelease(en); });
+    });
+    window.addEventListener('blur', releaseAll);
+
+    typeSel.addEventListener('change', () => { buildSynth(); setStatus('已切换音色：' + typeSel.value, 'info'); });
+    waveSel.addEventListener('change', () => { buildSynth(); setStatus('已切换波形：' + waveSel.value, 'info'); });
+    document.getElementById('octDown').addEventListener('click', () => { if (baseOctave > 1) { baseOctave--; renderPiano(); releaseAll(); } });
+    document.getElementById('octUp').addEventListener('click', () => { if (baseOctave < 7) { baseOctave++; renderPiano(); releaseAll(); } });
+
+    const volSlider = document.getElementById('volSlider');
+    volSlider.addEventListener('input', () => {
+        const v = parseInt(volSlider.value, 10);
+        document.getElementById('volVal').textContent = v + '%';
+        try {
+            const db = v === 0 ? -Infinity : 20 * Math.log10(v / 100);
+            Tone.getDestination().volume.value = db;
+        } catch (e) {}
+    });
+
+    renderPiano();
+    if (typeof Tone !== 'undefined') {
+        try { buildSynth(); } catch (e) {}
+        try { Tone.getDestination().volume.value = 20 * Math.log10(0.7); } catch (e) {}
+    }
+    setStatus('准备就绪，首次弹奏会激活音频引擎', 'info');
+
+    initSidebar('media');
+</script>
+</body>
+</html>

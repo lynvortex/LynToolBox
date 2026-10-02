@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPv6子网计算器 - 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="IPv6子网计算器，CIDR前缀换算，IPv6地址范围计算，压缩与展开格式互转。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+* { box-sizing: border-box; }
+body {
+    font-family: 'PingFang SC', -apple-system, sans-serif;
+    background: #f4f7f9;
+    margin: 0;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    color: #333;
+}
+
+.mobile-header {
+    display: none;
+    position: fixed; top: 0; left: 0; right: 0; height: 60px;
+    background: #fff; padding: 0 20px; align-items: center;
+    justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+}
+.mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+.mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+.menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #4a90e2; }
+
+.sidebar {
+    width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+    display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+    transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+}
+.brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+.brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+.brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+.brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+.close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+.category-list { padding: 16px 0; flex: 1; }
+.category-item {
+    display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+    transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+}
+.category-item:hover, .category-item.active { background: #ebf5ff; color: #4a90e2; border-left-color: #4a90e2; }
+
+.main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+.tool-container {
+    width: 100%;
+    max-width: 960px;
+    background: #fff; border-radius: 12px;
+    padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+}
+.tool-header { text-align: center; margin-bottom: 28px; }
+.tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+.tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+.input-group {
+    display: flex; gap: 10px; margin-bottom: 20px;
+}
+.input-group input {
+    flex: 1; padding: 12px 16px; border: 2px solid #e1e4e8; border-radius: 8px;
+    font-size: 1em; font-family: 'Consolas', monospace; outline: none; transition: border-color 0.2s;
+}
+.input-group input:focus { border-color: #4a90e2; }
+.input-group button {
+    padding: 12px 28px; border: none; border-radius: 8px; font-size: 0.9em;
+    font-family: inherit; cursor: pointer; background: #4a90e2; color: white; font-weight: 500; transition: background 0.2s; white-space: nowrap;
+}
+.input-group button:hover { background: #3a7bd5; }
+
+.res-table { width: 100%; border-collapse: collapse; }
+.res-table tr th { background: #f8fafc; width: 35%; padding: 15px; text-align: left; color: #64748b; font-size: 0.85em; border-bottom: 1px solid #f0f2f5; }
+.res-table tr td { padding: 15px; color: #1e293b; font-size: 0.95em; border-bottom: 1px solid #f0f2f5; font-family: 'Consolas', monospace; word-break: break-all; }
+.res-table tr:last-child th, .res-table tr:last-child td { border-bottom: none; }
+.binary-row td { font-family: 'Consolas', monospace; font-size: 0.82em; letter-spacing: 1px; color: #475569; }
+.binary-label { color: #94a3b8; font-size: 0.8em; }
+
+.error-tip { color: #ef4444; background: #fef2f2; padding: 15px; border-radius: 8px; font-size: 0.85em; margin-top: 20px; display: none; text-align: center; }
+
+.info-cards { width: 100%; max-width: 960px; display: flex; flex-direction: column; gap: 18px; }
+.info-card { background: #fff; border-radius: 12px; padding: 22px 24px; box-shadow: 0 4px 25px rgba(0,0,0,0.06); border: 1px solid #f0f2f5; }
+.info-card h3 { margin: 0 0 10px 0; font-size: 1em; color: #2c3e50; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.info-card p { margin: 0 0 10px 0; font-size: 0.82em; color: #64748b; }
+.tips-list { padding-left: 20px; margin: 0; }
+.tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+.tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.tld-chip { background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 12px; font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace; }
+.tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+.tool-links a { font-size: 0.85em; color: #4a90e2; text-decoration: none; padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s; }
+.tool-links a:hover { background: #e2e8f0; }
+
+.footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+.footer p { margin: 0; }
+.footer a { color: #4a90e2; text-decoration: none; }
+
+.overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+
+@media (max-width: 768px) {
+    body { display: block; height: auto; overflow: auto; }
+    .mobile-header { display: flex; }
+    .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+    .sidebar.active { transform: translateX(0); }
+    .close-sidebar { display: block; }
+    .main-content { display: block; }
+    .main-scroll { padding: 72px 16px 32px; gap: 20px; }
+    .tool-container { padding: 24px 16px; border-radius: 10px; }
+    .tool-header h1 { font-size: 1.3em; }
+    .overlay.active { display: block; }
+    .input-group { flex-direction: column; }
+    .input-group button { padding: 12px; }
+}
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="IPv6子网计算器,在线IPv6子网计算器,网络工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/network/ipv6-subnet-tool.html" />
+    <meta property="og:title" content="IPv6子网计算器" />
+    <meta property="og:description" content="IPv6子网计算器，CIDR前缀换算，IPv6地址范围计算，压缩与展开格式互转。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/network/ipv6-subnet-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="IPv6子网计算器" />
+    <meta itemprop="description" content="IPv6子网计算器，CIDR前缀换算，IPv6地址范围计算，压缩与展开格式互转。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "网络工具",
+                "item": "https://box.lynvortex.top/network.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "IPv6子网计算器",
+                "item": "https://box.lynvortex.top/network/ipv6-subnet-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "IPv6子网计算器",
+        "url": "https://box.lynvortex.top/network/ipv6-subnet-tool.html",
+        "description": "IPv6 CIDR前缀换算，地址范围计算，压缩与展开格式互转",
+        "applicationCategory": "网络工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+    <main class="main-content">
+        <div class="main-scroll">
+
+            <div class="tool-container">
+                <div class="tool-header">
+                    <h1>IPv6 子网计算器</h1>
+                    <p>输入 IPv6 地址和 CIDR 前缀，计算网络前缀、地址范围、可用地址数量等</p>
+                </div>
+
+                <div class="input-group">
+                    <input type="text" id="cidrInput" value="2001:db8::/32" placeholder="例如：2001:db8::/32 或 fe80::1/64" spellcheck="false">
+                    <button onclick="calcSubnet()">计算</button>
+                </div>
+
+                <div id="resultArea" style="display:none;">
+                    <table class="res-table">
+                        <tbody id="resultBody"></tbody>
+                    </table>
+                </div>
+
+                <div id="errorTip" class="error-tip"></div>
+
+                <footer class="footer">
+                    &copy; 2026 绘萤者-Lynvortex &middot; 美梦多彩 理想自由
+            <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+                </footer>
+            </div>
+
+            <div class="info-cards">
+                <div class="info-card">
+                    <h3>IPv6 子网计算说明</h3>
+                    <p>IPv6 地址为 128 位，CIDR 前缀长度范围 0-128。与 IPv4 不同，IPv6 没有广播地址。</p>
+                    <div class="tld-chips">
+                        <span class="tld-chip">CIDR</span>
+                        <span class="tld-chip">网络前缀</span>
+                        <span class="tld-chip">地址范围</span>
+                        <span class="tld-chip">压缩/展开</span>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <h3>使用须知</h3>
+                    <ul class="tips-list">
+                        <li>输入格式为 <code>IPv6地址/前缀长度</code>，例如 <code>2001:db8::/32</code></li>
+                        <li>前缀长度范围 0-128</li>
+                        <li>支持压缩格式（<code>::</code>）和展开格式输入</li>
+                        <li>支持 IPv4 映射地址，如 <code>::ffff:192.0.2.1/128</code></li>
+                        <li>结果同时显示压缩形式和完整展开形式</li>
+                        <li>所有计算在浏览器本地完成，数据不会上传</li>
+                    </ul>
+                </div>
+                <div class="info-card">
+                    <h3>绘萤者</h3>
+                    <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                    <div class="tool-links">
+                        <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                        <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                        <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                        <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                    </div>
+                    <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                        绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // ========== IPv6 地址解析：字符串 → BigInt(128位) ==========
+        function ipv6ToBigInt(str) {
+            str = str.trim().toLowerCase();
+
+            // 处理 IPv4 映射后缀（如 ::ffff:192.0.2.1）
+            var lastColon = str.lastIndexOf(':');
+            var lastPart = str.slice(lastColon + 1);
+            if (lastPart.includes('.')) {
+                var octets = lastPart.split('.').map(Number);
+                if (octets.length !== 4 || octets.some(function(o) { return isNaN(o) || o < 0 || o > 255; })) return null;
+                var hex1 = ((octets[0] << 8) | octets[1]).toString(16);
+                var hex2 = ((octets[2] << 8) | octets[3]).toString(16);
+                str = str.slice(0, lastColon + 1) + hex1 + ':' + hex2;
+            }
+
+            var groups;
+            if (str.includes('::')) {
+                // 只允许出现一次 ::
+                if (str.indexOf('::') !== str.lastIndexOf('::')) return null;
+                var parts = str.split('::');
+                var leftParts = parts[0] ? parts[0].split(':') : [];
+                var rightParts = parts[1] ? parts[1].split(':') : [];
+                var total = leftParts.length + rightParts.length;
+                if (total > 7) return null;
+                var zerosNeeded = 8 - total;
+                var zeros = new Array(zerosNeeded).fill('0');
+                groups = leftParts.concat(zeros).concat(rightParts);
+            } else {
+                groups = str.split(':');
+            }
+
+            if (groups.length !== 8) return null;
+
+            var result = 0n;
+            for (var i = 0; i < 8; i++) {
+                var g = groups[i];
+                if (!/^[0-9a-f]{1,4}$/.test(g)) return null;
+                result = (result << 16n) | BigInt(parseInt(g, 16));
+            }
+            return result;
+        }
+
+        // ========== BigInt → IPv6 压缩字符串 ==========
+        function bigIntToIpv6Compressed(n) {
+            var groups = [];
+            for (var i = 7; i >= 0; i--) {
+                groups.push(Number((n >> BigInt(i * 16)) & 0xFFFFn).toString(16));
+            }
+            // 寻找最长的连续 0 组，用 :: 压缩
+            var bestStart = -1, bestLen = 0;
+            var curStart = -1, curLen = 0;
+            for (var i = 0; i < 8; i++) {
+                if (groups[i] === '0') {
+                    if (curStart === -1) curStart = i;
+                    curLen++;
+                    if (curLen > bestLen) { bestLen = curLen; bestStart = curStart; }
+                } else {
+                    curStart = -1; curLen = 0;
+                }
+            }
+            if (bestLen >= 2) {
+                var before = groups.slice(0, bestStart);
+                var after = groups.slice(bestStart + bestLen);
+                return before.join(':') + '::' + after.join(':');
+            }
+            return groups.join(':');
+        }
+
+        // ========== BigInt → IPv6 完整展开字符串 ==========
+        function bigIntToIpv6Full(n) {
+            var groups = [];
+            for (var i = 7; i >= 0; i--) {
+                var h = Number((n >> BigInt(i * 16)) & 0xFFFFn).toString(16);
+                while (h.length < 4) h = '0' + h;
+                groups.push(h);
+            }
+            return groups.join(':');
+        }
+
+        // ========== BigInt → 128位二进制（8组16位，空格分隔） ==========
+        function bigIntToBinary(n) {
+            var groups = [];
+            for (var i = 7; i >= 0; i--) {
+                var val = Number((n >> BigInt(i * 16)) & 0xFFFFn);
+                var b = val.toString(2);
+                while (b.length < 16) b = '0' + b;
+                groups.push(b);
+            }
+            return groups.join(' ');
+        }
+
+        // ========== 大整数格式化（加千分位） ==========
+        function formatBigInt(n) {
+            return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        // ========== 主计算逻辑 ==========
+        function calcSubnet() {
+            var input = document.getElementById('cidrInput').value.trim();
+            var resultArea = document.getElementById('resultArea');
+            var resBody = document.getElementById('resultBody');
+            var errorTip = document.getElementById('errorTip');
+
+            resultArea.style.display = 'none';
+            errorTip.style.display = 'none';
+
+            var match = input.match(/^(.+)\/(\d{1,3})$/);
+            if (!match) {
+                errorTip.style.display = 'block';
+                errorTip.innerHTML = '&#9888; <strong>格式错误：</strong><br>请输入有效的 CIDR 格式，例如 <code>2001:db8::/32</code>';
+                return;
+            }
+
+            var ipStr = match[1];
+            var prefix = parseInt(match[2], 10);
+
+            if (isNaN(prefix) || prefix < 0 || prefix > 128) {
+                errorTip.style.display = 'block';
+                errorTip.innerHTML = '&#9888; <strong>前缀无效：</strong><br>IPv6 CIDR 前缀长度必须在 0 到 128 之间';
+                return;
+            }
+
+            var ipBigInt = ipv6ToBigInt(ipStr);
+            if (ipBigInt === null) {
+                errorTip.style.display = 'block';
+                errorTip.innerHTML = '&#9888; <strong>IPv6 地址无效：</strong><br>请输入有效的 IPv6 地址，例如 <code>2001:db8::1</code>';
+                return;
+            }
+
+            // 计算掩码：前 prefix 位为 1，其余为 0
+            var mask;
+            if (prefix === 0) {
+                mask = 0n;
+            } else if (prefix === 128) {
+                mask = (1n << 128n) - 1n;
+            } else {
+                mask = ((1n << BigInt(prefix)) - 1n) << BigInt(128 - prefix);
+            }
+
+            var networkInt = ipBigInt & mask;
+            // IPv6 无广播地址，但范围的末尾 = 网络地址 | ~mask
+            var lastAddrInt = networkInt | (~mask & ((1n << 128n) - 1n));
+
+            // 可用地址：IPv6 中除子网路由任播地址（全0接口ID）外的地址均可分配
+            // 对于 prefix >= 127 的特殊场景单独处理
+            var totalAddrs;
+            if (prefix === 128) {
+                totalAddrs = 1n;
+            } else {
+                totalAddrs = 1n << BigInt(128 - prefix);
+            }
+            // 可用数：总数 - 1（子网路由任播），但 /127 和 /128 特殊处理
+            var usableAddrs;
+            if (prefix === 128) {
+                usableAddrs = 1n;
+            } else if (prefix === 127) {
+                usableAddrs = 2n; // /127 用于点对点链路，两个地址都可用
+            } else {
+                usableAddrs = totalAddrs - 1n;
+            }
+
+            // 首个可用地址 = 网络地址 + 1（/127 和 /128 除外）
+            var firstUsable, lastUsable;
+            if (prefix === 128) {
+                firstUsable = networkInt;
+                lastUsable = networkInt;
+            } else if (prefix === 127) {
+                firstUsable = networkInt;
+                lastUsable = lastAddrInt;
+            } else {
+                firstUsable = networkInt + 1n;
+                lastUsable = lastAddrInt;
+            }
+
+            resBody.innerHTML =
+                '<tr><th>输入地址 / CIDR</th><td>' + window.escapeHtml(input) + '</td></tr>' +
+                '<tr><th>地址（压缩形式）</th><td>' + window.escapeHtml(bigIntToIpv6Compressed(ipBigInt)) + '</td></tr>' +
+                '<tr><th>地址（完整展开）</th><td>' + window.escapeHtml(bigIntToIpv6Full(ipBigInt)) + '</td></tr>' +
+                '<tr><th>前缀长度</th><td>/' + prefix + '</td></tr>' +
+                '<tr><th>网络前缀地址</th><td>' + window.escapeHtml(bigIntToIpv6Compressed(networkInt)) + '</td></tr>' +
+                '<tr><th>网络前缀（展开）</th><td>' + window.escapeHtml(bigIntToIpv6Full(networkInt)) + '</td></tr>' +
+                '<tr class="binary-row"><td class="binary-label">网络地址(二进制)</td><td>' + window.escapeHtml(bigIntToBinary(networkInt)) + '</td></tr>' +
+                '<tr><th>地址范围</th><td>' + window.escapeHtml(bigIntToIpv6Compressed(firstUsable)) + '<br>~<br>' + window.escapeHtml(bigIntToIpv6Compressed(lastUsable)) + '</td></tr>' +
+                '<tr><th>可用地址数量</th><td><strong>' + window.escapeHtml(formatBigInt(usableAddrs)) + '</strong> 个</td></tr>' +
+                '<tr><th>地址总数</th><td>' + window.escapeHtml(formatBigInt(totalAddrs)) + ' 个</td></tr>';
+
+            resultArea.style.display = 'block';
+        }
+
+        document.getElementById('cidrInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') calcSubnet();
+        });
+
+        // 页面加载后自动计算
+        window.onload = calcSubnet;
+
+        initSidebar('network');
+    </script>
+</body>
+</html>

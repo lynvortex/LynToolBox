@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>习惯打卡追踪 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线习惯打卡追踪工具，自定义习惯清单，每日一键打卡，月历视图与连续天数统计，数据保存在本地浏览器不上传，自律养成必备，纯前端运行。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="习惯打卡,每日打卡,习惯养成,打卡日历,连续打卡,自律工具,打卡统计,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/daily/checkin-tool.html"/>
+<meta property="og:title" content="习惯打卡追踪"/>
+<meta property="og:description" content="坚持打卡，看见改变。"/>
+<meta property="og:url" content="https://box.lynvortex.top/daily/checkin-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="习惯打卡追踪"/>
+<meta itemprop="description" content="坚持打卡，看见改变。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"日常通用","item":"https://box.lynvortex.top/daily.html"},{"@type":"ListItem","position":3,"name":"习惯打卡追踪","item":"https://box.lynvortex.top/daily/checkin-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"习惯打卡追踪","url":"https://box.lynvortex.top/daily/checkin-tool.html","description":"习惯打卡追踪工具","applicationCategory":"日常通用","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>✅ 习惯打卡追踪</h1>
+        <p>每日一签，月历回看，数据只存本地</p>
+    </div>
+    <div class="form-grid">
+        <div class="form-item" style="grid-column:1/3;"><label>新习惯（如：跑步 30 分钟 / 阅读 / 喝水 8 杯）</label>
+            <input type="text" id="newHabit" placeholder="输入习惯名称，回车添加" maxlength="30"/>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="addBtn">➕ 添加习惯</button>
+        <button class="btn btn-outline" id="todayAllBtn">今日全部打卡</button>
+        <button class="btn btn-ghost" id="exportBtn">导出记录</button>
+        <button class="btn btn-ghost" id="clearBtn">清空数据</button>
+    </div>
+    <div class="status-bar info" id="statusBar">添加习惯后点击卡片即可打卡</div>
+    <div id="habitList" style="margin-bottom:24px;"></div>
+    <p style="font-size:0.8em;color:#94a3b8;margin:0 0 8px;">打卡月历（点击日期可补卡/取消）</p>
+    <div id="calendarWrap" style="overflow-x:auto;"></div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>✅ 轻量追踪</h3>
+        <p>习惯清单、连续天数、月历热力图。</p>
+        <div class="feature-chips"><span class="feature-chip">本地存储</span><span class="feature-chip">连续天数</span><span class="feature-chip">月历补卡</span><span class="feature-chip">导出 JSON</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 坚持技巧</h3>
+        <ul class="tips-list">
+            <li>一次只培养 1-3 个习惯，贪多易弃</li>
+            <li>21 天入门、66 天稳定，前期别断签</li>
+            <li>数据存于本浏览器 localStorage，换设备不同步</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+var KEY = 'huiying-checkin-data';
+var state = { habits: [], records: {} };
+
+function load() {
+    try {
+        var raw = localStorage.getItem(KEY);
+        if (raw) state = JSON.parse(raw);
+        if (!state.habits) state.habits = [];
+        if (!state.records) state.records = {};
+    } catch (e) { state = { habits: [], records: {} }; }
+}
+function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+
+function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function streak(habit) {
+    var count = 0;
+    var d = new Date();
+    for (var i = 0; i < 400; i++) {
+        var key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        var dayRec = state.records[key] || [];
+        if (dayRec.indexOf(habit) !== -1) count++;
+        else if (i > 0) break;
+        else if (dayRec.indexOf(habit) === -1) { d.setDate(d.getDate() - 1); continue; }
+        d.setDate(d.getDate() - 1);
+    }
+    return count;
+}
+function totalDays(habit) {
+    var n = 0;
+    Object.keys(state.records).forEach(function(k) {
+        if ((state.records[k] || []).indexOf(habit) !== -1) n++;
+    });
+    return n;
+}
+
+function toggle(habit, dateKey) {
+    var day = state.records[dateKey] = state.records[dateKey] || [];
+    var idx = day.indexOf(habit);
+    if (idx === -1) day.push(habit); else day.splice(idx, 1);
+    if (!day.length) delete state.records[dateKey];
+    save(); render();
+    var sb = document.getElementById('statusBar');
+    if (idx === -1) { sb.textContent = '✅ ' + habit + ' 打卡成功（' + dateKey + '）'; sb.className = 'status-bar success'; }
+    else { sb.textContent = '已取消 ' + habit + '（' + dateKey + '）'; sb.className = 'status-bar info'; }
+}
+
+function addHabit() {
+    var name = document.getElementById('newHabit').value.trim();
+    if (!name) { setSt('请输入习惯名称', 'error'); return; }
+    if (state.habits.indexOf(name) !== -1) { setSt('该习惯已存在', 'error'); return; }
+    if (state.habits.length >= 12) { setSt('最多 12 个习惯，先专注再扩展', 'error'); return; }
+    state.habits.push(name);
+    save();
+    document.getElementById('newHabit').value = '';
+    render();
+    setSt('已添加习惯「' + name + '」，点击卡片打卡', 'success');
+}
+
+function render() {
+    var list = document.getElementById('habitList');
+    if (!state.habits.length) {
+        list.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;border:1px dashed #cbd5e1;border-radius:10px;">还没有习惯，添加第一个开始改变 💪</div>';
+    } else {
+        var today = todayStr();
+        var todayDone = state.records[today] || [];
+        var html = '';
+        state.habits.forEach(function(h, i) {
+            var done = todayDone.indexOf(h) !== -1;
+            var s = streak(h), t = totalDays(h);
+            html += '<div style="display:flex;align-items:center;gap:14px;padding:14px 18px;border:1px solid ' + (done ? '#a9dfbf' : '#e2e8f0') + ';border-radius:10px;margin-bottom:10px;background:' + (done ? '#f0faf3' : '#fff') + ';cursor:pointer;" onclick="toggleHabit(\'' + h.replace(/'/g, "\\'") + '\')">' +
+                '<div style="width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;background:' + (done ? '#27ae60' : '#cbd5e1') + '">' + (done ? '✓' : i + 1) + '</div>' +
+                '<div style="flex:1;min-width:0;"><div style="font-weight:600;color:#2c3e50;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(h) + '</div>' +
+                '<div style="font-size:0.78em;color:#94a3b8;margin-top:2px;">累计 ' + t + ' 天</div></div>' +
+                '<div style="text-align:right;"><div style="font-size:1.3em;font-weight:700;color:' + (s >= 7 ? '#e67e22' : '#4a90e2') + ';">🔥 ' + s + '</div><div style="font-size:0.72em;color:#94a3b8;">连续天数</div></div>' +
+                '<button class="btn btn-ghost" style="padding:4px 8px;font-size:0.85em;" onclick="event.stopPropagation();delHabit(\'' + h.replace(/'/g, "\\'") + '\')">✕</button></div>';
+        });
+        list.innerHTML = html;
+    }
+    renderCalendar();
+}
+
+function renderCalendar() {
+    var now = new Date();
+    var y = now.getFullYear(), m = now.getMonth();
+    var first = new Date(y, m, 1);
+    var days = new Date(y, m + 1, 0).getDate();
+    var startWeek = first.getDay();
+    var html = '<div style="min-width:560px;">';
+    html += '<div style="font-weight:700;color:#2c3e50;margin-bottom:8px;">' + y + ' 年 ' + (m + 1) + ' 月 · 当月打卡 <b style="color:#4a90e2;">' + Object.keys(state.records).filter(function(k) { return k.indexOf(y + '-' + String(m + 1).padStart(2, '0')) === 0; }).length + '</b> 天</div>';
+    html += '<table style="border-collapse:collapse;width:100%;"><tr>' + ['日', '一', '二', '三', '四', '五', '六'].map(function(w) {
+        return '<th style="padding:6px;border:1px solid #eef2f7;color:#94a3b8;font-weight:500;font-size:0.82em;">' + w + '</th>';
+    }).join('') + '</tr><tr>';
+    for (var i = 0; i < startWeek; i++) html += '<td style="border:1px solid #f5f7fa;padding:0;"></td>';
+    for (var d = 1; d <= days; d++) {
+        var key = y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+        var rec = state.records[key] || [];
+        var ratio = state.habits.length ? rec.length / state.habits.length : 0;
+        var isToday = key === todayStr();
+        var isFuture = new Date(key) > new Date(todayStr());
+        var bg = ratio === 0 ? '#f5f7fa' : ratio < 0.5 ? '#aed6f1' : ratio < 1 ? '#5dade2' : '#27ae60';
+        html += '<td style="border:1px solid #f0f2f5;padding:2px;"><div onclick="toggleDay(\'' + key + '\')" title="' + key + ' · ' + rec.length + '/' + state.habits.length + '" style="height:34px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:' + (isFuture ? '#fbfcfd' : bg) + ';color:' + (ratio > 0.49 && !isFuture ? '#fff' : '#64748b') + ';font-size:0.82em;cursor:' + (isFuture ? 'not-allowed' : 'pointer') + ';' + (isToday ? 'outline:2px solid #4a90e2;' : '') + '">' + d + '</div></td>';
+        if ((startWeek + d) % 7 === 0) html += '</tr><tr>';
+    }
+    html += '</tr></table></div>';
+    document.getElementById('calendarWrap').innerHTML = html;
+}
+
+window.toggleHabit = function(h) { toggle(h, todayStr()); };
+window.delHabit = function(h) {
+    if (!confirm('删除习惯「' + h + '」及其全部打卡记录？')) return;
+    state.habits = state.habits.filter(function(x) { return x !== h; });
+    Object.keys(state.records).forEach(function(k) {
+        state.records[k] = state.records[k].filter(function(x) { return x !== h; });
+        if (!state.records[k].length) delete state.records[k];
+    });
+    save(); render(); setSt('已删除「' + h + '」', 'info');
+};
+window.toggleDay = function(key) {
+    if (new Date(key) > new Date(todayStr())) { setSt('未来日期不能打卡', 'error'); return; }
+    if (!state.habits.length) { setSt('请先添加习惯', 'error'); return; }
+    var undone = state.habits.filter(function(h) { return (state.records[key] || []).indexOf(h) === -1; });
+    if (undone.length) toggle(undone[0], key);
+    else toggle(state.habits[state.habits.length - 1], key);
+};
+
+function setSt(msg, cls) {
+    var sb = document.getElementById('statusBar');
+    sb.textContent = msg; sb.className = 'status-bar ' + cls;
+}
+
+document.getElementById('addBtn').onclick = addHabit;
+document.getElementById('newHabit').addEventListener('keydown', function(e) { if (e.key === 'Enter') addHabit(); });
+document.getElementById('todayAllBtn').onclick = function() {
+    if (!state.habits.length) { setSt('请先添加习惯', 'error'); return; }
+    var today = todayStr();
+    state.records[today] = state.habits.slice();
+    save(); render();
+    setSt('今日 ' + state.habits.length + ' 个习惯全部打卡完成 🎉', 'success');
+};
+document.getElementById('exportBtn').onclick = function() {
+    var blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'checkin-' + todayStr() + '.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    setSt('已导出打卡记录', 'success');
+};
+document.getElementById('clearBtn').onclick = function() {
+    if (!confirm('确定清空全部习惯与打卡记录？此操作不可恢复。')) return;
+    state = { habits: [], records: {} };
+    save(); render(); setSt('已清空全部数据', 'info');
+};
+
+load(); render();
+initSidebar('daily');
+</script>
+</body>
+</html>

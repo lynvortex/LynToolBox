@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SVG压缩优化 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线 SVG 压缩优化工具，移除注释、元数据与冗余属性，合并空白，精简小数精度，实时显示压缩率与预览，纯前端处理不上传。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="SVG压缩,SVG优化,SVG minify,矢量图压缩,SVG清理,前端优化,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/work/svg-minify-tool.html"/>
+<meta property="og:title" content="SVG压缩优化"/>
+<meta property="og:description" content="矢量瘦身，体积立减。"/>
+<meta property="og:url" content="https://box.lynvortex.top/work/svg-minify-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="SVG压缩优化"/>
+<meta itemprop="description" content="矢量瘦身，体积立减。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"编程开发","item":"https://box.lynvortex.top/work.html"},{"@type":"ListItem","position":3,"name":"SVG压缩优化","item":"https://box.lynvortex.top/work/svg-minify-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"SVG压缩优化","url":"https://box.lynvortex.top/work/svg-minify-tool.html","description":"SVG压缩优化工具","applicationCategory":"编程开发","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>🧹 SVG 压缩优化</h1>
+        <p>去注释、清元数据、缩精度，体积立减</p>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>数字精度（小数位）</label>
+            <select id="precision"><option value="-1">不处理</option><option>4</option><option selected>3</option><option>2</option><option>1</option><option value="0">0（整数）</option></select>
+        </div>
+        <div class="form-item"><label>可移除属性</label>
+            <select id="stripId"><option value="yes">移除 id/aria-*</option><option value="no">保留</option></select>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="runBtn">⚙️ 压缩</button>
+        <button class="btn btn-outline" id="copyBtn">复制结果</button>
+        <button class="btn btn-outline" id="downloadBtn">下载 .svg</button>
+        <button class="btn btn-ghost" id="sampleBtn">载入示例</button>
+    </div>
+    <div class="status-bar info" id="statusBar">粘贴 SVG 代码后压缩</div>
+    <textarea class="code" id="input" style="min-height:180px;" placeholder="粘贴 SVG 源码…"></textarea>
+    <p style="font-size:0.8em;color:#94a3b8;margin:8px 0;">↓ 压缩结果 <span id="stats" style="color:#4a90e2;font-weight:700;"></span></p>
+    <pre class="output" id="output" style="white-space:pre-wrap;max-height:260px;overflow:auto;"></pre>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:12px;">
+        <div id="previewA" style="border:1px solid #e2e8f0;border-radius:8px;padding:8px;background:#fff;"></div>
+        <div style="color:#94a3b8;">→</div>
+        <div id="previewB" style="border:1px solid #4a90e2;border-radius:8px;padding:8px;background:#fff;"></div>
+    </div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>🧹 五重清理</h3>
+        <p>注释、元数据、空白、精度、冗余属性。</p>
+        <div class="feature-chips"><span class="feature-chip">压缩率统计</span><span class="feature-chip">前后预览</span><span class="feature-chip">一键下载</span><span class="feature-chip">安全无损</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>设计软件导出的 SVG 常含编辑器元信息，可安全移除</li>
+            <li>精度处理只影响数值小数位，不改变路径结构</li>
+            <li>含脚本或外部引用的 SVG 建议先人工确认再压缩</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+var SAMPLE = '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">\n  <!-- Generated by Design Tool -->\n  <metadata>creator: test</metadata>\n  <title>demo</title>\n  <g id="layer1">\n    <circle cx="60.0000" cy="60.0000" r="44.1234" fill="#4a90e2" />\n    <circle cx="60.0000" cy="60.0000" r="28.5678" fill="#ffffff" />\n    <path d="M 30.5000 60.0000 L 60.0000 30.5000 L 89.5000 60.0000 L 60.0000 89.5000 Z" fill="#f5a623" />\n  </g>\n</svg>';
+
+function bytesOf(s) { return new Blob([s]).size; }
+
+function minifySvg(src, prec, stripId) {
+    var s = src;
+    s = s.replace(/<!--[\s\S]*?-->/g, '');
+    s = s.replace(/<metadata[\s\S]*?<\/metadata>/gi, '');
+    s = s.replace(/<!--[\s\S]*?-->/g, '');
+    s = s.replace(/<script[\s\S]*?<\/script>/gi, '');
+    s = s.replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, '');
+    s = s.replace(/\son[a-z]+\s*=\s*'[^']*'/gi, '');
+    if (stripId === 'yes') {
+        s = s.replace(/\s(id|aria-[a-z]+|role|class|data-name)="[^"]*"/gi, '');
+    }
+    s = s.replace(/\s(xmlns:(xlink|svg|sodipodi|inkscape|serif)="[^"]*")/gi, '');
+    s = s.replace(/>\s+</g, '><').trim();
+    s = s.replace(/\s{2,}/g, ' ');
+    s = s.replace(/\s+\/>/g, '/>');
+    if (prec >= 0) {
+        s = s.replace(/-?\d+\.\d+/g, function(m) {
+            return parseFloat(parseFloat(m).toFixed(parseInt(prec))).toString();
+        });
+    }
+    return s;
+}
+
+function sanitizeForPreview(svg) {
+    return svg
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, '')
+        .replace(/\son[a-z]+\s*=\s*'[^']*'/gi, '')
+        .replace(/javascript:/gi, '');
+}
+
+function run() {
+    var input = document.getElementById('input').value;
+    if (!input.trim()) { setStatus('请粘贴 SVG 代码', 'error'); return; }
+    if (!/<svg[\s>]/i.test(input)) { setStatus('未检测到 <svg> 标签', 'error'); return; }
+    var prec = parseInt(document.getElementById('precision').value);
+    var out = minifySvg(input, prec, document.getElementById('stripId').value);
+    var a = bytesOf(input), b = bytesOf(out);
+    var pct = a > 0 ? Math.round((1 - b / a) * 100) : 0;
+
+    document.getElementById('output').textContent = out;
+    document.getElementById('stats').textContent = a + ' B → ' + b + ' B（省 ' + pct + '%）';
+    document.getElementById('previewA').innerHTML = '<div style="width:80px;height:80px;display:flex;align-items:center;justify-content:center;">' + input.replace(/width="\d+"/, 'width="64"').replace(/height="\d+"/', 'height="64"') + '</div>';
+    document.getElementById('previewB').innerHTML = '<div style="width:80px;height:80px;display:flex;align-items:center;justify-content:center;">' + out.replace(/width="\d+"/, 'width="64"').replace(/height="\d+"/', 'height="64"') + '</div>';
+    setStatus('压缩完成，体积 ' + a + 'B → ' + b + 'B', pct > 0 ? 'success' : 'info');
+}
+
+function setStatus(msg, cls) {
+    var sb = document.getElementById('statusBar');
+    sb.textContent = msg; sb.className = 'status-bar ' + cls;
+}
+
+document.getElementById('runBtn').onclick = run;
+document.getElementById('sampleBtn').onclick = function() {
+    document.getElementById('input').value = SAMPLE;
+    setStatus('已载入示例，点击压缩', 'info');
+};
+document.getElementById('copyBtn').onclick = function() {
+    var t = document.getElementById('output').textContent;
+    if (t) navigator.clipboard.writeText(t).then(function() { setStatus('已复制压缩结果', 'success'); });
+};
+document.getElementById('downloadBtn').onclick = function() {
+    var t = document.getElementById('output').textContent;
+    if (!t) { setStatus('请先压缩', 'error'); return; }
+    var blob = new Blob([t], { type: 'image/svg+xml' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'minified.svg';
+    a.click();
+    URL.revokeObjectURL(a.href);
+};
+initSidebar('work');
+</script>
+</body>
+</html>

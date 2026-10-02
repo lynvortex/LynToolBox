@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>卡路里TDEE计算器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线卡路里 TDEE 计算器，Mifflin-St Jeor 公式计算基础代谢与每日总消耗，附减脂/增肌热量目标与三大营养素分配方案，健身饮食必备，纯前端计算。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="卡路里计算,TDEE,BMR,基础代谢,每日消耗,减脂热量,增肌热量,营养素分配,健身饮食,免费工具,在线工具,纯前端处理,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/daily/calorie-tool.html"/>
+<meta property="og:title" content="卡路里TDEE计算器"/>
+<meta property="og:description" content="算清代谢，吃对热量。"/>
+<meta property="og:url" content="https://box.lynvortex.top/daily/calorie-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="卡路里TDEE计算器"/>
+<meta itemprop="description" content="算清代谢，吃对热量。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"日常通用","item":"https://box.lynvortex.top/daily.html"},{"@type":"ListItem","position":3,"name":"卡路里TDEE计算器","item":"https://box.lynvortex.top/daily/calorie-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"卡路里TDEE计算器","url":"https://box.lynvortex.top/daily/calorie-tool.html","description":"卡路里TDEE计算器","applicationCategory":"日常通用","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>🔥 卡路里 / TDEE 计算器</h1>
+        <p>基础代谢 + 每日总消耗 + 营养素分配</p>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>性别</label>
+            <select id="gender"><option value="male">男</option><option value="female">女</option></select>
+        </div>
+        <div class="form-item"><label>年龄</label>
+            <input type="number" id="age" value="28" min="12" max="90"/>
+        </div>
+        <div class="form-item"><label>身高 (cm)</label>
+            <input type="number" id="height" value="172" min="130" max="220"/>
+        </div>
+        <div class="form-item"><label>体重 (kg)</label>
+            <input type="number" id="weight" value="65" min="30" max="200" step="0.1"/>
+        </div>
+        <div class="form-item"><label>活动水平</label>
+            <select id="activity">
+                <option value="1.2">久坐（几乎不运动）</option>
+                <option value="1.375">轻度（每周 1-3 次运动）</option>
+                <option value="1.55" selected>中度（每周 3-5 次运动）</option>
+                <option value="1.725">高度（每周 6-7 次运动）</option>
+                <option value="1.9">极高（体力劳动/一天两练）</option>
+            </select>
+        </div>
+        <div class="form-item"><label>目标</label>
+            <select id="goal">
+                <option value="cut">减脂（-400 kcal）</option>
+                <option value="keep" selected>维持体重</option>
+                <option value="bulk">增肌（+300 kcal）</option>
+            </select>
+        </div>
+        <div class="form-item"><label>蛋白比例 %</label>
+            <input type="number" id="pRatio" value="30" min="10" max="50"/>
+            <span class="hint">蛋白 4 kcal/g · 碳水 4 · 脂肪 9</span>
+        </div>
+        <div class="form-item"><label>脂肪比例 %</label>
+            <input type="number" id="fRatio" value="25" min="15" max="45"/>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="calcBtn">⚙️ 计算</button>
+    </div>
+    <div class="status-bar info" id="statusBar">填写身体数据后即时计算</div>
+    <div id="resultWrap"></div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>🔥 三步定位</h3>
+        <p>BMR → TDEE → 目标热量与宏量分配。</p>
+        <div class="feature-chips"><span class="feature-chip">Mifflin-St Jeor</span><span class="feature-chip">五档活动</span><span class="feature-chip">三大营养素</span><span class="feature-chip">克数换算</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用建议</h3>
+        <ul class="tips-list">
+            <li>减脂缺口建议 300-500 kcal，过猛易掉肌肉</li>
+            <li>蛋白质建议 1.6-2.2 g/kg 体重（训练人群）</li>
+            <li>公式为估算值，实际以每两周体重变化为准调整</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+function calc() {
+    var g = document.getElementById('gender').value;
+    var age = parseFloat(document.getElementById('age').value);
+    var h = parseFloat(document.getElementById('height').value);
+    var w = parseFloat(document.getElementById('weight').value);
+    var act = parseFloat(document.getElementById('activity').value);
+    var goal = document.getElementById('goal').value;
+    var pR = parseFloat(document.getElementById('pRatio').value);
+    var fR = parseFloat(document.getElementById('fRatio').value);
+    var sb = document.getElementById('statusBar');
+
+    if (!(age > 10 && h > 120 && w > 25)) { sb.textContent = '请填写完整的身体数据'; sb.className = 'status-bar error'; return; }
+    var cR = 100 - pR - fR;
+    if (cR < 10) { sb.textContent = '蛋白+脂肪比例过高，碳水不足 10%'; sb.className = 'status-bar error'; return; }
+
+    var bmr = 10 * w + 6.25 * h - 5 * age + (g === 'male' ? 5 : -161);
+    var tdee = bmr * act;
+    var target = goal === 'cut' ? tdee - 400 : goal === 'bulk' ? tdee + 300 : tdee;
+    var goalName = goal === 'cut' ? '减脂' : goal === 'bulk' ? '增肌' : '维持';
+
+    var pG = target * pR / 100 / 4;
+    var cG = target * cR / 100 / 4;
+    var fG = target * fR / 100 / 9;
+    var wLoss = goal === 'cut' ? (400 * 7 / 7700).toFixed(2) + ' kg/周' : goal === 'bulk' ? '+' + (300 * 7 / 7700).toFixed(2) + ' kg/周' : '体重保持';
+
+    function bar(label, val, max, color, unit) {
+        var pct = Math.min(100, val / max * 100);
+        return '<div style="margin:10px 0;"><div style="display:flex;justify-content:space-between;font-size:0.85em;color:#475569;"><span>' + label + '</span><b>' + Math.round(val) + ' ' + unit + '</b></div>' +
+            '<div style="background:#eef2f7;border-radius:6px;height:10px;margin-top:4px;"><div style="width:' + pct + '%;height:10px;border-radius:6px;background:' + color + ';"></div></div></div>';
+    }
+
+    document.getElementById('resultWrap').innerHTML =
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:18px;">' +
+        '<div style="border:1px solid #e2e8f0;border-radius:12px;padding:16px;text-align:center;"><div style="font-size:1.5em;font-weight:700;color:#4a90e2;">' + Math.round(bmr) + '</div><div style="color:#94a3b8;font-size:0.8em;">基础代谢 BMR (kcal)</div></div>' +
+        '<div style="border:1px solid #e2e8f0;border-radius:12px;padding:16px;text-align:center;"><div style="font-size:1.5em;font-weight:700;color:#27ae60;">' + Math.round(tdee) + '</div><div style="color:#94a3b8;font-size:0.8em;">每日总消耗 TDEE</div></div>' +
+        '<div style="border:1px solid #d6e6f7;border-radius:12px;padding:16px;text-align:center;background:#f0f7ff;"><div style="font-size:1.5em;font-weight:700;color:#2c3e50;">' + Math.round(target) + '</div><div style="color:#94a3b8;font-size:0.8em;">' + goalName + '目标摄入 (kcal)</div></div>' +
+        '<div style="border:1px solid #e2e8f0;border-radius:12px;padding:16px;text-align:center;"><div style="font-size:1.5em;font-weight:700;color:#e67e22;">' + wLoss + '</div><div style="color:#94a3b8;font-size:0.8em;">预期体重变化</div></div></div>' +
+        '<div style="border:1px solid #e2e8f0;border-radius:12px;padding:16px 20px;">' +
+        '<b style="color:#2c3e50;">每日营养素分配（共 ' + Math.round(target) + ' kcal）</b>' +
+        bar('蛋白质 ' + pR + '%', pG, w * 2.2, '#e74c3c', 'g（约 ' + (pG / w).toFixed(1) + ' g/kg 体重）') +
+        bar('碳水 ' + cR + '%', cG, target / 4, '#f39c12', 'g') +
+        bar('脂肪 ' + fR + '%', fG, target / 9, '#8e44ad', 'g') +
+        '</div>';
+
+    sb.textContent = '计算完成：BMR ' + Math.round(bmr) + ' / TDEE ' + Math.round(tdee) + ' / 目标 ' + Math.round(target) + ' kcal';
+    sb.className = 'status-bar success';
+}
+
+['gender','activity','goal'].forEach(function(id) { document.getElementById(id).addEventListener('change', calc); });
+['age','height','weight','pRatio','fRatio'].forEach(function(id) { document.getElementById(id).addEventListener('input', calc); });
+document.getElementById('calcBtn').onclick = calc;
+calc();
+initSidebar('daily');
+</script>
+</body>
+</html>

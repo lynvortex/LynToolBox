@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>XML 格式化 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="XML格式化、压缩、校验与XML转JSON，使用浏览器原生DOMParser解析。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', -apple-system, sans-serif;
+            background: #f4f7f9;
+            margin: 0;
+            display: flex;
+            height: 100vh; overflow: hidden;
+            color: #333;
+        }
+
+        .mobile-header {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: #fff; padding: 0 16px; align-items: center;
+            justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+        }
+        .mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+        .mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+        .menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #e8845a; }
+
+        .sidebar {
+            width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+            display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+            transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+            position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item {
+            display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+            transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+        }
+        .category-item:hover, .category-item.active { background: #fdf0eb; color: #e8845a; border-left-color: #e8845a; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+        .tool-container {
+            width: 100%;
+            max-width: 960px;
+            background: #fff; border-radius: 12px;
+            padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+        }
+        .tool-header { text-align: center; margin-bottom: 28px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+        .io-wrap {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        @media (max-width: 600px) { .io-wrap { grid-template-columns: 1fr; } }
+
+        .io-block label {
+            display: block; font-size: 0.85em; color: #64748b; margin-bottom: 8px; font-weight: 500;
+        }
+        textarea {
+            width: 100%;
+            height: 280px;
+            padding: 14px;
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            font-size: 0.92em;
+            font-family: 'Consolas', 'Courier New', monospace;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+        textarea:focus { border-color: #4a90e2; }
+        textarea[readonly] { background: #f8fafc; cursor: default; }
+
+        .action-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em;
+            font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap;
+        }
+        .btn-primary { background: #e8845a; color: white; }
+        .btn-primary:hover { background: #d4734a; }
+        .btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .btn-success { background: #34d399; color: white; }
+        .btn-success:hover { background: #2bb981; }
+        .btn-warning { background: #f59e0b; color: white; }
+        .btn-warning:hover { background: #d97706; }
+        .btn-outline { background: transparent; color: #e8845a; border: 1px solid #e8845a; }
+        .btn-outline:hover { background: #e8845a; color: white; }
+        .btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+        .btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+
+        .status-bar {
+            min-height: 20px; font-size: 0.85em;
+            padding: 8px 12px; border-radius: 6px; margin-bottom: 16px;
+        }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+
+        .result-area { display: none; }
+
+        .json-output {
+            background: #1e293b; color: #e2e8f0; border-radius: 8px;
+            padding: 16px; font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.85em; line-height: 1.7; overflow-x: auto; white-space: pre-wrap;
+            max-height: 400px; overflow-y: auto; margin-bottom: 12px;
+        }
+        .json-output .key { color: #67e8f9; }
+        .json-output .str { color: #a7f3d0; }
+        .json-output .num { color: #fde68a; }
+        .json-output .bool { color: #c4b5fd; }
+        .json-output .null { color: #fca5a5; }
+        .json-output .bracket { color: #e2e8f0; }
+
+        .error-detail {
+            background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px;
+            padding: 12px 16px; margin-bottom: 12px; font-size: 0.85em;
+        }
+        .error-detail .err-title { color: #ef4444; font-weight: 600; margin-bottom: 4px; }
+        .error-detail .err-msg { color: #b91c1c; font-family: 'Consolas', monospace; }
+
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+        .footer p { margin: 0; }
+        .footer a { color: #e8845a; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+
+        .info-cards {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-top: 4px;
+        }
+
+        .info-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 22px 24px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+            border: 1px solid #f0f2f5;
+        }
+
+        .info-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1em;
+            color: #2c3e50;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .info-card p {
+            margin: 0 0 10px 0;
+            font-size: 0.82em;
+            color: #64748b;
+        }
+
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip {
+            background: #e0f2fe; color: #0369a1;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace;
+        }
+
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a {
+            font-size: 0.85em; color: #4a90e2; text-decoration: none;
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s;
+        }
+        .tool-links a:hover { background: #e2e8f0; }
+
+        .options-row {
+            display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
+            margin-bottom: 18px; padding: 14px 16px;
+            background: #f8fafc; border-radius: 8px; border: 1px solid #f0f2f5;
+            font-size: 0.85em; color: #475569;
+        }
+        .options-row label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+        .options-row select {
+            padding: 5px 8px; border: 1px solid #e0e6ed; border-radius: 6px;
+            font-size: 0.92em; font-family: inherit; color: #1e293b; outline: none; background: #fff;
+        }
+        .options-row select:focus { border-color: #4a90e2; }
+
+        @media (max-width: 768px) {
+            body { display: block; height: auto; overflow: auto; }
+            .mobile-header { display: flex; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .close-sidebar { display: block; }
+            .main-content { display: block; }
+            .main-scroll { padding: 72px 16px 32px; gap: 20px;  }
+            .tool-container { padding: 24px 16px; border-radius: 10px; }
+            .tool-header h1 { font-size: 1.3em; }
+            .action-row { gap: 8px; }
+            .btn { padding: 8px 14px; font-size: 0.85em; }
+            .info-card { padding: 18px 16px; }
+            .overlay.active { display: block; }
+            .options-row { gap: 10px; }
+        }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="XML格式化,在线XML格式化,文本处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/text/xml-format-tool.html" />
+    <meta property="og:title" content="XML 格式化" />
+    <meta property="og:description" content="XML格式化、压缩、校验与XML转JSON，使用浏览器原生DOMParser解析。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/text/xml-format-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="XML 格式化" />
+    <meta itemprop="description" content="XML格式化、压缩、校验与XML转JSON，使用浏览器原生DOMParser解析。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文本处理",
+                "item": "https://box.lynvortex.top/text.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "XML格式化",
+                "item": "https://box.lynvortex.top/text/xml-format-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "XML格式化",
+        "url": "https://box.lynvortex.top/text/xml-format-tool.html",
+        "description": "XML美化、压缩、校验与XML转JSON",
+        "applicationCategory": "文本处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>XML 格式化</h1>
+                <p>纯前端 XML 美化、压缩、校验与转 JSON，浏览器原生解析</p>
+            </div>
+
+            <div class="options-row">
+                <label>缩进：
+                    <select id="indentSel">
+                        <option value="2">2 空格</option>
+                        <option value="4" selected>4 空格</option>
+                    </select>
+                </label>
+                <label><input type="checkbox" id="declBox" checked /> 保留 XML 声明</label>
+            </div>
+
+            <div class="io-wrap">
+                <div class="io-block">
+                    <label>输入 XML</label>
+                    <textarea id="inputText" placeholder="在此粘贴 XML 字符串..."></textarea>
+                </div>
+                <div class="io-block">
+                    <label>输出结果</label>
+                    <textarea id="outputText" readonly placeholder="结果将显示在这里..."></textarea>
+                </div>
+            </div>
+
+            <div class="action-row">
+                <button class="btn btn-primary" id="formatBtn">&#x1F4CB; 美化</button>
+                <button class="btn btn-warning" id="compressBtn">&#x1F4E6; 压缩</button>
+                <button class="btn btn-success" id="validateBtn">&#x2705; 校验</button>
+                <button class="btn btn-outline" id="xml2jsonBtn">&#x1F501; XML 转 JSON</button>
+                <button class="btn btn-outline" id="copyBtn">&#x1F4CB; 复制结果</button>
+                <button class="btn btn-ghost" id="clearBtn">&#x1F5D1; 清空</button>
+            </div>
+
+            <div class="status-bar info" id="statusBar">输入 XML 字符串，点击美化、压缩、校验或转 JSON</div>
+
+            <div id="resultArea" class="result-area">
+                <div class="json-output" id="jsonOutput"></div>
+                <div class="error-detail" id="errorDetail" style="display:none;">
+                    <div class="err-title">XML 解析错误</div>
+                    <div class="err-msg" id="errorMsg"></div>
+                </div>
+            </div>
+
+            <footer class="footer">
+                &copy; 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+            <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#e8845a;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#e8845a;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>&#x1F4E6; 功能说明</h3>
+                <p>四种操作模式，覆盖 XML 常见处理场景</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">美化</span>
+                    <span class="tld-chip">压缩</span>
+                    <span class="tld-chip">校验</span>
+                    <span class="tld-chip">XML转JSON</span>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h3>&#x1F4A1; 使用须知</h3>
+                <ul class="tips-list">
+                    <li>所有处理在浏览器本地执行，数据不会上传</li>
+                    <li>使用浏览器原生 DOMParser 解析，准确识别标签嵌套与属性</li>
+                    <li>支持 2 / 4 空格缩进，可自定义是否保留 XML 声明</li>
+                    <li>XML 转 JSON 时，属性以 @ 前缀表示，文本内容存于 #text 字段</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h3>&#x2728; 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    // 侧边栏由 sidebar.js 统一管理
+    initSidebar('text');
+
+    var setStatus = function (msg, type) {
+        var sb = document.getElementById('statusBar');
+        sb.textContent = msg;
+        sb.className = 'status-bar ' + type;
+    };
+
+    var getIndent = function () {
+        return parseInt(document.getElementById('indentSel').value, 10);
+    };
+
+    // 解析 XML，返回 document 或抛出错误
+    var parseXML = function (text) {
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(text, 'application/xml');
+        var errNode = doc.querySelector('parsererror');
+        if (errNode) {
+            throw new Error(errNode.textContent.replace(/\s+/g, ' ').trim());
+        }
+        if (!doc.documentElement) {
+            throw new Error('无法解析 XML，文档为空');
+        }
+        return doc;
+    };
+
+    // 转义属性值/文本中的特殊字符
+    var escapeAttr = function (s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    };
+    var escapeText = function (s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    };
+
+    // 递归序列化节点为格式化字符串
+    var serializeNode = function (node, indentStr, level, keepDecl) {
+        var pad = '';
+        for (var i = 0; i < level; i++) pad += indentStr;
+        var out = '';
+
+        if (node.nodeType === 1) { // Element
+            out += pad + '<' + node.nodeName;
+            // 属性
+            var attrs = node.attributes;
+            for (var a = 0; a < attrs.length; a++) {
+                out += ' ' + attrs[a].name + '="' + escapeAttr(attrs[a].value) + '"';
+            }
+            // 子节点
+            var children = node.childNodes;
+            var hasElementChild = false;
+            var textContent = '';
+            for (var c = 0; c < children.length; c++) {
+                if (children[c].nodeType === 1) { hasElementChild = true; break; }
+            }
+            if (!hasElementChild) {
+                // 收集文本内容
+                for (var t = 0; t < children.length; t++) {
+                    if (children[t].nodeType === 3 || children[t].nodeType === 4) {
+                        textContent += children[t].nodeValue;
+                    }
+                }
+                textContent = textContent.replace(/\s+/g, ' ').trim();
+                if (children.length === 0) {
+                    out += ' />' + '\n';
+                } else if (textContent === '') {
+                    out += '>' + '\n';
+                    for (var c2 = 0; c2 < children.length; c2++) {
+                        if (children[c2].nodeType === 8) { // comment
+                            out += pad + indentStr + '<!--' + children[c2].nodeValue + '-->' + '\n';
+                        }
+                    }
+                    out += pad + '</' + node.nodeName + '>' + '\n';
+                } else {
+                    out += '>' + escapeText(textContent) + '</' + node.nodeName + '>' + '\n';
+                }
+            } else {
+                out += '>' + '\n';
+                for (var c3 = 0; c3 < children.length; c3++) {
+                    out += serializeNode(children[c3], indentStr, level + 1, keepDecl);
+                }
+                out += pad + '</' + node.nodeName + '>' + '\n';
+            }
+        } else if (node.nodeType === 3) { // Text
+            var txt = node.nodeValue.replace(/\s+/g, ' ').trim();
+            if (txt) out += pad + escapeText(txt) + '\n';
+        } else if (node.nodeType === 4) { // CDATA
+            out += pad + '<![CDATA[' + node.nodeValue + ']]>' + '\n';
+        } else if (node.nodeType === 8) { // Comment
+            out += pad + '<!--' + node.nodeValue + '-->' + '\n';
+        } else if (node.nodeType === 7) { // ProcessingInstruction
+            out += pad + '<?' + node.target + ' ' + node.data + '?>' + '\n';
+        }
+        return out;
+    };
+
+    // 美化 XML
+    var formatXML = function (doc) {
+        var indentStr = '';
+        var n = getIndent();
+        for (var i = 0; i < n; i++) indentStr += ' ';
+        var keepDecl = document.getElementById('declBox').checked;
+        var result = '';
+        // XML 声明
+        var pi = doc.firstChild;
+        if (keepDecl && doc.xmlDeclaration) {
+            result += doc.xmlDeclaration + '\n';
+        } else if (keepDecl) {
+            // 尝试从原文提取
+            // 默认添加声明
+        }
+        // 遍历根之前的处理指令
+        var root = doc.documentElement;
+        // 序列化根节点
+        result += serializeNode(root, indentStr, 0, keepDecl);
+        return result.replace(/\n$/, '');
+    };
+
+    // 压缩 XML
+    var compressXML = function (doc) {
+        var serializeCompact = function (node) {
+            var out = '';
+            if (node.nodeType === 1) {
+                out += '<' + node.nodeName;
+                var attrs = node.attributes;
+                for (var a = 0; a < attrs.length; a++) {
+                    out += ' ' + attrs[a].name + '="' + escapeAttr(attrs[a].value) + '"';
+                }
+                var children = node.childNodes;
+                var hasElementChild = false;
+                var textContent = '';
+                for (var c = 0; c < children.length; c++) {
+                    if (children[c].nodeType === 1) { hasElementChild = true; break; }
+                }
+                if (!hasElementChild) {
+                    for (var t = 0; t < children.length; t++) {
+                        if (children[t].nodeType === 3 || children[t].nodeType === 4) textContent += children[t].nodeValue;
+                    }
+                    textContent = textContent.replace(/\s+/g, ' ').trim();
+                    if (children.length === 0) {
+                        out += '/>';
+                    } else if (textContent === '') {
+                        out += '></' + node.nodeName + '>';
+                    } else {
+                        out += '>' + escapeText(textContent) + '</' + node.nodeName + '>';
+                    }
+                } else {
+                    out += '>';
+                    for (var c2 = 0; c2 < children.length; c2++) {
+                        out += serializeCompact(children[c2]);
+                    }
+                    out += '</' + node.nodeName + '>';
+                }
+            } else if (node.nodeType === 3) {
+                var txt = node.nodeValue.replace(/\s+/g, ' ').trim();
+                if (txt) out += escapeText(txt);
+            } else if (node.nodeType === 4) {
+                out += '<![CDATA[' + node.nodeValue + ']]>';
+            } else if (node.nodeType === 8) {
+                out += '<!--' + node.nodeValue + '-->';
+            }
+            return out;
+        };
+        return serializeCompact(doc.documentElement);
+    };
+
+    // XML 节点转 JSON
+    var xmlNodeToJson = function (node) {
+        var obj = {};
+        // 属性
+        if (node.attributes && node.attributes.length > 0) {
+            for (var a = 0; a < node.attributes.length; a++) {
+                obj['@' + node.attributes[a].name] = node.attributes[a].value;
+            }
+        }
+        // 子节点
+        var children = node.childNodes;
+        var textContent = '';
+        var hasElement = false;
+        for (var c = 0; c < children.length; c++) {
+            var child = children[c];
+            if (child.nodeType === 1) {
+                hasElement = true;
+                var childObj = xmlNodeToJson(child);
+                if (obj[child.nodeName] !== undefined) {
+                    if (!Array.isArray(obj[child.nodeName])) {
+                        obj[child.nodeName] = [obj[child.nodeName]];
+                    }
+                    obj[child.nodeName].push(childObj);
+                } else {
+                    obj[child.nodeName] = childObj;
+                }
+            } else if (child.nodeType === 3 || child.nodeType === 4) {
+                textContent += child.nodeValue;
+            }
+        }
+        textContent = textContent.replace(/\s+/g, ' ').trim();
+        if (hasElement) {
+            if (textContent) obj['#text'] = textContent;
+        } else {
+            if (Object.keys(obj).length === 0) {
+                return textContent;
+            } else if (textContent) {
+                obj['#text'] = textContent;
+            }
+        }
+        return obj;
+    };
+
+    // JSON 语法高亮
+    var syntaxHighlight = function (jsonStr) {
+        var escaped = escapeHtml(jsonStr);
+        return escaped.replace(
+            /("(?:[^"\\]|\\.)*")\s*:/g, '<span class="key">$1</span>:'
+        ).replace(
+            /("(?:[^"\\]|\\.)*")/g, '<span class="str">$1</span>'
+        ).replace(
+            /\b(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\b/g, '<span class="num">$1</span>'
+        ).replace(
+            /\b(true|false)\b/g, '<span class="bool">$1</span>'
+        ).replace(
+            /\bnull\b/g, '<span class="null">$1</span>'
+        );
+    };
+
+    var showError = function (msg) {
+        var resultArea = document.getElementById('resultArea');
+        var errorDetail = document.getElementById('errorDetail');
+        resultArea.style.display = 'block';
+        errorDetail.style.display = 'block';
+        document.getElementById('errorMsg').innerHTML = escapeHtml(msg);
+        document.getElementById('jsonOutput').innerHTML = '';
+        document.getElementById('outputText').value = '';
+        setStatus('XML 解析错误', 'error');
+    };
+
+    var doFormat = function () {
+        var input = document.getElementById('inputText').value;
+        if (!input.trim()) { setStatus('请输入 XML 字符串', 'error'); return; }
+        try {
+            var doc = parseXML(input);
+            var result = formatXML(doc);
+            document.getElementById('outputText').value = result;
+            document.getElementById('resultArea').style.display = 'none';
+            setStatus('XML 美化成功', 'success');
+        } catch (err) {
+            showError(err.message);
+        }
+    };
+
+    var doCompress = function () {
+        var input = document.getElementById('inputText').value;
+        if (!input.trim()) { setStatus('请输入 XML 字符串', 'error'); return; }
+        try {
+            var doc = parseXML(input);
+            var result = compressXML(doc);
+            document.getElementById('outputText').value = result;
+            document.getElementById('resultArea').style.display = 'none';
+            setStatus('XML 压缩成功，原 ' + input.length + ' 字符 -> ' + result.length + ' 字符', 'success');
+        } catch (err) {
+            showError(err.message);
+        }
+    };
+
+    var doValidate = function () {
+        var input = document.getElementById('inputText').value;
+        if (!input.trim()) { setStatus('请输入 XML 字符串', 'error'); return; }
+        try {
+            var doc = parseXML(input);
+            var rootName = doc.documentElement.nodeName;
+            document.getElementById('outputText').value = 'XML 语法正确\n根元素：<' + rootName + '>';
+            document.getElementById('resultArea').style.display = 'none';
+            setStatus('XML 校验通过，语法正确，根元素：' + rootName, 'success');
+        } catch (err) {
+            showError(err.message);
+        }
+    };
+
+    var doXml2Json = function () {
+        var input = document.getElementById('inputText').value;
+        if (!input.trim()) { setStatus('请输入 XML 字符串', 'error'); return; }
+        try {
+            var doc = parseXML(input);
+            var root = doc.documentElement;
+            var jsonObj = {};
+            jsonObj[root.nodeName] = xmlNodeToJson(root);
+            var resultStr = JSON.stringify(jsonObj, null, getIndent());
+            document.getElementById('outputText').value = resultStr;
+            document.getElementById('jsonOutput').innerHTML = syntaxHighlight(resultStr);
+            document.getElementById('errorDetail').style.display = 'none';
+            document.getElementById('resultArea').style.display = 'block';
+            setStatus('XML 转 JSON 成功', 'success');
+        } catch (err) {
+            showError(err.message);
+        }
+    };
+
+    var copyResult = function () {
+        var output = document.getElementById('outputText').value;
+        if (!output) { setStatus('没有可复制的内容', 'error'); return; }
+        navigator.clipboard.writeText(output).then(function () {
+            setStatus('已复制到剪贴板', 'success');
+        }).catch(function () {
+            document.getElementById('outputText').select();
+            document.execCommand('copy');
+            setStatus('已复制到剪贴板', 'success');
+        });
+    };
+
+    var clearAll = function () {
+        document.getElementById('inputText').value = '';
+        document.getElementById('outputText').value = '';
+        document.getElementById('resultArea').style.display = 'none';
+        setStatus('已清空', 'info');
+    };
+
+    document.getElementById('formatBtn').addEventListener('click', doFormat);
+    document.getElementById('compressBtn').addEventListener('click', doCompress);
+    document.getElementById('validateBtn').addEventListener('click', doValidate);
+    document.getElementById('xml2jsonBtn').addEventListener('click', doXml2Json);
+    document.getElementById('copyBtn').addEventListener('click', copyResult);
+    document.getElementById('clearBtn').addEventListener('click', clearAll);
+
+    document.getElementById('inputText').addEventListener('keydown', function (e) {
+        if (e.ctrlKey && e.key === 'Enter') doFormat();
+    });
+</script>
+</body>
+</html>

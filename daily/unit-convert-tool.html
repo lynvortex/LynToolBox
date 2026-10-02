@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>单位换算 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="单位换算工具，长度、重量、温度、数据量、面积、速度、时间单位互转，纯前端实时计算。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+        .cat-tabs { display: flex; gap: 8px; margin-bottom: 22px; flex-wrap: wrap; }
+        .cat-tab { padding: 9px 18px; border-radius: 8px; border: 1px solid #e0e6ed; background: #f8fafc; color: #64748b; cursor: pointer; font-size: 0.85em; font-weight: 600; }
+        .cat-tab.active { background: #4a90e2; color: #fff; border-color: #4a90e2; }
+        .conv-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: end; margin-bottom: 22px; }
+        @media (max-width: 600px) { .conv-row { grid-template-columns: 1fr; } .swap-btn { transform: rotate(90deg); justify-self: center; } }
+        .conv-row select, .conv-row input { padding: 12px 14px; border: 1px solid #e0e6ed; border-radius: 8px; font-size: 1em; outline: none; }
+        .conv-row input:focus { border-color: #4a90e2; }
+        .swap-btn { width: 44px; height: 44px; border-radius: 50%; border: 1px solid #e0e6ed; background: #fff; cursor: pointer; font-size: 1.1em; color: #4a90e2; }
+        .swap-btn:hover { background: #ebf5ff; }
+        .result-table { width: 100%; border-collapse: collapse; font-size: 0.88em; }
+        .result-table th { text-align: left; padding: 10px 12px; background: #f1f5f9; color: #475569; font-weight: 600; border-bottom: 2px solid #e1e4e8; }
+        .result-table td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; }
+        .result-table tr:hover td { background: #f8fafc; }
+        .result-table .unit { color: #64748b; font-size: 0.85em; }
+        .result-table .val { font-family: 'Courier New', monospace; color: #1e293b; font-weight: 600; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="单位换算器,在线单位换算器,日常通用,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/daily/unit-convert-tool.html" />
+    <meta property="og:title" content="单位换算" />
+    <meta property="og:description" content="单位换算工具，长度、重量、温度、数据量、面积、速度、时间单位互转，纯前端实时计算。" />
+    <meta property="og:url" content="https://box.lynvortex.top/daily/unit-convert-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="单位换算" />
+    <meta itemprop="description" content="单位换算工具，长度、重量、温度、数据量、面积、速度、时间单位互转，纯前端实时计算。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "日常通用",
+                "item": "https://box.lynvortex.top/daily.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "单位换算器",
+                "item": "https://box.lynvortex.top/daily/unit-convert-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "单位换算器",
+        "url": "https://box.lynvortex.top/daily/unit-convert-tool.html",
+        "description": "长度、重量、面积、体积、速度、数据等单位换算",
+        "applicationCategory": "日常通用",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>📐 单位换算</h1>
+                <p>长度/重量/温度/数据量/面积/速度/时间单位互转，实时计算</p>
+            </div>
+
+            <div class="cat-tabs" id="catTabs"></div>
+
+            <div class="conv-row">
+                <div class="form-item"><label>输入值</label>
+                    <div style="display:flex;gap:8px;">
+                        <input type="number" id="fromVal" value="1" step="any" style="flex:1;" />
+                        <select id="fromUnit" style="min-width:130px;"></select>
+                    </div>
+                </div>
+                <button class="swap-btn" id="swapBtn" title="交换单位">⇄</button>
+                <div class="form-item"><label>结果</label>
+                    <div style="display:flex;gap:8px;">
+                        <input type="text" id="toVal" readonly style="flex:1;background:#f0fdf4;color:#16a34a;font-weight:600;" />
+                        <select id="toUnit" style="min-width:130px;"></select>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top:8px;">
+                <label style="font-size:0.85em;color:#64748b;font-weight:600;display:block;margin-bottom:8px;">全部换算结果</label>
+                <table class="result-table"><thead><tr><th>单位</th><th>换算值</th></tr></thead><tbody id="allBody"></tbody></table>
+            </div>
+
+            <div id="statusBar" class="status-bar info">输入数值自动实时换算</div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 单位换算器</h3>
+                <p>多种度量单位快速换算</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">长度</span>
+                    <span class="feature-chip">重量</span>
+                    <span class="feature-chip">温度</span>
+                    <span class="feature-chip">面积</span>
+                    <span class="feature-chip">体积</span>
+                    <span class="feature-chip">离线可用</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>支持长度、重量、温度、面积、体积等多种物理量</li>
+                    <li>输入任意单位自动换算所有其他单位</li>
+                    <li>温度换算使用特殊公式处理</li>
+                    <li>纯前端计算，结果精确</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    // 每类单位：以基准单位为 1 的换算系数；温度特殊处理
+    const CATS = {
+        length: { name: '📏 长度', base: 'm', units: { 'nm':1e-9,'um':1e-6,'mm':0.001,'cm':0.01,'dm':0.1,'m':1,'km':1000,'inch':0.0254,'ft':0.3048,'yd':0.9144,'mi':1609.344,'li':500,'cun':0.0333 } },
+        weight: { name: '⚖️ 重量', base: 'g', units: { 'mg':0.001,'g':1,'kg':1000,'t':1e6,'oz':28.3495,'lb':453.592,'jin':500,'liang':50 } },
+        area: { name: '🟦 面积', base: 'm2', units: { 'mm2':1e-6,'cm2':1e-4,'m2':1,'ha':10000,'km2':1e6,'acre':4046.86,'mu':666.667,'ft2':0.092903 } },
+        volume: { name: '🧪 体积', base: 'L', units: { 'ml':0.001,'L':1,'m3':1000,'gal_us':3.78541,'gal_uk':4.54609,'pt':0.473176,'cc':0.001 } },
+        speed: { name: '🚀 速度', base: 'm/s', units: { 'm/s':1,'km/h':0.277778,'mph':0.44704,'knot':0.514444,'ft/s':0.3048 } },
+        data: { name: '💾 数据量', base: 'B', units: { 'bit':0.125,'B':1,'KB':1024,'MB':1048576,'GB':1073741824,'TB':1.0995e12 } },
+        time: { name: '⏰ 时间', base: 's', units: { 'ms':0.001,'s':1,'min':60,'h':3600,'day':86400,'week':604800,'year':31536000 } },
+        temp: { name: '🌡️ 温度', base: 'C', units: { 'C':'C','F':'F','K':'K' } }
+    };
+    const UNIT_LABEL = { nm:'纳米 nm',um:'微米 μm',mm:'毫米 mm',cm:'厘米 cm',dm:'分米 dm',m:'米 m',km:'千米 km',inch:'英寸 in',ft:'英尺 ft',yd:'码 yd',mi:'英里 mi',li:'市里',cun:'市寸',mg:'毫克 mg',g:'克 g',kg:'千克 kg',t:'吨 t',oz:'盎司 oz',lb:'磅 lb',jin:'市斤',liang:'市两',mm2:'平方毫米',cm2:'平方厘米',m2:'平方米 m²',ha:'公顷 ha',km2:'平方千米 km²',acre:'英亩',mu:'市亩',ft2:'平方英尺',ml:'毫升 mL',L:'升 L',m3:'立方米 m³',gal_us:'加仑(美)',gal_uk:'加仑(英)',pt:'品脱 pt',cc:'立方厘米','m/s':'米/秒','km/h':'千米/时','mph':'英里/时','knot':'节 knot','ft/s':'英尺/秒',bit:'比特 bit',B:'字节 B',KB:'KB',MB:'MB',GB:'GB',TB:'TB',ms:'毫秒 ms',s:'秒 s',min:'分 min',h:'时 h',day:'天 day',week:'周 week',year:'年 year',C:'摄氏度 °C',F:'华氏度 °F',K:'开尔文 K' };
+
+    let curCat = 'length';
+    const catTabs = document.getElementById('catTabs');
+    const fromUnit = document.getElementById('fromUnit');
+    const toUnit = document.getElementById('toUnit');
+    const fromVal = document.getElementById('fromVal');
+    const toVal = document.getElementById('toVal');
+    const allBody = document.getElementById('allBody');
+
+    catTabs.innerHTML = Object.entries(CATS).map(([k, c]) => `<div class="cat-tab${k === 'length' ? ' active' : ''}" data-cat="${k}">${c.name}</div>`).join('');
+    catTabs.addEventListener('click', (e) => {
+        const t = e.target.closest('.cat-tab'); if (!t) return;
+        catTabs.querySelectorAll('.cat-tab').forEach(x => x.classList.remove('active'));
+        t.classList.add('active'); curCat = t.dataset.cat; buildUnits(); convert();
+    });
+
+    const buildUnits = () => {
+        const units = Object.keys(CATS[curCat].units);
+        fromUnit.innerHTML = units.map(u => `<option value="${u}">${UNIT_LABEL[u] || u}</option>`).join('');
+        toUnit.innerHTML = units.map(u => `<option value="${u}">${UNIT_LABEL[u] || u}</option>`).join('');
+        fromUnit.value = units[0];
+        toUnit.value = units[Math.min(1, units.length - 1)];
+    };
+    buildUnits();
+
+    const toBase = (val, unit) => {
+        if (curCat === 'temp') {
+            if (unit === 'C') return val;
+            if (unit === 'F') return (val - 32) * 5 / 9;
+            if (unit === 'K') return val - 273.15;
+        }
+        return val * CATS[curCat].units[unit];
+    };
+    const fromBase = (val, unit) => {
+        if (curCat === 'temp') {
+            if (unit === 'C') return val;
+            if (unit === 'F') return val * 9 / 5 + 32;
+            if (unit === 'K') return val + 273.15;
+        }
+        return val / CATS[curCat].units[unit];
+    };
+
+    const fmtNum = (n) => {
+        if (!isFinite(n)) return '—';
+        if (Math.abs(n) >= 1e9 || (Math.abs(n) < 1e-4 && n !== 0)) return n.toExponential(4);
+        return parseFloat(n.toPrecision(8)).toString();
+    };
+
+    const convert = () => {
+        const v = parseFloat(fromVal.value);
+        if (isNaN(v)) { toVal.value = ''; allBody.innerHTML = ''; return; }
+        const base = toBase(v, fromUnit.value);
+        toVal.value = fmtNum(fromBase(base, toUnit.value));
+        const units = Object.keys(CATS[curCat].units);
+        allBody.innerHTML = units.map(u => `<tr><td class="unit">${UNIT_LABEL[u] || u}</td><td class="val">${fmtNum(fromBase(base, u))}</td></tr>`).join('');
+    };
+
+    [fromVal, fromUnit, toUnit].forEach(el => el.addEventListener('input', convert));
+    document.getElementById('swapBtn').addEventListener('click', () => { const a = fromUnit.value; fromUnit.value = toUnit.value; toUnit.value = a; convert(); });
+    convert();
+    initSidebar('daily');
+</script>
+</body>
+</html>

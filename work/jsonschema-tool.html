@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>JSON Schema 校验 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="JSON Schema校验工具，纯前端使用Ajv校验JSON数据是否符合Schema规范，显示详细错误信息，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<script src="../assets/ajv.min.js"></script>
+<style>
+.col-label{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.col-label label{font-size:0.85em;color:#64748b;font-weight:600;}
+.mini-btn{padding:3px 10px;font-size:0.74em;background:#f1f5f9;color:#475569;border:1px solid #e0e6ed;border-radius:6px;cursor:pointer;font-family:inherit;}
+.mini-btn:hover{background:#e2e8f0;color:#4a90e2;border-color:#4a90e2;}
+textarea.code-area{min-height:230px;}
+.result-banner{display:none;align-items:center;gap:10px;padding:12px 16px;border-radius:8px;margin-bottom:14px;font-weight:600;font-size:0.92em;}
+.result-banner.pass{display:flex;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;}
+.result-banner.fail{display:flex;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;}
+.result-banner .ic{font-size:1.2em;}
+.err-list{display:flex;flex-direction:column;gap:8px;}
+.err-item{background:#fff7f7;border:1px solid #fecaca;border-left:4px solid #ef4444;border-radius:6px;padding:10px 12px;font-size:0.84em;}
+.err-item .err-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:4px;}
+.err-path{font-family:'Courier New',monospace;color:#b91c1c;font-weight:700;background:#fee2e2;padding:1px 8px;border-radius:4px;}
+.err-kw{font-size:0.78em;color:#fff;background:#ef4444;padding:1px 8px;border-radius:10px;font-weight:600;}
+.err-msg{color:#7f1d1d;line-height:1.5;word-break:break-all;}
+.err-params{font-family:'Courier New',monospace;font-size:0.8em;color:#9a3412;background:#fffbeb;padding:4px 8px;border-radius:4px;margin-top:4px;word-break:break-all;}
+.ok-note{font-size:0.82em;color:#16a34a;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:10px 12px;}
+</style>
+    <meta name="keywords" content="JSON Schema校验,在线JSON Schema校验,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/jsonschema-tool.html" />
+    <meta property="og:title" content="JSON Schema 校验" />
+    <meta property="og:description" content="JSON Schema校验工具，纯前端使用Ajv校验JSON数据是否符合Schema规范，显示详细错误信息，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/jsonschema-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="JSON Schema 校验" />
+    <meta itemprop="description" content="JSON Schema校验工具，纯前端使用Ajv校验JSON数据是否符合Schema规范，显示详细错误信息，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "JSON Schema校验",
+                "item": "https://box.lynvortex.top/work/jsonschema-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "JSON Schema校验",
+        "url": "https://box.lynvortex.top/work/jsonschema-tool.html",
+        "description": "Ajv校验JSON数据是否符合Schema规范，错误精确定位",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+  <div class="tool-container">
+    <div class="tool-header"><h1>🛡️ JSON Schema 校验</h1><p>纯前端使用 Ajv 校验 JSON 数据是否符合 Schema 规范，精确定位错误，数据完全本地化</p></div>
+
+    <div class="form-grid">
+      <div class="form-item">
+        <div class="col-label">
+          <label>JSON Schema（规范）</label>
+          <button class="mini-btn" id="exampleSchemaBtn">加载示例 Schema</button>
+        </div>
+        <textarea class="code-area" id="schemaInput" spellcheck="false" placeholder='{"type":"object","properties":{...},"required":[...]}'></textarea>
+      </div>
+      <div class="form-item">
+        <div class="col-label">
+          <label>待校验 JSON 数据</label>
+          <button class="mini-btn" id="exampleDataBtn">加载示例数据</button>
+        </div>
+        <textarea class="code-area" id="dataInput" spellcheck="false" placeholder='{"name":"绘萤者","age":18}'></textarea>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="validateBtn">开始校验</button>
+      <button class="btn btn-ghost" id="clearBtn">清空</button>
+      <button class="btn btn-outline" id="loadInvalidBtn" style="font-size:0.82em;">加载错误示例</button>
+    </div>
+
+    <div id="statusBar" class="status-bar info">输入 Schema 与 JSON 数据后点击开始校验</div>
+
+    <div id="resultArea" style="display:none;">
+      <div id="resultBanner" class="result-banner"></div>
+      <div id="errList" class="err-list"></div>
+    </div>
+
+    <footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+  </div>
+  <div class="info-cards">
+    <div class="info-card"><h3>📦 功能说明</h3><p>基于 Ajv 在浏览器本地校验 JSON 数据是否符合指定的 JSON Schema 规范，开启 allErrors 模式列出全部错误，每条错误标注数据路径、关键字与详细原因。</p><div class="feature-chips"><span class="feature-chip">Schema校验</span><span class="feature-chip">错误定位</span><span class="feature-chip">JSON规范</span><span class="feature-chip">Ajv</span><span class="feature-chip">示例数据</span><span class="feature-chip">离线本地</span></div></div>
+    <div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>左侧填写 <strong>JSON Schema</strong>（draft-07 规范），右侧填写待校验的 <strong>JSON 数据</strong>。</li><li>错误路径使用 JSON Pointer 格式，如 <code>/age</code> 表示根对象的 age 字段，<code>/0/name</code> 表示数组首项。</li><li>关键字（keyword）标明违反的约束，如 <strong>type</strong>、<strong>required</strong>、<strong>minimum</strong>、<strong>maxLength</strong> 等。</li><li>本工具内置 Ajv v6，<strong>不校验 format 关键字</strong>（如 email/uri）的格式细节，仅校验结构约束。</li><li>所有校验在浏览器本地完成，<strong>数据不会上传</strong>。</li></ul></div>
+    <div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+      <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+      <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+  </div>
+</div></main>
+<script>
+(function(){
+  'use strict';
+  var schemaInput=document.getElementById('schemaInput');
+  var dataInput=document.getElementById('dataInput');
+  var validateBtn=document.getElementById('validateBtn');
+  var clearBtn=document.getElementById('clearBtn');
+  var exampleSchemaBtn=document.getElementById('exampleSchemaBtn');
+  var exampleDataBtn=document.getElementById('exampleDataBtn');
+  var loadInvalidBtn=document.getElementById('loadInvalidBtn');
+  var statusBar=document.getElementById('statusBar');
+  var resultArea=document.getElementById('resultArea');
+  var resultBanner=document.getElementById('resultBanner');
+  var errList=document.getElementById('errList');
+
+  // 兼容 ajv6 bundle：全局可能是 Ajv（大写）或 ajv（小写），或 ajv.Ajv
+  function createAjv(){
+    var Ctor=null;
+    if(typeof window.Ajv==='function'){Ctor=window.Ajv;}
+    else if(typeof window.ajv==='function'){Ctor=window.ajv;}
+    else if(window.ajv&&typeof window.ajv.Ajv==='function'){Ctor=window.ajv.Ajv;}
+    if(!Ctor){throw new Error('Ajv 校验库未加载，请刷新页面重试');}
+    try{return new Ctor({allErrors:true,jsonPointers:true,verbose:false});}
+    catch(e){return new Ctor({allErrors:true});}
+  }
+
+  function prettyPath(p){
+    if(!p||p===''){return '(根)';}
+    return p;
+  }
+
+  function doValidate(){
+    var schemaRaw=schemaInput.value.trim();
+    var dataRaw=dataInput.value.trim();
+    if(!schemaRaw){setStatus('请输入 JSON Schema','error');return;}
+    if(!dataRaw){setStatus('请输入待校验的 JSON 数据','error');return;}
+    var schema,data;
+    try{schema=JSON.parse(schemaRaw);}
+    catch(e){setStatus('Schema JSON 解析失败：'+e.message,'error');return;}
+    try{data=JSON.parse(dataRaw);}
+    catch(e){setStatus('数据 JSON 解析失败：'+e.message,'error');return;}
+
+    var ajv,validate;
+    try{ajv=createAjv();}
+    catch(e){setStatus(e.message,'error');return;}
+    try{validate=ajv.compile(schema);}
+    catch(e){setStatus('Schema 编译失败：'+e.message,'error');return;}
+
+    var valid;
+    try{valid=validate(data);}
+    catch(e){setStatus('校验执行出错：'+e.message,'error');return;}
+
+    resultArea.style.display='block';
+    errList.innerHTML='';
+
+    if(valid){
+      resultBanner.className='result-banner pass';
+      resultBanner.innerHTML='<span class="ic">✓</span><span>校验通过：数据符合 Schema 规范</span>';
+      errList.innerHTML='<div class="ok-note">所有字段均满足约束条件，未发现任何错误。</div>';
+      setStatus('校验通过 ✓','success');
+    }else{
+      var errors=validate.errors||[];
+      resultBanner.className='result-banner fail';
+      resultBanner.innerHTML='<span class="ic">✗</span><span>校验失败：共发现 '+errors.length+' 处错误</span>';
+      if(errors.length===0){
+        errList.innerHTML='<div class="ok-note">未返回详细错误信息。</div>';
+      }else{
+        var html='';
+        for(var i=0;i<errors.length;i++){
+          var er=errors[i];
+          var path=er.dataPath!==undefined?er.dataPath:(er.instancePath||'');
+          var kw=er.keyword||'unknown';
+          var msg=er.message||'';
+          var params=er.params?JSON.stringify(er.params):'';
+          html+='<div class="err-item">'+
+            '<div class="err-head"><span class="err-path">'+escapeHtml(prettyPath(path))+'</span><span class="err-kw">'+escapeHtml(kw)+'</span></div>'+
+            '<div class="err-msg">'+escapeHtml(msg)+'</div>'+
+            (params&&params!=='{}'?'<div class="err-params">params: '+escapeHtml(params)+'</div>':'')+
+            '</div>';
+        }
+        errList.innerHTML=html;
+      }
+      setStatus('校验失败，请查看下方错误详情','error');
+    }
+  }
+
+  var EXAMPLE_SCHEMA=JSON.stringify({
+    type:'object',
+    properties:{
+      name:{type:'string',minLength:2,maxLength:30},
+      age:{type:'integer',minimum:0,maximum:150},
+      role:{type:'string',enum:['admin','user','guest']},
+      tags:{type:'array',items:{type:'string'},maxItems:5,uniqueItems:true},
+      active:{type:'boolean'}
+    },
+    required:['name','age','role'],
+    additionalProperties:false
+  },null,2);
+
+  var EXAMPLE_DATA_VALID=JSON.stringify({name:'绘萤者',age:18,role:'admin',tags:['tool','box'],active:true},null,2);
+  var EXAMPLE_DATA_INVALID=JSON.stringify({name:'A',age:200,role:'superuser',tags:['a','a','b','c','d','e'],extra:'nope'},null,2);
+
+  exampleSchemaBtn.addEventListener('click',function(){schemaInput.value=EXAMPLE_SCHEMA;setStatus('已加载示例 Schema',  'info');});
+  exampleDataBtn.addEventListener('click',function(){dataInput.value=EXAMPLE_DATA_VALID;setStatus('已加载示例数据（合法）','info');});
+  loadInvalidBtn.addEventListener('click',function(){
+    if(!schemaInput.value.trim()){schemaInput.value=EXAMPLE_SCHEMA;}
+    dataInput.value=EXAMPLE_DATA_INVALID;
+    setStatus('已加载错误示例数据，点击开始校验查看错误','info');
+  });
+  validateBtn.addEventListener('click',doValidate);
+  clearBtn.addEventListener('click',function(){
+    schemaInput.value='';dataInput.value='';
+    resultArea.style.display='none';
+    errList.innerHTML='';
+    setStatus('已清空，输入 Schema 与数据后点击校验','info');
+  });
+
+  setStatus('输入 Schema 与 JSON 数据后点击开始校验','info');
+})();
+initSidebar('work');
+</script>
+</body></html>

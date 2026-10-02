@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DNS over HTTPS查询 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp" />
+<meta name="description" content="DNS over HTTPS查询工具，纯前端通过Cloudflare/Google DoH接口查询A/AAAA/MX/TXT/NS/CNAME记录，无需服务端代理，数据不经过自有服务器。" />
+<link rel="stylesheet" href="../assets/tool-common.css" />
+<script src="../assets/sidebar.js"></script>
+<style>
+    /* 工具特有样式 */
+    .section-title { font-size: 0.95em; font-weight: 600; color: #2c3e50; margin: 18px 0 10px; padding-left: 10px; border-left: 3px solid #4a90e2; }
+    .provider-row { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 4px; }
+    .provider-row label { display: inline-flex; align-items: center; gap: 6px; font-size: 0.88em; color: #2c3e50; font-weight: 500; cursor: pointer; }
+    .provider-row label small { color: #94a3b8; font-weight: 400; }
+
+    .dns-table-wrap { border: 1px solid #f0f2f5; border-radius: 10px; overflow: hidden; margin-top: 4px; }
+    .dns-table { width: 100%; border-collapse: collapse; }
+    .dns-table thead th { background: #f8fafc; padding: 11px 14px; text-align: left; color: #64748b; font-size: 0.8em; border-bottom: 1px solid #f0f2f5; white-space: nowrap; }
+    .dns-table tbody td { padding: 11px 14px; color: #1e293b; font-size: 0.86em; border-bottom: 1px solid #f5f7fa; font-family: 'Consolas', monospace; word-break: break-all; vertical-align: top; }
+    .dns-table tbody tr:last-child td { border-bottom: none; }
+    .dns-table tbody tr.domain-head td { background: #eff6ff; font-weight: 600; color: #1e40af; }
+    .dns-table .typ { color: #0369a1; font-weight: 600; }
+    .dns-table .typ.err { color: #ef4444; }
+    .dns-table .ttl { color: #64748b; }
+    .dns-table .val { color: #15803d; }
+
+    .stat-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 4px; }
+    .stat-chip { background: #f1f5f9; border-radius: 8px; padding: 6px 12px; font-size: 0.8em; color: #475569; font-family: 'Consolas', monospace; }
+    .stat-chip b { color: #4a90e2; }
+    .loader { display: none; margin: 16px auto; border: 3px solid #f3f3f3; border-top: 3px solid #4a90e2; border-radius: 50%; width: 22px; height: 22px; animation: spin 0.8s linear infinite; }
+    @keyframes spin { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
+    .empty-tip { text-align: center; color: #94a3b8; font-size: 0.85em; padding: 30px 0; }
+    @media (max-width: 600px) {
+        .dns-table, .dns-table tbody, .dns-table tr, .dns-table td { display: block; width: 100%; }
+        .dns-table thead { display: none; }
+        .dns-table tbody tr { border-bottom: 1px solid #f0f2f5; padding: 6px 0; }
+        .dns-table tbody td { border-bottom: none; padding: 2px 12px; }
+        .dns-table tbody td:before { content: attr(data-l) "："; color: #94a3b8; font-weight: 500; margin-right: 6px; }
+    }
+</style>
+    <meta name="keywords" content="DNS over HTTPS查询,在线DNS over HTTPS查询,网络工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/network/dns-doh-tool.html" />
+    <meta property="og:title" content="DNS over HTTPS查询" />
+    <meta property="og:description" content="DNS over HTTPS查询工具，纯前端通过Cloudflare/Google DoH接口查询A/AAAA/MX/TXT/NS/CNAME记录，无需服务端代理，数据不经过自有服务器。" />
+    <meta property="og:url" content="https://box.lynvortex.top/network/dns-doh-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="DNS over HTTPS查询" />
+    <meta itemprop="description" content="DNS over HTTPS查询工具，纯前端通过Cloudflare/Google DoH接口查询A/AAAA/MX/TXT/NS/CNAME记录，无需服务端代理，数据不经过自有服务器。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "网络工具",
+                "item": "https://box.lynvortex.top/network.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "DNS over HTTPS查询",
+                "item": "https://box.lynvortex.top/network/dns-doh-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "DNS over HTTPS查询",
+        "url": "https://box.lynvortex.top/network/dns-doh-tool.html",
+        "description": "纯前端通过Cloudflare/Google DoH查询DNS记录，无需服务端",
+        "applicationCategory": "网络工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+  <div class="tool-container">
+    <div class="tool-header">
+      <h1>🛡️ DNS over HTTPS查询</h1>
+      <p>纯前端通过DoH查询DNS记录，无需服务端</p>
+    </div>
+
+    <div class="section-title">查询配置</div>
+    <div class="form-grid">
+      <div class="form-item">
+        <label for="domainInput">域名（每行一个，支持批量）</label>
+        <textarea id="domainInput" class="code-area" style="min-height:90px;" spellcheck="false" placeholder="example.com&#10;cloudflare.com">example.com</textarea>
+      </div>
+      <div class="form-item">
+        <label for="typeSel">记录类型</label>
+        <select id="typeSel">
+          <option value="A" selected>A — IPv4 地址</option>
+          <option value="AAAA">AAAA — IPv6 地址</option>
+          <option value="MX">MX — 邮件交换</option>
+          <option value="TXT">TXT — 文本记录</option>
+          <option value="NS">NS — 域名服务器</option>
+          <option value="CNAME">CNAME — 别名记录</option>
+          <option value="SOA">SOA — 起始授权</option>
+          <option value="CAA">CAA — 授权机构</option>
+        </select>
+        <div class="provider-row" style="margin-top:8px;">
+          <label><input type="radio" name="provider" value="cloudflare" checked /> Cloudflare <small>cloudflare-dns.com</small></label>
+          <label><input type="radio" name="provider" value="google" /> Google <small>dns.google</small></label>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="queryBtn">查询</button>
+      <button class="btn btn-ghost" id="clearBtn">清空结果</button>
+    </div>
+    <div id="statusBar" class="status-bar info">输入域名并选择记录类型后点击「查询」，请求将直接发往 DoH 服务商，不经过自有服务器。</div>
+    <div class="stat-row">
+      <span class="stat-chip">域名数：<b id="statDom">0</b></span>
+      <span class="stat-chip">记录数：<b id="statRec">0</b></span>
+      <span class="stat-chip">服务商：<b id="statProv">Cloudflare</b></span>
+    </div>
+    <div id="loader" class="loader"></div>
+    <div id="resultWrap" class="dns-table-wrap">
+      <div class="empty-tip">暂无结果，点击「查询」开始</div>
+    </div>
+
+    <footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+  </div>
+
+  <div class="info-cards">
+    <div class="info-card">
+      <h3>📦 功能说明</h3>
+      <p>纯前端通过 DNS over HTTPS（DoH）协议查询 DNS 记录，支持 Cloudflare 与 Google 双服务商切换，可查询 A/AAAA/MX/TXT/NS/CNAME/SOA/CAA 等记录类型，并支持每行一个域名批量查询。</p>
+      <div class="feature-chips">
+        <span class="feature-chip">A记录</span>
+        <span class="feature-chip">AAAA</span>
+        <span class="feature-chip">MX</span>
+        <span class="feature-chip">TXT</span>
+        <span class="feature-chip">NS</span>
+        <span class="feature-chip">CNAME</span>
+        <span class="feature-chip">双DoH源</span>
+        <span class="feature-chip">批量查询</span>
+      </div>
+    </div>
+    <div class="info-card">
+      <h3>💡 使用须知</h3>
+      <ul class="tips-list">
+        <li>纯前端直连 DoH 端点，请求不经过自有服务器，查询在你的浏览器完成</li>
+        <li>Cloudflare 与 Google 的 DoH JSON 端点均支持 CORS，可直接跨域调用</li>
+        <li>TTL 单位为秒，表示记录在解析器缓存中的有效时长</li>
+        <li>批量查询时每行一个域名，结果按域名分组展示</li>
+        <li>若查询失败可尝试切换另一个 DoH 服务商后重试</li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <h3>✨ 绘萤者</h3>
+      <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+      <div class="tool-links">
+        <a href="https://lynvortex.top" target="_blank">完全免费</a>
+        <a href="https://lynvortex.top" target="_blank">开源精神</a>
+        <a href="https://lynvortex.top" target="_blank">极客风范</a>
+        <a href="https://lynvortex.top" target="_blank">协作共创</a>
+      </div>
+      <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+  </div>
+</div></main>
+
+<script>
+initSidebar('network');
+
+(function () {
+    'use strict';
+    var $ = function (id) { return document.getElementById(id); };
+    var statusBar = $('statusBar');
+    function esc(s) { return window.escapeHtml(s); }
+
+    // DNS 记录类型编号映射（DoH JSON 返回的 type 为数字）
+    var TYPE_MAP = {1:'A',2:'NS',5:'CNAME',6:'SOA',15:'MX',16:'TXT',28:'AAAA',257:'CAA'};
+    // 状态码映射
+    var STATUS_MAP = {0:'NOERROR',1:'FORMERR',2:'SERVFAIL',3:'NXDOMAIN',4:'NOTIMP',5:'REFUSED'};
+
+    function buildUrl(provider, name, type) {
+        if (provider === 'google') {
+            return 'https://dns.google/resolve?name=' + encodeURIComponent(name) + '&type=' + encodeURIComponent(type);
+        }
+        return 'https://cloudflare-dns.com/dns-query?name=' + encodeURIComponent(name) + '&type=' + encodeURIComponent(type);
+    }
+
+    async function queryOne(provider, name, type) {
+        var url = buildUrl(provider, name, type);
+        var headers = { 'accept': 'application/dns-json' };
+        var resp = await fetch(url, { headers: headers, method: 'GET' });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        return resp.json();
+    }
+
+    // 解析单条记录 data 字段
+    function formatValue(data, typeName) {
+        if (typeName === 'TXT') {
+            // TXT 通常被双引号包裹
+            var m = data.match(/^"(.*)"$/);
+            return m ? m[1] : data;
+        }
+        if (typeName === 'MX' || typeName === 'CNAME' || typeName === 'NS') {
+            return data.replace(/\.$/, ''); // 去掉末尾点
+        }
+        return data;
+    }
+
+    async function runQuery() {
+        var raw = $('domainInput').value.trim();
+        var type = $('typeSel').value;
+        var provider = document.querySelector('input[name="provider"]:checked').value;
+        var providerName = provider === 'google' ? 'Google' : 'Cloudflare';
+
+        $('statProv').textContent = providerName;
+
+        if (!raw) { setStatus('⚠️ 请输入至少一个域名。', 'error')); return; }
+
+        var domains = raw.split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean);
+        if (!domains.length) { setStatus('⚠️ 未识别到有效域名。', 'error')); return; }
+
+        $('statDom').textContent = domains.length;
+        $('statRec').textContent = '0';
+        $('loader').style.display = 'block';
+        $('resultWrap').innerHTML = '<div class="empty-tip">查询中…</div>';
+        $('queryBtn').disabled = true;
+        setStatus('正在通过 ' + providerName + ' DoH 查询 ' + domains.length + ' 个域名…', 'info'));
+
+        var totalRecs = 0;
+        var html = '<table class="dns-table"><thead><tr><th>名称</th><th>TTL</th><th>类型</th><th>值</th></tr></thead><tbody>';
+        var errors = 0;
+        var done = 0;
+
+        // 顺序查询，避免并发过多触发限流
+        for (var i = 0; i < domains.length; i++) {
+            var name = domains[i];
+            var rows = '';
+            try {
+                var data = await queryOne(provider, name, type);
+                var statusName = STATUS_MAP[data.Status] || ('STATUS ' + data.Status);
+                if (data.Status !== 0) {
+                    rows += '<tr class="domain-head"><td data-l="域名">' + esc(name) + '</td><td data-l="TTL">—</td><td class="typ err">' + esc(statusName) + '</td><td class="val" style="color:#94a3b8;">该域名无 ' + esc(type) + ' 记录或不存在</td></tr>';
+                } else {
+                    rows += '<tr class="domain-head"><td colspan="4">🌐 ' + esc(name) + ' &nbsp;<span style="font-weight:400;color:#64748b;">查询 ' + esc(type) + ' 记录</span></td></tr>';
+                    var answers = data.Answer || [];
+                    if (!answers.length) {
+                        // 无 Answer，查看 Authority
+                        var auth = data.Authority || [];
+                        if (auth.length) {
+                            auth.forEach(function (a) {
+                                var tn = TYPE_MAP[a.type] || ('TYPE' + a.type);
+                                rows += makeRow(a.name, a.TTL, tn, a.data, true);
+                                totalRecs++;
+                            });
+                        } else {
+                            rows += '<tr><td data-l="名称">' + esc(name) + '</td><td data-l="TTL">—</td><td class="typ">' + esc(type) + '</td><td class="val" style="color:#94a3b8;">未找到记录</td></tr>';
+                        }
+                    } else {
+                        answers.forEach(function (a) {
+                            var tn = TYPE_MAP[a.type] || ('TYPE' + a.type);
+                            rows += makeRow(a.name, a.TTL, tn, a.data, false);
+                            totalRecs++;
+                        });
+                    }
+                }
+            } catch (err) {
+                errors++;
+                rows += '<tr class="domain-head"><td data-l="域名">' + esc(name) + '</td><td data-l="TTL">—</td><td class="typ err">错误</td><td class="val" style="color:#ef4444;">查询失败：' + esc(err.message) + '</td></tr>';
+            }
+            html += rows;
+            done++;
+            $('statRec').textContent = totalRecs;
+            // 增量更新，便于观察进度
+            $('resultWrap').innerHTML = html + '</tbody></table>';
+        }
+
+        html += '</tbody></table>';
+        $('resultWrap').innerHTML = html;
+        $('loader').style.display = 'none';
+        $('queryBtn').disabled = false;
+
+        if (errors) {
+            setStatus('⚠️ 完成 ' + domains.length + ' 个域名查询，其中 ' + errors + ' 个失败，共 ' + totalRecs + ' 条记录。', 'error'));
+        } else {
+            setStatus('✓ 查询完成：' + domains.length + ' 个域名，共 ' + totalRecs + ' 条记录（' + providerName + ' DoH）。', 'success'));
+        }
+    }
+
+    function makeRow(name, ttl, typeName, value, isAuth) {
+        var val = formatValue(String(value), typeName);
+        var prefix = isAuth ? '<span style="color:#94a3b8;">[权威] </span>' : '';
+        return '<tr><td data-l="名称">' + esc(name.replace(/\.$/, '')) + '</td>' +
+            '<td class="ttl" data-l="TTL">' + ttl + 's</td>' +
+            '<td class="typ" data-l="类型">' + esc(typeName) + '</td>' +
+            '<td class="val" data-l="值">' + prefix + esc(val) + '</td></tr>';
+    }
+
+    $('queryBtn').addEventListener('click', runQuery);
+    $('domainInput').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); runQuery(); }
+    });
+    $('clearBtn').addEventListener('click', function () {
+        $('resultWrap').innerHTML = '<div class="empty-tip">暂无结果，点击「查询」开始</div>';
+        $('statDom').textContent = '0';
+        $('statRec').textContent = '0';
+        setStatus('已清空结果。', 'info'));
+    });
+    document.querySelectorAll('input[name="provider"]').forEach(function (r) {
+        r.addEventListener('change', function () {
+            $('statProv').textContent = r.value === 'google' ? 'Google' : 'Cloudflare';
+        });
+    });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>体脂率计算器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线体脂率计算器，美国海军法围度测量（腰围/颈围/臀围）与 BMI 估算法双模式，附体脂分级标准与瘦体重计算，健身减脂必备，纯前端计算。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="体脂率计算,体脂,围度测量,腰围,颈围,瘦体重,BMI体脂,健身计算,减脂工具,免费工具,在线工具,纯前端处理,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/daily/body-fat-tool.html"/>
+<meta property="og:title" content="体脂率计算器"/>
+<meta property="og:description" content="围度实测 + BMI 双估算。"/>
+<meta property="og:url" content="https://box.lynvortex.top/daily/body-fat-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="体脂率计算器"/>
+<meta itemprop="description" content="围度实测 + BMI 双估算。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"日常通用","item":"https://box.lynvortex.top/daily.html"},{"@type":"ListItem","position":3,"name":"体脂率计算器","item":"https://box.lynvortex.top/daily/body-fat-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"体脂率计算器","url":"https://box.lynvortex.top/daily/body-fat-tool.html","description":"体脂率计算器","applicationCategory":"日常通用","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>💪 体脂率计算器</h1>
+        <p>海军围度法 + BMI 估算，双模式对照</p>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>计算方法</label>
+            <select id="method">
+                <option value="navy">海军围度法（推荐，需软尺）</option>
+                <option value="bmi">BMI 估算法（只需身高体重）</option>
+            </select>
+        </div>
+        <div class="form-item"><label>性别</label>
+            <select id="gender"><option value="male">男</option><option value="female">女</option></select>
+        </div>
+        <div class="form-item"><label>年龄</label>
+            <input type="number" id="age" value="28" min="10" max="90"/>
+        </div>
+        <div class="form-item"><label>身高 (cm)</label>
+            <input type="number" id="height" value="172" min="120" max="220"/>
+        </div>
+        <div class="form-item"><label>体重 (kg)</label>
+            <input type="number" id="weight" value="65" min="30" max="200" step="0.1"/>
+        </div>
+        <div class="form-item navy"><label>颈围 (cm)</label>
+            <input type="number" id="neck" value="37" min="20" max="60" step="0.1"/>
+        </div>
+        <div class="form-item navy"><label>腰围 (cm)</label>
+            <input type="number" id="waist" value="78" min="40" max="160" step="0.1"/>
+        </div>
+        <div class="form-item navy female-only"><label>臀围 (cm，女必填)</label>
+            <input type="number" id="hip" value="94" min="50" max="170" step="0.1"/>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="calcBtn">⚙️ 计算体脂率</button>
+    </div>
+    <div class="status-bar info" id="statusBar">晨起空腹测量围度更准确</div>
+    <div id="resultWrap"></div>
+    <p style="font-size:0.8em;color:#94a3b8;margin:20px 0 8px;">体脂分级参考</p>
+    <div id="tableWrap" style="overflow-x:auto;"></div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>💪 双模式</h3>
+        <p>围度实测与快速估算互相印证。</p>
+        <div class="feature-chips"><span class="feature-chip">US Navy 公式</span><span class="feature-chip">Deurenberg 公式</span><span class="feature-chip">瘦体重</span><span class="feature-chip">分级定位</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 测量要点</h3>
+        <ul class="tips-list">
+            <li>颈围：喉结下方最细处；腰围：肚脐水平一圈</li>
+            <li>臀围：臀部最凸处水平一周（女性必测）</li>
+            <li>体脂钳/DEXA 扫描比公式更精确，公式作趋势参考</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+function navyBF(gender, height, neck, waist, hip) {
+    var h = height, n = neck, w = waist, p = hip;
+    if (gender === 'male') {
+        return 495 / (1.0324 - 0.19077 * Math.log10(w - n) + 0.15456 * Math.log10(h)) - 450;
+    }
+    return 495 / (1.29579 - 0.35004 * Math.log10(w + p - n) + 0.22100 * Math.log10(h)) - 450;
+}
+function bmiBF(bmi, age, gender) {
+    return 1.20 * bmi + 0.23 * age - 10.8 * (gender === 'male' ? 1 : 0) - 5.4;
+}
+
+function gradeBF(gender, bf) {
+    var male = [[6, '必需脂肪', '#7f1d1d'], [14, '运动员', '#27ae60'], [18, '健康', '#2980b9'], [25, '平均', '#f39c12'], [100, '偏高', '#c0392b']];
+    var female = [[14, '必需脂肪', '#7f1d1d'], [21, '运动员', '#27ae60'], [25, '健康', '#2980b9'], [32, '平均', '#f39c12'], [100, '偏高', '#c0392b']];
+    var tiers = gender === 'male' ? male : female;
+    for (var i = 0; i < tiers.length; i++) {
+        if (bf <= tiers[i][0]) return { n: tiers[i][1], c: tiers[i][2], range: (i === 0 ? '≤' + tiers[i][0] : tiers[i - 1][0] + '-' + tiers[i][0]) };
+    }
+}
+
+function calc() {
+    var method = document.getElementById('method').value;
+    var gender = document.getElementById('gender').value;
+    var age = parseFloat(document.getElementById('age').value);
+    var h = parseFloat(document.getElementById('height').value);
+    var w = parseFloat(document.getElementById('weight').value);
+    var sb = document.getElementById('statusBar');
+
+    Array.prototype.forEach.call(document.querySelectorAll('.navy'), function(el) { el.style.display = method === 'navy' ? '' : 'none'; });
+    Array.prototype.forEach.call(document.querySelectorAll('.female-only'), function(el) { el.style.display = (method === 'navy' && gender === 'female') ? '' : 'none'; });
+
+    if (!(h > 100 && w > 25 && age > 5)) { sb.textContent = '请填写完整的身高体重年龄'; sb.className = 'status-bar error'; return; }
+
+    var bf = null, tag = '';
+    if (method === 'navy') {
+        var neck = parseFloat(document.getElementById('neck').value);
+        var waist = parseFloat(document.getElementById('waist').value);
+        var hip = parseFloat(document.getElementById('hip').value);
+        if (!(neck > 15 && waist > 30)) { sb.textContent = '请填写颈围与腰围'; sb.className = 'status-bar error'; return; }
+        if (gender === 'female' && !(hip > 40)) { sb.textContent = '女性需填写臀围'; sb.className = 'status-bar error'; return; }
+        if (waist - neck <= 0 && gender === 'male') { sb.textContent = '腰围应大于颈围，请核对数据'; sb.className = 'status-bar error'; return; }
+        bf = navyBF(gender, h, neck, waist, hip);
+        tag = '美国海军围度法';
+    } else {
+        var bmi = w / Math.pow(h / 100, 2);
+        bf = bmiBF(bmi, age, gender);
+        tag = 'Deurenberg BMI 估算法';
+    }
+
+    if (bf < 2 || bf > 65) { sb.textContent = '计算结果异常，请检查输入'; sb.className = 'status-bar error'; return; }
+    var g = gradeBF(gender, bf);
+    var bmi2 = w / Math.pow(h / 100, 2);
+    var lbm = w * (1 - bf / 100);
+    var fatKg = w - lbm;
+
+    document.getElementById('resultWrap').innerHTML =
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px;">' +
+        '<div style="border:1px solid #e2e8f0;border-radius:12px;padding:18px;text-align:center;background:linear-gradient(135deg,#f0f7ff,#fff);"><div style="font-size:2.2em;font-weight:800;color:#4a90e2;">' + bf.toFixed(1) + '%</div><div style="color:#94a3b8;font-size:0.82em;">体脂率 · ' + tag + '</div></div>' +
+        '<div style="border:1px solid #e2e8f0;border-radius:12px;padding:18px;text-align:center;"><div style="font-size:1.5em;font-weight:700;color:' + g.c + '">' + g.n + '</div><div style="color:#94a3b8;font-size:0.82em;">参考区间 ' + g.range + '%</div></div>' +
+        '<div style="border:1px solid #e2e8f0;border-radius:12px;padding:18px;text-align:center;"><div style="font-size:1.5em;font-weight:700;color:#2c3e50;">' + lbm.toFixed(1) + ' kg</div><div style="color:#94a3b8;font-size:0.82em;">瘦体重（去脂体重）</div></div>' +
+        '<div style="border:1px solid #e2e8f0;border-radius:12px;padding:18px;text-align:center;"><div style="font-size:1.5em;font-weight:700;color:#2c3e50;">' + fatKg.toFixed(1) + ' kg</div><div style="color:#94a3b8;font-size:0.82em;">脂肪重量 · BMI ' + bmi2.toFixed(1) + '</div></div></div>';
+
+    document.getElementById('statusBar').textContent = '计算完成：体脂率 ' + bf.toFixed(1) + '%（' + g.n + '）';
+    document.getElementById('statusBar').className = 'status-bar success';
+    renderTable(gender, bf);
+}
+
+function renderTable(gender, cur) {
+    var male = [['2-6', '必需脂肪'], ['6-14', '运动员'], ['14-18', '健康'], ['18-25', '平均'], ['25+', '偏高']];
+    var female = [['10-14', '必需脂肪'], ['14-21', '运动员'], ['21-25', '健康'], ['25-32', '平均'], ['32+', '偏高']];
+    var rows = gender === 'male' ? male : female;
+    var html = '<table style="width:100%;border-collapse:collapse;font-size:0.88em;"><tr style="background:#f1f5f9;"><th style="padding:8px;border:1px solid #e2e8f0;">区间（' + (gender === 'male' ? '男' : '女') + '）</th>' +
+        rows.map(function(r) { return '<th style="padding:8px;border:1px solid #e2e8f0;">' + r[0] + '%</th>'; }).join('') + '</tr><tr>' +
+        '<td style="padding:8px;border:1px solid #e2e8f0;font-weight:700;">分级</td>' +
+        rows.map(function(r) {
+            var isCur = false;
+            var nums = r[0].split('-');
+            var lo = parseFloat(nums[0]), hi = nums[1] ? parseFloat(nums[1]) : 999;
+            if (cur >= lo && cur < (hi === 999 ? 999 : hi + 0.001)) isCur = true;
+            return '<td style="padding:8px;border:1px solid #e2e8f0;text-align:center;' + (isCur ? 'background:#f0f9f1;font-weight:700;color:#27ae60;' : '') + '">' + r[1] + '</td>';
+        }).join('') + '</tr></table>';
+    document.getElementById('tableWrap').innerHTML = html;
+}
+
+document.getElementById('method').addEventListener('change', calc);
+document.getElementById('gender').addEventListener('change', calc);
+['age','height','weight','neck','waist','hip'].forEach(function(id) {
+    document.getElementById(id).addEventListener('input', calc);
+});
+document.getElementById('calcBtn').onclick = calc;
+calc();
+initSidebar('daily');
+</script>
+</body>
+</html>

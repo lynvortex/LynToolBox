@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>变声器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="变声器，纯前端Web Audio API实时变声，支持机器人/花栗鼠/低沉/电话效果，麦克风实时处理，数据本地处理。"/>
+<meta name="robots" content="noindex, follow" />
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.effect-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;}
+.effect-card{background:#f8fafc;border:2px solid #e0e6ed;border-radius:12px;padding:18px;text-align:center;cursor:pointer;transition:.2s;}
+.effect-card:hover{border-color:#4a90e2;}
+.effect-card.active{border-color:#4a90e2;background:#e0f2fe;}
+.effect-card .icon{font-size:2em;margin-bottom:6px;}
+.effect-card .name{font-size:.9em;font-weight:700;color:#2c3e50;}
+.control-panel{background:#f8fafc;border:1px solid #e0e6ed;border-radius:12px;padding:20px;margin-bottom:16px;}
+.slider-row{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+.slider-row label{font-size:.85em;font-weight:600;color:#475569;width:80px;flex:none;}
+.slider-row input[type=range]{flex:1;height:6px;border-radius:3px;accent-color:#4a90e2;}
+.slider-row .val{width:60px;text-align:center;font-size:.85em;font-weight:700;color:#4a90e2;font-family:'Courier New',monospace;}
+.btn-row{text-align:center;margin-top:16px;}
+.record-btn{padding:14px 36px;font-size:1em;font-weight:700;border:none;border-radius:12px;background:linear-gradient(135deg,#4a90e2,#3a7bd5);color:#fff;cursor:pointer;transition:.2s;box-shadow:0 4px 15px rgba(74,144,226,.4);}
+.record-btn.recording{background:linear-gradient(135deg,#ef4444,#dc2626);}
+.info-note{background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:10px;font-size:.8em;color:#92400e;margin-bottom:14px;}
+</style>
+    <meta name="keywords" content="变声器,在线变声器,音视频处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/media/voice-changer-tool.html" />
+    <meta property="og:title" content="变声器" />
+    <meta property="og:description" content="变声器，纯前端Web Audio API实时变声，支持机器人/花栗鼠/低沉/电话效果，麦克风实时处理，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/media/voice-changer-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="变声器" />
+    <meta itemprop="description" content="变声器，纯前端Web Audio API实时变声，支持机器人/花栗鼠/低沉/电话效果，麦克风实时处理，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "音视频处理",
+                "item": "https://box.lynvortex.top/media.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "变声器",
+                "item": "https://box.lynvortex.top/media/voice-changer-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "变声器",
+        "url": "https://box.lynvortex.top/media/voice-changer-tool.html",
+        "description": "实时麦克风变声，支持机器人/儿童/低音等多种效果",
+        "applicationCategory": "音视频处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🎤 变声器</h1><p>实时麦克风变声，多种音效效果</p></div>
+<div class="info-note">💡 需要授权麦克风权限，所有音频处理在浏览器本地完成，不会上传任何音频数据。</div>
+<div class="effect-grid">
+<div class="effect-card active" data-effect="robot"><div class="icon">🤖</div><div class="name">机器人</div></div>
+<div class="effect-card" data-effect="chipmunk"><div class="icon">🐿️</div><div class="name">花栗鼠</div></div>
+<div class="effect-card" data-effect="deep"><div class="icon">👹</div><div class="name">低沉声</div></div>
+<div class="effect-card" data-effect="phone"><div class="icon">📞</div><div class="name">电话音</div></div>
+<div class="effect-card" data-effect="echo"><div class="icon">Echo</div><div class="name">回声</div></div>
+<div class="effect-card" data-effect="alien"><div class="icon">👽</div><div class="name">外星人</div></div>
+</div>
+<div class="control-panel">
+<div class="slider-row"><label>🎵 音调</label><input type="range" id="pitch" min="-12" max="12" value="0" step="1"/><span class="val" id="pitchVal">0</span></div>
+<div class="slider-row"><label>🔊 音量</label><input type="range" id="volume" min="0" max="200" value="100"/><span class="val" id="volVal">100%</span></div>
+<div class="slider-row"><label>📊 混响</label><input type="range" id="reverb" min="0" max="100" value="0"/><span class="val" id="revVal">0%</span></div>
+</div>
+<div class="btn-row">
+<button class="record-btn" id="toggleBtn">🎤 开始变声</button>
+</div>
+<div id="statusBar" class="status-bar info">选择效果后点击按钮开始变声</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 变声器</h3><p>实时麦克风变声工具</p><div class="feature-chips"><span class="feature-chip">机器人</span><span class="feature-chip">花栗鼠</span><span class="feature-chip">低沉声</span><span class="feature-chip">电话音</span><span class="feature-chip">回声</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>使用前请允许浏览器访问麦克风</li><li>建议佩戴耳机避免啸叫回授</li><li>音调滑块可微调变声效果</li><li>所有处理在本地完成，不上传数据</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var audioCtx=null,mediaStream=null,source=null,activeEffect='robot',running=false;
+var nodes=[];
+document.querySelectorAll('.effect-card').forEach(function(c){c.onclick=function(){document.querySelectorAll('.effect-card').forEach(function(x){x.classList.remove('active');});c.classList.add('active');activeEffect=c.dataset.effect;if(running){stopEffect();startEffect();}};});
+function clearNodes(){nodes.forEach(function(n){try{n.disconnect();}catch(e){}});nodes=[];}
+function startEffect(){
+clearNodes();
+var pitch=parseFloat(document.getElementById('pitch').value);
+var effectPitch=pitch;
+if(activeEffect==='chipmunk')effectPitch+=5;
+else if(activeEffect==='deep')effectPitch-=4;
+else if(activeEffect==='alien')effectPitch+=3;
+else if(activeEffect==='robot')effectPitch=0;
+var gainNode=audioCtx.createGain();
+gainNode.gain.value=parseFloat(document.getElementById('volume').value)/100;
+nodes.push(gainNode);
+source.connect(gainNode);
+var lastNode=gainNode;
+/* pitch shift via biquad filter approximation (MediaStreamSource has no playbackRate) */
+if(effectPitch!==0){
+var filter=audioCtx.createBiquadFilter();
+filter.type=effectPitch>0?'highshelf':'lowshelf';
+filter.frequency.value=effectPitch>0?2000:500;
+filter.gain.value=effectPitch*3;
+lastNode.connect(filter);lastNode=filter;nodes.push(filter);
+}
+if(activeEffect==='phone'){
+var bp=audioCtx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=1500;bp.Q.value=2;
+lastNode.connect(bp);lastNode=bp;nodes.push(bp);
+}
+if(activeEffect==='robot'){
+var lfo=audioCtx.createOscillator();lfo.frequency.value=30;
+var lfoGain=audioCtx.createGain();lfoGain.gain.value=50;
+var delay=audioCtx.createDelay();delay.delayTime.value=0.01;
+lfo.connect(lfoGain);lfoGain.connect(delay.delayTime);
+lastNode.connect(delay);lastNode=delay;nodes.push(lfo,lfoGain,delay);
+lfo.start();
+}
+if(activeEffect==='alien'){
+var ringOsc=audioCtx.createOscillator();ringOsc.frequency.value=80;
+var ringGain=audioCtx.createGain();ringGain.gain.value=0.5;
+var ringMerge=audioCtx.createGain();
+lastNode.connect(ringGain);ringOsc.connect(ringGain.gain);ringGain.connect(ringMerge);
+lastNode=ringMerge;nodes.push(ringOsc,ringGain,ringMerge);
+ringOsc.start();
+}
+var reverbAmt=parseFloat(document.getElementById('reverb').value)/100;
+if(reverbAmt>0){
+var convolver=audioCtx.createConvolver();
+var impulseLen=Math.floor(audioCtx.sampleRate*1.5);
+var impulse=audioCtx.createBuffer(2,impulseLen,audioCtx.sampleRate);
+for(var ch=0;ch<2;ch++){
+var cData=impulse.getChannelData(ch);
+for(var i=0;i<impulseLen;i++)cData[i]=(Math.random()*2-1)*Math.pow(1-i/impulseLen,2);
+}
+convolver.buffer=impulse;
+var wetGain=audioCtx.createGain();wetGain.gain.value=reverbAmt;
+var dryGain=audioCtx.createGain();dryGain.gain.value=1-reverbAmt;
+lastNode.connect(dryGain);lastNode.connect(convolver);convolver.connect(wetGain);
+var mergeGain=audioCtx.createGain();
+dryGain.connect(mergeGain);wetGain.connect(mergeGain);
+lastNode=mergeGain;nodes.push(convolver,wetGain,dryGain,mergeGain);
+}
+lastNode.connect(audioCtx.destination);
+}
+function stopEffect(){clearNodes();if(source){try{source.disconnect();}catch(e){}}}
+document.getElementById('toggleBtn').onclick=function(){
+if(running){
+stopEffect();if(mediaStream){mediaStream.getTracks().forEach(function(t){t.stop();});}
+running=false;
+document.getElementById('toggleBtn').textContent='🎤 开始变声';
+document.getElementById('toggleBtn').classList.remove('recording');
+document.getElementById('statusBar').textContent='已停止';document.getElementById('statusBar').className='status-bar info';
+}else{
+navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+mediaStream=stream;
+if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+source=audioCtx.createMediaStreamSource(stream);
+startEffect();running=true;
+document.getElementById('toggleBtn').textContent='⏹ 停止变声';
+document.getElementById('toggleBtn').classList.add('recording');
+document.getElementById('statusBar').textContent='正在变声中...';document.getElementById('statusBar').className='status-bar success';
+}).catch(function(err){
+document.getElementById('statusBar').textContent='麦克风访问失败: '+err.message;document.getElementById('statusBar').className='status-bar error';
+});
+}
+};
+document.getElementById('pitch').oninput=function(){document.getElementById('pitchVal').textContent=this.value;if(running){stopEffect();startEffect();}};
+document.getElementById('volume').oninput=function(){document.getElementById('volVal').textContent=this.value+'%';nodes.forEach(function(n){if(n.gain)n.gain.value=parseFloat(this.value)/100;}.bind(this));};
+document.getElementById('reverb').oninput=function(){document.getElementById('revVal').textContent=this.value+'%';if(running){stopEffect();startEffect();}};
+initSidebar('media');
+</script>
+</body>
+</html>

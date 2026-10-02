@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>房贷计算器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="房贷计算器，支持等额本息和等额本金两种还款方式，计算月供、总利息、还款总额，纯前端无依赖。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
+        @media (max-width: 600px) { .input-grid { grid-template-columns: 1fr; } }
+        .mode-toggle { display: flex; gap: 8px; margin-bottom: 18px; }
+        .mode-btn { padding: 9px 22px; border-radius: 8px; border: 1px solid #e0e6ed; background: #f8fafc; cursor: pointer; font-weight: 600; color: #64748b; }
+        .mode-btn.active { background: #4a90e2; color: #fff; border-color: #4a90e2; }
+        .result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
+        .result-item { background: linear-gradient(135deg, #4a90e2 0%, #3a7bd5 100%); color: #fff; border-radius: 12px; padding: 20px; text-align: center; }
+        .result-item .rv { font-size: 1.8em; font-weight: 700; font-family: 'Courier New', monospace; }
+        .result-item .rl { font-size: 0.82em; opacity: 0.85; margin-top: 4px; }
+        .detail-card { background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 12px; padding: 20px; }
+        .detail-card h4 { color: #2c3e50; margin-bottom: 12px; }
+        .amort-table { width: 100%; border-collapse: collapse; font-size: 0.82em; }
+        .amort-table th { background: #4a90e2; color: #fff; padding: 8px; text-align: right; }
+        .amort-table th:first-child { text-align: center; }
+        .amort-table td { padding: 6px 8px; border-bottom: 1px solid #e0e6ed; text-align: right; font-family: 'Courier New', monospace; }
+        .amort-table td:first-child { text-align: center; }
+        .amort-table tr:nth-child(even) { background: #f8fafc; }
+        .amort-wrap { max-height: 400px; overflow-y: auto; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="房贷计算器,在线房贷计算器,日常通用,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/daily/mortgage-tool.html" />
+    <meta property="og:title" content="房贷计算器" />
+    <meta property="og:description" content="房贷计算器，支持等额本息和等额本金两种还款方式，计算月供、总利息、还款总额，纯前端无依赖。" />
+    <meta property="og:url" content="https://box.lynvortex.top/daily/mortgage-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="房贷计算器" />
+    <meta itemprop="description" content="房贷计算器，支持等额本息和等额本金两种还款方式，计算月供、总利息、还款总额，纯前端无依赖。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "日常通用",
+                "item": "https://box.lynvortex.top/daily.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "房贷计算器",
+                "item": "https://box.lynvortex.top/daily/mortgage-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "房贷计算器",
+        "url": "https://box.lynvortex.top/daily/mortgage-tool.html",
+        "description": "等额本息等额本金房贷月供计算，含还款明细表",
+        "applicationCategory": "日常通用",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🏠 房贷计算器</h1>
+                <p>等额本息/等额本金还款计算，月供、利息一目了然</p>
+            </div>
+
+            <div class="mode-toggle">
+                <div class="mode-btn active" data-mode="equal">等额本息</div>
+                <div class="mode-btn" data-mode="principal">等额本金</div>
+            </div>
+
+            <div class="input-grid">
+                <div class="form-item"><label>贷款总额 (万元)</label><input type="number" id="loanAmount" value="100" min="1" step="0.1" /></div>
+                <div class="form-item"><label>贷款期限 (年)</label><input type="number" id="loanYears" value="30" min="1" max="50" /></div>
+                <div class="form-item"><label>年利率 (%)</label><input type="number" id="loanRate" value="4.2" min="0.01" step="0.01" /></div>
+                <div class="form-item"><label>首付比例 (%)</label><input type="number" id="downPayment" value="30" min="0" max="90" /></div>
+            </div>
+
+            <button class="btn btn-primary" id="calcBtn" style="width:100%;margin-bottom:20px;font-size:1.05em;padding:14px;">开始计算</button>
+
+            <div class="result-grid" id="resultGrid" style="display:none;">
+                <div class="result-item"><div class="rv" id="monthlyPay">—</div><div class="rl">月供 (元)</div></div>
+                <div class="result-item"><div class="rv" id="totalInterest">—</div><div class="rl">总利息 (元)</div></div>
+                <div class="result-item"><div class="rv" id="totalPay">—</div><div class="rl">还款总额 (元)</div></div>
+                <div class="result-item"><div class="rv" id="totalMonths">—</div><div class="rl">还款月数</div></div>
+            </div>
+
+            <div class="detail-card" id="detailCard" style="display:none;">
+                <h4>📋 还款明细 (前24期)</h4>
+                <div class="amort-wrap">
+                    <table class="amort-table">
+                        <thead><tr><th>期数</th><th>月供</th><th>本金</th><th>利息</th><th>剩余本金</th></tr></thead>
+                        <tbody id="amortBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="statusBar" class="status-bar info">所有计算在浏览器本地完成</div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 房贷计算器</h3>
+                <p>等额本息与等额本金还款计算</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">月供计算</span>
+                    <span class="feature-chip">总利息</span>
+                    <span class="feature-chip">还款明细</span>
+                    <span class="feature-chip">离线可用</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>等额本息：每月还款金额固定</li>
+                    <li>等额本金：每月本金固定，利息递减</li>
+                    <li>结果仅供参考，实际以银行为准</li>
+                    <li>纯前端计算，无需网络</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+var mode='equal';
+document.querySelectorAll('.mode-btn').forEach(function(b){
+    b.onclick=function(){
+        document.querySelectorAll('.mode-btn').forEach(function(x){x.classList.remove('active');});
+        b.classList.add('active');mode=b.dataset.mode;
+    };
+});
+
+function fmt(n){return Math.round(n).toLocaleString('zh-CN');}
+
+document.getElementById('calcBtn').onclick=function(){
+    var amt=parseFloat(document.getElementById('loanAmount').value)*10000;
+    var years=parseInt(document.getElementById('loanYears').value);
+    var rate=parseFloat(document.getElementById('loanRate').value)/100/12;
+    var dp=parseFloat(document.getElementById('downPayment').value)||0;
+    var loanAmt=amt*(1-dp/100);
+    var months=years*12;
+    if(!loanAmt||!months||loanAmt<=0)return;
+
+    var rows=[];
+    if(mode==='equal'){
+        var monthly=loanAmt*rate*Math.pow(1+rate,months)/(Math.pow(1+rate,months)-1);
+        var totalPay=monthly*months;
+        var totalInterest=totalPay-loanAmt;
+        var remaining=loanAmt;
+        for(var i=1;i<=months;i++){
+            var interest=remaining*rate;
+            var principal=monthly-interest;
+            remaining-=principal;
+            if(i<=24)rows.push([i,monthly,principal,interest,Math.max(0,remaining)]);
+        }
+        document.getElementById('monthlyPay').textContent=fmt(monthly);
+        document.getElementById('totalInterest').textContent=fmt(totalInterest);
+        document.getElementById('totalPay').textContent=fmt(totalPay);
+    }else{
+        var monthlyPrincipal=loanAmt/months;
+        var totalInterest=0;
+        var remaining=loanAmt;
+        var firstPay=0,lastPay=0;
+        for(var i=1;i<=months;i++){
+            var interest=remaining*rate;
+            var pay=monthlyPrincipal+interest;
+            totalInterest+=interest;
+            remaining-=monthlyPrincipal;
+            if(i===1)firstPay=pay;
+            if(i===months)lastPay=pay;
+            if(i<=24)rows.push([i,pay,monthlyPrincipal,interest,Math.max(0,remaining)]);
+        }
+        document.getElementById('monthlyPay').textContent=fmt(firstPay)+'~'+fmt(lastPay);
+        document.getElementById('totalInterest').textContent=fmt(totalInterest);
+        document.getElementById('totalPay').textContent=fmt(loanAmt+totalInterest);
+    }
+
+    document.getElementById('totalMonths').textContent=months+' 期';
+    document.getElementById('resultGrid').style.display='grid';
+    document.getElementById('detailCard').style.display='block';
+    document.getElementById('amortBody').innerHTML=rows.map(function(r){
+        return '<tr><td>'+r[0]+'</td><td>'+fmt(r[1])+'</td><td>'+fmt(r[2])+'</td><td>'+fmt(r[3])+'</td><td>'+fmt(r[4])+'</td></tr>';
+    }).join('');
+};
+initSidebar('daily');
+</script>
+</body>
+</html>

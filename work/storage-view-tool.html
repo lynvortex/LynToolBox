@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>本地存储查看器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="本地存储查看器，查看管理 localStorage、sessionStorage、Cookie，支持新增编辑删除，纯前端操作。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+        .store-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+        .store-tab { padding: 8px 16px; border: 1px solid #e0e6ed; border-radius: 8px; background: #f8fafc; color: #64748b; cursor: pointer; font-size: 0.85em; font-weight: 600; }
+        .store-tab.active { background: #4a90e2; color: #fff; border-color: #4a90e2; }
+        .kv-table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+        .kv-table th { text-align: left; padding: 10px 12px; background: #f1f5f9; color: #475569; font-weight: 600; border-bottom: 2px solid #e1e4e8; position: sticky; top: 0; }
+        .kv-table td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+        .kv-table tr:hover td { background: #f8fafc; }
+        .kv-key { font-family: 'Courier New', monospace; color: #1e293b; font-weight: 600; word-break: break-all; max-width: 220px; }
+        .kv-val { font-family: 'Courier New', monospace; color: #475569; word-break: break-all; max-width: 460px; max-height: 120px; overflow: auto; display: block; }
+        .kv-actions { white-space: nowrap; }
+        .kv-actions button { padding: 4px 8px; font-size: 0.8em; margin-right: 4px; border: 1px solid #e0e6ed; background: #f8fafc; border-radius: 5px; cursor: pointer; color: #475569; }
+        .kv-actions button:hover { background: #e2e8f0; }
+        .kv-actions button.del:hover { background: #fee2e2; color: #ef4444; border-color: #fecaca; }
+        .table-wrap { border: 1px solid #e1e4e8; border-radius: 10px; overflow: auto; max-height: 460px; }
+        .empty-state { text-align: center; padding: 50px 20px; color: #94a3b8; }
+        .add-row { display: grid; grid-template-columns: 1fr 2fr auto; gap: 8px; margin-bottom: 16px; }
+        @media (max-width: 600px) { .add-row { grid-template-columns: 1fr; } }
+        .add-row input { padding: 9px 12px; border: 1px solid #e0e6ed; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.85em; outline: none; }
+        .add-row input:focus { border-color: #4a90e2; }
+        .stat-pills { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+        .stat-pill { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; padding: 5px 12px; border-radius: 20px; font-size: 0.8em; font-weight: 600; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="本地存储查看,在线本地存储查看,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/storage-view-tool.html" />
+    <meta property="og:title" content="本地存储查看器" />
+    <meta property="og:description" content="本地存储查看器，查看管理 localStorage、sessionStorage、Cookie，支持新增编辑删除，纯前端操作。" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/storage-view-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="本地存储查看器" />
+    <meta itemprop="description" content="本地存储查看器，查看管理 localStorage、sessionStorage、Cookie，支持新增编辑删除，纯前端操作。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "本地存储查看",
+                "item": "https://box.lynvortex.top/work/storage-view-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "本地存储查看",
+        "url": "https://box.lynvortex.top/work/storage-view-tool.html",
+        "description": "查看和管理localStorage、sessionStorage、Cookie数据",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🗄️ 本地存储查看器</h1>
+                <p>查看与管理当前站点的 localStorage、sessionStorage 与 Cookie，支持增删改</p>
+            </div>
+
+            <div class="store-tabs">
+                <div class="store-tab active" data-store="local">📦 localStorage</div>
+                <div class="store-tab" data-store="session">🗂️ sessionStorage</div>
+                <div class="store-tab" data-store="cookie">🍪 Cookie</div>
+            </div>
+
+            <div class="stat-pills" id="statPills"></div>
+
+            <div class="add-row" id="addRow">
+                <input type="text" id="newKey" placeholder="键名 key" />
+                <input type="text" id="newVal" placeholder="值 value" />
+                <button class="btn btn-primary" id="addBtn" style="padding:9px 18px;">＋ 添加/更新</button>
+            </div>
+
+            <div class="btn-row" style="margin-bottom:14px;">
+                <button class="btn btn-ghost" id="refreshBtn">🔄 刷新</button>
+                <button class="btn btn-ghost" id="clearAllBtn" style="color:#ef4444;">🗑️ 清空当前存储</button>
+            </div>
+
+            <div class="table-wrap">
+                <table class="kv-table">
+                    <thead><tr><th style="width:24%;">键</th><th>值</th><th style="width:120px;">操作</th></tr></thead>
+                    <tbody id="kvBody"></tbody>
+                </table>
+            </div>
+
+            <div id="statusBar" class="status-bar info">仅显示当前站点（box.lynvortex.top）下本工具页可访问的存储数据</div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 存储查看器</h3>
+                <p>查看浏览器的 localStorage、sessionStorage 和 Cookies</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">localStorage</span>
+                    <span class="feature-chip">sessionStorage</span>
+                    <span class="feature-chip">Cookies</span>
+                    <span class="feature-chip">离线可用</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>仅查看当前域名下的存储数据</li>
+                    <li>支持新增、编辑、删除存储项</li>
+                    <li>可一键清空当前存储类型数据</li>
+                    <li>数据不会上传到服务器</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    let currentStore = 'local';
+    const kvBody = document.getElementById('kvBody');
+    const statPills = document.getElementById('statPills');
+    const statusBar = document.getElementById('statusBar');
+    const newKey = document.getElementById('newKey');
+    const newVal = document.getElementById('newVal');
+    const addRow = document.getElementById('addRow');
+
+    const setStatus = (m, t) => { statusBar.textContent = m; statusBar.className = 'status-bar ' + (t || 'info'); };
+
+    const getStore = () => currentStore === 'local' ? localStorage : currentStore === 'session' ? sessionStorage : null;
+
+    const parseCookies = () => {
+        return document.cookie.split('; ').filter(Boolean).map(c => {
+            const i = c.indexOf('=');
+            return [c.slice(0, i), c.slice(i + 1)];
+        });
+    };
+
+    const byteSize = (s) => new Blob([s]).size;
+
+    const render = () => {
+        let entries = [];
+        let totalBytes = 0, count = 0;
+        if (currentStore === 'cookie') {
+            entries = parseCookies();
+            count = entries.length;
+            totalBytes = entries.reduce((s, [k, v]) => s + byteSize(k) + byteSize(v), 0);
+            addRow.style.display = 'none';
+        } else {
+            const store = getStore();
+            count = store.length;
+            for (let i = 0; i < store.length; i++) {
+                const k = store.key(i);
+                const v = store.getItem(k);
+                entries.push([k, v]);
+                totalBytes += byteSize(k) + byteSize(v);
+            }
+            addRow.style.display = 'grid';
+        }
+        statPills.innerHTML = `<span class="stat-pill">条目：${count}</span><span class="stat-pill">占用：${(totalBytes / 1024).toFixed(2)} KB</span>`;
+        if (!entries.length) {
+            kvBody.innerHTML = '<tr><td colspan="3"><div class="empty-state">📭 当前存储为空</div></td></tr>';
+            return;
+        }
+        kvBody.innerHTML = entries.map(([k, v], i) => `
+            <tr>
+                <td class="kv-key">${escapeHtml(k)}</td>
+                <td><span class="kv-val">${escapeHtml(v)}</span></td>
+                <td class="kv-actions">
+                    <button data-edit="${i}">✏️</button>
+                    <button class="del" data-del="${i}" data-key="${escapeHtml(k)}">🗑️</button>
+                </td>
+            </tr>`).join('');
+    };
+
+    document.querySelectorAll('.store-tab').forEach(t => t.addEventListener('click', () => {
+        document.querySelectorAll('.store-tab').forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+        currentStore = t.dataset.store;
+        render();
+        setStatus('已切换至 ' + (currentStore === 'local' ? 'localStorage' : currentStore === 'session' ? 'sessionStorage' : 'Cookie'), 'info');
+    }));
+
+    document.getElementById('addBtn').addEventListener('click', () => {
+        const k = newKey.value.trim();
+        if (!k) { setStatus('请填写键名', 'error'); return; }
+        if (currentStore === 'cookie') { setStatus('Cookie 请通过「编辑」设置', 'info'); return; }
+        getStore().setItem(k, newVal.value);
+        newKey.value = ''; newVal.value = '';
+        render(); setStatus(`已保存：${k}`, 'success');
+    });
+
+    kvBody.addEventListener('click', (e) => {
+        const editBtn = e.target.closest('[data-edit]');
+        const delBtn = e.target.closest('[data-del]');
+        if (editBtn) {
+            const row = editBtn.closest('tr');
+            const key = row.querySelector('.kv-key').textContent;
+            const val = row.querySelector('.kv-val').textContent;
+            newKey.value = key; newVal.value = val;
+            newKey.focus();
+            setStatus(`编辑「${key}」，修改后点击「添加/更新」`, 'info');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        if (delBtn) {
+            const key = delBtn.dataset.key;
+            if (!confirm(`确认删除「${key}」？`)) return;
+            if (currentStore === 'cookie') {
+                document.cookie = encodeURIComponent(key) + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+            } else {
+                getStore().removeItem(key);
+            }
+            render(); setStatus(`已删除：${key}`, 'success');
+        }
+    });
+
+    document.getElementById('refreshBtn').addEventListener('click', () => { render(); setStatus('已刷新', 'info'); });
+    document.getElementById('clearAllBtn').addEventListener('click', () => {
+        if (!confirm(`确认清空当前${currentStore === 'local' ? 'localStorage' : currentStore === 'session' ? 'sessionStorage' : 'Cookie'}全部数据？此操作不可恢复！`)) return;
+        if (currentStore === 'cookie') {
+            parseCookies().forEach(([k]) => { document.cookie = encodeURIComponent(k) + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/'; });
+        } else {
+            getStore().clear();
+        }
+        render(); setStatus('已清空全部数据', 'success');
+    });
+
+    render();
+    initSidebar('work');
+</script>
+</body>
+</html>

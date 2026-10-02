@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>设备信息 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线设备信息检测工具，查看屏幕、CPU、内存、网络、电池、GPU、触控等硬件参数，调试前端兼容性必备，全部本地读取。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<style>
+.dev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;}
+.dev-card{border:1px solid #eef2f7;border-radius:10px;padding:16px;background:#fafbfc;}
+.dev-card h4{margin:0 0 10px;font-size:0.9em;color:#4a90e2;display:flex;align-items:center;gap:6px;}
+.dev-row{display:flex;justify-content:space-between;gap:12px;font-size:0.82em;padding:5px 0;border-bottom:1px dashed #e8edf3;}
+.dev-row span:first-child{color:#64748b;flex-shrink:0;}
+.dev-row span:last-child{color:#1e293b;text-align:right;word-break:break-all;font-family:Consolas,monospace;}
+.battery-bar{height:10px;border-radius:5px;background:#e2e8f0;overflow:hidden;margin-top:6px;}
+.battery-fill{height:100%;background:linear-gradient(90deg,#34d399,#10b981);transition:.3s;}
+</style>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="设备信息,硬件参数,屏幕分辨率,浏览器信息,GPU,CPU核心,电池API,网络信息,编程开发,免费工具,在线工具,纯前端,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/work/device-info-tool.html"/>
+<meta property="og:title" content="设备信息"/>
+<meta property="og:description" content="屏幕/CPU/内存/网络/电池硬件参数一览。"/>
+<meta property="og:url" content="https://box.lynvortex.top/work/device-info-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="设备信息"/>
+<meta itemprop="description" content="屏幕/CPU/内存/网络/电池硬件参数一览。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"编程开发","item":"https://box.lynvortex.top/work.html"},{"@type":"ListItem","position":3,"name":"设备信息","item":"https://box.lynvortex.top/work/device-info-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"设备信息","url":"https://box.lynvortex.top/work/device-info-tool.html","description":"设备硬件信息检测工具","applicationCategory":"编程开发","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>💻 设备信息</h1>
+        <p>屏幕 / CPU / 内存 / 网络 / 电池 / GPU，一键全览</p>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="runBtn">🔄 刷新检测</button>
+    </div>
+    <div class="status-bar info" id="statusBar">点击刷新读取本机参数</div>
+    <div class="dev-grid" id="grid"></div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 设备信息</h3>
+        <p>汇总 Navigator / Screen / Battery / Network 等标准 API。</p>
+        <div class="feature-chips"><span class="feature-chip">屏幕DPR</span><span class="feature-chip">GPU渲染器</span><span class="feature-chip">电池状态</span><span class="feature-chip">网络类型</span><span class="feature-chip">UA-CH</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>deviceMemory 上限为 8（防指纹保护），并非真实内存</li>
+            <li>电池 API 需浏览器授权，部分浏览器已禁用</li>
+            <li>Network Information API 仅 Chrome 系浏览器支持</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+function rows(div, arr) {
+    var h = '';
+    arr.forEach(function(r) {
+        h += '<div class="dev-row"><span>' + escapeHtml(r[0]) + '</span><span>' + (r[1] === undefined || r[1] === '' ? '—' : escapeHtml(r[1])) + '</span></div>';
+    });
+    div.innerHTML += h;
+}
+
+function render() {
+    var grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    var nav = navigator;
+
+    function mk(title) {
+        var d = document.createElement('div');
+        d.className = 'dev-card';
+        d.innerHTML = '<h4>' + title + '</h4><div class="rows"></div>';
+        grid.appendChild(d);
+        return d.querySelector('.rows');
+    }
+
+    var r1 = mk('🖥️ 屏幕');
+    rows(r1, [
+        ['分辨率', screen.width + ' × ' + screen.height],
+        ['物理分辨率', Math.round(screen.width * devicePixelRatio) + ' × ' + Math.round(screen.height * devicePixelRatio)],
+        ['可用区域（去任务栏）', screen.availWidth + ' × ' + screen.availHeight],
+        ['色深', screen.colorDepth + ' bit'],
+        ['方向', (screen.orientation && screen.orientation.type) || '—'],
+        ['设备像素比 DPR', devicePixelRatio],
+        ['窗口内尺寸', innerWidth + ' × ' + innerHeight],
+        ['屏占比', (innerWidth / screen.width * 100).toFixed(0) + '%（窗口/屏幕宽）']
+    ]);
+
+    var r2 = mk('⚙️ 硬件');
+    rows(r2, [
+        ['CPU 逻辑核心', nav.hardwareConcurrency || '未暴露'],
+        ['设备内存（估计）', nav.deviceMemory ? nav.deviceMemory + ' GB' : '未暴露'],
+        ['平台', nav.platform || '—'],
+        ['架构 (UA-CH)', ''],
+        ['触控支持', nav.maxTouchPoints > 0 ? '是，' + nav.maxTouchPoints + ' 点' : '否'],
+        ['手柄连接数', (nav.getGamepads ? Array.from(nav.getGamepads()).filter(function(g){return g;}).length : '—')]
+    ]);
+    if (nav.userAgentData && nav.userAgentData.getHighEntropyValues) {
+        nav.userAgentData.getHighEntropyValues(['architecture', 'bitness', 'model', 'platformVersion']).then(function(info) {
+            var archRow = r2.querySelectorAll('.dev-row')[3];
+            if (archRow) archRow.children[1].textContent = (info.architecture || '—') + (info.bitness ? ' ' + info.bitness + 'bit' : '');
+            rows(r2, [['设备型号', info.model || '—'], ['系统版本', info.platformVersion || '—']]);
+        });
+    }
+
+    var r3 = mk('🌐 网络');
+    var conn = nav.connection || nav.mozConnection || nav.webkitConnection;
+    if (conn) {
+        var typeMap = { 'slow-2g': '极慢 2G', '2g': '2G', '3g': '3G', '4g': '4G/宽带' };
+        rows(r3, [
+            ['有效类型', typeMap[conn.effectiveType] || conn.effectiveType],
+            ['下行带宽估计', conn.downlink ? conn.downlink + ' Mbps' : '—'],
+            ['往返延迟估计', conn.rtt ? conn.rtt + ' ms' : '—'],
+            ['省流量模式', conn.saveData ? '开启' : '关闭'],
+            ['在线状态', navigator.onLine ? '在线 ✓' : '离线 ✗']
+        ]);
+    } else {
+        rows(r3, [['在线状态', navigator.onLine ? '在线 ✓' : '离线 ✗'], ['Network API', '此浏览器不支持']]);
+    }
+
+    var r4 = mk('🔋 电池');
+    var batteryCard = grid.children[3];
+    if (nav.getBattery) {
+        nav.getBattery().then(function(b) {
+            var color = b.charging ? 'linear-gradient(90deg,#fbbf24,#f59e0b)' : 'linear-gradient(90deg,#34d399,#10b981)';
+            batteryCard.innerHTML += '<div class="dev-row"><span>电量</span><span>' + Math.round(b.level * 100) + '%</span></div>' +
+                '<div class="dev-row"><span>充电状态</span><span>' + (b.charging ? '⚡ 充电中' : '使用电池') + '</span></div>' +
+                '<div class="battery-bar"><div class="battery-fill" style="width:' + (b.level * 100) + '%;background:' + color + '"></div></div>';
+        }).catch(function(){
+            rows(r4, [['Battery API', '不可用']]);
+        });
+    } else {
+        rows(r4, [['Battery API', '此浏览器不支持']]);
+    }
+
+    var r5 = mk('🎨 图形 (GPU)');
+    var c = document.createElement('canvas');
+    var gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+    if (gl) {
+        var ext = gl.getExtension('WEBGL_debug_renderer_info');
+        rows(r5, [
+            ['GPU 渲染器', ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)],
+            ['GPU 厂商', ext ? gl.getParameter(ext.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR)],
+            ['WebGL 版本', gl.getParameter(gl.VERSION)],
+            ['最大纹理', gl.getParameter(gl.MAX_TEXTURE_SIZE) + ' px'],
+            ['WebGL2', !!c.getContext('webgl2') ? '支持' : '不支持']
+        ]);
+    } else {
+        rows(r5, [['WebGL', '不可用']]);
+    }
+
+    var r6 = mk('🧭 浏览器');
+    var ua = nav.userAgent;
+    var browserName = '未知';
+    if (/edg\//i.test(ua)) browserName = 'Microsoft Edge';
+    else if (/firefox\//i.test(ua)) browserName = 'Firefox';
+    else if (/opr\//i.test(ua)) browserName = 'Opera';
+    else if (/chrome\//i.test(ua)) browserName = 'Chrome';
+    else if (/safari\//i.test(ua)) browserName = 'Safari';
+    rows(r6, [
+        ['浏览器识别', browserName],
+        ['语言', nav.language + (nav.languages ? '（首选 ' + nav.languages.length + ' 种）' : '')],
+        ['Cookie', nav.cookieEnabled ? '启用' : '禁用'],
+        ['Do Not Track', nav.doNotTrack || '未设置'],
+        ['时区', Intl.DateTimeFormat().resolvedOptions().timeZone || '—'],
+        ['当前时间', new Date().toLocaleString('zh-CN')]
+    ]);
+    setStatus('检测完成 · ' + new Date().toLocaleTimeString(), 'success');
+}
+
+document.getElementById('runBtn').onclick = render;
+addEventListener('resize', function(){ if (document.getElementById('grid').children.length) render(); });
+render();
+initSidebar('work');
+</script>
+</body>
+</html>

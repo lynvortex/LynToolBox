@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>碳排放计算器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线个人碳排放计算器，统计用电、燃气、汽油、飞行、用水等日常活动的碳足迹，月度年度汇总对比全国人均水平，纯前端计算。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="碳排放计算,碳足迹,二氧化碳排放,低碳生活,环保计算,个人碳排放,免费工具,在线工具,纯前端处理,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/daily/carbon-tool.html"/>
+<meta property="og:title" content="碳排放计算器"/>
+<meta property="og:description" content="量化你的碳足迹。"/>
+<meta property="og:url" content="https://box.lynvortex.top/daily/carbon-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="碳排放计算器"/>
+<meta itemprop="description" content="量化你的碳足迹。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"日常通用","item":"https://box.lynvortex.top/daily.html"},{"@type":"ListItem","position":3,"name":"碳排放计算器","item":"https://box.lynvortex.top/daily/carbon-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"碳排放计算器","url":"https://box.lynvortex.top/daily/carbon-tool.html","description":"个人碳排放计算器","applicationCategory":"日常通用","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>🌍 碳排放计算器</h1>
+        <p>量化日常碳足迹，对比全国人均水平</p>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>统计周期</label>
+            <select id="period">
+                <option value="month" selected>按月估算</option>
+                <option value="year">按年估算</option>
+            </select>
+        </div>
+        <div class="form-item"><label>家庭人数</label>
+            <input type="number" id="people" value="3" min="1"/>
+        </div>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>用电量 (度/kWh)</label>
+            <input type="number" id="elec" value="200" min="0" step="10"/>
+            <span class="hint">电费单上的用电度数</span>
+        </div>
+        <div class="form-item"><label>天然气 (m³)</label>
+            <input type="number" id="gas" value="15" min="0" step="1"/>
+        </div>
+        <div class="form-item"><label>汽油用量 (升)</label>
+            <input type="number" id="petrol" value="60" min="0" step="5"/>
+            <span class="hint">约百公里 8L × 750km</span>
+        </div>
+        <div class="form-item"><label>公交地铁 (次)</label>
+            <input type="number" id="transit" value="40" min="0"/>
+        </div>
+        <div class="form-item"><label>出租车/网约车 (公里)</label>
+            <input type="number" id="taxi" value="30" min="0"/>
+        </div>
+        <div class="form-item"><label>国内航班 (次)</label>
+            <input type="number" id="flightDom" value="0" min="0"/>
+            <span class="hint">单程 1000-2000km 计一次</span>
+        </div>
+        <div class="form-item"><label>国际航班 (次)</label>
+            <input type="number" id="flightIntl" value="0" min="0"/>
+        </div>
+        <div class="form-item"><label>用水量 (吨/m³)</label>
+            <input type="number" id="water" value="8" min="0" step="1"/>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="calcBtn">⚙️ 计算碳排放</button>
+    </div>
+    <div class="status-bar info" id="statusBar">按月填写常见活动量，即时计算</div>
+    <div id="resultWrap"></div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>🌍 八类排放源</h3>
+        <p>用电、燃气、燃油、出行全覆盖。</p>
+        <div class="feature-chips"><span class="feature-chip">官方因子</span><span class="feature-chip">人均对比</span><span class="feature-chip">减排建议</span><span class="feature-chip">月/年切换</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 排放因子说明</h3>
+        <ul class="tips-list">
+            <li>电网 0.581 kg CO₂/度（全国电网均值）</li>
+            <li>汽油 2.30 kg CO₂/升，天然气 2.16 kg CO₂/m³</li>
+            <li>参考值仅供个人估算，企业核算需专业核证</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+var FACTORS = [
+    { id: 'elec', name: '用电', unit: '度', factor: 0.581, color: '#f5b731' },
+    { id: 'gas', name: '天然气', unit: 'm³', factor: 2.162, color: '#e67e22' },
+    { id: 'petrol', name: '汽油', unit: '升', factor: 2.30, color: '#8e44ad' },
+    { id: 'transit', name: '公交地铁', unit: '次', factor: 0.5, color: '#27ae60' },
+    { id: 'taxi', name: '出租车', unit: '公里', factor: 0.18, color: '#16a085' },
+    { id: 'flightDom', name: '国内航班', unit: '次', factor: 250, color: '#c0392b' },
+    { id: 'flightIntl', name: '国际航班', unit: '次', factor: 1200, color: '#7f1d1d' },
+    { id: 'water', name: '用水', unit: '吨', factor: 0.91, color: '#2980b9' }
+];
+
+document.getElementById('calcBtn').onclick = calc;
+['elec','gas','petrol','transit','taxi','flightDom','flightIntl','water','people'].forEach(function(id) {
+    document.getElementById(id).addEventListener('input', calc);
+});
+document.getElementById('period').addEventListener('change', calc);
+
+function calc() {
+    var period = document.getElementById('period').value;
+    var people = Math.max(1, parseInt(document.getElementById('people').value) || 1);
+    var rows = [], total = 0, maxItem = 0;
+    FACTORS.forEach(function(f) {
+        var qty = parseFloat(document.getElementById(f.id).value) || 0;
+        var co2 = qty * f.factor;
+        total += co2;
+        if (co2 > maxItem) maxItem = co2;
+        rows.push({ name: f.name, qty: qty, unit: f.unit, co2: co2, color: f.color });
+    });
+
+    var yearly = period === 'month' ? total * 12 : total;
+    var perPerson = total / people;
+    var perPersonYearly = yearly / people;
+
+    var html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;">';
+    html += card((period === 'month' ? '本月' : '本年') + '总排放', total >= 1000 ? (total / 1000).toFixed(2) + ' 吨' : total.toFixed(1) + ' kg', '#4a90e2');
+    html += card('人均' + (period === 'month' ? '月' : '年') + '排放', perPerson >= 1000 ? (perPerson / 1000).toFixed(2) + ' 吨' : perPerson.toFixed(1) + ' kg', '#27ae60');
+    html += card('年化总量', yearly >= 1000 ? (yearly / 1000).toFixed(2) + ' 吨' : yearly.toFixed(0) + ' kg', '#e67e22');
+    html += card('人均年化', perPersonYearly >= 1000 ? (perPersonYearly / 1000).toFixed(2) + ' 吨' : perPersonYearly.toFixed(0) + ' kg', '#8e44ad');
+    html += '</div>';
+
+    html += '<p style="font-size:0.85em;color:#64748b;margin:0 0 8px;">分类明细</p><table style="width:100%;border-collapse:collapse;font-size:0.88em;">';
+    html += '<tr style="background:#f1f5f9;"><th style="padding:8px;border:1px solid #e2e8f0;text-align:left;">项目</th><th style="padding:8px;border:1px solid #e2e8f0;">数量</th><th style="padding:8px;border:1px solid #e2e8f0;">CO₂ 排放</th><th style="padding:8px;border:1px solid #e2e8f0;width:36%;">占比</th></tr>';
+    rows.forEach(function(r) {
+        var pct = total > 0 ? (r.co2 / total * 100) : 0;
+        html += '<tr><td style="padding:8px;border:1px solid #e2e8f0;">' + r.name + '</td>' +
+            '<td style="padding:8px;border:1px solid #e2e8f0;text-align:center;">' + r.qty + ' ' + r.unit + '</td>' +
+            '<td style="padding:8px;border:1px solid #e2e8f0;text-align:center;color:#4a90e2;font-weight:700;">' + r.co2.toFixed(1) + ' kg</td>' +
+            '<td style="padding:8px;border:1px solid #e2e8f0;"><div style="background:#eef2f7;border-radius:4px;height:14px;"><div style="background:' + r.color + ';height:14px;border-radius:4px;width:' + pct.toFixed(1) + '%;"></div></div><span style="font-size:0.85em;color:#94a3b8;">' + pct.toFixed(1) + '%</span></td></tr>';
+    });
+    html += '</table>';
+
+    var cnAvgPerPersonYear = 7400;
+    var ratio = perPersonYearly / cnAvgPerPersonYear;
+    var level, advice;
+    if (ratio < 0.5) { level = '低碳先锋 🌱'; advice = '远低于全国人均，继续保持绿色生活方式！'; }
+    else if (ratio < 0.85) { level = '低碳生活 ✅'; advice = '低于全国人均水平，属于环保优等生。'; }
+    else if (ratio < 1.15) { level = '平均水平 ⚖️'; advice = '与全国人均相当，可从出行方式入手减排。'; }
+    else { level = '高碳生活 ⚠️'; advice = '高于全国人均，建议减少飞行、选择公共交通。'; }
+    html += '<div style="margin-top:16px;padding:14px 18px;border-radius:10px;background:#f0f7ff;border:1px solid #d6e6f7;">' +
+        '<b style="color:#2c3e50;">' + level + '</b>' +
+        '<span style="color:#64748b;margin-left:10px;font-size:0.88em;">人均年化 ' + perPersonYearly.toFixed(0) + ' kg ≈ 全国人均（约 7.4 吨）的 ' + Math.round(ratio * 100) + '%</span>' +
+        '<p style="margin:8px 0 0;color:#64748b;font-size:0.85em;">' + advice + '</p></div>';
+
+    document.getElementById('resultWrap').innerHTML = html;
+    document.getElementById('statusBar').textContent = '计算完成：' + (period === 'month' ? '本月' : '本年') + '合计 ' + (total >= 1000 ? (total / 1000).toFixed(2) + ' 吨' : total.toFixed(1) + ' kg') + ' CO₂';
+    document.getElementById('statusBar').className = 'status-bar success';
+}
+
+function card(title, val, color) {
+    return '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:1.3em;font-weight:700;color:' + color + '">' + val + '</div><div style="color:#94a3b8;font-size:0.8em;margin-top:4px;">' + title + '</div></div>';
+}
+
+calc();
+initSidebar('daily');
+</script>
+</body>
+</html>

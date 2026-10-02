@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>图像矢量化 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="图片转SVG矢量化工具，基于ImageTracer将位图转换为矢量路径，可调颜色数与细节精度，支持下载SVG，纯前端处理。"/>
+<meta name="robots" content="noindex, follow" />
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<style>
+.canvas-wrap canvas,.canvas-wrap img{max-width:420px;max-height:360px;background:repeating-conic-gradient(#f1f5f9 0 25%,#fff 0 50%) 0 0/16px 16px;}
+</style>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="图像矢量化,图片转SVG,位图转矢量,ImageTracer,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/image/img-trace-tool.html"/>
+<meta property="og:title" content="图像矢量化"/>
+<meta property="og:description" content="位图转SVG矢量图，可调颜色数与精度，纯前端处理。"/>
+<meta property="og:url" content="https://box.lynvortex.top/image/img-trace-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="图像矢量化"/>
+<meta itemprop="description" content="位图转SVG矢量图，可调颜色数与精度，纯前端处理。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"图像工具","item":"https://box.lynvortex.top/image.html"},{"@type":"ListItem","position":3,"name":"图像矢量化","item":"https://box.lynvortex.top/image/img-trace-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"图像矢量化","url":"https://box.lynvortex.top/image/img-trace-tool.html","description":"位图转SVG矢量图","applicationCategory":"图像工具","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>🧭 图像矢量化</h1>
+        <p>位图 → SVG 矢量路径，适合 Logo、插画、色块图</p>
+    </div>
+    <div class="upload-zone" id="dropZone">
+        <p style="margin:0;color:#64748b;">🖼️ 点击选择或拖入图片（建议 1000px 以内）</p>
+        <input type="file" id="fileInput" accept="image/*" style="display:none;"/>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>颜色数量（1-64）</label><input type="number" id="colorNum" value="16" min="1" max="64"/></div>
+        <div class="form-item"><label>路径精度（数值越小越平滑）</label><input type="number" id="ltres" value="1" min="0.1" max="10" step="0.1"/></div>
+        <div class="form-item"><label>模糊降噪（0-5）</label><input type="number" id="blur" value="0" min="0" max="5" step="1"/></div>
+        <div class="form-item"><label>最小路径长度</label><input type="number" id="minLen" value="8" min="1" max="50"/></div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="runBtn" disabled>开始矢量化</button>
+        <button class="btn btn-outline" id="dlBtn" disabled>下载 SVG</button>
+    </div>
+    <div class="status-bar info" id="statusBar">请先选择图片</div>
+    <div class="canvas-wrap">
+        <div class="canvas-box"><canvas id="srcCanvas"></canvas><div class="cl">原图</div></div>
+        <div class="canvas-box"><div id="svgOut"></div><div class="cl">矢量化结果</div></div>
+    </div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 图像矢量化</h3>
+        <p>基于 ImageTracerJS 的颜色量化 + 轮廓追踪算法。</p>
+        <div class="feature-chips"><span class="feature-chip">位图转SVG</span><span class="feature-chip">颜色量化</span><span class="feature-chip">精度可调</span><span class="feature-chip">无限缩放</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>色块分明、边缘清晰的图片效果最好（Logo、图标、插画）</li>
+            <li>照片类图片建议先降低颜色数再矢量化</li>
+            <li>大图处理较慢，建议先缩小再转换</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script src="../assets/imagetracer.min.js"></script>
+<script>
+var imgLoaded = false, svgStr = '';
+var srcCanvas = document.getElementById('srcCanvas');
+var dropZone = document.getElementById('dropZone'), fileInput = document.getElementById('fileInput');
+dropZone.onclick = function(){ fileInput.click(); };
+dropZone.ondragover = function(e){ e.preventDefault(); };
+dropZone.ondrop = function(e){ e.preventDefault(); if (e.dataTransfer.files[0]) loadImg(e.dataTransfer.files[0]); };
+fileInput.onchange = function(){ if (fileInput.files[0]) loadImg(fileInput.files[0]); };
+
+function loadImg(f) {
+    var img = new Image();
+    img.onload = function(){
+        var scale = Math.min(1, 800 / Math.max(img.width, img.height));
+        srcCanvas.width = Math.round(img.width * scale);
+        srcCanvas.height = Math.round(img.height * scale);
+        srcCanvas.getContext('2d').drawImage(img, 0, 0, srcCanvas.width, srcCanvas.height);
+        imgLoaded = true;
+        document.getElementById('runBtn').disabled = false;
+        setStatus('图片已加载：' + srcCanvas.width + ' × ' + srcCanvas.height, 'success');
+    };
+    img.src = URL.createObjectURL(f);
+}
+
+document.getElementById('runBtn').onclick = function(){
+    if (!imgLoaded) return;
+    var btn = this; btn.disabled = true;
+    setStatus('正在矢量化，请稍候…', 'info');
+    setTimeout(function(){
+        try {
+            var imgData = srcCanvas.getContext('2d').getImageData(0, 0, srcCanvas.width, srcCanvas.height);
+            var options = {
+                numberofcolors: parseInt(document.getElementById('colorNum').value) || 16,
+                ltres: parseFloat(document.getElementById('ltres').value) || 1,
+                qtres: parseFloat(document.getElementById('ltres').value) || 1,
+                blurradius: parseInt(document.getElementById('blur').value) || 0,
+                minlength: parseInt(document.getElementById('minLen').value) || 8,
+                strokewidth: 0,
+                viewbox: true
+            };
+            svgStr = ImageTracer.imagedataToSVG(imgData, options);
+            var out = document.getElementById('svgOut');
+            out.innerHTML = svgStr;
+            var svgEl = out.querySelector('svg');
+            if (svgEl) { svgEl.style.maxWidth = '420px'; svgEl.style.maxHeight = '360px'; svgEl.style.height = 'auto'; }
+            document.getElementById('dlBtn').disabled = false;
+            setStatus('矢量化完成，SVG 大小 ' + (svgStr.length / 1024).toFixed(1) + ' KB', 'success');
+        } catch (e) { setStatus('处理失败：' + e.message, 'error'); }
+        btn.disabled = false;
+    }, 30);
+};
+
+document.getElementById('dlBtn').onclick = function(){
+    var blob = new Blob([svgStr], { type: 'image/svg+xml' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'vectorized.svg';
+    a.click();
+};
+initSidebar('image');
+</script>
+</body>
+</html>

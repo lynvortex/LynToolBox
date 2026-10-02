@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>掷骰子抽签 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="在线掷骰子、抛硬币、抽签工具，支持多面骰、自定义选项抽签，纯前端无依赖。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+        .tab-row { display: flex; gap: 8px; margin-bottom: 22px; }
+        .tab-btn { padding: 9px 22px; border-radius: 8px; border: 1px solid #e0e6ed; background: #f8fafc; cursor: pointer; font-weight: 600; color: #64748b; }
+        .tab-btn.active { background: #4a90e2; color: #fff; border-color: #4a90e2; }
+        .dice-area { text-align: center; padding: 30px; }
+        .dice-display { font-size: 5em; margin: 20px 0; min-height: 100px; display: flex; justify-content: center; align-items: center; gap: 16px; flex-wrap: wrap; }
+        .dice-face { width: 80px; height: 80px; background: #fff; border: 3px solid #2c3e50; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 2.5em; font-weight: 700; color: #2c3e50; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .dice-face.rolling { animation: shake 0.3s infinite; }
+        @keyframes shake { 0%{transform:rotate(-10deg) scale(0.95);} 50%{transform:rotate(10deg) scale(1.05);} 100%{transform:rotate(-10deg) scale(0.95);} }
+        .coin-display { font-size: 6em; margin: 20px 0; min-height: 100px; display: flex; align-items: center; justify-content: center; }
+        .coin-display .coin { width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5em; font-weight: 700; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .coin-heads { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .coin-tails { background: linear-gradient(135deg, #64748b, #475569); }
+        .dice-config { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; max-width: 400px; margin: 0 auto 18px; }
+        .history-box { background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 10px; padding: 14px; margin-top: 18px; }
+        .history-box h4 { margin-bottom: 8px; color: #2c3e50; }
+        .history-list { font-family: 'Courier New', monospace; font-size: 0.88em; color: #64748b; max-height: 150px; overflow-y: auto; }
+        .draw-area textarea { width: 100%; min-height: 120px; padding: 12px; border: 1px solid #e0e6ed; border-radius: 8px; font-size: 0.95em; resize: vertical; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="骰子掷硬币抽签,在线骰子掷硬币抽签,日常通用,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/daily/dice-tool.html" />
+    <meta property="og:title" content="掷骰子抽签" />
+    <meta property="og:description" content="在线掷骰子、抛硬币、抽签工具，支持多面骰、自定义选项抽签，纯前端无依赖。" />
+    <meta property="og:url" content="https://box.lynvortex.top/daily/dice-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="掷骰子抽签" />
+    <meta itemprop="description" content="在线掷骰子、抛硬币、抽签工具，支持多面骰、自定义选项抽签，纯前端无依赖。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "日常通用",
+                "item": "https://box.lynvortex.top/daily.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "骰子掷硬币抽签",
+                "item": "https://box.lynvortex.top/daily/dice-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "骰子掷硬币抽签",
+        "url": "https://box.lynvortex.top/daily/dice-tool.html",
+        "description": "多面骰子掷硬币抽签工具，支持自定义面数与抽取数量",
+        "applicationCategory": "日常通用",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🎲 掷骰子抽签</h1>
+                <p>掷骰子、抛硬币、抽签决策，纯前端无依赖</p>
+            </div>
+
+            <div class="tab-row">
+                <div class="tab-btn active" data-tab="dice">掷骰子</div>
+                <div class="tab-btn" data-tab="coin">抛硬币</div>
+                <div class="tab-btn" data-tab="draw">抽签</div>
+            </div>
+
+            <div id="dicePanel" class="dice-area">
+                <div class="dice-config">
+                    <div class="form-item"><label>骰子面数</label><select id="diceSides" style="padding:10px;border:1px solid #e0e6ed;border-radius:8px;">
+                        <option value="6">6面 (标准)</option><option value="4">4面</option><option value="8">8面</option>
+                        <option value="10">10面</option><option value="12">12面</option><option value="20">20面</option><option value="100">100面</option>
+                    </select></div>
+                    <div class="form-item"><label>骰子数量</label><input type="number" id="diceCount" value="1" min="1" max="10" /></div>
+                </div>
+                <div class="dice-display" id="diceDisplay"><div class="dice-face">?</div></div>
+                <button class="btn btn-primary" id="rollDiceBtn" style="font-size:1.1em;padding:14px 40px;">🎲 掷骰子</button>
+                <div style="margin-top:10px;font-size:1.2em;font-weight:700;color:#2c3e50;" id="diceSum"></div>
+            </div>
+
+            <div id="coinPanel" class="dice-area" style="display:none;">
+                <div class="coin-display" id="coinDisplay"><div class="coin coin-heads">正</div></div>
+                <button class="btn btn-primary" id="flipCoinBtn" style="font-size:1.1em;padding:14px 40px;">🪙 抛硬币</button>
+                <div style="margin-top:10px;font-size:1.2em;font-weight:700;color:#2c3e50;" id="coinResult"></div>
+            </div>
+
+            <div id="drawPanel" class="dice-area" style="display:none;">
+                <p style="color:#64748b;margin-bottom:12px;">每行一个选项，随机抽取一个</p>
+                <textarea id="drawOptions" placeholder="选项1&#10;选项2&#10;选项3">吃火锅&#10;吃烧烤&#10;吃日料&#10;吃快餐&#10;自己做饭</textarea>
+                <button class="btn btn-primary" id="drawBtn" style="margin-top:14px;font-size:1.1em;padding:14px 40px;">🎯 抽签</button>
+                <div style="margin-top:14px;font-size:2em;font-weight:700;color:#4a90e2;" id="drawResult"></div>
+            </div>
+
+            <div class="history-box" id="historyBox">
+                <h4>📜 历史记录</h4>
+                <div class="history-list" id="historyList">暂无记录</div>
+            </div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 掷骰子抽签</h3>
+                <p>骰子、硬币、抽签决策工具</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">多面骰</span>
+                    <span class="feature-chip">抛硬币</span>
+                    <span class="feature-chip">随机抽签</span>
+                    <span class="feature-chip">历史记录</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>支持4/6/8/10/12/20/100面骰子</li>
+                    <li>可同时掷多个骰子并显示总和</li>
+                    <li>抽签模式每行一个选项</li>
+                    <li>纯前端随机，无需网络</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+var history=[];
+function addHistory(label,val){history.unshift(label+': '+val);if(history.length>20)history.pop();document.getElementById('historyList').innerHTML=history.map(function(h){return '<div>'+h+'</div>';}).join('');}
+
+document.querySelectorAll('.tab-btn').forEach(function(b){
+    b.onclick=function(){
+        document.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active');});
+        b.classList.add('active');
+        document.getElementById('dicePanel').style.display=b.dataset.tab==='dice'?'block':'none';
+        document.getElementById('coinPanel').style.display=b.dataset.tab==='coin'?'block':'none';
+        document.getElementById('drawPanel').style.display=b.dataset.tab==='draw'?'block':'none';
+    };
+});
+
+document.getElementById('rollDiceBtn').onclick=function(){
+    var sides=parseInt(document.getElementById('diceSides').value);
+    var count=Math.min(10,Math.max(1,parseInt(document.getElementById('diceCount').value)||1));
+    var display=document.getElementById('diceDisplay');
+    display.innerHTML='';
+    var faces=[];
+    for(var i=0;i<count;i++){var f=document.createElement('div');f.className='dice-face rolling';f.textContent='?';display.appendChild(f);faces.push(f);}
+    setTimeout(function(){
+        var results=[],sum=0;
+        faces.forEach(function(f){var r=Math.floor(Math.random()*sides)+1;results.push(r);sum+=r;f.textContent=r;f.classList.remove('rolling');});
+        document.getElementById('diceSum').textContent=count>1?'结果: '+results.join(' + ')+' = '+sum:'结果: '+sum;
+        addHistory('骰子D'+sides+'×'+count,results.join(', '));
+    },500);
+};
+
+document.getElementById('flipCoinBtn').onclick=function(){
+    var d=document.getElementById('coinDisplay');
+    d.innerHTML='<div class="coin coin-heads" style="animation:shake 0.2s infinite;">?</div>';
+    setTimeout(function(){
+        var r=Math.random()<0.5?'正':'反';
+        d.innerHTML='<div class="coin '+(r==='正'?'coin-heads':'coin-tails')+'">'+r+'</div>';
+        document.getElementById('coinResult').textContent='结果: '+r;
+        addHistory('硬币',r);
+    },500);
+};
+
+document.getElementById('drawBtn').onclick=function(){
+    var opts=document.getElementById('drawOptions').value.split('\n').map(function(s){return s.trim();}).filter(Boolean);
+    if(!opts.length)return;
+    var r=opts[Math.floor(Math.random()*opts.length)];
+    document.getElementById('drawResult').textContent='🎯 '+r;
+    addHistory('抽签',r);
+};
+initSidebar('daily');
+</script>
+</body>
+</html>

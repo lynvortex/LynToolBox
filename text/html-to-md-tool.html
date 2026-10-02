@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HTML转Markdown · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="HTML转Markdown工具，将HTML代码转换为Markdown格式，支持表格/列表/代码块，纯前端 turndown。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+        .io-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 768px) { .io-grid { grid-template-columns: 1fr; } }
+        .io-pane label { font-size: 0.8em; color: #64748b; font-weight: 600; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+        .opt-row { display: flex; gap: 16px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+        .opt-row .opt { display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: #475569; }
+        .prev-card { background: #fff; border: 1px solid #e1e4e8; border-radius: 10px; padding: 14px 16px; max-height: 200px; overflow: auto; font-size: 0.88em; line-height: 1.7; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <script src="../assets/turndown.min.js"></script>
+    <meta name="keywords" content="HTML转Markdown,在线HTML转Markdown,文本处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/text/html-to-md-tool.html" />
+    <meta property="og:title" content="HTML转Markdown" />
+    <meta property="og:description" content="HTML转Markdown工具，将HTML代码转换为Markdown格式，支持表格/列表/代码块，纯前端 turndown。" />
+    <meta property="og:url" content="https://box.lynvortex.top/text/html-to-md-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="HTML转Markdown" />
+    <meta itemprop="description" content="HTML转Markdown工具，将HTML代码转换为Markdown格式，支持表格/列表/代码块，纯前端 turndown。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文本处理",
+                "item": "https://box.lynvortex.top/text.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "HTML转Markdown",
+                "item": "https://box.lynvortex.top/text/html-to-md-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "HTML转Markdown",
+        "url": "https://box.lynvortex.top/text/html-to-md-tool.html",
+        "description": "将HTML代码转换为Markdown格式，支持表格、列表等",
+        "applicationCategory": "文本处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>📝 HTML 转 Markdown</h1>
+                <p>将 HTML 代码转换为 Markdown 格式，支持标题/列表/表格/代码块/链接</p>
+            </div>
+
+            <div class="opt-row">
+                <div class="opt"><input type="checkbox" id="gfm" checked /> GitHub Flavored（表格/删除线）</div>
+                <div class="opt">标题风格
+                    <select id="headingSel">
+                        <option value="atx" selected># ATX</option>
+                        <option value="setext">Setext（下划线）</option>
+                    </select>
+                </div>
+                <div class="opt">列表符号
+                    <select id="bulletSel">
+                        <option value="-" selected>- 短横</option>
+                        <option value="*">* 星号</option>
+                        <option value="+">+ 加号</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="io-grid">
+                <div class="io-pane">
+                    <label>HTML 输入 <span style="color:#4a90e2;cursor:pointer;" id="loadSample">载入示例</span></label>
+                    <textarea class="code" id="htmlInput" spellcheck="false" style="min-height:300px;" placeholder="<h1>标题</h1>\n<p>段落内容...</p>"></textarea>
+                </div>
+                <div class="io-pane">
+                    <label>Markdown 输出 <span style="color:#4a90e2;cursor:pointer;" id="copyBtn">📋 复制</span></label>
+                    <textarea class="code" id="mdOutput" spellcheck="false" readonly style="min-height:300px;background:#0f172a;color:#e2e8f0;"></textarea>
+                </div>
+            </div>
+
+            <div class="btn-row" style="margin-top:18px;">
+                <button class="btn btn-primary" id="convertBtn">🔄 转换</button>
+                <button class="btn btn-outline" id="previewBtn">👁 预览渲染</button>
+                <button class="btn btn-ghost" id="clearBtn">🗑️ 清空</button>
+            </div>
+
+            <div id="previewArea" style="display:none;margin-top:16px;">
+                <div class="io-pane"><label>Markdown 渲染预览</label><div class="prev-card" id="previewCard"></div></div>
+            </div>
+
+            <div id="statusBar" class="status-bar info">粘贴 HTML 后点击「转换」</div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 HTML 转 Markdown</h3>
+                <p>将 HTML 内容转换为 Markdown 格式，支持 GFM 扩展语法</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">Turndown.js</span>
+                    <span class="feature-chip">GFM</span>
+                    <span class="feature-chip">表格支持</span>
+                    <span class="feature-chip">离线可用</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>基于 Turndown.js 库实现转换</li>
+                    <li>可选启用 GFM 扩展（表格、删除线等）</li>
+                    <li>支持保留或移除链接和图片</li>
+                    <li>纯前端处理，HTML 内容不上传</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const SAMPLE = `<article>
+  <h1>绘萤工具箱</h1>
+  <p>这是一个 <strong>HTML 转 Markdown</strong> 工具，支持常用标签转换。</p>
+  <h2>功能特点</h2>
+  <ul>
+    <li>标题、段落、<strong>加粗</strong>、<em>斜体</em></li>
+    <li>有序与无序列表</li>
+    <li>代码块与行内代码 <code>console.log()</code></li>
+  </ul>
+  <h2>表格示例</h2>
+  <table>
+    <thead><tr><th>工具</th><th>类型</th></tr></thead>
+    <tbody>
+      <tr><td>TTS</td><td>文本</td></tr>
+      <tr><td>条形码</td><td>图像</td></tr>
+    </tbody>
+  </table>
+  <blockquote>纯前端处理，数据不上传。</blockquote>
+  <p><a href="https://lynvortex.top">访问官网</a></p>
+</article>`;
+
+    const htmlInput = document.getElementById('htmlInput');
+    const mdOutput = document.getElementById('mdOutput');
+    const statusBar = document.getElementById('statusBar');
+    const setStatus = (m, t) => { statusBar.textContent = m; statusBar.className = 'status-bar ' + (t || 'info'); };
+
+    const convert = () => {
+        const html = htmlInput.value.trim();
+        if (!html) { setStatus('请先输入 HTML', 'error'); return; }
+        if (typeof TurndownService === 'undefined') { setStatus('转换库未加载', 'error'); return; }
+        try {
+            const td = new TurndownService({
+                headingStyle: document.getElementById('headingSel').value,
+                bulletListMarker: document.getElementById('bulletSel').value,
+                codeBlockStyle: 'fenced',
+                emDelimiter: '*'
+            });
+            if (document.getElementById('gfm').checked && typeof turndownPluginGfm !== 'undefined') {
+                td.use([turndownPluginGfm.tables, turndownPluginGfm.strikethrough, turndownPluginGfm.gfm].filter(Boolean));
+            }
+            const md = td.turndown(html);
+            mdOutput.value = md;
+            setStatus(`转换完成，输出 ${md.length} 字符`, 'success');
+        } catch (e) {
+            // GFM 插件可能未随主包提供，降级为纯 turndown
+            try {
+                const td = new TurndownService({ headingStyle: document.getElementById('headingSel').value, bulletListMarker: document.getElementById('bulletSel').value, codeBlockStyle: 'fenced' });
+                const md = td.turndown(html);
+                mdOutput.value = md;
+                setStatus('转换完成（表格插件未启用，表格已转为列表）', 'success');
+            } catch (e2) { setStatus('转换失败：' + e2.message, 'error'); }
+        }
+    };
+
+    document.getElementById('convertBtn').addEventListener('click', convert);
+    document.getElementById('loadSample').addEventListener('click', () => { htmlInput.value = SAMPLE; convert(); });
+    document.getElementById('copyBtn').addEventListener('click', () => {
+        if (!mdOutput.value) { setStatus('没有可复制的内容', 'error'); return; }
+        navigator.clipboard.writeText(mdOutput.value).then(() => setStatus('已复制 ✓', 'success'))
+            .catch(() => { const ta = document.createElement('textarea'); ta.value = mdOutput.value; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); setStatus('已复制 ✓', 'success'); });
+    });
+    document.getElementById('clearBtn').addEventListener('click', () => { htmlInput.value = ''; mdOutput.value = ''; document.getElementById('previewArea').style.display = 'none'; setStatus('已清空', 'info'); });
+    document.getElementById('previewBtn').addEventListener('click', () => {
+        if (!mdOutput.value) { setStatus('请先转换', 'error'); return; }
+        const card = document.getElementById('previewCard');
+        card.innerHTML = markedSafe(mdOutput.value);
+        document.getElementById('previewArea').style.display = 'block';
+        setStatus('预览已生成', 'info');
+    });
+
+    // 极简 markdown 渲染（不依赖外部库）
+    function markedSafe(md) {
+        let h = escapeHtml(md);
+        h = h.replace(/^### (.*)$/gm, '<h3>$1</h3>').replace(/^## (.*)$/gm, '<h2>$1</h2>').replace(/^# (.*)$/gm, '<h1>$1</h1>');
+        h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>');
+        h = h.replace(/`([^`]+)`/g, '<code>$1</code>');
+        h = h.replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+        h = h.replace(/^&gt; (.*)$/gm, '<blockquote>$1</blockquote>');
+        h = h.replace(/^---$/gm, '<hr>');
+        return h;
+    }
+
+    initSidebar('text');
+</script>
+</body>
+</html>

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UUID 生成器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="UUID生成器，纯前端生成标准 UUID v4，支持批量生成与一键复制。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', -apple-system, sans-serif;
+            background: #f4f7f9;
+            margin: 0;
+            display: flex;
+            height: 100vh; overflow: hidden;
+            color: #333;
+        }
+
+        .mobile-header {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: #fff; padding: 0 20px; align-items: center;
+            justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+        }
+        .mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+        .mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+        .menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #4a90e2; }
+
+        .sidebar {
+            width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+            display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+            transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+            position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item {
+            display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+            transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+        }
+        .category-item:hover, .category-item.active { background: #ebf5ff; color: #4a90e2; border-left-color: #4a90e2; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+        /* 全宽工具容器 */
+        .tool-container {
+            width: 100%;
+            max-width: 960px;
+            background: #fff; border-radius: 12px;
+            padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+        }
+        .tool-header { text-align: center; margin-bottom: 28px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+        @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+
+        .form-item { display: flex; flex-direction: column; gap: 6px; }
+        .form-item label { font-size: 0.85em; color: #64748b; font-weight: 600; }
+        .form-item select {
+            padding: 10px 14px; border: 1px solid #e0e6ed; border-radius: 8px;
+            font-size: 0.9em; outline: none; transition: 0.2s; background: #fff;
+            font-family: inherit;
+        }
+        .form-item select:focus { border-color: #4a90e2; }
+        .hint { font-size: 0.78em; color: #94a3b8; margin-top: 4px; }
+
+        .btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; align-items: center; }
+
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em;
+            font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap;
+        }
+        .btn-primary { background: #4a90e2; color: white; }
+        .btn-primary:hover { background: #3a7bd5; }
+        .btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .btn-outline { background: transparent; color: #4a90e2; border: 1px solid #4a90e2; }
+        .btn-outline:hover { background: #4a90e2; color: white; }
+        .btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+        .btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+
+        .status-bar {
+            min-height: 20px; font-size: 0.85em;
+            padding: 8px 12px; border-radius: 6px; margin-bottom: 16px;
+        }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+
+        .uuid-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+        .uuid-item {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 8px;
+            padding: 12px 15px; gap: 10px; transition: border-color 0.2s;
+        }
+        .uuid-item:hover { border-color: #4a90e2; }
+        .uuid-item.copied { border-color: #22c55e; background: #f0fdf4; }
+        .uuid-text {
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+            color: #1e293b;
+            letter-spacing: 0.5px;
+            flex: 1;
+            word-break: break-all;
+        }
+        .copy-btn {
+            padding: 6px 14px; font-size: 0.8em;
+            background: #f1f5f9; color: #475569;
+            border-radius: 6px; flex-shrink: 0;
+            border: 1px solid #e0e6ed;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .copy-btn:hover { background: #e2e8f0; }
+        .copy-btn.copied { background: #dcfce7; color: #16a34a; border-color: #bbf7d0; }
+
+        .copy-all-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 8px; flex-wrap: wrap; gap: 8px;
+        }
+        .copy-all-bar .count-label { font-size: 0.85em; color: #64748b; }
+        .stats-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 20px;
+            padding: 4px 12px; font-size: 0.8em; color: #1d4ed8; font-weight: 600;
+        }
+
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+        .footer p { margin: 0; }
+        .footer a { color: #4a90e2; text-decoration: none; }
+
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+
+        /* 信息卡片 */
+        .info-cards {
+            width: 100%;
+            max-width: 960px;
+            display: flex; flex-direction: column; gap: 18px; margin-top: 4px;
+        }
+        .info-card {
+            background: #fff; border-radius: 12px; padding: 22px 24px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06); border: 1px solid #f0f2f5;
+        }
+        .info-card h3 {
+            margin: 0 0 10px 0; font-size: 1em; color: #2c3e50; font-weight: 600;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .info-card p { margin: 0 0 10px 0; font-size: 0.82em; color: #64748b; }
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip {
+            background: #e0f2fe; color: #0369a1;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace;
+        }
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a {
+            font-size: 0.85em; color: #4a90e2; text-decoration: none;
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s;
+        }
+        .tool-links a:hover { background: #e2e8f0; }
+
+        @media (max-width: 768px) {
+            body { display: block; height: auto; overflow: auto; }
+            .mobile-header { display: flex; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .close-sidebar { display: block; }
+            .main-content { display: block; }
+            .main-scroll { padding: 72px 16px 32px; gap: 20px;  }
+            .tool-container { padding: 24px 16px; border-radius: 10px; }
+            .tool-header h1 { font-size: 1.3em; }
+            .form-grid { grid-template-columns: 1fr; }
+            .uuid-text { font-size: 0.82em; }
+            .overlay.active { display: block; }
+        }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="UUID生成器,在线UUID生成器,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/uuid-tool.html" />
+    <meta property="og:title" content="UUID 生成器" />
+    <meta property="og:description" content="UUID生成器，纯前端生成标准 UUID v4，支持批量生成与一键复制。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/uuid-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="UUID 生成器" />
+    <meta itemprop="description" content="UUID生成器，纯前端生成标准 UUID v4，支持批量生成与一键复制。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "UUID生成器",
+                "item": "https://box.lynvortex.top/work/uuid-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "UUID生成器",
+        "url": "https://box.lynvortex.top/work/uuid-tool.html",
+        "description": "纯前端生成标准 UUID v4，支持批量生成与一键复制",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🔑 UUID 生成器</h1>
+                <p>纯前端生成标准 UUID v4，支持批量生成与多种格式，数据完全本地化</p>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-item">
+                    <label>生成数量</label>
+                    <select id="countInput">
+                        <option value="1">1 个</option>
+                        <option value="5">5 个</option>
+                        <option value="10" selected>10 个</option>
+                        <option value="20">20 个</option>
+                        <option value="50">50 个</option>
+                    </select>
+                    <div class="hint">单次最多生成 50 个</div>
+                </div>
+                <div class="form-item">
+                    <label>格式</label>
+                    <select id="formatInput">
+                        <option value="standard">标准格式（8-4-4-4-12）</option>
+                        <option value="plain">无连字符</option>
+                        <option value="upper">大写</option>
+                        <option value="braces">花括号包裹</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn-primary" id="genBtn">⚡ 生成 UUID</button>
+                <button class="btn btn-ghost" id="clearBtn">🗑️ 清空</button>
+            </div>
+
+            <div id="statusBar" class="status-bar info">选择数量和格式，点击生成按钮即可</div>
+
+            <div id="resultArea" style="display:none;">
+                <div class="copy-all-bar">
+                    <span class="count-label">
+                        已生成 <span class="stats-badge">🔑 <span id="genCount">0</span> 个</span>
+                    </span>
+                    <button class="btn btn-outline" id="copyAllBtn" style="padding:6px 14px;font-size:0.82em;">📋 复制全部</button>
+                </div>
+                <div class="uuid-list" id="uuidList"></div>
+            </div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 UUID 版本说明</h3>
+                <p>生成的是 UUID v4（随机），基于密码学安全的伪随机数生成器</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">UUID v4</span>
+                    <span class="tld-chip">Crypto API</span>
+                    <span class="tld-chip">离线可用</span>
+                    <span class="tld-chip">全球唯一</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>所有 UUID 在浏览器本地生成，无需网络请求，<strong>完全离线可用</strong></li>
+                    <li>基于 <strong>crypto.randomUUID()</strong> 或手动构造，确保随机性</li>
+                    <li>支持批量生成最多 50 个，并提供多种格式（标准/无连字符/大写/花括号）</li>
+                    <li>点击单个复制或一键复制全部，生成记录仅在当前页面保留</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    
+        // 手动构造 UUID v4
+        const arr = new Uint8Array(16);
+        crypto.getRandomValues(arr);
+        arr[6] = (arr[6] & 0x0f) | 0x40; // version 4
+        arr[8] = (arr[8] & 0x3f) | 0x80; // variant 10xx
+        const hex = Array.from(arr, b => b.toString(16).padStart(2, '0'));
+        return `${hex[0]}${hex[1]}${hex[2]}${hex[3]}-${hex[4]}${hex[5]}-${hex[6]}${hex[7]}-${hex[8]}${hex[9]}-${hex[10]}${hex[11]}${hex[12]}${hex[13]}${hex[14]}${hex[15]}`;
+    }
+
+    // 格式化 UUID
+    const formatUUID = function(raw, fmt) {
+        switch (fmt) {
+            case 'plain':   return raw.replace(/-/g, '');
+            case 'upper':   return raw.toUpperCase();
+            case 'braces':  return `{${raw}}`;
+            default:        return raw;
+        }
+    }
+
+    // 生成 UUIDs
+    const generateUUIDs = function() {
+        const count = parseInt(countInput.value, 10);
+        const fmt = formatInput.value;
+        const uuids = [];
+        for (let i = 0; i < count; i++) {
+            uuids.push(formatUUID(generateUUIDv4(), fmt));
+        }
+        renderResults(uuids);
+        setStatus(`已生成 ${uuids.length} 个 UUID`, 'success');
+    }
+
+    const renderResults = function(uuids) {
+        genCountSpan.textContent = uuids.length;
+        uuidList.innerHTML = uuids.map((uuid, i) => `
+            <div class="uuid-item" id="item-${i}">
+                <span class="uuid-text">${escapeHtml(uuid)}</span>
+                <button class="copy-btn" data-index="${i}" data-uuid="${escapeHtml(uuid)}">复制</button>
+            </div>
+        `).join('');
+        resultArea.style.display = 'block';
+    }
+
+    // 单条复制
+    uuidList.addEventListener('click', (e) => {
+        const btn = e.target.closest('.copy-btn');
+        if (!btn) return;
+        const uuid = btn.dataset.uuid;
+        const index = btn.dataset.index;
+        navigator.clipboard.writeText(uuid).then(() => {
+            const item = document.getElementById(`item-${index}`);
+            btn.textContent = '已复制';
+            btn.classList.add('copied');
+            if (item) item.classList.add('copied');
+            setTimeout(() => {
+                btn.textContent = '复制';
+                btn.classList.remove('copied');
+                if (item) item.classList.remove('copied');
+            }, 1500);
+        }).catch(() => {
+            // 降级方案
+            const ta = document.createElement('textarea');
+            ta.value = uuid;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            btn.textContent = '已复制';
+            btn.classList.add('copied');
+            const item = document.getElementById(`item-${index}`);
+            if (item) item.classList.add('copied');
+            setTimeout(() => {
+                btn.textContent = '复制';
+                btn.classList.remove('copied');
+                if (item) item.classList.remove('copied');
+            }, 1500);
+        });
+    });
+
+    // 复制全部
+    copyAllBtn.addEventListener('click', () => {
+        const texts = Array.from(document.querySelectorAll('.uuid-text')).map(el => el.textContent).join('\n');
+        navigator.clipboard.writeText(texts).then(() => {
+            setStatus('全部 UUID 已复制到剪贴板 ✓', 'success');
+        }).catch(() => {
+            const ta = document.createElement('textarea');
+            ta.value = texts;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            setStatus('全部 UUID 已复制到剪贴板 ✓', 'success');
+        });
+    });
+
+    // 清空
+    const clearResults = function() {
+        resultArea.style.display = 'none';
+        uuidList.innerHTML = '';
+        setStatus('已清空，选择数量和格式后点击生成', 'info');
+    }
+
+    const setStatus = function(msg, type) {
+        statusBar.textContent = msg;
+        statusBar.className = `status-bar ${type}`;
+    }
+
+    initSidebar('work');
+</script>
+</body>
+</html>
+

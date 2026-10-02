@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>字符编码查看 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="字符编码查看器，查看文本的 Unicode 码点、UTF-8/UTF-16 字节、HTML 实体，纯前端 TextEncoder。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+        .enc-input { width: 100%; padding: 12px 14px; border: 1px solid #e0e6ed; border-radius: 8px; font-size: 1em; outline: none; font-family: inherit; }
+        .enc-input:focus { border-color: #4a90e2; }
+        .enc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        @media (max-width: 768px) { .enc-grid { grid-template-columns: 1fr; } }
+        .enc-card { background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 10px; padding: 14px 16px; }
+        .enc-card h4 { margin: 0 0 10px 0; font-size: 0.88em; color: #2c3e50; display: flex; justify-content: space-between; align-items: center; }
+        .enc-card .copy-mini { font-size: 0.78em; color: #4a90e2; cursor: pointer; background: none; border: none; }
+        .enc-val { font-family: 'Courier New', monospace; font-size: 0.85em; color: #1e293b; word-break: break-all; line-height: 1.7; }
+        .byte-cell { display: inline-block; background: #e0f2fe; color: #0369a1; border-radius: 4px; padding: 1px 6px; margin: 2px 1px; font-size: 0.8em; }
+        .char-row { display: grid; grid-template-columns: 60px 80px 1fr 1fr; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid #f1f5f9; font-family: 'Courier New', monospace; font-size: 0.82em; }
+        .char-row .ch { font-size: 1.1em; text-align: center; }
+        .char-row .cp { color: #1d4ed8; }
+        @media (max-width: 600px) { .char-row { grid-template-columns: 50px 1fr; } .char-row .u8, .char-row .u16 { display: none; } }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="字符编码查看,在线字符编码查看,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/charset-view-tool.html" />
+    <meta property="og:title" content="字符编码查看" />
+    <meta property="og:description" content="字符编码查看器，查看文本的 Unicode 码点、UTF-8/UTF-16 字节、HTML 实体，纯前端 TextEncoder。" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/charset-view-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="字符编码查看" />
+    <meta itemprop="description" content="字符编码查看器，查看文本的 Unicode 码点、UTF-8/UTF-16 字节、HTML 实体，纯前端 TextEncoder。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "字符编码查看",
+                "item": "https://box.lynvortex.top/work/charset-view-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "字符编码查看",
+        "url": "https://box.lynvortex.top/work/charset-view-tool.html",
+        "description": "查看字符的Unicode码点、UTF-8编码、HTML实体编码",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🔤 字符编码查看</h1>
+                <p>查看文本的 Unicode 码点、UTF-8 / UTF-16 字节序列与 HTML 实体，纯前端解析</p>
+            </div>
+
+            <div class="form-item" style="margin-bottom:18px;">
+                <label>输入文本</label>
+                <input type="text" class="enc-input" id="textInput" value="绘萤工具箱 AÆ中😀" placeholder="输入任意字符..." />
+            </div>
+
+            <div class="enc-grid" style="margin-bottom:16px;">
+                <div class="enc-card">
+                    <h4>UTF-8 字节序列 <button class="copy-mini" id="copyU8">复制</button></h4>
+                    <div class="enc-val" id="utf8Out"></div>
+                </div>
+                <div class="enc-card">
+                    <h4>UTF-16 码元 <button class="copy-mini" id="copyU16">复制</button></h4>
+                    <div class="enc-val" id="utf16Out"></div>
+                </div>
+                <div class="enc-card">
+                    <h4>HTML 实体（十进制） <button class="copy-mini" id="copyDec">复制</button></h4>
+                    <div class="enc-val" id="decOut"></div>
+                </div>
+                <div class="enc-card">
+                    <h4>HTML 实体（十六进制） <button class="copy-mini" id="copyHex">复制</button></h4>
+                    <div class="enc-val" id="hexOut"></div>
+                </div>
+            </div>
+
+            <div class="enc-card">
+                <h4>逐字符详情</h4>
+                <div class="char-row" style="background:#f1f5f9;border-radius:6px;padding:6px 8px;font-weight:600;color:#475569;">
+                    <span class="ch">字符</span><span class="cp">码点 U+</span><span class="u8">UTF-8</span><span class="u16">UTF-16</span>
+                </div>
+                <div id="charRows"></div>
+            </div>
+
+            <div id="statusBar" class="status-bar info">输入文本即时查看各编码表示</div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 字符编码查看</h3>
+                <p>查看字符的 Unicode 码点、UTF-8 编码字节、HTML 实体等多种表示形式</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">Unicode</span>
+                    <span class="feature-chip">UTF-8</span>
+                    <span class="feature-chip">HTML实体</span>
+                    <span class="feature-chip">JavaScript转义</span>
+                    <span class="feature-chip">离线可用</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>输入任意字符即可实时查看其多种编码表示</li>
+                    <li>支持中文、emoji 及各种特殊字符</li>
+                    <li>同时显示十进制和十六进制码点</li>
+                    <li>UTF-8 编码以字节序列形式展示</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const textInput = document.getElementById('textInput');
+    const utf8Out = document.getElementById('utf8Out');
+    const utf16Out = document.getElementById('utf16Out');
+    const decOut = document.getElementById('decOut');
+    const hexOut = document.getElementById('hexOut');
+    const charRows = document.getElementById('charRows');
+    const statusBar = document.getElementById('statusBar');
+
+    const toHex = (n, len) => n.toString(16).toUpperCase().padStart(len, '0');
+    const bytesHtml = (bytes) => bytes.map(b => `<span class="byte-cell">${toHex(b, 2)}</span>`).join(' ');
+
+    const update = () => {
+        const text = textInput.value;
+        if (!text) {
+            [utf8Out, utf16Out, decOut, hexOut].forEach(e => e.innerHTML = '<span style="color:#94a3b8;">—</span>');
+            charRows.innerHTML = ''; setStatus('请输入文本', 'info'); return;
+        }
+        // UTF-8 字节
+        const u8 = Array.from(new TextEncoder().encode(text));
+        utf8Out.innerHTML = bytesHtml(u8);
+
+        // UTF-16 码元（按 charCodeAt，正确处理代理对）
+        const u16 = [];
+        for (let i = 0; i < text.length; i++) u16.push(text.charCodeAt(i));
+        utf16Out.innerHTML = u16.map(c => `<span class="byte-cell">${toHex(c, 4)}</span>`).join(' ');
+
+        // 逐字符（用 for...of 正确拆分代理对）
+        const chars = [...text];
+        decOut.textContent = chars.map(c => `&#${c.codePointAt(0)};`).join(' ');
+        hexOut.textContent = chars.map(c => `&#x${toHex(c.codePointAt(0), 0)};`).join(' ');
+
+        charRows.innerHTML = chars.map(c => {
+            const cp = c.codePointAt(0);
+            const cpStr = toHex(cp, 0);
+            // UTF-8 bytes for this code point
+            const u8b = Array.from(new TextEncoder().encode(c));
+            // UTF-16 units
+            const u16b = [];
+            for (let i = 0; i < c.length; i++) u16b.push(c.charCodeAt(i));
+            const disp = c === ' ' ? '␣' : c === '\n' ? '↵' : c;
+            return `<div class="char-row">
+                <span class="ch">${escapeHtml(disp)}</span>
+                <span class="cp">U+${cpStr}</span>
+                <span class="u8">${u8b.map(b => toHex(b, 2)).join(' ')}</span>
+                <span class="u16">${u16b.map(b => toHex(b, 4)).join(' ')}</span>
+            </div>`;
+        }).join('');
+
+        setStatus(`共 ${chars.length} 个字符 / ${text.length} 个 UTF-16 码元 / ${u8.length} 个 UTF-8 字节`, 'info');
+    };
+
+    const copyText = (txt) => {
+        navigator.clipboard.writeText(txt).then(() => setStatus('已复制 ✓', 'success'))
+            .catch(() => { const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); setStatus('已复制 ✓', 'success'); });
+    };
+
+    document.getElementById('copyU8').addEventListener('click', () => copyText(Array.from(new TextEncoder().encode(textInput.value)).map(b => toHex(b, 2)).join(' ')));
+    document.getElementById('copyU16').addEventListener('click', () => copyText([...textInput.value].flatMap(c => { const a = []; for (let i = 0; i < c.length; i++) a.push(toHex(c.charCodeAt(i), 4)); return a; }).join(' ')));
+    document.getElementById('copyDec').addEventListener('click', () => copyText([...textInput.value].map(c => `&#${c.codePointAt(0)};`).join(' ')));
+    document.getElementById('copyHex').addEventListener('click', () => copyText([...textInput.value].map(c => `&#x${toHex(c.codePointAt(0), 0)};`).join(' ')));
+
+    textInput.addEventListener('input', update);
+    update();
+    initSidebar('work');
+</script>
+</body>
+</html>

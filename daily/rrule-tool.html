@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>重复事件规则 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="重复事件规则生成工具，纯前端使用rrule生成RRULE重复规则与日期，支持可视化勾选与可读说明，数据本地处理。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <script src="../assets/sidebar.js"></script>
+    <script src="../assets/rrule.min.js"></script>
+    <style>
+        .sub-tabs { display: flex; gap: 8px; margin-bottom: 22px; }
+        .sub-tab { padding: 9px 20px; border-radius: 8px; border: 1px solid #e0e6ed; background: #f8fafc; color: #64748b; cursor: pointer; font-size: 0.88em; font-weight: 600; }
+        .sub-tab.active { background: #4a90e2; color: #fff; border-color: #4a90e2; }
+
+        .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
+        @media (max-width: 600px) { .config-grid { grid-template-columns: 1fr; } }
+        .config-grid .form-item { margin-bottom: 0; }
+
+        .weekday-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+        .wd-chk { padding: 8px 14px; border-radius: 8px; border: 1px solid #e0e6ed; background: #fff; color: #64748b; cursor: pointer; font-size: 0.85em; font-weight: 500; transition: 0.2s; user-select: none; }
+        .wd-chk.active { background: #4a90e2; color: #fff; border-color: #4a90e2; }
+
+        .end-row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }
+        .end-row .radio-grp { display: flex; gap: 14px; font-size: 0.85em; color: #475569; }
+        .end-row input[type="number"], .end-row input[type="date"] { padding: 8px 12px; border: 1px solid #e0e6ed; border-radius: 8px; font-size: 0.9em; width: 130px; }
+
+        .rrule-out { background: #0f172a; color: #e2e8f0; border-radius: 8px; padding: 14px 16px; font-family: 'Courier New', monospace; font-size: 0.9em; word-break: break-all; margin-bottom: 16px; }
+        .desc-card { background: linear-gradient(135deg, #4a90e2 0%, #3a7bd5 100%); color: #fff; border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; }
+        .desc-card .dt { font-size: 0.8em; opacity: 0.85; margin-bottom: 4px; }
+        .desc-card .dv { font-size: 1.05em; line-height: 1.5; }
+
+        .occ-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; margin-bottom: 8px; }
+        .occ-item { background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 8px; padding: 10px 12px; font-family: 'Courier New', monospace; font-size: 0.82em; color: #1e293b; }
+        .occ-item .oi { color: #4a90e2; font-weight: 600; margin-right: 6px; }
+        .section-title { font-size: 0.9em; color: #475569; font-weight: 600; margin: 0 0 10px 0; }
+        .parse-area { width: 100%; min-height: 80px; padding: 12px 14px; border: 1px solid #e0e6ed; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.88em; outline: none; resize: vertical; background: #f8fafc; color: #1e293b; margin-bottom: 14px; }
+        .parse-area:focus { border-color: #4a90e2; background: #fff; }
+    </style>
+    <meta name="keywords" content="重复事件规则,在线重复事件规则,日常通用,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/daily/rrule-tool.html" />
+    <meta property="og:title" content="重复事件规则" />
+    <meta property="og:description" content="重复事件规则生成工具，纯前端使用rrule生成RRULE重复规则与日期，支持可视化勾选与可读说明，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/daily/rrule-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="重复事件规则" />
+    <meta itemprop="description" content="重复事件规则生成工具，纯前端使用rrule生成RRULE重复规则与日期，支持可视化勾选与可读说明，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "日常通用",
+                "item": "https://box.lynvortex.top/daily.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "重复事件规则",
+                "item": "https://box.lynvortex.top/daily/rrule-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "重复事件规则",
+        "url": "https://box.lynvortex.top/daily/rrule-tool.html",
+        "description": "rrule生成RRULE重复规则、可读说明与日期列举",
+        "applicationCategory": "日常通用",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🔁 重复事件规则</h1>
+                <p>使用RRULE生成重复规则、可读说明与发生日期，可视化配置与字符串解析</p>
+            </div>
+
+            <div class="sub-tabs">
+                <div class="sub-tab active" data-sub="config">可视化配置</div>
+                <div class="sub-tab" data-sub="parse">字符串解析</div>
+            </div>
+
+            <div id="configPanel">
+                <div class="config-grid">
+                    <div class="form-item"><label>频率</label>
+                        <select id="freq">
+                            <option value="DAILY">每天</option>
+                            <option value="WEEKLY" selected>每周</option>
+                            <option value="MONTHLY">每月</option>
+                            <option value="YEARLY">每年</option>
+                        </select>
+                    </div>
+                    <div class="form-item"><label>间隔（每 N 个周期）</label>
+                        <input type="number" id="interval" value="1" min="1" />
+                    </div>
+                    <div class="form-item"><label>起始日期</label>
+                        <input type="date" id="dtstart" />
+                    </div>
+                    <div class="form-item"><label>列举数量</label>
+                        <input type="number" id="listCount" value="12" min="1" max="100" />
+                    </div>
+                </div>
+
+                <div id="weekdayBox">
+                    <label style="font-size:0.85em;color:#64748b;font-weight:600;display:block;margin-bottom:8px;">星期勾选（每周频率有效）</label>
+                    <div class="weekday-row" id="weekdayRow">
+                        <div class="wd-chk" data-day="MO">周一</div>
+                        <div class="wd-chk active" data-day="TU">周二</div>
+                        <div class="wd-chk" data-day="WE">周三</div>
+                        <div class="wd-chk" data-day="TH">周四</div>
+                        <div class="wd-chk" data-day="FR">周五</div>
+                        <div class="wd-chk" data-day="SA">周六</div>
+                        <div class="wd-chk" data-day="SU">周日</div>
+                    </div>
+                </div>
+
+                <div class="end-row">
+                    <div class="radio-grp">
+                        <label><input type="radio" name="endType" value="never" checked /> 无限</label>
+                        <label><input type="radio" name="endType" value="count" /> 限定次数</label>
+                        <label><input type="radio" name="endType" value="until" /> 结束日期</label>
+                    </div>
+                    <input type="number" id="countInput" value="10" min="1" placeholder="次数" disabled />
+                    <input type="date" id="untilInput" disabled />
+                </div>
+
+                <div class="btn-row">
+                    <button class="btn btn-primary" id="genBtn">生成规则</button>
+                    <button class="btn btn-outline" id="copyBtn">复制 RRULE</button>
+                </div>
+            </div>
+
+            <div id="parsePanel" style="display:none;">
+                <div class="form-item" style="margin-bottom:14px;"><label>输入 RRULE 字符串</label>
+                    <textarea class="parse-area" id="parseInput" placeholder="RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,WE,FR;COUNT=10"></textarea>
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-primary" id="parseBtn">解析规则</button>
+                    <button class="btn btn-outline" id="fillExampleBtn">填入示例</button>
+                </div>
+            </div>
+
+            <div id="resultArea"></div>
+
+            <div id="statusBar" class="status-bar info">配置重复规则后生成 RRULE 字符串与发生日期，纯前端本地计算</div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 重复事件规则</h3>
+                <p>基于 iCalendar RRULE 标准生成与解析重复事件规则</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">RRULE生成</span>
+                    <span class="feature-chip">可视化配置</span>
+                    <span class="feature-chip">可读说明</span>
+                    <span class="feature-chip">日期列举</span>
+                    <span class="feature-chip">每日每周每月</span>
+                    <span class="feature-chip">离线本地</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>可视化配置频率、间隔、星期与结束条件，自动生成标准 RRULE</li>
+                    <li>支持直接粘贴 RRULE 字符串进行解析与日期推算</li>
+                    <li>可读说明同时提供英文(toText)与中文摘要</li>
+                    <li>基于 rrule.js，遵循 RFC 5545，纯前端本地计算</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    var R = (typeof rrule !== 'undefined') ? rrule : null;
+    var resultArea = document.getElementById('resultArea');
+    var statusBar = document.getElementById('statusBar');
+
+    // 子标签切换
+    document.querySelectorAll('.sub-tab').forEach(function (t) {
+        t.addEventListener('click', function () {
+            document.querySelectorAll('.sub-tab').forEach(function (x) { x.classList.remove('active'); });
+            t.classList.add('active');
+            var s = t.dataset.sub;
+            document.getElementById('configPanel').style.display = s === 'config' ? 'block' : 'none';
+            document.getElementById('parsePanel').style.display = s === 'parse' ? 'block' : 'none';
+        });
+    });
+
+    // 星期勾选
+    document.querySelectorAll('.wd-chk').forEach(function (c) {
+        c.addEventListener('click', function () { c.classList.toggle('active'); });
+    });
+
+    // 结束方式联动
+    document.querySelectorAll('input[name="endType"]').forEach(function (r) {
+        r.addEventListener('change', function () {
+            var v = document.querySelector('input[name="endType"]:checked').value;
+            document.getElementById('countInput').disabled = (v !== 'count');
+            document.getElementById('untilInput').disabled = (v !== 'until');
+        });
+    });
+
+    // 频率变化时控制星期勾选显示
+    document.getElementById('freq').addEventListener('change', function () {
+        document.getElementById('weekdayBox').style.display = (this.value === 'WEEKLY') ? 'block' : 'none';
+    });
+
+    // 默认起始日期为今天
+    document.getElementById('dtstart').value = new Date().toISOString().slice(0, 10);
+
+    var WD_MAP = { MO: '周一', TU: '周二', WE: '周三', TH: '周四', FR: '周五', SA: '周六', SU: '周日' };
+    var FREQ_CN = { DAILY: '天', WEEKLY: '周', MONTHLY: '月', YEARLY: '年' };
+
+    function buildOptions() {
+        var freqVal = document.getElementById('freq').value;
+        var interval = parseInt(document.getElementById('interval').value, 10) || 1;
+        var dtVal = document.getElementById('dtstart').value;
+        var opts = {
+            freq: R.RRule[freqVal],
+            interval: interval
+        };
+        if (dtVal) {
+            var p = dtVal.split('-');
+            opts.dtstart = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10), 0, 0, 0);
+        }
+        // 星期勾选
+        if (freqVal === 'WEEKLY') {
+            var days = [];
+            document.querySelectorAll('.wd-chk.active').forEach(function (c) {
+                days.push(R.RRule[c.dataset.day]);
+            });
+            if (days.length > 0) opts.byweekday = days;
+        }
+        // 结束方式
+        var endType = document.querySelector('input[name="endType"]:checked').value;
+        if (endType === 'count') {
+            opts.count = parseInt(document.getElementById('countInput').value, 10) || 10;
+        } else if (endType === 'until') {
+            var uVal = document.getElementById('untilInput').value;
+            if (uVal) {
+                var up = uVal.split('-');
+                opts.until = new Date(parseInt(up[0], 10), parseInt(up[1], 10) - 1, parseInt(up[2], 10), 23, 59, 59);
+            }
+        }
+        return opts;
+    }
+
+    function formatDate(d) {
+        var y = d.getFullYear();
+        var m = String(d.getMonth() + 1).padStart(2, '0');
+        var day = String(d.getDate()).padStart(2, '0');
+        var wd = ['日', '一', '二', '三', '四', '五', '六'][d.getDay()];
+        return y + '-' + m + '-' + day + ' 周' + wd;
+    }
+
+    // 中文描述
+    function chineseDesc(opts, ruleStr) {
+        var freqVal = document.getElementById('freq').value;
+        var interval = parseInt(document.getElementById('interval').value, 10) || 1;
+        var s = '每';
+        if (interval > 1) s += interval + FREQ_CN[freqVal];
+        else s += FREQ_CN[freqVal];
+        if (freqVal === 'WEEKLY') {
+            var days = [];
+            document.querySelectorAll('.wd-chk.active').forEach(function (c) { days.push(WD_MAP[c.dataset.day]); });
+            if (days.length > 0) s += '的 ' + days.join('、');
+        }
+        var endType = document.querySelector('input[name="endType"]:checked').value;
+        if (endType === 'count') s += '，共 ' + (parseInt(document.getElementById('countInput').value, 10) || 10) + ' 次';
+        else if (endType === 'until') s += '，直到 ' + (document.getElementById('untilInput').value || '?');
+        else s += '，无限重复';
+        return s;
+    }
+
+    function renderResult(rule, opts, isParsed) {
+        var html = '';
+        // RRULE 字符串
+        var ruleStr;
+        try { ruleStr = rule.toString(); } catch (e) { ruleStr = '(无法生成字符串)'; }
+        html += '<p class="section-title">RRULE 字符串</p>';
+        html += '<div class="rrule-out">' + escapeHtml(ruleStr) + '</div>';
+
+        // 可读说明
+        var enText = '';
+        try { enText = rule.toText(); } catch (e) { enText = '(无法生成)'; }
+        var zhDesc = isParsed ? parsedChineseDesc(rule) : chineseDesc(opts, ruleStr);
+        html += '<div class="desc-card">';
+        html += '<div class="dt">可读说明</div>';
+        html += '<div class="dv">' + escapeHtml(zhDesc) + '</div>';
+        html += '<div class="dt" style="margin-top:8px;">英文描述 (toText)</div>';
+        html += '<div class="dv" style="font-size:0.9em;opacity:0.9;">' + escapeHtml(enText) + '</div>';
+        html += '</div>';
+
+        // 列举日期
+        var listN = parseInt(document.getElementById('listCount').value, 10) || 12;
+        var dates = [];
+        try {
+            if (opts && opts.count && opts.count <= listN * 2) {
+                dates = rule.all();
+            } else {
+                var start = (opts && opts.dtstart) ? opts.dtstart : new Date();
+                var end = new Date(start.getTime() + 365 * 5 * 86400000);
+                dates = rule.between(start, end, true);
+            }
+        } catch (e) { dates = []; }
+
+        html += '<p class="section-title">发生日期（最多 ' + listN + ' 次）</p>';
+        if (dates.length === 0) {
+            html += '<div class="status-bar info">未生成任何日期，请检查规则配置</div>';
+        } else {
+            html += '<div class="occ-list">';
+            var showN = Math.min(listN, dates.length);
+            for (var i = 0; i < showN; i++) {
+                html += '<div class="occ-item"><span class="oi">#' + (i + 1) + '</span>' + escapeHtml(formatDate(dates[i])) + '</div>';
+            }
+            html += '</div>';
+            if (dates.length > showN) {
+                html += '<div class="hint">共 ' + dates.length + ' 次（受列举数量限制仅显示前 ' + showN + ' 次）</div>';
+            } else {
+                html += '<div class="hint">共计 ' + dates.length + ' 次</div>';
+            }
+        }
+
+        resultArea.innerHTML = html;
+        return ruleStr;
+    }
+
+    // 解析模式下的中文描述
+    function parsedChineseDesc(rule) {
+        try {
+            var o = rule.options;
+            var freqName = ['年', '月', '周', '天', '小时', '分钟', '秒'][o.freq] || '周期';
+            var s = '每';
+            if (o.interval > 1) s += o.interval + freqName;
+            else s += freqName;
+            if (o.byweekday && o.byweekday.length > 0) {
+                var days = o.byweekday.map(function (w) {
+                    var idx = (typeof w === 'object' && w !== null) ? w.weekday : w;
+                    var names = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+                    return names[idx] || '?';
+                });
+                s += '的 ' + days.join('、');
+            }
+            if (o.count) s += '，共 ' + o.count + ' 次';
+            else if (o.until) s += '，直到 ' + o.until.toISOString().slice(0, 10);
+            else s += '，无限重复';
+            return s;
+        } catch (e) {
+            return '（描述生成失败）';
+        }
+    }
+
+    var currentRuleStr = '';
+
+    // 生成
+    document.getElementById('genBtn').addEventListener('click', function () {
+        if (!R) { setStatus('rrule库未加载', 'error'); return; }
+        try {
+            var opts = buildOptions();
+            var rule = new R.RRule(opts);
+            currentRuleStr = renderResult(rule, opts, false);
+            setStatus('规则生成成功', 'success');
+        } catch (e) {
+            resultArea.innerHTML = '';
+            setStatus('生成失败：' + (e && e.message ? e.message : e), 'error');
+        }
+    });
+
+    // 复制
+    document.getElementById('copyBtn').addEventListener('click', function () {
+        var text = currentRuleStr;
+        if (!text) { setStatus('请先生成规则', 'error'); return; }
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(function () {
+                setStatus('已复制到剪贴板：' + text, 'success');
+            }, function () { fallbackCopy(text); });
+        } else { fallbackCopy(text); }
+    });
+    function fallbackCopy(text) {
+        var ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); setStatus('已复制：' + text, 'success'); }
+        catch (e) { setStatus('复制失败，请手动选取', 'error'); }
+        document.body.removeChild(ta);
+    }
+
+    // 解析
+    document.getElementById('parseBtn').addEventListener('click', function () {
+        if (!R) { setStatus('rrule库未加载', 'error'); return; }
+        var input = document.getElementById('parseInput').value.trim();
+        if (!input) { setStatus('请输入 RRULE 字符串', 'error'); return; }
+        try {
+            var ruleStr = input.indexOf('RRULE:') === 0 ? input : 'RRULE:' + input.replace(/^RRULE:?/i, '');
+            var rule = R.RRule.fromString(ruleStr);
+            currentRuleStr = renderResult(rule, rule.options, true);
+            setStatus('解析成功', 'success');
+        } catch (e) {
+            resultArea.innerHTML = '';
+            setStatus('解析失败：' + (e && e.message ? e.message : e) + '，请检查 RRULE 格式', 'error');
+        }
+    });
+
+    document.getElementById('fillExampleBtn').addEventListener('click', function () {
+        document.getElementById('parseInput').value = 'RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,WE,FR;COUNT=10';
+        document.getElementById('parseBtn').click();
+    });
+
+    // 初始生成一次
+    document.getElementById('genBtn').click();
+
+    initSidebar('daily');
+</script>
+</body>
+</html>

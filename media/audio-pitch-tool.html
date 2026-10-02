@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>变调变速 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线音频变调变速工具，0.25x-4x速度调节，支持变速不变调（保音高）模式，实时试听与导出，纯前端本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="音频变调,变速,变速不变调,升降调,音高保持,声音处理,音视频工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/media/audio-pitch-tool.html"/>
+<meta property="og:title" content="变调变速"/>
+<meta property="og:description" content="0.25x-4x 变速，支持保音高模式。"/>
+<meta property="og:url" content="https://box.lynvortex.top/media/audio-pitch-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="变调变速"/>
+<meta itemprop="description" content="0.25x-4x 变速，支持保音高模式。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"音视频处理","item":"https://box.lynvortex.top/media.html"},{"@type":"ListItem","position":3,"name":"变调变速","item":"https://box.lynvortex.top/media/audio-pitch-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"变调变速","url":"https://box.lynvortex.top/media/audio-pitch-tool.html","description":"音频变调变速工具","applicationCategory":"音视频工具","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>🎚️ 变调变速</h1>
+        <p>0.25x - 4x 速度调节，可开启「变速不变调」</p>
+    </div>
+    <div class="upload-zone" id="dropZone">
+        <p style="margin:0;color:#64748b;">🎵 点击选择或拖入音频文件</p>
+        <input type="file" id="fileInput" accept="audio/*" style="display:none;"/>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>速度 / 音调倍率</label><input type="range" id="rate" min="25" max="400" value="100"/><span class="hint" id="ratev">1.00x</span></div>
+        <div class="form-item"><label>常用倍率</label>
+            <select id="quick">
+                <option value="">— 选择 —</option>
+                <option value="50">0.5x（慢速低音）</option>
+                <option value="75">0.75x</option>
+                <option value="150">1.5x</option>
+                <option value="200">2x（快速高音）</option>
+            </select>
+        </div>
+        <div class="form-item"><label>变速不变调（保音高）</label>
+            <select id="preserve"><option value="1">开启（推荐）</option><option value="0">关闭（音调随速度变化）</option></select>
+        </div>
+        <div class="form-item"><label>输出音量</label><input type="range" id="vol" min="50" max="100" value="90"/><span class="hint" id="volv">90%</span></div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-outline" id="dlBtn" disabled>下载 WebM</button>
+        <button class="btn btn-ghost" id="stopBtn">停止试听</button>
+    </div>
+    <div class="status-bar info" id="statusBar">请先选择音频文件，拖动倍率即可实时试听</div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 变调变速</h3>
+        <p>AudioContext 播放速率引擎，实时调节即时可听。</p>
+        <div class="feature-chips"><span class="feature-chip">0.25x-4x</span><span class="feature-chip">保音高</span><span class="feature-chip">实时试听</span><span class="feature-chip">导出WebM</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>「保音高」由浏览器音频引擎实现，各浏览器效果略有差异</li>
+            <li>导出采用实时录制，时长按处理后长度播放一遍</li>
+            <li>学习外语、扒歌、听书变速场景推荐 0.75x / 1.5x</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+var audioEl = null, srcNode = null, ctx = null, gainNode = null, recDest = null, recorder = null, fileURL = null;
+var dropZone = document.getElementById('dropZone'), fileInput = document.getElementById('fileInput');
+dropZone.onclick = function(){ fileInput.click(); };
+dropZone.ondragover = function(e){ e.preventDefault(); };
+dropZone.ondrop = function(e){ e.preventDefault(); if (e.dataTransfer.files[0]) loadAudio(e.dataTransfer.files[0]); };
+fileInput.onchange = function(){ if (fileInput.files[0]) loadAudio(fileInput.files[0]); };
+
+function loadAudio(f) {
+    stopAll();
+    fileURL = URL.createObjectURL(f);
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    audioEl = new Audio(fileURL);
+    audioEl.crossOrigin = 'anonymous';
+    srcNode = ctx.createMediaElementSource(audioEl);
+    gainNode = ctx.createGain();
+    gainNode.gain.value = parseInt(document.getElementById('vol').value) / 100;
+    recDest = ctx.createMediaStreamDestination();
+    srcNode.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    gainNode.connect(recDest);
+    audioEl.loop = false;
+    audioEl.onloadedmetadata = function() {
+        setStatus('已加载：' + f.name + '，时长 ' + audioEl.duration.toFixed(1) + ' 秒，正在试听', 'success');
+        applyRate();
+        audioEl.play();
+        document.getElementById('dlBtn').disabled = false;
+    };
+}
+
+function applyRate() {
+    if (!audioEl) return;
+    var r = parseInt(document.getElementById('rate').value) / 100;
+    audioEl.playbackRate = r;
+    if ('preservesPitch' in audioEl) audioEl.preservesPitch = document.getElementById('preserve').value === '1';
+    if ('mozPreservesPitch' in audioEl) audioEl.mozPreservesPitch = document.getElementById('preserve').value === '1';
+    if ('webkitPreservesPitch' in audioEl) audioEl.webkitPreservesPitch = document.getElementById('preserve').value === '1';
+    document.getElementById('ratev').textContent = r.toFixed(2) + 'x';
+}
+
+function stopAll() {
+    if (audioEl) { audioEl.pause(); }
+    if (recorder && recorder.state === 'recording') { recorder.stop(); }
+}
+
+document.getElementById('rate').oninput = applyRate;
+document.getElementById('preserve').onchange = applyRate;
+document.getElementById('quick').onchange = function() {
+    if (this.value) { document.getElementById('rate').value = this.value; applyRate(); }
+};
+document.getElementById('vol').oninput = function() {
+    document.getElementById('volv').textContent = this.value + '%';
+    if (gainNode) gainNode.gain.value = this.value / 100;
+};
+document.getElementById('stopBtn').onclick = stopAll;
+document.getElementById('dlBtn').onclick = function() {
+    if (!audioEl) return;
+    if (recorder && recorder.state === 'recording') { setStatus('正在录制中…', 'info'); return; }
+    var chunks = [];
+    var mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
+    recorder = new MediaRecorder(recDest.stream, { mimeType: mime });
+    recorder.ondataavailable = function(e){ if (e.data.size) chunks.push(e.data); };
+    recorder.onstop = function() {
+        var b = new Blob(chunks, { type: 'audio/webm' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(b);
+        a.download = 'pitch_' + (audioEl.playbackRate).toFixed(2) + 'x.webm';
+        a.click();
+        setStatus('导出完成', 'success');
+    };
+    audioEl.currentTime = 0;
+    applyRate();
+    audioEl.play();
+    recorder.start();
+    setStatus('开始实时录制，处理后时长约 ' + (audioEl.duration / audioEl.playbackRate).toFixed(1) + ' 秒，请等待播放结束…', 'info');
+    audioEl.onended = function(){ if (recorder && recorder.state === 'recording') recorder.stop(); };
+};
+initSidebar('media');
+</script>
+</body>
+</html>

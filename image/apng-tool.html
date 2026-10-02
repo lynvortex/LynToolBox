@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>APNG制作与PNG优化 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp"/>
+    <meta name="description" content="APNG制作与PNG优化工具，纯前端使用UPNG.js合成多帧APNG动画、分解APNG帧并优化PNG体积，数据本地处理。"/>
+    <link rel="stylesheet" href="../assets/tool-common.css"/>
+    <script src="../assets/upng.min.js"></script>
+    <script src="../assets/sidebar.js"></script>
+    <style>
+        /* 工具特有样式 */
+        .tab-bar { display: flex; border-bottom: 2px solid #f0f2f5; margin-bottom: 24px; gap: 4px; flex-wrap: wrap; }
+        .tab-btn { padding: 10px 18px; border: none; background: none; font-size: 0.92em; font-family: inherit; color: #94a3b8; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; font-weight: 500; transition: all 0.2s; }
+        .tab-btn.active { color: #4a90e2; border-bottom-color: #4a90e2; }
+        .tab-btn:hover:not(.active) { color: #64748b; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        .upload-area { border: 2px dashed #e0e6ed; border-radius: 8px; padding: 28px; text-align: center; margin-bottom: 20px; transition: all 0.2s; cursor: pointer; background: #f8fafc; }
+        .upload-area:hover { border-color: #4a90e2; background: #ebf5ff; }
+        .upload-area.dragover { border-color: #4a90e2; background: #dbeafe; }
+        .upload-icon { font-size: 2.6em; margin-bottom: 8px; color: #cbd5e1; }
+        .upload-text { color: #64748b; font-size: 0.9em; }
+        .upload-hint { color: #94a3b8; font-size: 0.8em; margin-top: 6px; }
+        .upload-input { display: none; }
+
+        .frame-list { display: none; margin-bottom: 16px; }
+        .frame-list-title { font-size: 0.95em; font-weight: 600; color: #2c3e50; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+        .frame-list-title .hint { font-size: 0.8em; color: #94a3b8; font-weight: 400; }
+        .frame-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 12px; }
+        .frame-card { border: 1px solid #e0e6ed; border-radius: 8px; overflow: hidden; background: #fff; }
+        .frame-card .frame-thumb { width: 100%; height: 96px; object-fit: contain; background: repeating-conic-gradient(#f1f5f9 0% 25%, #fff 0% 50%) 50% / 16px 16px; display: block; }
+        .frame-card .frame-meta { padding: 6px 8px; font-size: 0.74em; color: #64748b; display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+        .frame-card .frame-no { font-weight: 600; color: #334155; }
+        .frame-card .frame-actions { display: flex; gap: 3px; }
+        .frame-card .frame-actions button { border: 1px solid #e0e6ed; background: #fff; border-radius: 4px; cursor: pointer; color: #64748b; font-size: 0.78em; padding: 1px 5px; line-height: 1.4; }
+        .frame-card .frame-actions button:hover { background: #f1f5f9; color: #2c3e50; }
+
+        .result-section { display: none; text-align: center; margin-top: 18px; padding: 18px; background: #f8fafc; border-radius: 8px; border: 1px solid #e0e6ed; }
+        .result-section img { max-width: 100%; max-height: 320px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 12px; background: repeating-conic-gradient(#f1f5f9 0% 25%, #fff 0% 50%) 50% / 16px 16px; }
+        .result-meta { font-size: 0.82em; color: #64748b; margin-bottom: 10px; }
+
+        .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+        @media (max-width: 600px) { .compare-grid { grid-template-columns: 1fr; } }
+        .compare-box { border: 1px solid #e0e6ed; border-radius: 8px; padding: 12px; background: #fff; }
+        .compare-label { font-size: 0.85em; color: #64748b; margin-bottom: 8px; font-weight: 600; }
+        .compare-box img { width: 100%; max-height: 200px; object-fit: contain; border-radius: 6px; margin-bottom: 8px; background: repeating-conic-gradient(#f1f5f9 0% 25%, #fff 0% 50%) 50% / 16px 16px; }
+        .compare-info { font-size: 0.8em; color: #475569; display: flex; justify-content: space-between; }
+        .compare-info .save { color: #16a34a; font-weight: 600; }
+        .compare-info .warn { color: #ef4444; font-weight: 600; }
+
+        .btn-success { background: #10b981; color: #fff; }
+        .btn-success:hover { background: #059669; }
+        .btn-secondary { background: #f0f2f5; color: #606266; }
+        .btn-secondary:hover { background: #e1e4e8; }
+        .progress-bar { display: none; height: 8px; background: #f0f2f5; border-radius: 4px; overflow: hidden; margin-bottom: 16px; }
+        .progress-bar .progress-fill { height: 100%; background: linear-gradient(90deg, #4a90e2, #3a7bd5); width: 0%; transition: width 0.2s; }
+    </style>
+    <meta name="keywords" content="APNG制作/PNG优化,在线APNG制作/PNG优化,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/apng-tool.html" />
+    <meta property="og:title" content="APNG制作与PNG优化" />
+    <meta property="og:description" content="APNG制作与PNG优化工具，纯前端使用UPNG.js合成多帧APNG动画、分解APNG帧并优化PNG体积，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/apng-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="APNG制作与PNG优化" />
+    <meta itemprop="description" content="APNG制作与PNG优化工具，纯前端使用UPNG.js合成多帧APNG动画、分解APNG帧并优化PNG体积，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "APNG制作/PNG优化",
+                "item": "https://box.lynvortex.top/image/apng-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "APNG制作/PNG优化",
+        "url": "https://box.lynvortex.top/image/apng-tool.html",
+        "description": "UPNG合成多帧APNG、分解APNG帧并优化PNG体积",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+  <div class="tool-container">
+    <div class="tool-header"><h1>🎞️ APNG 制作 / 分解 / PNG 优化</h1><p>多帧合成 APNG 动画、分解 APNG 逐帧导出、UPNG 重编码优化 PNG 体积</p></div>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="compose">✨ 制作 APNG</button>
+      <button class="tab-btn" data-tab="decompose">🔍 分解 APNG</button>
+      <button class="tab-btn" data-tab="optimize">🗜️ 优化 PNG</button>
+    </div>
+
+    <!-- 制作 APNG -->
+    <div class="tab-panel active" id="panel-compose">
+      <div class="upload-area" id="composeUpload">
+        <div class="upload-icon">🖼️</div>
+        <div class="upload-text">点击或拖拽多张图片到此处（按顺序作为帧）</div>
+        <div class="upload-hint">支持 PNG / JPG / WEBP 等格式，透明 PNG 可保留透明通道</div>
+        <input type="file" id="composeInput" class="upload-input" accept="image/*" multiple>
+      </div>
+
+      <div class="frame-list" id="composeFrameList">
+        <div class="frame-list-title">
+          <span>帧列表（<span id="composeFrameCount">0</span>）</span>
+          <span class="hint">使用 ↑↓ 调整顺序</span>
+        </div>
+        <div class="frame-grid" id="composeFrameGrid"></div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-item">
+          <label>帧率（FPS）</label>
+          <input type="number" id="fps" value="10" min="1" max="60" step="1">
+          <span class="hint">每秒帧数，10 FPS = 每帧 100ms</span>
+        </div>
+        <div class="form-item">
+          <label>循环次数</label>
+          <select id="loopCount">
+            <option value="0" selected>无限循环</option>
+            <option value="1">循环 1 次</option>
+            <option value="3">循环 3 次</option>
+            <option value="5">循环 5 次</option>
+          </select>
+          <span class="hint">APNG 播放循环次数</span>
+        </div>
+        <div class="form-item">
+          <label>颜色数（cnum）</label>
+          <select id="composeCnum">
+            <option value="256" selected>256 色（压缩，推荐）</option>
+            <option value="128">128 色</option>
+            <option value="64">64 色</option>
+            <option value="0">无损（RGBA，体积较大）</option>
+          </select>
+          <span class="hint">调色板颜色数量，越少体积越小</span>
+        </div>
+        <div class="form-item">
+          <label>适配方式</label>
+          <select id="fitMode">
+            <option value="contain" selected>包含（保留比例，透明边距）</option>
+            <option value="stretch">拉伸铺满</option>
+          </select>
+          <span class="hint">不同尺寸图片如何适配到画布</span>
+        </div>
+        <div class="form-item">
+          <label>输出宽度（px，可选）</label>
+          <input type="number" id="outWidth" value="" min="1" max="1280" placeholder="留空=首帧宽度">
+          <span class="hint">统一画布宽度，最大 1280</span>
+        </div>
+        <div class="form-item">
+          <label>输出高度（px，可选）</label>
+          <input type="number" id="outHeight" value="" min="1" max="1280" placeholder="留空=首帧高度">
+          <span class="hint">统一画布高度，最大 1280</span>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="composeBtn" onclick="composeApng()">🎞️ 生成 APNG</button>
+        <button class="btn btn-secondary" onclick="resetCompose()">🔄 清空</button>
+      </div>
+
+      <div class="progress-bar" id="composeProgress"><div class="progress-fill" id="composeProgressFill"></div></div>
+
+      <div class="result-section" id="composeResult">
+        <div class="result-meta" id="composeResultMeta"></div>
+        <img id="composeResultImg" src="" alt="生成的APNG">
+        <br>
+        <button class="btn btn-success" onclick="downloadComposed()">💾 下载 APNG</button>
+      </div>
+    </div>
+
+    <!-- 分解 APNG -->
+    <div class="tab-panel" id="panel-decompose">
+      <div class="upload-area" id="decomposeUpload">
+        <div class="upload-icon">🎞️</div>
+        <div class="upload-text">点击或拖拽 APNG / PNG 文件到此处</div>
+        <div class="upload-hint">将逐帧分解为 PNG 图片，支持动画 APNG 与静态 PNG</div>
+        <input type="file" id="decomposeInput" class="upload-input" accept="image/png,.png">
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="decomposeBtn" onclick="decomposeApng()">🔍 开始分解</button>
+        <button class="btn btn-success" id="downloadAllFramesBtn" onclick="downloadAllFrames()" style="display:none;">📦 下载全部 PNG</button>
+        <button class="btn btn-secondary" onclick="resetDecompose()">🔄 清空</button>
+      </div>
+
+      <div class="progress-bar" id="decomposeProgress"><div class="progress-fill" id="decomposeProgressFill"></div></div>
+
+      <div class="frame-list" id="decomposeFrameList">
+        <div class="frame-list-title">
+          <span>分解结果（<span id="decomposeFrameCount">0</span> 帧）</span>
+          <span class="hint" id="decomposeInfo"></span>
+        </div>
+        <div class="frame-grid" id="decomposeFrameGrid"></div>
+      </div>
+    </div>
+
+    <!-- 优化 PNG -->
+    <div class="tab-panel" id="panel-optimize">
+      <div class="upload-area" id="optimizeUpload">
+        <div class="upload-icon">🗜️</div>
+        <div class="upload-text">点击或拖拽 PNG 图片到此处</div>
+        <div class="upload-hint">使用 UPNG 重编码并量化颜色以减小体积</div>
+        <input type="file" id="optimizeInput" class="upload-input" accept="image/png,.png">
+      </div>
+
+      <div class="form-grid">
+        <div class="form-item">
+          <label>颜色数（cnum）</label>
+          <select id="optimizeCnum">
+            <option value="256" selected>256 色</option>
+            <option value="128">128 色</option>
+            <option value="64">64 色</option>
+            <option value="32">32 色</option>
+            <option value="0">无损重编码</option>
+          </select>
+          <span class="hint">颜色越少体积越小，但画质损失越大</span>
+        </div>
+        <div class="form-item">
+          <label>原始文件</label>
+          <input type="text" id="optimizeFileName" value="—" readonly>
+          <span class="hint" id="optimizeOriginalInfo">尚未上传</span>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="optimizeBtn" onclick="optimizePng()">🗜️ 开始优化</button>
+        <button class="btn btn-success" id="optimizeDownloadBtn" onclick="downloadOptimized()" style="display:none;">💾 下载较小文件</button>
+        <button class="btn btn-secondary" onclick="resetOptimize()">🔄 清空</button>
+      </div>
+
+      <div class="progress-bar" id="optimizeProgress"><div class="progress-fill" id="optimizeProgressFill"></div></div>
+
+      <div class="compare-grid" id="optimizeCompare" style="display:none;">
+        <div class="compare-box">
+          <div class="compare-label">原始 PNG</div>
+          <img id="optOriginalImg" src="" alt="原图">
+          <div class="compare-info"><span id="optOriginalSize">-</span><span id="optOriginalDim">-</span></div>
+        </div>
+        <div class="compare-box">
+          <div class="compare-label">优化后 PNG</div>
+          <img id="optOptimizedImg" src="" alt="优化后">
+          <div class="compare-info"><span id="optOptimizedSize">-</span><span id="optSavings"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="statusBar" class="status-bar info">请选择功能开始使用：制作 APNG、分解 APNG 或优化 PNG</div>
+
+    <footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+  </div>
+
+  <div class="info-cards">
+    <div class="info-card">
+      <h3>📦 功能说明</h3>
+      <p>基于 UPNG.js 实现纯前端 APNG 合成、APNG 帧分解与 PNG 体积优化，所有图片数据均在浏览器本地处理，不上传服务器。</p>
+      <div class="feature-chips">
+        <span class="feature-chip">合成APNG</span>
+        <span class="feature-chip">分解APNG</span>
+        <span class="feature-chip">PNG优化</span>
+        <span class="feature-chip">帧率设置</span>
+        <span class="feature-chip">体积对比</span>
+        <span class="feature-chip">离线本地</span>
+      </div>
+    </div>
+    <div class="info-card">
+      <h3>💡 使用须知</h3>
+      <ul class="tips-list">
+        <li>制作 APNG：上传多张图片按顺序成帧，设置帧率/循环/颜色数后生成动画并预览。</li>
+        <li>分解 APNG：上传 APNG 文件，逐帧渲染为 PNG 并支持单独或批量下载。</li>
+        <li>优化 PNG：通过 UPNG 量化重编码（cnum 颜色数）减小体积，自动对比并下载较小者。</li>
+        <li>颜色数越小体积越小但画质损失越大，无损模式（cnum=0）可能不会减小体积。</li>
+        <li>所有处理在本地完成，大图或大量帧可能耗时，请耐心等待进度提示。</li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <h3>✨ 绘萤者</h3>
+      <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+      <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+      <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+  </div>
+</div></main>
+
+<script>
+(function () {
+    'use strict';
+    initSidebar('image');
+
+    var setStatus = function (msg, type) {
+        var bar = document.getElementById('statusBar');
+        bar.textContent = msg;
+        bar.className = 'status-bar ' + (type || 'info');
+    };
+    window.setStatus = setStatus;
+
+    var formatSize = function (bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / 1024 / 1024).toFixed(2) + ' MB';
+    };
+
+    // Tab 切换
+    var tabBtns = document.querySelectorAll('.tab-btn');
+    tabBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            tabBtns.forEach(function (b) { b.classList.remove('active'); });
+            document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.remove('active'); });
+            btn.classList.add('active');
+            document.getElementById('panel-' + btn.getAttribute('data-tab')).classList.add('active');
+            var map = { compose: '上传多张图片合成 APNG 动画', decompose: '上传 APNG 文件逐帧分解为 PNG', optimize: '上传 PNG 通过重编码优化体积' };
+            setStatus(map[btn.getAttribute('data-tab')] || '请选择功能', 'info');
+        });
+    });
+
+    // 通用拖拽上传绑定
+    var bindUpload = function (area, input, handler) {
+        area.addEventListener('click', function () { input.click(); });
+        area.addEventListener('dragover', function (e) { e.preventDefault(); area.classList.add('dragover'); });
+        area.addEventListener('dragleave', function () { area.classList.remove('dragover'); });
+        area.addEventListener('drop', function (e) {
+            e.preventDefault();
+            area.classList.remove('dragover');
+            if (e.dataTransfer.files && e.dataTransfer.files.length) handler(e.dataTransfer.files);
+        });
+        input.addEventListener('change', function () {
+            if (input.files && input.files.length) handler(input.files);
+            input.value = '';
+        });
+    };
+
+    // ============ 制作 APNG ============
+    var composeImages = []; // { id, name, dataUrl, width, height }
+    var composedBlobUrl = null;
+
+    bindUpload(document.getElementById('composeUpload'), document.getElementById('composeInput'), function (files) {
+        var added = 0, pending = 0;
+        var done = function () {
+            pending--;
+            if (pending === 0) {
+                renderComposeFrames();
+                if (added > 0) setStatus('已添加 ' + added + ' 张图片，点击"生成 APNG"', 'info');
+            }
+        };
+        for (var i = 0; i < files.length; i++) {
+            var f = files[i];
+            if (!f.type.startsWith('image/')) continue;
+            added++; pending++;
+            (function (file) {
+                var item = { id: 'c' + Date.now() + '_' + Math.random().toString(36).slice(2, 8), name: file.name, dataUrl: null, width: 0, height: 0 };
+                composeImages.push(item);
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    item.dataUrl = e.target.result;
+                    var img = new Image();
+                    img.onload = function () { item.width = img.naturalWidth; item.height = img.naturalHeight; done(); };
+                    img.onerror = function () { done(); };
+                    img.src = item.dataUrl;
+                };
+                reader.onerror = function () { done(); };
+                reader.readAsDataURL(file);
+            })(f);
+        }
+        if (added === 0) setStatus('未识别到有效图片文件', 'error');
+    });
+
+    var renderComposeFrames = function () {
+        var list = document.getElementById('composeFrameList');
+        var grid = document.getElementById('composeFrameGrid');
+        document.getElementById('composeFrameCount').textContent = composeImages.length;
+        if (composeImages.length === 0) { list.style.display = 'none'; return; }
+        list.style.display = 'block';
+        var html = '';
+        composeImages.forEach(function (item, idx) {
+            html += '<div class="frame-card">' +
+                (item.dataUrl ? '<img class="frame-thumb" src="' + escapeHtml(item.dataUrl) + '" alt="帧' + (idx + 1) + '">' : '<div class="frame-thumb"></div>') +
+                '<div class="frame-meta"><span class="frame-no">#' + (idx + 1) + '</span>' +
+                '<div class="frame-actions">' +
+                '<button onclick="moveComposeFrame(\'' + item.id + '\',-1)" title="上移">↑</button>' +
+                '<button onclick="moveComposeFrame(\'' + item.id + '\',1)" title="下移">↓</button>' +
+                '<button onclick="removeComposeFrame(\'' + item.id + '\')" title="删除">✕</button>' +
+                '</div></div></div>';
+        });
+        grid.innerHTML = html;
+    };
+
+    window.moveComposeFrame = function (id, dir) {
+        var idx = composeImages.findIndex(function (i) { return i.id === id; });
+        if (idx < 0) return;
+        var ni = idx + dir;
+        if (ni < 0 || ni >= composeImages.length) return;
+        var tmp = composeImages[idx]; composeImages[idx] = composeImages[ni]; composeImages[ni] = tmp;
+        renderComposeFrames();
+    };
+    window.removeComposeFrame = function (id) {
+        composeImages = composeImages.filter(function (i) { return i.id !== id; });
+        renderComposeFrames();
+        setStatus('已移除该帧', 'info');
+    };
+
+    window.resetCompose = function () {
+        composeImages = [];
+        if (composedBlobUrl) { URL.revokeObjectURL(composedBlobUrl); composedBlobUrl = null; }
+        renderComposeFrames();
+        document.getElementById('composeResult').style.display = 'none';
+        document.getElementById('composeResultImg').src = '';
+        document.getElementById('composeProgress').style.display = 'none';
+        document.getElementById('composeProgressFill').style.width = '0%';
+        setStatus('已清空', 'info');
+    };
+
+    // PNG CRC32（用于修正 APNG acTL 块的循环次数）
+    var CRC_TABLE = (function () {
+        var t = new Uint32Array(256);
+        for (var n = 0; n < 256; n++) {
+            var c = n;
+            for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+            t[n] = c >>> 0;
+        }
+        return t;
+    })();
+    var crc32 = function (bytes, start, len) {
+        var c = 0xFFFFFFFF;
+        for (var i = 0; i < len; i++) c = CRC_TABLE[(c ^ bytes[start + i]) & 0xFF] ^ (c >>> 8);
+        return (c ^ 0xFFFFFFFF) >>> 0;
+    };
+    // 设置 APNG 的循环次数（num_plays），0=无限
+    var setApngLoop = function (buffer, loop) {
+        var view = new DataView(buffer);
+        var bytes = new Uint8Array(buffer);
+        var offset = 8; // 跳过 PNG 签名
+        while (offset < buffer.byteLength - 12) {
+            var len = view.getUint32(offset);        // 大端
+            var type = String.fromCharCode(bytes[offset + 4], bytes[offset + 5], bytes[offset + 6], bytes[offset + 7]);
+            if (type === 'acTL') {
+                // 数据：num_frames(4) + num_plays(4)，CRC 紧随其后
+                view.setUint32(offset + 12, loop, false); // num_plays（大端）
+                var crc = crc32(bytes, offset + 4, 12);   // 覆盖 type+data
+                view.setUint32(offset + 16, crc, false);
+                return buffer;
+            }
+            offset += 8 + len + 4; // length字段 + data + CRC
+        }
+        return buffer;
+    };
+
+    // 将图片绘制到 w×h 画布并返回 RGBA Uint8Array
+    var imageToRgba = function (dataUrl, w, h, fitMode, cb) {
+        var img = new Image();
+        img.onload = function () {
+            var c = document.createElement('canvas');
+            c.width = w; c.height = h;
+            var cx = c.getContext('2d');
+            if (fitMode === 'stretch') {
+                cx.drawImage(img, 0, 0, w, h);
+            } else {
+                var ir = img.naturalWidth / img.naturalHeight, tr = w / h;
+                var dw, dh;
+                if (ir > tr) { dw = w; dh = w / ir; } else { dh = h; dw = h * ir; }
+                cx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+            }
+            var id = cx.getImageData(0, 0, w, h);
+            cb(new Uint8Array(id.data));
+        };
+        img.onerror = function () { cb(null); };
+        img.src = dataUrl;
+    };
+
+    window.composeApng = function () {
+        var ready = composeImages.filter(function (i) { return i.dataUrl && i.width; });
+        if (ready.length === 0) { setStatus('请先上传至少一张图片', 'error'); return; }
+        if (typeof UPNG === 'undefined') { setStatus('UPNG.js 库未加载，请刷新重试', 'error'); return; }
+        if (ready.length === 1) { setStatus('仅 1 帧将生成静态 PNG，建议上传多帧以生成动画', 'info'); }
+
+        var btn = document.getElementById('composeBtn');
+        btn.disabled = true; btn.textContent = '生成中...';
+        var prog = document.getElementById('composeProgress');
+        var fill = document.getElementById('composeProgressFill');
+        prog.style.display = 'block'; fill.style.width = '10%';
+        document.getElementById('composeResult').style.display = 'none';
+
+        setTimeout(function () {
+            try {
+                var fps = Math.max(1, parseInt(document.getElementById('fps').value, 10) || 10);
+                var loop = parseInt(document.getElementById('loopCount').value, 10) || 0;
+                var cnum = parseInt(document.getElementById('composeCnum').value, 10);
+                var fitMode = document.getElementById('fitMode').value;
+                var delay = Math.round(1000 / fps);
+
+                var ow = parseInt(document.getElementById('outWidth').value, 10);
+                var oh = parseInt(document.getElementById('outHeight').value, 10);
+                var w = (ow && ow > 0) ? Math.min(ow, 1280) : ready[0].width;
+                var h = (oh && oh > 0) ? Math.min(oh, 1280) : ready[0].height;
+                w = Math.max(1, Math.min(w, 1280));
+                h = Math.max(1, Math.min(h, 1280));
+
+                fill.style.width = '30%';
+                setStatus('正在解码 ' + ready.length + ' 帧（' + w + '×' + h + '）...', 'info');
+
+                var bufs = new Array(ready.length);
+                var loaded = 0;
+                var failed = false;
+                var loadOne = function (i) {
+                    imageToRgba(ready[i].dataUrl, w, h, fitMode, function (rgba) {
+                        if (failed) return;
+                        if (!rgba) { failed = true; setStatus('第 ' + (i + 1) + ' 帧解码失败', 'error'); btn.disabled = false; btn.textContent = '🎞️ 生成 APNG'; prog.style.display = 'none'; return; }
+                        bufs[i] = rgba;
+                        loaded++;
+                        fill.style.width = (30 + (loaded / ready.length) * 50) + '%';
+                        if (loaded === ready.length) doEncode();
+                    });
+                };
+                for (var i = 0; i < ready.length; i++) loadOne(i);
+
+                var doEncode = function () {
+                    try {
+                        var dels = [];
+                        for (var d = 0; d < bufs.length; d++) dels.push(delay);
+                        fill.style.width = '85%';
+                        var result = UPNG.encode(bufs, w, h, cnum, dels); // ArrayBuffer
+                        if (loop !== 0) result = setApngLoop(result, loop);
+                        var blob = new Blob([result], { type: 'image/png' });
+                        if (composedBlobUrl) URL.revokeObjectURL(composedBlobUrl);
+                        composedBlobUrl = URL.createObjectURL(blob);
+                        var img = document.getElementById('composeResultImg');
+                        img.src = composedBlobUrl;
+                        img.onload = function () { document.getElementById('composeResult').style.display = 'block'; };
+                        var meta = document.getElementById('composeResultMeta');
+                        meta.textContent = '尺寸 ' + w + '×' + h + ' · ' + bufs.length + ' 帧 · ' + fps + ' FPS · ' + formatSize(blob.size);
+                        fill.style.width = '100%';
+                        setTimeout(function () { prog.style.display = 'none'; }, 600);
+                        btn.disabled = false; btn.textContent = '🎞️ 生成 APNG';
+                        setStatus('APNG 生成成功！体积 ' + formatSize(blob.size), 'success');
+                    } catch (err) {
+                        btn.disabled = false; btn.textContent = '🎞️ 生成 APNG';
+                        prog.style.display = 'none';
+                        setStatus('编码失败：' + (err && err.message ? err.message : err), 'error');
+                    }
+                };
+            } catch (err) {
+                btn.disabled = false; btn.textContent = '🎞️ 生成 APNG';
+                prog.style.display = 'none';
+                setStatus('生成失败：' + (err && err.message ? err.message : err), 'error');
+            }
+        }, 50);
+    };
+
+    window.downloadComposed = function () {
+        if (!composedBlobUrl) { setStatus('请先生成 APNG', 'error'); return; }
+        var a = document.createElement('a');
+        a.href = composedBlobUrl;
+        a.download = 'apng_' + Date.now() + '.png';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setStatus('开始下载 APNG 文件', 'success');
+    };
+
+    // ============ 分解 APNG ============
+    var decomposeFile = null;
+    var decomposedFrames = []; // { dataUrl, delay }
+
+    bindUpload(document.getElementById('decomposeUpload'), document.getElementById('decomposeInput'), function (files) {
+        var f = files[0];
+        if (!f) return;
+        if (f.type !== 'image/png' && !/\.png$/i.test(f.name)) { setStatus('请上传 PNG/APNG 格式文件', 'error'); return; }
+        decomposeFile = f;
+        setStatus('已选择文件：' + f.name + '（' + formatSize(f.size) + '），点击"开始分解"', 'info');
+    });
+
+    window.decomposeApng = function () {
+        if (!decomposeFile) { setStatus('请先上传 APNG/PNG 文件', 'error'); return; }
+        if (typeof UPNG === 'undefined') { setStatus('UPNG.js 库未加载，请刷新重试', 'error'); return; }
+        var btn = document.getElementById('decomposeBtn');
+        btn.disabled = true; btn.textContent = '解析中...';
+        var prog = document.getElementById('decomposeProgress');
+        var fill = document.getElementById('decomposeProgressFill');
+        prog.style.display = 'block'; fill.style.width = '10%';
+        decomposedFrames = [];
+
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            try {
+                fill.style.width = '30%';
+                var out = UPNG.decode(e.target.result);
+                var w = out.width, h = out.height;
+                var animated = out.tabs && out.tabs.acTL != null;
+                fill.style.width = '60%';
+                var rgbaFrames = UPNG.toRGBA8(out); // [ArrayBuffer]
+                // 帧延迟
+                var delays = [];
+                if (out.frames && out.frames.length) {
+                    out.frames.forEach(function (fr) { delays.push(fr.delay || 0); });
+                }
+                while (delays.length < rgbaFrames.length) delays.push(0);
+
+                for (var i = 0; i < rgbaFrames.length; i++) {
+                    var c = document.createElement('canvas');
+                    c.width = w; c.height = h;
+                    var cx = c.getContext('2d');
+                    var id = cx.createImageData(w, h);
+                    id.data.set(new Uint8Array(rgbaFrames[i]));
+                    cx.putImageData(id, 0, 0);
+                    decomposedFrames.push({ dataUrl: c.toDataURL('image/png'), delay: delays[i] });
+                }
+                fill.style.width = '100%';
+                renderDecomposedFrames(w, h, animated);
+                btn.disabled = false; btn.textContent = '🔍 开始分解';
+                setTimeout(function () { prog.style.display = 'none'; }, 600);
+                setStatus('分解完成，共 ' + decomposedFrames.length + ' 帧' + (animated ? '（动画 APNG）' : '（静态 PNG）'), 'success');
+            } catch (err) {
+                btn.disabled = false; btn.textContent = '🔍 开始分解';
+                prog.style.display = 'none';
+                setStatus('解析失败：' + (err && err.message ? err.message : err) + '（可能为非标准 PNG）', 'error');
+            }
+        };
+        reader.onerror = function () {
+            btn.disabled = false; btn.textContent = '🔍 开始分解';
+            prog.style.display = 'none';
+            setStatus('文件读取失败', 'error');
+        };
+        reader.readAsArrayBuffer(decomposeFile);
+    };
+
+    var renderDecomposedFrames = function (w, h, animated) {
+        var list = document.getElementById('decomposeFrameList');
+        var grid = document.getElementById('decomposeFrameGrid');
+        document.getElementById('decomposeFrameCount').textContent = decomposedFrames.length;
+        document.getElementById('decomposeInfo').textContent = w + '×' + h + 'px' + (animated ? ' · 动画' : ' · 静态');
+        if (decomposedFrames.length === 0) { list.style.display = 'none'; document.getElementById('downloadAllFramesBtn').style.display = 'none'; return; }
+        list.style.display = 'block';
+        document.getElementById('downloadAllFramesBtn').style.display = 'inline-block';
+        var html = '';
+        decomposedFrames.forEach(function (f, idx) {
+            var delayStr = f.delay ? (f.delay + 'ms') : '--';
+            html += '<div class="frame-card">' +
+                '<img class="frame-thumb" src="' + escapeHtml(f.dataUrl) + '" alt="帧' + (idx + 1) + '">' +
+                '<div class="frame-meta"><span class="frame-no">#' + (idx + 1) + '</span><span>' + delayStr + '</span>' +
+                '<div class="frame-actions"><button onclick="downloadFrame(' + idx + ')" title="下载 PNG">💾</button></div></div></div>';
+        });
+        grid.innerHTML = html;
+    };
+
+    window.downloadFrame = function (idx) {
+        if (!decomposedFrames[idx]) return;
+        var a = document.createElement('a');
+        a.href = decomposedFrames[idx].dataUrl;
+        a.download = 'frame_' + (idx + 1) + '.png';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setStatus('开始下载第 ' + (idx + 1) + ' 帧', 'success');
+    };
+    window.downloadAllFrames = function () {
+        if (decomposedFrames.length === 0) return;
+        setStatus('开始下载全部 ' + decomposedFrames.length + ' 帧（间隔 300ms）...', 'info');
+        decomposedFrames.forEach(function (f, idx) {
+            setTimeout(function () {
+                var a = document.createElement('a');
+                a.href = f.dataUrl;
+                a.download = 'frame_' + (idx + 1) + '.png';
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            }, idx * 300);
+        });
+    };
+    window.resetDecompose = function () {
+        decomposeFile = null; decomposedFrames = [];
+        document.getElementById('decomposeFrameList').style.display = 'none';
+        document.getElementById('decomposeFrameGrid').innerHTML = '';
+        document.getElementById('downloadAllFramesBtn').style.display = 'none';
+        document.getElementById('decomposeProgress').style.display = 'none';
+        setStatus('已清空', 'info');
+    };
+
+    // ============ 优化 PNG ============
+    var optimizeFile = null;
+    var optimizedBlobUrl = null;
+    var downloadBlobUrl = null; // 较小者
+
+    bindUpload(document.getElementById('optimizeUpload'), document.getElementById('optimizeInput'), function (files) {
+        var f = files[0];
+        if (!f) return;
+        if (f.type !== 'image/png' && !/\.png$/i.test(f.name)) { setStatus('请上传 PNG 格式文件', 'error'); return; }
+        optimizeFile = f;
+        document.getElementById('optimizeFileName').value = f.name;
+        document.getElementById('optimizeOriginalInfo').textContent = formatSize(f.size);
+        document.getElementById('optimizeCompare').style.display = 'none';
+        document.getElementById('optimizeDownloadBtn').style.display = 'none';
+        setStatus('已选择文件：' + f.name + '（' + formatSize(f.size) + '），点击"开始优化"', 'info');
+    });
+
+    window.optimizePng = function () {
+        if (!optimizeFile) { setStatus('请先上传 PNG 文件', 'error'); return; }
+        if (typeof UPNG === 'undefined') { setStatus('UPNG.js 库未加载，请刷新重试', 'error'); return; }
+        var btn = document.getElementById('optimizeBtn');
+        btn.disabled = true; btn.textContent = '优化中...';
+        var prog = document.getElementById('optimizeProgress');
+        var fill = document.getElementById('optimizeProgressFill');
+        prog.style.display = 'block'; fill.style.width = '20%';
+
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            try {
+                var originalBuffer = e.target.result;
+                var originalSize = optimizeFile.size;
+                fill.style.width = '50%';
+                var out = UPNG.decode(originalBuffer);
+                var w = out.width, h = out.height;
+                var rgba = UPNG.toRGBA8(out)[0]; // ArrayBuffer
+                fill.style.width = '75%';
+                var cnum = parseInt(document.getElementById('optimizeCnum').value, 10);
+                var result = UPNG.encode([rgba], w, h, cnum); // ArrayBuffer
+                var optimizedSize = result.byteLength;
+                var optimizedBlob = new Blob([result], { type: 'image/png' });
+                if (optimizedBlobUrl) URL.revokeObjectURL(optimizedBlobUrl);
+                optimizedBlobUrl = URL.createObjectURL(optimizedBlob);
+
+                // 显示对比
+                document.getElementById('optOriginalImg').src = URL.createObjectURL(new Blob([originalBuffer], { type: 'image/png' }));
+                document.getElementById('optOptimizedImg').src = optimizedBlobUrl;
+                document.getElementById('optOriginalSize').textContent = formatSize(originalSize);
+                document.getElementById('optOriginalDim').textContent = w + '×' + h;
+                document.getElementById('optOptimizedSize').textContent = formatSize(optimizedSize);
+
+                var savingsEl = document.getElementById('optSavings');
+                var smallerIsOptimized = optimizedSize < originalSize;
+                if (smallerIsOptimized) {
+                    var pct = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
+                    savingsEl.innerHTML = '<span class="save">减少 ' + pct + '%</span>';
+                    downloadBlobUrl = optimizedBlobUrl;
+                } else {
+                    savingsEl.innerHTML = '<span class="warn">未减小（+ ' + ((optimizedSize / originalSize - 1) * 100).toFixed(1) + '%）</span>';
+                    downloadBlobUrl = URL.createObjectURL(new Blob([originalBuffer], { type: 'image/png' }));
+                }
+                document.getElementById('optimizeCompare').style.display = 'grid';
+                document.getElementById('optimizeDownloadBtn').style.display = 'inline-block';
+                document.getElementById('optimizeDownloadBtn').textContent = smallerIsOptimized ? '💾 下载优化版' : '💾 下载原图（更小）';
+
+                fill.style.width = '100%';
+                btn.disabled = false; btn.textContent = '🗜️ 开始优化';
+                setTimeout(function () { prog.style.display = 'none'; }, 600);
+                setStatus(smallerIsOptimized ? ('优化成功！' + formatSize(originalSize) + ' → ' + formatSize(optimizedSize)) : '优化后体积未减小，已为你保留原图', smallerIsOptimized ? 'success' : 'info');
+            } catch (err) {
+                btn.disabled = false; btn.textContent = '🗜️ 开始优化';
+                prog.style.display = 'none';
+                setStatus('优化失败：' + (err && err.message ? err.message : err), 'error');
+            }
+        };
+        reader.onerror = function () {
+            btn.disabled = false; btn.textContent = '🗜️ 开始优化';
+            prog.style.display = 'none';
+            setStatus('文件读取失败', 'error');
+        };
+        reader.readAsArrayBuffer(optimizeFile);
+    };
+
+    window.downloadOptimized = function () {
+        if (!downloadBlobUrl) { setStatus('请先执行优化', 'error'); return; }
+        var a = document.createElement('a');
+        a.href = downloadBlobUrl;
+        a.download = 'optimized_' + Date.now() + '.png';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setStatus('开始下载', 'success');
+    };
+    window.resetOptimize = function () {
+        optimizeFile = null;
+        if (optimizedBlobUrl) { URL.revokeObjectURL(optimizedBlobUrl); optimizedBlobUrl = null; }
+        downloadBlobUrl = null;
+        document.getElementById('optimizeFileName').value = '—';
+        document.getElementById('optimizeOriginalInfo').textContent = '尚未上传';
+        document.getElementById('optimizeCompare').style.display = 'none';
+        document.getElementById('optimizeDownloadBtn').style.display = 'none';
+        document.getElementById('optimizeProgress').style.display = 'none';
+        setStatus('已清空', 'info');
+    };
+})();
+</script>
+</body></html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>字幕时间轴调整 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线SRT字幕时间轴调整工具，整体偏移、倍速缩放、重新编号，一键下载修复后的字幕文件，纯前端本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="字幕时间轴,SRT调整,字幕偏移,字幕同步,字幕缩放,ass转srt,音视频工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/media/subtitle-shift-tool.html"/>
+<meta property="og:title" content="字幕时间轴调整"/>
+<meta property="og:description" content="SRT 时间偏移/缩放/重编号。"/>
+<meta property="og:url" content="https://box.lynvortex.top/media/subtitle-shift-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="字幕时间轴调整"/>
+<meta itemprop="description" content="SRT 时间偏移/缩放/重编号。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"音视频处理","item":"https://box.lynvortex.top/media.html"},{"@type":"ListItem","position":3,"name":"字幕时间轴调整","item":"https://box.lynvortex.top/media/subtitle-shift-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"字幕时间轴调整","url":"https://box.lynvortex.top/media/subtitle-shift-tool.html","description":"SRT字幕时间轴调整工具","applicationCategory":"音视频工具","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>⏱️ 字幕时间轴调整</h1>
+        <p>SRT 字幕整体偏移 / 倍速缩放 / 重新编号</p>
+    </div>
+    <div class="upload-zone" id="dropZone">
+        <p style="margin:0;color:#64748b;">📄 点击选择或拖入 SRT 字幕文件（或直接粘贴到下方）</p>
+        <input type="file" id="fileInput" accept=".srt,.txt" style="display:none;"/>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>整体偏移（秒，负数提前）</label><input type="number" id="offset" value="0" step="0.1"/></div>
+        <div class="form-item"><label>时间缩放倍率</label><input type="number" id="scale" value="1" step="0.001"/></div>
+        <div class="form-item"><label>常用偏移</label>
+            <select id="quick">
+                <option value="">— 选择 —</option>
+                <option value="-0.5">提前 0.5 秒</option>
+                <option value="0.5">延后 0.5 秒</option>
+                <option value="-1">提前 1 秒</option>
+                <option value="1">延后 1 秒</option>
+            </select>
+        </div>
+        <div class="form-item"><label>选项</label>
+            <select id="renum"><option value="1">重新编号（推荐）</option><option value="0">保留原编号</option></select>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="runBtn">⚙️ 应用调整</button>
+        <button class="btn btn-outline" id="dlBtn" disabled>下载 SRT</button>
+    </div>
+    <div class="status-bar info" id="statusBar">粘贴或选择 SRT 字幕内容</div>
+    <textarea class="code" id="input" style="min-height:180px;" placeholder="1&#10;00:00:01,000 --> 00:00:03,500&#10;第一句字幕内容"></textarea>
+    <p style="font-size:0.8em;color:#94a3b8;margin:8px 0;">↓ 输出结果</p>
+    <pre class="output" id="output"></pre>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 字幕时间轴调整</h3>
+        <p>解析 SRT 块结构，对起止时间做仿射变换后重组。</p>
+        <div class="feature-chips"><span class="feature-chip">正负偏移</span><span class="feature-chip">倍速缩放</span><span class="feature-chip">自动重编号</span><span class="feature-chip">负时间钳制</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>偏移用于字幕整体早/晚；缩放用于不同帧率版本（如 23.976→25）</li>
+            <li>缩放参考点为 0 时刻，与播放器行为一致</li>
+            <li>调整后时间小于 0 的字幕会被钳制到 0</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+var dropZone = document.getElementById('dropZone'), fileInput = document.getElementById('fileInput');
+dropZone.onclick = function(){ fileInput.click(); };
+dropZone.ondragover = function(e){ e.preventDefault(); };
+dropZone.ondrop = function(e){ e.preventDefault(); if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); };
+fileInput.onchange = function(){ if (fileInput.files[0]) loadFile(fileInput.files[0]); };
+
+function loadFile(f) {
+    var fr = new FileReader();
+    fr.onload = function() {
+        document.getElementById('input').value = fr.result;
+        setStatus('已加载：' + f.name + '，' + fr.result.length + ' 字符', 'success');
+    };
+    fr.readAsText(f, 'utf-8');
+}
+
+function parseTs(s) {
+    var m = s.trim().match(/^(\d+):(\d+):(\d+)[,.](\d+)$/);
+    if (!m) return null;
+    return ((+m[1]) * 3600 + (+m[2]) * 60 + (+m[3])) * 1000 + (+m[4]);
+}
+
+function fmtTs(ms) {
+    if (ms < 0) ms = 0;
+    var h = Math.floor(ms / 3600000), mi = Math.floor(ms % 3600000 / 60000), s = Math.floor(ms % 60000 / 1000), msec = Math.floor(ms % 1000);
+    var p = function(n, l){ return String(n).padStart(l, '0'); };
+    return p(h, 2) + ':' + p(mi, 2) + ':' + p(s, 2) + ',' + p(msec, 3);
+}
+
+document.getElementById('quick').onchange = function() {
+    if (this.value) document.getElementById('offset').value = this.value;
+};
+
+document.getElementById('runBtn').onclick = function() {
+    var text = document.getElementById('input').value.trim();
+    if (!text) { setStatus('请先输入字幕内容', 'error'); return; }
+    var offset = (parseFloat(document.getElementById('offset').value) || 0) * 1000;
+    var scale = parseFloat(document.getElementById('scale').value) || 1;
+    var renum = document.getElementById('renum').value === '1';
+    var blocks = text.replace(/\r\n/g, '\n').split(/\n\s*\n/);
+    var out = [], count = 0;
+    for (var i = 0; i < blocks.length; i++) {
+        var lines = blocks[i].split('\n').filter(function(l){ return l.trim() !== ''; });
+        if (lines.length < 2) continue;
+        var tsIdx = -1;
+        for (var j = 0; j < lines.length; j++) {
+            if (lines[j].indexOf('-->') !== -1) { tsIdx = j; break; }
+        }
+        if (tsIdx === -1) continue;
+        var parts = lines[tsIdx].split('-->');
+        var start = parseTs(parts[0]), end = parseTs(parts[1]);
+        if (start === null || end === null) continue;
+        start = start * scale + offset;
+        end = end * scale + offset;
+        count++;
+        var body = lines.slice(tsIdx + 1).join('\n');
+        out.push((renum ? count : lines[0]) + '\n' + fmtTs(start) + ' --> ' + fmtTs(end) + '\n' + body);
+    }
+    if (!count) { setStatus('未解析到有效字幕块，请确认 SRT 格式', 'error'); return; }
+    var result = out.join('\n\n') + '\n';
+    document.getElementById('output').textContent = result;
+    document.getElementById('dlBtn').disabled = false;
+    document.getElementById('dlBtn').dataset.result = result;
+    setStatus('处理完成：共 ' + count + ' 条字幕，偏移 ' + (offset / 1000) + 's，缩放 ×' + scale, 'success');
+};
+
+document.getElementById('dlBtn').onclick = function() {
+    var b = new Blob([this.dataset.result], { type: 'text/plain;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(b);
+    a.download = 'adjusted.srt';
+    a.click();
+};
+initSidebar('media');
+</script>
+</body>
+</html>

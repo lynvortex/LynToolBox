@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>HTML 实体转换 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线 HTML 实体编解码工具，命名实体与数字实体（十进制/十六进制）互转，支持全量 Unicode，中文安全编码，XSS 防护必备。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="HTML实体,实体编码,实体解码,&amp;nbsp,HTML转义,XSS防护,unicode编码,编程开发,免费工具,在线工具,纯前端处理,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/work/html-entity-tool.html"/>
+<meta property="og:title" content="HTML 实体转换"/>
+<meta property="og:description" content="命名/数字实体编解码，全量 Unicode。"/>
+<meta property="og:url" content="https://box.lynvortex.top/work/html-entity-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="HTML 实体转换"/>
+<meta itemprop="description" content="命名/数字实体编解码，全量 Unicode。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"编程开发","item":"https://box.lynvortex.top/work.html"},{"@type":"ListItem","position":3,"name":"HTML 实体转换","item":"https://box.lynvortex.top/work/html-entity-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"HTML 实体转换","url":"https://box.lynvortex.top/work/html-entity-tool.html","description":"HTML实体编解码工具","applicationCategory":"编程开发","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>&#38; HTML 实体转换</h1>
+        <p>实体编码 ⇄ 解码，命名 / 十进制 / 十六进制全支持</p>
+    </div>
+    <div class="form-grid">
+        <div class="form-item" style="grid-column:1/-1;"><label>输入</label>
+            <textarea class="code" id="input">&lt;a href=&quot;x&quot;&gt;你好 &amp; 世界 &#x1F525;&lt;/a&gt;</textarea>
+        </div>
+        <div class="form-item"><label>编码模式</label>
+            <select id="mode">
+                <option value="named">命名实体优先（&amp;nbsp; 等）</option>
+                <option value="dec">十进制数字实体（&#20013;）</option>
+                <option value="hex">十六进制实体（&#x4e2d;）</option>
+                <option value="ascii">仅非 ASCII 转实体（推荐）</option>
+            </select>
+        </div>
+        <div class="form-item"><label>操作</label>
+            <select id="op"><option value="encode">编码（字符 → 实体）</option><option value="decode">解码（实体 → 字符）</option></select>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="runBtn">⚙️ 转换</button>
+        <button class="btn btn-outline" id="swapBtn">↔ 交换输入输出</button>
+        <button class="btn btn-ghost" id="copyBtn">复制结果</button>
+    </div>
+    <div class="status-bar info" id="statusBar">编码防止 HTML 注入，解码用于还原渲染文本</div>
+    <label style="font-size:0.85em;color:#64748b;font-weight:600;">结果</label>
+    <pre class="output" id="output" style="user-select:all;white-space:pre-wrap;"></pre>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 HTML 实体转换</h3>
+        <p>解码走 DOM 引擎，覆盖全部命名实体与数字实体。</p>
+        <div class="feature-chips"><span class="feature-chip">全量Unicode</span><span class="feature-chip">命名实体</span><span class="feature-chip">十进制/十六进制</span><span class="feature-chip">XSS转义</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>「仅非 ASCII 转实体」保留 &lt; &gt; &amp; 转义，中文转数字实体</li>
+            <li>编码 emoji 等 astral 字符会自动拆成代理对或按码点输出</li>
+            <li>解码任意来源实体前请确认内容可信，实体本身无执行能力</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+var NAMED = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;', '\u00a0': '&nbsp;', '\u00a9': '&copy;', '\u00ae': '&reg;', '\u2122': '&trade;', '\u00d7': '&times;', '\u00f7': '&divide;', '\u2014': '&mdash;', '\u2013': '&ndash;', '\u2026': '&hellip;', '\u2018': '&lsquo;', '\u2019': '&rsquo;', '\u201c': '&ldquo;', '\u201d': '&rdquo;', '\u00b7': '&middot;', '\u00a7': '&sect;', '\u00b6': '&para;', '\u00b0': '&deg;', '\u00b1': '&plusmn;', '\u00bc': '&frac14;', '\u00bd': '&frac12;', '\u00be': '&frac34;', '\u00d7': '&times;', '\u20ac': '&euro;', '\u00a3': '&pound;', '\u00a5': '&yen;', '\u00a2': '&cent;' };
+
+function encodeStr(s, mode) {
+    var out = '';
+    for (var ch of s) {
+        var cp = ch.codePointAt(0);
+        if (mode === 'ascii' && cp < 128 && !NAMED[ch]) { out += ch; continue; }
+        if (mode === 'named' && NAMED[ch]) { out += NAMED[ch]; continue; }
+        if (mode !== 'ascii' && cp < 128 && !['&', '<', '>', '"', "'"].includes(ch)) { out += ch; continue; }
+        if (mode === 'named' && cp < 128 && NAMED[ch]) { out += NAMED[ch]; continue; }
+        if (mode === 'hex') out += '&#x' + cp.toString(16) + ';';
+        else out += '&#' + cp + ';';
+    }
+    return out;
+}
+
+function decodeStr(s) {
+    var t = document.createElement('textarea');
+    t.innerHTML = s;
+    return t.value;
+}
+
+document.getElementById('runBtn').onclick = function() {
+    var input = document.getElementById('input').value;
+    if (!input) { setStatus('请输入内容', 'error'); return; }
+    var mode = document.getElementById('mode').value;
+    var op = document.getElementById('op').value;
+    try {
+        var result = op === 'encode' ? encodeStr(input, mode) : decodeStr(input);
+        document.getElementById('output').textContent = result;
+        setStatus((op === 'encode' ? '编码' : '解码') + '完成，' + result.length + ' 字符', 'success');
+    } catch (e) {
+        setStatus('转换失败：' + e.message, 'error');
+    }
+};
+
+document.getElementById('swapBtn').onclick = function() {
+    var out = document.getElementById('output').textContent;
+    if (!out) { setStatus('没有可交换的内容', 'error'); return; }
+    document.getElementById('input').value = out;
+    var op = document.getElementById('op');
+    op.value = op.value === 'encode' ? 'decode' : 'encode';
+    document.getElementById('runBtn').click();
+};
+
+document.getElementById('copyBtn').onclick = function() {
+    var t = document.getElementById('output').textContent;
+    if (t) navigator.clipboard.writeText(t).then(function(){ setStatus('已复制', 'success'); });
+};
+initSidebar('work');
+</script>
+</body>
+</html>

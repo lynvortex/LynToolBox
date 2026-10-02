@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Excel查看器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="Excel在线查看器，支持xlsx/xls/csv文件，多工作表切换、单元格搜索、行列统计，纯前端解析不上传。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<style>
+.sheet-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.sheet-tab{padding:7px 16px;border-radius:6px;border:1px solid #e0e6ed;background:#f8fafc;cursor:pointer;font-size:.85em;color:#64748b;font-weight:600;}
+.sheet-tab.active{background:#4a90e2;color:#fff;border-color:#4a90e2;}
+.table-wrap{overflow:auto;max-height:520px;border:1px solid #e0e6ed;border-radius:8px;}
+table.xl{border-collapse:collapse;font-size:.82em;white-space:nowrap;}
+table.xl th{position:sticky;top:0;background:#f1f5f9;color:#475569;padding:6px 10px;border:1px solid #e0e6ed;font-weight:600;z-index:2;}
+table.xl td{padding:5px 10px;border:1px solid #eef2f6;color:#334155;max-width:320px;overflow:hidden;text-overflow:ellipsis;}
+table.xl tr:nth-child(even) td{background:#fafcff;}
+table.xl td mark{background:#fde68a;padding:0 1px;border-radius:2px;}
+.row-head{background:#f8fafc !important;color:#94a3b8 !important;font-weight:600;position:sticky;left:0;z-index:1;}
+</style>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="Excel查看器,xlsx查看,在线打开Excel,csv查看,文档处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/document/xlsx-view-tool.html"/>
+<meta property="og:title" content="Excel查看器"/>
+<meta property="og:description" content="在线查看xlsx/xls/csv文件，多工作表切换与单元格搜索，纯前端解析。"/>
+<meta property="og:url" content="https://box.lynvortex.top/document/xlsx-view-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="Excel查看器"/>
+<meta itemprop="description" content="在线查看xlsx/xls/csv文件，多工作表切换与单元格搜索，纯前端解析。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"文档处理","item":"https://box.lynvortex.top/document.html"},{"@type":"ListItem","position":3,"name":"Excel查看器","item":"https://box.lynvortex.top/document/xlsx-view-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"Excel查看器","url":"https://box.lynvortex.top/document/xlsx-view-tool.html","description":"在线查看xlsx/xls/csv表格文件","applicationCategory":"文档处理","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>📊 Excel查看器</h1>
+        <p>在线打开 xlsx / xls / csv，纯前端解析</p>
+    </div>
+    <div class="upload-zone" id="dropZone">
+        <p style="margin:0;color:#64748b;">📈 点击选择或拖入 Excel / CSV 文件</p>
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.ods" style="display:none;"/>
+    </div>
+    <div class="btn-row" id="toolbar" style="display:none;">
+        <input type="text" id="searchInput" placeholder="🔎 搜索单元格内容…" style="flex:1;min-width:180px;padding:9px 12px;border:1px solid #e0e6ed;border-radius:8px;font-size:.88em;"/>
+        <span id="statInfo" style="font-size:.82em;color:#64748b;"></span>
+    </div>
+    <div class="status-bar info" id="statusBar">请先选择文件</div>
+    <div class="sheet-tabs" id="sheetTabs"></div>
+    <div class="table-wrap" id="tableWrap" style="display:none;"></div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 Excel查看器</h3>
+        <p>基于 SheetJS 的纯前端表格解析，无需安装 Office。</p>
+        <div class="feature-chips"><span class="feature-chip">xlsx/xls</span><span class="feature-chip">CSV/ODS</span><span class="feature-chip">多工作表</span><span class="feature-chip">内容搜索</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>超大表格仅渲染前 2000 行以保证流畅</li>
+            <li>搜索会高亮匹配的单元格</li>
+            <li>文件在浏览器本地解析，不会上传</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script src="../assets/xlsx.full.min.js"></script>
+<script>
+var workbook = null, MAX_ROWS = 2000;
+var dropZone = document.getElementById('dropZone'), fileInput = document.getElementById('fileInput');
+dropZone.onclick = function(){ fileInput.click(); };
+dropZone.ondragover = function(e){ e.preventDefault(); };
+dropZone.ondrop = function(e){ e.preventDefault(); if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); };
+fileInput.onchange = function(){ if (fileInput.files[0]) loadFile(fileInput.files[0]); };
+
+function loadFile(f) {
+    setStatus('正在解析 ' + f.name + ' …', 'info');
+    var reader = new FileReader();
+    reader.onload = function(){
+        try {
+            workbook = XLSX.read(reader.result, { type: 'array' });
+            var tabs = document.getElementById('sheetTabs');
+            tabs.innerHTML = '';
+            workbook.SheetNames.forEach(function(name, i){
+                var t = document.createElement('div');
+                t.className = 'sheet-tab' + (i === 0 ? ' active' : '');
+                t.textContent = name;
+                t.onclick = function(){
+                    document.querySelectorAll('.sheet-tab').forEach(function(x){ x.classList.remove('active'); });
+                    t.classList.add('active');
+                    renderSheet(name);
+                };
+                tabs.appendChild(t);
+            });
+            document.getElementById('toolbar').style.display = 'flex';
+            document.getElementById('tableWrap').style.display = 'block';
+            renderSheet(workbook.SheetNames[0]);
+            setStatus('解析成功：' + f.name + '（' + workbook.SheetNames.length + ' 个工作表）', 'success');
+        } catch (e) { setStatus('解析失败：' + e.message, 'error'); }
+    };
+    reader.readAsArrayBuffer(f);
+}
+
+function renderSheet(name) {
+    var sheet = workbook.Sheets[name];
+    var rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+    var wrap = document.getElementById('tableWrap');
+    if (!rows.length) { wrap.innerHTML = '<p style="padding:20px;color:#94a3b8;">该工作表为空</p>'; document.getElementById('statInfo').textContent = ''; return; }
+    var total = rows.length, truncated = total > MAX_ROWS;
+    rows = rows.slice(0, MAX_ROWS);
+    var colCount = rows.reduce(function(m, r){ return Math.max(m, r.length); }, 0);
+    var html = '<table class="xl"><thead><tr><th class="row-head">#</th>';
+    for (var c = 0; c < colCount; c++) html += '<th>' + colName(c) + '</th>';
+    html += '</tr></thead><tbody>';
+    rows.forEach(function(row, ri){
+        html += '<tr><td class="row-head">' + (ri + 1) + '</td>';
+        for (var c2 = 0; c2 < colCount; c2++) {
+            html += '<td>' + escapeHtml(row[c2] !== undefined ? String(row[c2]) : '') + '</td>';
+        }
+        html += '</tr>';
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+    document.getElementById('statInfo').textContent = total + ' 行 × ' + colCount + ' 列' + (truncated ? '（仅显示前 ' + MAX_ROWS + ' 行）' : '');
+}
+
+function colName(n) {
+    var s = '';
+    n++;
+    while (n > 0) { var m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); }
+    return s;
+}
+
+document.getElementById('searchInput').addEventListener('input', function(){
+    var q = this.value.trim().toLowerCase();
+    document.querySelectorAll('#tableWrap td').forEach(function(td){
+        if (td.classList.contains('row-head')) return;
+        var txt = td.textContent;
+        if (q && txt.toLowerCase().indexOf(q) > -1) {
+            var idx = txt.toLowerCase().indexOf(q);
+            td.innerHTML = escapeHtml(txt.slice(0, idx)) + '<mark>' + escapeHtml(txt.slice(idx, idx + q.length)) + '</mark>' + escapeHtml(txt.slice(idx + q.length));
+        } else {
+            td.textContent = txt;
+        }
+    });
+});
+initSidebar('document');
+</script>
+</body>
+</html>

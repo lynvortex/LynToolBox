@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CSV转SQL工具 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线 CSV/JSON 转 SQL INSERT 语句工具，支持 MySQL/PostgreSQL/SQLite 方言、批量插入、类型推断与 NULL 处理，Excel 数据秒变建表语句，纯前端处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="CSV转SQL,JSON转SQL,INSERT语句,批量插入,Excel转SQL,SQL生成,数据迁移,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/work/csv-sql-tool.html"/>
+<meta property="og:title" content="CSV转SQL工具"/>
+<meta property="og:description" content="表格数据秒变 INSERT 语句。"/>
+<meta property="og:url" content="https://box.lynvortex.top/work/csv-sql-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="CSV转SQL工具"/>
+<meta itemprop="description" content="表格数据秒变 INSERT 语句。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"编程开发","item":"https://box.lynvortex.top/work.html"},{"@type":"ListItem","position":3,"name":"CSV转SQL工具","item":"https://box.lynvortex.top/work/csv-sql-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"CSV转SQL工具","url":"https://box.lynvortex.top/work/csv-sql-tool.html","description":"CSV/JSON转SQL工具","applicationCategory":"编程开发","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>🗃️ CSV / JSON → SQL</h1>
+        <p>表格数据一键生成 INSERT 语句</p>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>输入格式</label>
+            <select id="srcType">
+                <option value="csv">CSV（首行为字段名）</option>
+                <option value="tsv">TSV（Tab 分隔）</option>
+                <option value="json">JSON 数组</option>
+            </select>
+        </div>
+        <div class="form-item"><label>SQL 方言</label>
+            <select id="dialect">
+                <option value="mysql">MySQL</option>
+                <option value="postgres">PostgreSQL</option>
+                <option value="sqlite">SQLite</option>
+                <option value="standard">标准 SQL</option>
+            </select>
+        </div>
+        <div class="form-item"><label>表名</label>
+            <input type="text" id="table" value="my_table"/>
+        </div>
+        <div class="form-item"><label>插入模式</label>
+            <select id="batch">
+                <option value="multi">批量（一条多值）</option>
+                <option value="single">逐行（一行一条）</option>
+            </select>
+        </div>
+        <div class="form-item"><label>数值不加引号</label>
+            <select id="numeric"><option value="yes">是（智能识别数字）</option><option value="no">否（全部按字符串）</option></select>
+        </div>
+        <div class="form-item"><label>空值处理</label>
+            <select id="nullMode"><option value="null">转 NULL</option><option value="empty">转空字符串</option></select>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="runBtn">⚙️ 生成 SQL</button>
+        <button class="btn btn-outline" id="copyBtn">复制 SQL</button>
+        <button class="btn btn-ghost" id="sampleBtn">载入示例</button>
+    </div>
+    <div class="status-bar info" id="statusBar">粘贴 CSV / JSON 数据后生成</div>
+    <textarea class="code" id="input" style="min-height:180px;" placeholder="id,name,score&#10;1,张三,95.5&#10;2,李四,88"></textarea>
+    <p style="font-size:0.8em;color:#94a3b8;margin:8px 0;">↓ SQL 输出</p>
+    <pre class="output" id="output" style="white-space:pre-wrap;max-height:300px;overflow:auto;"></pre>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>🗃️ 数据迁移助手</h3>
+        <p>Excel 导出的 CSV 直接入库。</p>
+        <div class="feature-chips"><span class="feature-chip">三种方言</span><span class="feature-chip">批量插入</span><span class="feature-chip">转义引号</span><span class="feature-chip">NULL 处理</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>CSV 首行会作为字段名，值中的引号自动转义</li>
+            <li>JSON 输入需为数组对象格式，键即字段名</li>
+            <li>生成语句建议先在测试库验证再执行</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+var SAMPLE_CSV = 'id,username,email,age,city\n1,alice,alice@example.com,28,北京\n2,bob,bob@example.com,34,上海\n3,Carol O\'Connor,carol@example.com,,广州';
+
+function parseCsv(text, delim) {
+    var rows = [], cur = [], field = '', inQ = false;
+    for (var i = 0; i < text.length; i++) {
+        var ch = text[i];
+        if (inQ) {
+            if (ch === '"' && text[i + 1] === '"') { field += '"'; i++; }
+            else if (ch === '"') inQ = false;
+            else field += ch;
+        } else {
+            if (ch === '"') inQ = true;
+            else if (ch === delim) { cur.push(field); field = ''; }
+            else if (ch === '\n') { cur.push(field); rows.push(cur); cur = []; field = ''; }
+            else if (ch === '\r') {}
+            else field += ch;
+        }
+    }
+    if (field !== '' || cur.length) { cur.push(field); rows.push(cur); }
+    return rows.filter(function(r) { return r.length > 1 || (r[0] && r[0].trim() !== ''); });
+}
+
+function sqlValue(v, numeric, nullMode) {
+    var s = String(v == null ? '' : v);
+    if (nullMode === 'null' && s.trim() === '') return 'NULL';
+    if (nullMode === 'empty' && s.trim() === '') return "''";
+    if (numeric === 'yes' && s.trim() !== '' && !isNaN(s.trim())) return s.trim();
+    return "'" + s.replace(/'/g, "''") + "'";
+}
+
+function quoteIdent(name, dialect) {
+    if (dialect === 'mysql') return '`' + name.replace(/`/g, '``') + '`';
+    return '"' + name.replace(/"/g, '""') + '"';
+}
+
+document.getElementById('runBtn').onclick = function() {
+    var input = document.getElementById('input').value;
+    if (!input.trim()) { setStatus('请输入数据', 'error'); return; }
+    var srcType = document.getElementById('srcType').value;
+    var dialect = document.getElementById('dialect').value;
+    var table = document.getElementById('table').value.trim() || 'my_table';
+    var batch = document.getElementById('batch').value;
+    var numeric = document.getElementById('numeric').value;
+    var nullMode = document.getElementById('nullMode').value;
+
+    var headers, rows;
+    try {
+        if (srcType === 'json') {
+            var arr = JSON.parse(input);
+            if (!Array.isArray(arr) || !arr.length) throw new Error('JSON 需为非空数组');
+            headers = Object.keys(arr[0]);
+            rows = arr.map(function(o) { return headers.map(function(h) { return o[h]; }); });
+        } else {
+            var delim = srcType === 'tsv' ? '\t' : ',';
+            var parsed = parseCsv(input, delim);
+            if (parsed.length < 2) throw new Error('至少需要字段行 + 1 行数据');
+            headers = parsed[0].map(function(h) { return h.trim(); });
+            rows = parsed.slice(1);
+        }
+    } catch (e) {
+        document.getElementById('output').textContent = '❌ ' + e.message;
+        setStatus('解析失败：' + e.message, 'error');
+        return;
+    }
+
+    var idents = headers.map(function(h) { return quoteIdent(h, dialect); });
+    var lines = [];
+    var headerSql = 'INSERT INTO ' + quoteIdent(table, dialect) + ' (' + idents.join(', ') + ')';
+    if (batch === 'multi') {
+        lines.push(headerSql + ' VALUES');
+        var vals = rows.map(function(r) {
+            return '(' + headers.map(function(h, i) { return sqlValue(r[i], numeric, nullMode); }).join(', ') + ')';
+        });
+        lines.push(vals.join(',\n') + ';');
+    } else {
+        rows.forEach(function(r) {
+            lines.push(headerSql + ' VALUES (' + headers.map(function(h, i) { return sqlValue(r[i], numeric, nullMode); }).join(', ') + ');');
+        });
+    }
+    if (dialect === 'sqlite') lines.unshift('BEGIN TRANSACTION;');
+    if (dialect === 'sqlite') lines.push('COMMIT;');
+    document.getElementById('output').textContent = lines.join('\n');
+    setStatus('已生成 ' + rows.length + ' 行数据、' + headers.length + ' 个字段的 INSERT 语句', 'success');
+};
+
+function setStatus(msg, cls) {
+    var sb = document.getElementById('statusBar');
+    sb.textContent = msg; sb.className = 'status-bar ' + cls;
+}
+
+document.getElementById('sampleBtn').onclick = function() {
+    document.getElementById('srcType').value = 'csv';
+    document.getElementById('input').value = SAMPLE_CSV;
+    setStatus('已载入示例，点击生成', 'info');
+};
+document.getElementById('copyBtn').onclick = function() {
+    var t = document.getElementById('output').textContent;
+    if (t && t.indexOf('❌') !== 0) navigator.clipboard.writeText(t).then(function() { setStatus('SQL 已复制', 'success'); });
+};
+initSidebar('work');
+</script>
+</body>
+</html>

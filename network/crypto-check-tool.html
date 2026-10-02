@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>加密货币地址校验 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="加密货币地址校验工具，纯前端校验BTC ETH TRON等区块链地址合法性，支持Base58Check与Keccak-256校验，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<script src="../assets/crypto-js.min.js"></script>
+<style>
+.result-card{border-radius:12px;padding:24px;text-align:center;margin-bottom:16px;}
+.result-card.valid{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;}
+.result-card.invalid{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;}
+.result-card.unknown{background:linear-gradient(135deg,#64748b,#475569);color:#fff;}
+.result-icon{font-size:2.4em;margin-bottom:8px;}
+.result-title{font-size:1.2em;font-weight:700;margin-bottom:4px;}
+.result-detail{font-size:.85em;opacity:.9;}
+.chain-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:16px;}
+.chain-badge{padding:10px 14px;border-radius:8px;border:2px solid #f0f2f5;text-align:center;font-size:.85em;font-weight:600;cursor:pointer;transition:.2s;}
+.chain-badge.active{border-color:#4a90e2;background:#ebf5ff;color:#4a90e2;}
+.chain-badge.detected{border-color:#16a34a;background:#f0fdf4;color:#16a34a;}
+.info-table{width:100%;border-collapse:collapse;margin-top:12px;}
+.info-table td{padding:8px 12px;border-bottom:1px solid #f1f5f9;font-size:.85em;}
+.info-table td:first-child{color:#94a3b8;width:35%;}
+.info-table td:last-child{color:#2c3e50;font-weight:600;word-break:break-all;}
+</style>
+    <meta name="keywords" content="加密货币地址验证,在线加密货币地址验证,网络工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/network/crypto-check-tool.html" />
+    <meta property="og:title" content="加密货币地址校验" />
+    <meta property="og:description" content="加密货币地址校验工具，纯前端校验BTC ETH TRON等区块链地址合法性，支持Base58Check与Keccak-256校验，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/network/crypto-check-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="加密货币地址校验" />
+    <meta itemprop="description" content="加密货币地址校验工具，纯前端校验BTC ETH TRON等区块链地址合法性，支持Base58Check与Keccak-256校验，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "网络工具",
+                "item": "https://box.lynvortex.top/network.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "加密货币地址验证",
+                "item": "https://box.lynvortex.top/network/crypto-check-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "加密货币地址验证",
+        "url": "https://box.lynvortex.top/network/crypto-check-tool.html",
+        "description": "验证BTC/ETH/LTC等加密货币地址格式与校验和",
+        "applicationCategory": "网络工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🪙 加密货币地址校验</h1><p>校验BTC/ETH/TRON等区块链地址合法性</p></div>
+<div class="form-item" style="margin-bottom:16px;">
+<label>输入加密货币地址</label>
+<input type="text" id="addrInput" placeholder="bc1qxy2k... 或 0x742d..." style="padding:12px 14px;border:1px solid #e0e6ed;border-radius:8px;font-size:.92em;font-family:'Consolas',monospace;outline:none;" oninput="checkAddr()"/>
+</div>
+<div class="chain-list" id="chainList">
+<div class="chain-badge" data-chain="BTC">比特币 BTC</div>
+<div class="chain-badge" data-chain="ETH">以太坊 ETH</div>
+<div class="chain-badge" data-chain="TRON">波场 TRON</div>
+<div class="chain-badge" data-chain="LTC">莱特币 LTC</div>
+<div class="chain-badge" data-chain="DOGE">狗狗币 DOGE</div>
+<div class="chain-badge" data-chain="DASH">达世币 DASH</div>
+</div>
+<div id="resultArea" style="display:none;">
+<div class="result-card unknown" id="resultCard">
+<div class="result-icon" id="resultIcon">⏳</div>
+<div class="result-title" id="resultTitle">等待输入</div>
+<div class="result-detail" id="resultDetail">输入地址后自动校验</div>
+</div>
+<table class="info-table" id="infoTable" style="display:none;"></table>
+</div>
+<div id="statusBar" class="status-bar info">输入加密货币地址后自动校验，也可点击链类型手动指定</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+</footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 功能说明</h3><p>校验多种加密货币地址格式与校验和</p><div class="feature-chips"><span class="feature-chip">BTC地址</span><span class="feature-chip">ETH地址</span><span class="feature-chip">TRON地址</span><span class="feature-chip">Base58Check</span><span class="feature-chip">Keccak-256</span><span class="feature-chip">自动识别</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>支持比特币(Legacy/Bech32)、以太坊、波场等主流链地址</li><li>ETH使用Keccak-256校验和验证，BTC使用Base58Check</li><li>仅校验地址格式合法性，不验证链上余额或交易</li><li>所有校验在浏览器本地执行，地址不上传</li><li>自动识别地址类型，也可手动指定链进行校验</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+initSidebar('network');
+var sb=document.getElementById('statusBar');
+var B58='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+function b58Decode(str){var bytes=[];for(var i=0;i<str.length;i++){var c=B58.indexOf(str[i]);if(c<0)return null;var carry=c;for(var j=0;j<bytes.length;j++){carry+=bytes[j]*58;bytes[j]=carry&0xff;carry>>=8;}while(carry>0){bytes.push(carry&0xff);carry>>=8;}}for(var i=0;i<str.length&&str[i]==='1';i++)bytes.push(0);return bytes.reverse();}
+function checkBase58(addr,prefix){var decoded=b58Decode(addr);if(!decoded||decoded.length<5)return false;var payload=decoded.slice(0,-4);var checksum=decoded.slice(-4);var hash1=CryptoJS.SHA256(CryptoJS.lib.WordArray.create(new Uint8Array(payload))).toString();var hash2=CryptoJS.SHA256(CryptoJS.enc.Hex.parse(hash1)).toString();var calc=hash2.substr(0,8);var expected=Array.from(new Uint8Array(checksum)).map(function(b){return('0'+b.toString(16)).slice(-2);}).join('');return calc===expected;}
+function checkETH(addr){if(!/^0x[0-9a-fA-F]{40}$/.test(addr))return false;var hex=addr.slice(2).toLowerCase();var hash=CryptoJS.SHA3(hex,{outputLength:256}).toString();for(var i=0;i<hex.length;i++){var c=parseInt(hash[i],16);if(c>=8&&hex[i]!==hex[i].toUpperCase())return false;if(c<8&&hex[i]!==hex[i].toLowerCase())return false;}return true;}
+function checkBech32(addr){if(!/^(bc1|tb1|ltc1)[ac-hj-np-z02-9]+$/.test(addr.toLowerCase()))return false;return addr.toLowerCase().length>=39&&addr.toLowerCase().length<=90;}
+var chainMap={BTC:{prefixes:[0x00,0x05],name:'比特币'},ETH:{name:'以太坊'},TRON:{prefixes:[0x41],name:'波场'},LTC:{prefixes:[0x30,0x32],name:'莱特币'},DOGE:{prefixes:[0x1e],name:'狗狗币'},DASH:{prefixes:[0x4c,0x10],name:'达世币'}};
+var selectedChain=null;
+document.querySelectorAll('.chain-badge').forEach(function(b){b.onclick=function(){document.querySelectorAll('.chain-badge').forEach(function(x){x.classList.remove('active');});b.classList.add('active');selectedChain=b.dataset.chain;checkAddr();};});
+function checkAddr(){
+var addr=document.getElementById('addrInput').value.trim();
+document.querySelectorAll('.chain-badge').forEach(function(b){b.classList.remove('detected');});
+if(!addr){document.getElementById('resultArea').style.display='none';setStatus('输入加密货币地址后自动校验','info');return;}
+document.getElementById('resultArea').style.display='block';
+var results=[];
+if(/^0x[0-9a-fA-F]{40}$/.test(addr)){var valid=checkETH(addr);results.push({chain:'ETH',valid:valid,detail:valid?'Keccak-256校验通过':'校验和不匹配'});}
+if(addr.startsWith('bc1')||addr.startsWith('tb1')){results.push({chain:'BTC',valid:checkBech32(addr),detail:'Bech32(SegWit)格式'});}
+if(/^[3mn][1-9A-HJ-NP-Za-km-z]{25,39}$/.test(addr)||/^[D][1-9A-HJ-NP-Za-km-z]{25,39}$/.test(addr)){if(checkBase58(addr,0x00))results.push({chain:'BTC',valid:true,detail:'Legacy P2PKH格式'});}
+if(/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(addr)){results.push({chain:'TRON',valid:checkBase58(addr,0x41),detail:'Base58Check (prefix 0x41)'});}
+if(/^L[1-9A-HJ-NP-Za-km-z]{25,39}$/.test(addr)){results.push({chain:'LTC',valid:checkBase58(addr,0x30),detail:'Legacy P2PKH格式'});}
+if(/^D[1-9A-HJ-NP-Za-km-z]{25,39}$/.test(addr)){results.push({chain:'DOGE',valid:checkBase58(addr,0x1e),detail:'Base58Check (prefix 0x1e)'});}
+if(selectedChain&&!results.some(function(r){return r.chain===selectedChain})){var cm=chainMap[selectedChain];if(selectedChain==='ETH'){results=[{chain:selectedChain,valid:checkETH(addr),detail:checkETH(addr)?'Keccak-256校验通过':'地址格式不匹配'}];}else if(cm.prefixes){var v=cm.prefixes.some(function(p){return checkBase58(addr,p);});results=[{chain:selectedChain,valid:v,detail:'Base58Check校验'}];}}
+if(results.length===0){showResult('unknown','❓','无法识别','地址格式不属于已知链类型',null);setStatus('无法识别地址类型','info');return;}
+results.forEach(function(r){document.querySelector('[data-chain="'+r.chain+'"]').classList.add('detected');});
+var best=results[0];
+if(selectedChain){best=results.find(function(r){return r.chain===selectedChain;})||best;}
+var card=document.getElementById('resultCard');
+if(best.valid){card.className='result-card valid';document.getElementById('resultIcon').textContent='✅';document.getElementById('resultTitle').textContent='地址有效';document.getElementById('resultDetail').textContent=chainMap[best.chain].name+' · '+best.detail;setStatus('校验通过：'+chainMap[best.chain].name+'地址有效','success');}else{card.className='result-card invalid';document.getElementById('resultIcon').textContent='❌';document.getElementById('resultTitle').textContent='地址无效';document.getElementById('resultDetail').textContent=chainMap[best.chain].name+' · '+best.detail;setStatus('校验失败：地址无效','error');}
+var info=[['链类型',chainMap[best.chain].name],['原始地址',addr],['地址长度',addr.length+'字符'],['校验结果',best.valid?'有效 ✓':'无效 ✗'],['校验方式',best.detail]];
+var t=document.getElementById('infoTable');t.style.display='table';t.innerHTML=info.map(function(r){return '<tr><td>'+r[0]+'</td><td>'+escapeHtml(r[1])+'</td></tr>';}).join('');
+}
+function showResult(cls,icon,title,detail,info){var card=document.getElementById('resultCard');card.className='result-card '+cls;document.getElementById('resultIcon').textContent=icon;document.getElementById('resultTitle').textContent=title;document.getElementById('resultDetail').textContent=detail;var t=document.getElementById('infoTable');if(info){t.style.display='table';t.innerHTML=info.map(function(r){return '<tr><td>'+r[0]+'</td><td>'+escapeHtml(r[1])+'</td></tr>';}).join('');}else{t.style.display='none';}}
+</script>
+</body>
+</html>

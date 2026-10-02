@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FLV播放器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="FLV视频播放器，纯前端使用flv.js播放FLV直播或点播流，支持自定义地址，数据本地处理" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <script src="../assets/sidebar.js"></script>
+    <script src="../assets/flv.min.js"></script>
+    <style>
+        .player-wrap { background: #0f172a; border-radius: 10px; overflow: hidden; margin-bottom: 16px; aspect-ratio: 16 / 9; display: flex; align-items: center; justify-content: center; }
+        .player-wrap video { width: 100%; height: 100%; display: block; background: #000; }
+        .url-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+        .url-row input { flex: 1; min-width: 200px; padding: 10px 14px; border: 1px solid #e0e6ed; border-radius: 8px; font-size: 0.9em; outline: none; transition: 0.2s; }
+        .url-row input:focus { border-color: #4a90e2; }
+        .mode-row { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+        .mode-toggle { display: inline-flex; border: 1px solid #e0e6ed; border-radius: 8px; overflow: hidden; }
+        .mode-toggle button { padding: 8px 16px; border: none; background: #fff; cursor: pointer; font-size: 0.85em; color: #64748b; transition: 0.2s; }
+        .mode-toggle button.active { background: #4a90e2; color: #fff; }
+        .examples { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+        .ex-chip { padding: 4px 10px; background: #f1f5f9; color: #4a90e2; border-radius: 6px; font-size: 0.78em; cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
+        .ex-chip:hover { background: #e2e8f0; border-color: #4a90e2; }
+        .conn-status { display: flex; align-items: center; gap: 8px; font-size: 0.85em; margin-bottom: 14px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: #cbd5e1; flex-shrink: 0; }
+        .dot.connecting { background: #eab308; animation: blink 1s infinite; }
+        .dot.ok { background: #22c55e; }
+        .dot.err { background: #ef4444; }
+        @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+    </style>
+    <meta name="keywords" content="FLV播放器,在线FLV播放器,音视频处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/media/flv-player-tool.html" />
+    <meta property="og:title" content="FLV播放器" />
+    <meta property="og:description" content="FLV视频播放器，纯前端使用flv.js播放FLV直播或点播流，支持自定义地址，数据本地处理" />
+    <meta property="og:url" content="https://box.lynvortex.top/media/flv-player-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="FLV播放器" />
+    <meta itemprop="description" content="FLV视频播放器，纯前端使用flv.js播放FLV直播或点播流，支持自定义地址，数据本地处理" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "音视频处理",
+                "item": "https://box.lynvortex.top/media.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "FLV播放器",
+                "item": "https://box.lynvortex.top/media/flv-player-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "FLV播放器",
+        "url": "https://box.lynvortex.top/media/flv-player-tool.html",
+        "description": "基于flv.js播放FLV直播或点播流，支持自定义地址与直播点播切换",
+        "applicationCategory": "音视频处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🎞️ FLV播放器</h1>
+                <p>基于 flv.js 播放 FLV 直播或点播流，支持自定义地址与直播/点播切换，纯前端本地处理</p>
+            </div>
+
+            <div class="url-row">
+                <input type="text" id="urlInput" placeholder="输入 .flv 地址，例如 https://example.com/live/stream.flv" />
+                <button class="btn btn-primary" id="playBtn">▶ 播放</button>
+                <button class="btn btn-outline" id="stopBtn">⏹ 停止</button>
+            </div>
+            <div class="mode-row">
+                <div class="mode-toggle" id="modeToggle">
+                    <button class="active" data-live="false">🎬 点播（VOD）</button>
+                    <button data-live="true">📡 直播（Live）</button>
+                </div>
+                <span class="hint" style="margin:0;">直播流请选择直播模式以启用低延迟拉流</span>
+            </div>
+            <div class="examples">
+                <span class="ex-chip" data-url="https://sf1-cdn-tos.huoshanstatic.com/obj/media-fe/xgplayer_doc_video/flv/xgplayer-demo-720p.flv" data-live="false">示例点播流</span>
+                <span class="ex-chip" data-url="https://live.example.com/live/stream.flv" data-live="true">示例直播流（需自备源）</span>
+            </div>
+
+            <div class="player-wrap" id="playerWrap">
+                <video id="video" controls playsinline></video>
+            </div>
+
+            <div class="conn-status">
+                <span class="dot" id="dot"></span>
+                <span id="connText">未连接，请输入地址后点击播放</span>
+            </div>
+
+            <div id="statusBar" class="status-bar info">准备就绪，flv.js 已加载，可播放 FLV 直播/点播流</div>
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 功能说明</h3>
+                <p>输入 FLV 地址即可播放，支持点播与直播模式切换。基于 flv.js 通过 MSE 在浏览器内解码 FLV 流。</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">FLV播放</span>
+                    <span class="feature-chip">直播点播</span>
+                    <span class="feature-chip">flv.js</span>
+                    <span class="feature-chip">自定义地址</span>
+                    <span class="feature-chip">状态反馈</span>
+                    <span class="feature-chip">离线本地</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>需要浏览器支持 Media Source Extensions（MSE），移动端 Safari 可能不支持</li>
+                    <li>FLV 源需允许跨域访问（CORS），否则无法加载</li>
+                    <li>直播流请选择「直播」模式，点播文件选择「点播」模式</li>
+                    <li>所有拉流与解码均在浏览器本地完成，不经过服务器中转</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const setStatus = (m, t) => { const s = document.getElementById('statusBar'); s.textContent = m; s.className = 'status-bar ' + (t || 'info'); };
+    const setConn = (state, text) => {
+        const dot = document.getElementById('dot');
+        dot.className = 'dot' + (state ? ' ' + state : '');
+        document.getElementById('connText').textContent = text;
+    };
+    const video = document.getElementById('video');
+    const urlInput = document.getElementById('urlInput');
+    let player = null, isLive = false;
+
+    document.querySelectorAll('#modeToggle button').forEach(b => b.addEventListener('click', () => {
+        document.querySelectorAll('#modeToggle button').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        isLive = b.dataset.live === 'true';
+    }));
+    document.querySelectorAll('.ex-chip').forEach(c => c.addEventListener('click', () => {
+        urlInput.value = c.dataset.url;
+        isLive = c.dataset.live === 'true';
+        document.querySelectorAll('#modeToggle button').forEach(x => x.classList.toggle('active', x.dataset.live === String(isLive)));
+    }));
+
+    function destroy() {
+        if (player) {
+            try { player.pause(); } catch (e) {}
+            try { player.unload(); } catch (e) {}
+            try { player.detachMediaElement(); } catch (e) {}
+            try { player.destroy(); } catch (e) {}
+            player = null;
+        }
+        video.removeAttribute('src');
+        try { video.load(); } catch (e) {}
+    }
+
+    function play() {
+        const url = urlInput.value.trim();
+        if (!url) { setStatus('请输入有效的 FLV 地址', 'error'); return; }
+        if (!/^https?:\/\//i.test(url)) { setStatus('地址需以 http:// 或 https:// 开头', 'error'); return; }
+        if (typeof flvjs === 'undefined') { setStatus('flv.js 库加载失败，请刷新重试', 'error'); return; }
+        if (!flvjs.isSupported()) {
+            setConn('err', '当前浏览器不支持 FLV 播放（需要 MSE）');
+            setStatus('当前浏览器不支持 flv.js 播放，请使用支持 MSE 的浏览器（如 Chrome/Edge/Firefox）', 'error');
+            return;
+        }
+        destroy();
+        setConn('connecting', '正在连接并加载 FLV 流…');
+        setStatus('正在加载 FLV 流（' + (isLive ? '直播' : '点播') + '）…', 'info');
+
+        player = flvjs.createPlayer({
+            type: 'flv',
+            url: url,
+            isLive: isLive,
+            hasAudio: true,
+            hasVideo: true
+        }, {
+            enableWorker: false,
+            enableStashBuffer: !isLive,
+            stashInitialSize: isLive ? 128 : 384,
+            liveBufferLatencyChasing: isLive
+        });
+        player.attachMediaElement(video);
+        player.load();
+
+        player.on(flvjs.Events.ERROR, (errorType, errorDetail, errorInfo) => {
+            setConn('err', '播放失败：' + (errorDetail || errorType));
+            setStatus('播放失败 [' + errorType + ']：' + (errorDetail || '请检查地址与跨域设置'), 'error');
+        });
+        player.on(flvjs.Events.LOADING_COMPLETE, () => {
+            setConn('ok', '点播流加载完成');
+            setStatus('点播流已播放完毕', 'info');
+        });
+
+        video.addEventListener('loadedmetadata', () => {
+            setConn('ok', '流已连接，开始播放');
+            setStatus('播放成功（' + (isLive ? '直播' : '点播') + '）', 'success');
+            video.play().catch(() => setStatus('已加载，请点击视频播放按钮', 'info'));
+        }, { once: true });
+        video.addEventListener('error', () => {
+            setConn('err', '视频元素错误');
+            setStatus('视频解码错误，可能是编码不受支持或跨域被拦截', 'error');
+        });
+    }
+
+    document.getElementById('playBtn').addEventListener('click', play);
+    document.getElementById('stopBtn').addEventListener('click', () => {
+        destroy();
+        setConn('', '已停止，未连接');
+        setStatus('已停止播放', 'info');
+    });
+    urlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') play(); });
+
+    initSidebar('media');
+</script>
+</body>
+</html>

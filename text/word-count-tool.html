@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>字数统计 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="字数统计，统计文本的字数、字符数、行数及段落数。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', -apple-system, sans-serif;
+            background: #f4f7f9;
+            margin: 0;
+            display: flex;
+            height: 100vh; overflow: hidden;
+            color: #333;
+        }
+
+        .mobile-header {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: #fff; padding: 0 16px; align-items: center;
+            justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+        }
+        .mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+        .mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+        .menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #e8845a; }
+
+        .sidebar {
+            width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+            display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+            transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+            position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item {
+            display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+            transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+        }
+        .category-item:hover, .category-item.active { background: #fdf0eb; color: #e8845a; border-left-color: #e8845a; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+        /* 全宽工具容器 */
+        .tool-container {
+            width: 100%;
+            max-width: 960px;
+            background: #fff; border-radius: 12px;
+            padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+        }
+        .tool-header { text-align: center; margin-bottom: 28px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+        textarea {
+            width: 100%; min-height: 160px; padding: 14px 15px;
+            border: 1px solid #e0e6ed; border-radius: 8px; font-size: 0.95em;
+            outline: none; resize: vertical; font-family: inherit;
+            line-height: 1.6; color: #1e293b; transition: border-color 0.2s;
+            margin-bottom: 16px;
+        }
+        textarea:focus { border-color: #4a90e2; }
+
+        .action-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; }
+
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em;
+            font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap;
+        }
+        .btn-primary { background: #e8845a; color: white; }
+        .btn-primary:hover { background: #d4734a; }
+        .btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .btn-outline { background: transparent; color: #e8845a; border: 1px solid #e8845a; }
+        .btn-outline:hover { background: #e8845a; color: white; }
+        .btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+        .btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+
+        .status-bar {
+            margin-bottom: 20px; min-height: 20px; font-size: 0.85em;
+            padding: 8px 12px; border-radius: 6px;
+        }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+
+        .result-area { display: none; }
+
+        .stat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+        .stat-card {
+            background: #f8fafc; border: 1px solid #f0f2f5; border-radius: 10px;
+            padding: 16px 12px; text-align: center;
+        }
+        .stat-card .num { font-size: 1.8em; font-weight: 700; color: #2c3e50; line-height: 1; }
+        .stat-card .label { font-size: 0.78em; color: #94a3b8; margin-top: 5px; }
+        .stat-card.highlight .num { color: #4a90e2; }
+
+        .ratio-section { background: #f8fafc; border: 1px solid #f0f2f5; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+        .ratio-title { font-size: 0.8em; color: #64748b; margin-bottom: 10px; font-weight: 600; }
+        .ratio-bar-wrap { display: flex; height: 10px; border-radius: 6px; overflow: hidden; margin-bottom: 8px; background: #e2e8f0; }
+        .ratio-seg { height: 100%; transition: width 0.4s ease; }
+        .seg-zh  { background: #4a90e2; }
+        .seg-en  { background: #34d399; }
+        .seg-num { background: #f59e0b; }
+        .seg-pun { background: #a78bfa; }
+        .ratio-legend { display: flex; flex-wrap: wrap; gap: 10px; }
+        .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.78em; color: #64748b; }
+        .legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+        .res-table { width: 100%; border-collapse: collapse; border: 1px solid #f0f2f5; border-radius: 10px; overflow: hidden; }
+        .res-table tr th { background: #f8fafc; width: 40%; padding: 12px 15px; text-align: left; color: #64748b; font-size: 0.83em; border-bottom: 1px solid #f0f2f5; }
+        .res-table tr td { padding: 12px 15px; color: #1e293b; font-size: 0.92em; border-bottom: 1px solid #f0f2f5; font-family: 'Consolas', monospace; }
+        .res-table tr:last-child th, .res-table tr:last-child td { border-bottom: none; }
+
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+        .footer p { margin: 0; }
+        .footer a { color: #e8845a; text-decoration: none; }
+
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+
+        /* 信息卡片 */
+        .info-cards {
+            width: 100%; display: flex; flex-direction: column; gap: 18px; margin-top: 4px;
+        }
+        .info-card {
+            background: #fff; border-radius: 12px; padding: 22px 24px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06); border: 1px solid #f0f2f5;
+        }
+        .info-card h3 {
+            margin: 0 0 10px 0; font-size: 1em; color: #2c3e50; font-weight: 600;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .info-card p { margin: 0 0 10px 0; font-size: 0.82em; color: #64748b; }
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip {
+            background: #e0f2fe; color: #0369a1;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace;
+        }
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a {
+            font-size: 0.85em; color: #4a90e2; text-decoration: none;
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s;
+        }
+        .tool-links a:hover { background: #e2e8f0; }
+
+        @media (max-width: 768px) {
+            body { display: block; height: auto; overflow: auto; }
+            .mobile-header { display: flex; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .close-sidebar { display: block; }
+            .main-content { display: block; }
+            .main-scroll { padding: 72px 16px 32px; gap: 20px;  }
+            .tool-container { padding: 24px 16px; border-radius: 10px; }
+            .tool-header h1 { font-size: 1.3em; }
+            .stat-cards { grid-template-columns: repeat(2, 1fr); }
+            .btn { padding: 8px 14px; font-size: 0.85em; }
+            .info-card { padding: 18px 16px; }
+            .overlay.active { display: block; }
+        }
+        @media (max-width: 380px) { .tool-header h1 { font-size: 1.1em; } }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="字数统计,在线字数统计,文本处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/text/word-count-tool.html" />
+    <meta property="og:title" content="字数统计" />
+    <meta property="og:description" content="字数统计，统计文本的字数、字符数、行数及段落数。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/text/word-count-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="字数统计" />
+    <meta itemprop="description" content="字数统计，统计文本的字数、字符数、行数及段落数。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文本处理",
+                "item": "https://box.lynvortex.top/text.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "字数统计",
+                "item": "https://box.lynvortex.top/text/word-count-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "字数统计",
+        "url": "https://box.lynvortex.top/text/word-count-tool.html",
+        "description": "统计文本的字数、字符数、行数及段落数",
+        "applicationCategory": "文本处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>📝 字数统计</h1>
+                <p>纯前端分析，粘贴或输入文本，即时获取详细的字符构成统计</p>
+            </div>
+
+            <textarea id="textInput" placeholder="在此粘贴或输入需要统计的文本内容…"></textarea>
+
+            <div class="action-row">
+                <button class="btn btn-primary" id="runBtn">🔍 开始统计</button>
+                <button class="btn btn-ghost" id="clearBtn">🗑️ 清空</button>
+            </div>
+
+            <div id="statusBar" class="status-bar info">输入文本后点击统计按钮，或按 Ctrl + Enter 快捷统计</div>
+
+            <div id="resultArea" class="result-area">
+                <div class="stat-cards" id="statCards"></div>
+
+                <div class="ratio-section">
+                    <div class="ratio-title">字符构成比例</div>
+                    <div class="ratio-bar-wrap" id="ratioBar"></div>
+                    <div class="ratio-legend" id="ratioLegend"></div>
+                </div>
+
+                <table class="res-table">
+                    <tbody id="resultBody"></tbody>
+                </table>
+            </div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#e8845a;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#e8845a;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 统计维度</h3>
+                <p>涵盖字符总数、中英文、数字、标点、空白、行数及字节大小等</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">字符</span>
+                    <span class="tld-chip">单词</span>
+                    <span class="tld-chip">行数</span>
+                    <span class="tld-chip">字节</span>
+                    <span class="tld-chip">中文</span>
+                    <span class="tld-chip">英文</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>统计完全在浏览器本地执行，文本不会上传至任何服务器</li>
+                    <li>中文字符识别涵盖常用汉字及扩展区</li>
+                    <li>字节数按 <strong>UTF-8</strong> 编码计算</li>
+                    <li>行数按换行符分割统计，空白行亦计入</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    
+    // 侧边栏由 sidebar.js 统一管理
+    initSidebar('text');
+
+const textInput = document.getElementById('textInput');
+    const resultArea = document.getElementById('resultArea');
+    const statusBar = document.getElementById('statusBar');
+    const runBtn = document.getElementById('runBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    // --------- 纯前端统计逻辑 ---------
+    const analyzeText = function(text) {
+        const totalChars = text.length;
+        const lines = text.split(/\r?\n/);
+        const lineCount = lines.length;
+        // 空白字符（包括空格、制表符等）
+        const spaceCount = (text.match(/\s/g) || []).length;
+        const nonWhitespaceCount = totalChars - spaceCount;
+
+        // 中文字符（基本汉字 + 扩展A区，可根据需要调整）
+        const chineseRegex = /[\u4e00-\u9fff\u3400-\u4dbf]/g;
+        const chineseCount = (text.match(chineseRegex) || []).length;
+
+        // 英文字母
+        const englishLetterRegex = /[a-zA-Z]/g;
+        const englishLetterCount = (text.match(englishLetterRegex) || []).length;
+
+        // 数字
+        const digitRegex = /[0-9]/g;
+        const digitCount = (text.match(digitRegex) || []).length;
+
+        // 标点符号（中文标点+英文标点，可根据需要扩充）
+        const punctuationRegex = /[，。！？；：…—～“”‘’、·【】《》（）.,!?;:'"()\[\]{}<>\/@#$%^&*+=~`|\\_-]/g;
+        const punctuationArray = text.match(punctuationRegex) || [];
+        const punctuationCount = punctuationArray.length;
+
+        // 字节大小（UTF-8）
+        const encoder = new TextEncoder();
+        const byteSize = encoder.encode(text).length;
+
+        // 比例
+        const chineseRatio = totalChars > 0 ? chineseCount / totalChars : 0;
+        const englishRatio = totalChars > 0 ? englishLetterCount / totalChars : 0;
+        const digitRatio = totalChars > 0 ? digitCount / totalChars : 0;
+        const punctuationRatio = totalChars > 0 ? punctuationCount / totalChars : 0;
+
+        return {
+            totalChars,
+            nonWhitespaceCount,
+            lineCount,
+            chineseCount,
+            englishLetterCount,
+            digitCount,
+            spaceCount,
+            punctuationCount,
+            byteSize,
+            chineseRatio,
+            englishRatio,
+            digitRatio,
+            punctuationRatio
+        };
+    }
+
+    const performCount = function() {
+        const text = textInput.value;
+        if (!text.trim()) {
+            setStatus('请输入需要统计的文本', 'error');
+            resultArea.style.display = 'none';
+            return;
+        }
+
+        runBtn.disabled = true;
+        runBtn.textContent = '统计中...';
+        setStatus('正在统计...', 'info');
+
+        // 使用 setTimeout 让按钮状态可见（纯前端很快，但仍提供反馈）
+        setTimeout(() => {
+            const stats = analyzeText(text);
+            renderCards(stats);
+            renderRatio(stats);
+            renderTable(stats);
+            resultArea.style.display = 'block';
+            setStatus('统计完成 ✓', 'success');
+            runBtn.disabled = false;
+            runBtn.textContent = '🔍 开始统计';
+        }, 50);
+    }
+
+    const renderCards = function(s) {
+        const cards = [
+            { num: s.totalChars,           label: '总字符数',    highlight: true },
+            { num: s.nonWhitespaceCount,   label: '非空白字符' },
+            { num: s.lineCount,            label: '行数' },
+            { num: s.chineseCount,         label: '中文字符' },
+            { num: s.englishLetterCount,   label: '英文字母' },
+            { num: s.digitCount,           label: '数字' },
+        ];
+        document.getElementById('statCards').innerHTML = cards.map(c => `
+            <div class="stat-card ${c.highlight ? 'highlight' : ''}">
+                <div class="num">${c.num}</div>
+                <div class="label">${c.label}</div>
+            </div>
+        `).join('');
+    }
+
+    const renderRatio = function(s) {
+        const zh  = (s.chineseRatio * 100).toFixed(1);
+        const en  = (s.englishRatio * 100).toFixed(1);
+        const num = (s.digitRatio * 100).toFixed(1);
+        const pun = (s.punctuationRatio * 100).toFixed(1);
+
+        document.getElementById('ratioBar').innerHTML = `
+            <div class="ratio-seg seg-zh"  style="width:${zh}%"></div>
+            <div class="ratio-seg seg-en"  style="width:${en}%"></div>
+            <div class="ratio-seg seg-num" style="width:${num}%"></div>
+            <div class="ratio-seg seg-pun" style="width:${pun}%"></div>
+        `;
+        document.getElementById('ratioLegend').innerHTML = [
+            { cls: 'seg-zh',  label: `中文 ${zh}%` },
+            { cls: 'seg-en',  label: `英文 ${en}%` },
+            { cls: 'seg-num', label: `数字 ${num}%` },
+            { cls: 'seg-pun', label: `标点 ${pun}%` },
+        ].map(l => `
+            <div class="legend-item">
+                <span class="legend-dot ${l.cls}"></span>${l.label}
+            </div>
+        `).join('');
+    }
+
+    const renderTable = function(s) {
+        const fields = [
+            { k: '字节大小 (UTF-8)',  v: `${s.byteSize} bytes` },
+            { k: '空格数',            v: s.spaceCount },
+            { k: '标点符号总数',      v: s.punctuationCount },
+        ];
+        document.getElementById('resultBody').innerHTML = fields.map(f => `
+            <tr>
+                <th>${f.k}</th>
+                <td>${f.v}</td>
+            </tr>
+        `).join('');
+    }
+
+    const clearAll = function() {
+        textInput.value = '';
+        resultArea.style.display = 'none';
+        setStatus('已清空', 'info');
+    }
+
+    const setStatus = function(msg, type) {
+        statusBar.textContent = msg;
+        statusBar.className = `status-bar ${type}`;
+    }
+
+    // 事件监听
+    runBtn.addEventListener('click', performCount);
+    clearBtn.addEventListener('click', clearAll);
+    textInput.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === 'Enter') performCount();
+    });
+</script>
+</body>
+</html>

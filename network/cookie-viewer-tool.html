@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Cookie查看解析 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="Cookie查看解析工具，纯前端解析Cookie字符串，查看当前页面Cookie，分析Set-Cookie属性，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.input-area{width:100%;min-height:100px;padding:10px 14px;border:1px solid #e0e6ed;border-radius:8px;font-size:.85em;font-family:'Courier New',monospace;outline:none;resize:vertical;box-sizing:border-box;}
+.input-area:focus{border-color:#4a90e2;}
+.tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.tab{padding:8px 18px;border-radius:8px;border:1px solid #e0e6ed;background:#f8fafc;color:#64748b;cursor:pointer;font-size:.85em;font-weight:600;transition:.2s;}
+.tab.active{background:#4a90e2;color:#fff;border-color:#4a90e2;}
+.cookie-card{background:#f8fafc;border:1px solid #e0e6ed;border-radius:10px;padding:14px;margin-bottom:10px;}
+.cookie-name{font-size:1em;font-weight:700;color:#2c3e50;margin-bottom:8px;}
+.cookie-attr{display:flex;gap:8px;padding:4px 0;font-size:.85em;border-bottom:1px solid #f1f5f9;}
+.cookie-attr:last-child{border-bottom:none;}
+.cookie-attr .ak{font-weight:600;color:#64748b;min-width:100px;flex-shrink:0;}
+.cookie-attr .av{color:#334155;word-break:break-all;}
+.attr-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.78em;font-weight:600;}
+.badge-secure{background:#dcfce7;color:#16a34a;}
+.badge-httponly{background:#dbeafe;color:#2563eb;}
+.badge-samesite{background:#f3e8ff;color:#9333ea;}
+.badge-warning{background:#fef3c7;color:#d97706;}
+.badge-danger{background:#fee2e2;color:#dc2626;}
+.stat-row{display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+.stat-box{background:#f8fafc;border:1px solid #e0e6ed;border-radius:8px;padding:10px 18px;flex:1;min-width:120px;text-align:center;}
+.stat-box .sv{font-size:1.5em;font-weight:700;color:#4a90e2;}
+.stat-box .sl{font-size:.78em;color:#94a3b8;margin-top:4px;}
+.set-cookie-section{background:#1e293b;color:#e2e8f0;border-radius:10px;padding:14px;margin-bottom:10px;font-family:'Courier New',monospace;font-size:.82em;white-space:pre-wrap;word-break:break-all;}
+</style>
+    <meta name="keywords" content="Cookie查看解析,在线Cookie查看解析,网络工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/network/cookie-viewer-tool.html" />
+    <meta property="og:title" content="Cookie查看解析" />
+    <meta property="og:description" content="Cookie查看解析工具，纯前端解析Cookie字符串，查看当前页面Cookie，分析Set-Cookie属性，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/network/cookie-viewer-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="Cookie查看解析" />
+    <meta itemprop="description" content="Cookie查看解析工具，纯前端解析Cookie字符串，查看当前页面Cookie，分析Set-Cookie属性，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "网络工具",
+                "item": "https://box.lynvortex.top/network.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Cookie查看解析",
+                "item": "https://box.lynvortex.top/network/cookie-viewer-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Cookie查看解析",
+        "url": "https://box.lynvortex.top/network/cookie-viewer-tool.html",
+        "description": "解析Cookie字符串与Set-Cookie响应头，检测安全属性配置",
+        "applicationCategory": "网络工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🍪 Cookie查看解析</h1><p>解析Cookie字符串，查看当前页面Cookie与Set-Cookie属性</p></div>
+<div class="tabs">
+<div class="tab active" data-mode="current">当前页面Cookie</div>
+<div class="tab" data-mode="parse">Cookie字符串解析</div>
+<div class="tab" data-mode="setcookie">Set-Cookie解析</div>
+</div>
+<div id="currentMode">
+<div style="text-align:center;margin-bottom:12px;">
+<button class="btn btn-primary" id="readCookieBtn" style="padding:10px 24px;">🍪 读取当前页面Cookie</button>
+</div>
+<div id="currentResult" style="display:none;">
+<div class="stat-row" id="statRow"></div>
+<div id="cookieList"></div>
+</div>
+</div>
+<div id="parseMode" style="display:none;">
+<textarea class="input-area" id="cookieInput" placeholder="粘贴Cookie字符串，例如：&#10;name=value; session_id=abc123; theme=dark; user_id=42"></textarea>
+<div style="text-align:center;margin-top:10px;">
+<button class="btn btn-primary" id="parseBtn" style="padding:10px 24px;">🔍 解析</button>
+</div>
+<div id="parseResult" style="display:none;margin-top:14px;">
+<div class="stat-row" id="parseStatRow"></div>
+<div id="parseList"></div>
+</div>
+</div>
+<div id="setcookieMode" style="display:none;">
+<textarea class="input-area" id="setCookieInput" placeholder="粘贴Set-Cookie响应头，例如：&#10;Set-Cookie: session=abc123; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=3600&#10;Set-Cookie: token=xyz; Domain=example.com; Expires=Wed, 21 Oct 2026 07:28:00 GMT"></textarea>
+<div style="text-align:center;margin-top:10px;">
+<button class="btn btn-primary" id="setCookieBtn" style="padding:10px 24px;">🔍 解析</button>
+</div>
+<div id="setCookieResult" style="display:none;margin-top:14px;"></div>
+</div>
+<div id="statusBar" class="status-bar info">选择模式查看或解析Cookie</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 Cookie查看解析</h3><p>Cookie字符串解析与属性查看</p><div class="feature-chips"><span class="feature-chip">当前Cookie</span><span class="feature-chip">Set-Cookie</span><span class="feature-chip">属性分析</span><span class="feature-chip">安全检测</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>读取当前页面Cookie（仅限非HttpOnly的Cookie）</li><li>解析Cookie字符串为键值对列表</li><li>解析Set-Cookie头中的Path/Domain/Secure等属性</li><li>检测Cookie安全配置是否合理</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+document.querySelectorAll('.tab').forEach(function(t){
+  t.onclick=function(){
+    document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active');});
+    t.classList.add('active');
+    ['currentMode','parseMode','setcookieMode'].forEach(function(id){document.getElementById(id).style.display='none';});
+    var mode=t.dataset.mode;
+    if(mode==='current')document.getElementById('currentMode').style.display='block';
+    else if(mode==='parse')document.getElementById('parseMode').style.display='block';
+    else document.getElementById('setcookieMode').style.display='block';
+  };
+});
+function parseCookieString(str){
+  var cookies=[];
+  var pairs=str.split(';');
+  pairs.forEach(function(pair){
+    var idx=pair.indexOf('=');
+    if(idx>0){
+      var name=pair.substring(0,idx).trim();
+      var value=pair.substring(idx+1).trim();
+      if(name)cookies.push({name:name,value:value});
+    }
+  });
+  return cookies;
+}
+function parseSetCookie(str){
+  var lines=str.split('\n').filter(function(l){return l.trim();});
+  var cookies=[];
+  lines.forEach(function(line){
+    var raw=line.replace(/^Set-Cookie:\s*/i,'').trim();
+    if(!raw)return;
+    var parts=raw.split(';');
+    var nvIdx=parts[0].indexOf('=');
+    if(nvIdx<0)return;
+    var name=parts[0].substring(0,nvIdx).trim();
+    var value=parts[0].substring(nvIdx+1).trim();
+    var attrs={Path:'/',Secure:false,HttpOnly:false,SameSite:'None',MaxAge:null,Expires:null,Domain:null};
+    parts.slice(1).forEach(function(p){
+      p=p.trim();
+      var pi=p.indexOf('=');
+      var attrName,attrVal;
+      if(pi>0){attrName=p.substring(0,pi).trim().toLowerCase();attrVal=p.substring(pi+1).trim();}
+      else{attrName=p.toLowerCase();attrVal=true;}
+      if(attrName==='path')attrs.Path=attrVal;
+      else if(attrName==='domain')attrs.Domain=attrVal;
+      else if(attrName==='secure')attrs.Secure=true;
+      else if(attrName==='httponly')attrs.HttpOnly=true;
+      else if(attrName==='samesite')attrs.SameSite=attrVal;
+      else if(attrName==='max-age')attrs.MaxAge=parseInt(attrVal);
+      else if(attrName==='expires')attrs.Expires=attrVal;
+    });
+    cookies.push({name:name,value:value,attrs:attrs,raw:raw});
+  });
+  return cookies;
+}
+function renderCookieList(cookies,containerId,statId){
+  var html='';
+  cookies.forEach(function(c){
+    html+='<div class="cookie-card">';
+    html+='<div class="cookie-name">🍪 '+escapeHtml(c.name)+'</div>';
+    html+='<div class="cookie-attr"><span class="ak">值</span><span class="av" style="font-family:Courier New,monospace;">'+escapeHtml(c.value)+'</span></div>';
+    if(c.attrs){
+      html+='<div class="cookie-attr"><span class="ak">Path</span><span class="av">'+escapeHtml(c.attrs.Path)+'</span></div>';
+      if(c.attrs.Domain)html+='<div class="cookie-attr"><span class="ak">Domain</span><span class="av">'+escapeHtml(c.attrs.Domain)+'</span></div>';
+      if(c.attrs.MaxAge!==null)html+='<div class="cookie-attr"><span class="ak">Max-Age</span><span class="av">'+c.attrs.MaxAge+'秒 ('+formatDuration(c.attrs.MaxAge)+')</span></div>';
+      if(c.attrs.Expires)html+='<div class="cookie-attr"><span class="ak">Expires</span><span class="av">'+escapeHtml(c.attrs.Expires)+'</span></div>';
+      html+='<div class="cookie-attr"><span class="ak">Secure</span><span class="av">';
+      html+=c.attrs.Secure?'<span class="attr-badge badge-secure">✓ Secure</span>':'<span class="attr-badge badge-danger">✗ 非Secure</span>';
+      html+='</span></div>';
+      html+='<div class="cookie-attr"><span class="ak">HttpOnly</span><span class="av">';
+      html+=c.attrs.HttpOnly?'<span class="attr-badge badge-httponly">✓ HttpOnly</span>':'<span class="attr-badge badge-warning">⚠ 非HttpOnly</span>';
+      html+='</span></div>';
+      html+='<div class="cookie-attr"><span class="ak">SameSite</span><span class="av"><span class="attr-badge badge-samesite">'+escapeHtml(c.attrs.SameSite)+'</span></span></div>';
+    }
+    html+='</div>';
+  });
+  document.getElementById(containerId).innerHTML=html;
+  var secureCount=cookies.filter(function(c){return c.attrs&&c.attrs.Secure;}).length;
+  var httpOnlyCount=cookies.filter(function(c){return c.attrs&&c.attrs.HttpOnly;}).length;
+  document.getElementById(statId).innerHTML=
+    '<div class="stat-box"><div class="sv">'+cookies.length+'</div><div class="sl">Cookie总数</div></div>'+
+    (cookies[0]&&cookies[0].attrs?
+      '<div class="stat-box"><div class="sv" style="color:#16a34a;">'+secureCount+'</div><div class="sl">Secure</div></div>'+
+      '<div class="stat-box"><div class="sv" style="color:#2563eb;">'+httpOnlyCount+'</div><div class="sl">HttpOnly</div></div>'+
+      '<div class="stat-box"><div class="sv" style="color:#dc2626;">'+(cookies.length-secureCount)+'</div><div class="sl">非Secure</div></div>'
+    :'');
+}
+function formatDuration(sec){
+  if(sec<=0)return '已过期';
+  if(sec<60)return sec+'秒';
+  if(sec<3600)return Math.floor(sec/60)+'分'+sec%60+'秒';
+  if(sec<86400)return Math.floor(sec/3600)+'时'+Math.floor((sec%3600)/60)+'分';
+  return Math.floor(sec/86400)+'天'+Math.floor((sec%86400)/3600)+'时';
+}
+document.getElementById('readCookieBtn').onclick=function(){
+  var raw=document.cookie;
+  if(!raw){
+    document.getElementById('statusBar').textContent='当前页面没有Cookie，或所有Cookie都是HttpOnly';
+    document.getElementById('statusBar').className='status-bar info';
+    document.getElementById('currentResult').style.display='none';
+    return;
+  }
+  var cookies=parseCookieString(raw).map(function(c){
+    return{name:c.name,value:c.value,attrs:null};
+  });
+  renderCookieList(cookies,'cookieList','statRow');
+  document.getElementById('currentResult').style.display='block';
+  document.getElementById('statusBar').textContent='读取到 '+cookies.length+' 个Cookie';
+  document.getElementById('statusBar').className='status-bar success';
+};
+document.getElementById('parseBtn').onclick=function(){
+  var str=document.getElementById('cookieInput').value.trim();
+  if(!str){document.getElementById('statusBar').textContent='请输入Cookie字符串';document.getElementById('statusBar').className='status-bar error';return;}
+  var cookies=parseCookieString(str).map(function(c){return{name:c.name,value:c.value,attrs:null};});
+  if(!cookies.length){document.getElementById('statusBar').textContent='未能解析出Cookie';document.getElementById('statusBar').className='status-bar error';return;}
+  renderCookieList(cookies,'parseList','parseStatRow');
+  document.getElementById('parseResult').style.display='block';
+  document.getElementById('statusBar').textContent='解析出 '+cookies.length+' 个Cookie';
+  document.getElementById('statusBar').className='status-bar success';
+};
+document.getElementById('setCookieBtn').onclick=function(){
+  var str=document.getElementById('setCookieInput').value.trim();
+  if(!str){document.getElementById('statusBar').textContent='请输入Set-Cookie响应头';document.getElementById('statusBar').className='status-bar error';return;}
+  var cookies=parseSetCookie(str);
+  if(!cookies.length){document.getElementById('statusBar').textContent='未能解析出Set-Cookie';document.getElementById('statusBar').className='status-bar error';return;}
+  var html='<div class="stat-row">'+
+    '<div class="stat-box"><div class="sv">'+cookies.length+'</div><div class="sl">Set-Cookie总数</div></div>'+
+    '<div class="stat-box"><div class="sv" style="color:#16a34a;">'+cookies.filter(function(c){return c.attrs.Secure;}).length+'</div><div class="sl">Secure</div></div>'+
+    '<div class="stat-box"><div class="sv" style="color:#2563eb;">'+cookies.filter(function(c){return c.attrs.HttpOnly;}).length+'</div><div class="sl">HttpOnly</div></div>'+
+    '<div class="stat-box"><div class="sv" style="color:#dc2626;">'+cookies.filter(function(c){return !c.attrs.Secure;}).length+'</div><div class="sl">非Secure</div></div>'+
+    '</div>';
+  html+='<div class="set-cookie-section" style="margin-bottom:14px;">原始Set-Cookie:\n\n'+escapeHtml(str)+'</div>';
+  var listHtml='';
+  cookies.forEach(function(c){
+    listHtml+='<div class="cookie-card">';
+    listHtml+='<div class="cookie-name">🍪 '+escapeHtml(c.name)+'</div>';
+    listHtml+='<div class="cookie-attr"><span class="ak">值</span><span class="av" style="font-family:Courier New,monospace;">'+escapeHtml(c.value)+'</span></div>';
+    listHtml+='<div class="cookie-attr"><span class="ak">Path</span><span class="av">'+escapeHtml(c.attrs.Path)+'</span></div>';
+    if(c.attrs.Domain)listHtml+='<div class="cookie-attr"><span class="ak">Domain</span><span class="av">'+escapeHtml(c.attrs.Domain)+'</span></div>';
+    if(c.attrs.MaxAge!==null)listHtml+='<div class="cookie-attr"><span class="ak">Max-Age</span><span class="av">'+c.attrs.MaxAge+'秒 ('+formatDuration(c.attrs.MaxAge)+')</span></div>';
+    if(c.attrs.Expires)listHtml+='<div class="cookie-attr"><span class="ak">Expires</span><span class="av">'+escapeHtml(c.attrs.Expires)+'</span></div>';
+    listHtml+='<div class="cookie-attr"><span class="ak">Secure</span><span class="av">'+(c.attrs.Secure?'<span class="attr-badge badge-secure">✓ Secure</span>':'<span class="attr-badge badge-danger">✗ 非Secure</span>')+'</span></div>';
+    listHtml+='<div class="cookie-attr"><span class="ak">HttpOnly</span><span class="av">'+(c.attrs.HttpOnly?'<span class="attr-badge badge-httponly">✓ HttpOnly</span>':'<span class="attr-badge badge-warning">⚠ 非HttpOnly</span>')+'</span></div>';
+    listHtml+='<div class="cookie-attr"><span class="ak">SameSite</span><span class="av"><span class="attr-badge badge-samesite">'+escapeHtml(c.attrs.SameSite)+'</span></span></div>';
+    listHtml+='<div class="set-cookie-section">Raw: '+escapeHtml(c.raw)+'</div>';
+    listHtml+='</div>';
+  });
+  html+=listHtml;
+  document.getElementById('setCookieResult').innerHTML=html;
+  document.getElementById('setCookieResult').style.display='block';
+  document.getElementById('statusBar').textContent='解析出 '+cookies.length+' 个Set-Cookie';
+  document.getElementById('statusBar').className='status-bar success';
+};
+initSidebar('network');
+</script>
+</body>
+</html>

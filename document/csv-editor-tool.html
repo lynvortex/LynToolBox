@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSV/Excel在线编辑 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="在线编辑CSV和Excel表格数据，支持增删行列、排序筛选，导出CSV/XLSX格式" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+
+        .ce-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.88em; }
+        .ce-table th, .ce-table td { border: 1px solid #e0e6ed; padding: 6px 10px; text-align: left; }
+        .ce-table th { background: #f1f5f9; font-weight: 600; cursor: pointer; position: relative; }
+        .ce-table th:hover { background: #e2e8f0; }
+        .ce-table td { background: #fff; }
+        .ce-table td[contenteditable]:focus { outline: 2px solid #4a90e2; background: #ebf5ff; }
+        .ce-table .ce-del-col { position: absolute; right: 2px; top: 2px; cursor: pointer; color: #ef4444; font-size: 0.85em; }
+        .ce-toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <meta name="keywords" content="CSV/Excel在线编辑,在线CSV/Excel在线编辑,文档处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/document/csv-editor-tool.html" />
+    <meta property="og:title" content="CSV/Excel在线编辑" />
+    <meta property="og:description" content="在线编辑CSV和Excel表格数据，支持增删行列、排序筛选，导出CSV/XLSX格式" />
+    <meta property="og:url" content="https://box.lynvortex.top/document/csv-editor-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="CSV/Excel在线编辑" />
+    <meta itemprop="description" content="在线编辑CSV和Excel表格数据，支持增删行列、排序筛选，导出CSV/XLSX格式" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文档处理",
+                "item": "https://box.lynvortex.top/document.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "CSV/Excel在线编辑",
+                "item": "https://box.lynvortex.top/document/csv-editor-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "CSV/Excel在线编辑",
+        "url": "https://box.lynvortex.top/document/csv-editor-tool.html",
+        "description": "在线编辑表格数据，支持增删行列、排序，导出CSV/XLSX",
+        "applicationCategory": "文档处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>📊 CSV/Excel在线编辑</h1>
+                <p>在线编辑CSV和Excel表格数据，支持增删行列、排序筛选，导出CSV/XLSX格式</p>
+            </div>
+
+            <div class="form-item" style="margin-bottom:12px;">
+                <label>导入CSV/Excel文件（可选）</label>
+                <input type="file" id="ceFile" accept=".csv,.xlsx,.xls" />
+            </div>
+            <div class="ce-toolbar">
+                <button class="btn btn-primary" style="padding:6px 14px;font-size:0.85em;" id="ceAddRow">➕ 添加行</button>
+                <button class="btn btn-outline" style="padding:6px 14px;font-size:0.85em;" id="ceAddCol">➕ 添加列</button>
+                <button class="btn btn-ghost" style="padding:6px 14px;font-size:0.85em;" id="ceClear">🗑 清空</button>
+                <span style="flex:1;"></span>
+                <button class="btn btn-outline" style="padding:6px 14px;font-size:0.85em;" id="ceExportCsv">⬇ 导出CSV</button>
+                <button class="btn btn-outline" style="padding:6px 14px;font-size:0.85em;" id="ceExportXlsx">⬇ 导出XLSX</button>
+            </div>
+            <div style="overflow:auto;max-height:400px;">
+                <table class="ce-table" id="ceTable"></table>
+            </div>
+    
+            <div id="statusBar" class="status-bar info">准备就绪，请按提示操作</div>
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 CSV/Excel在线编辑</h3>
+                <p>在线编辑表格数据，支持导入导出CSV和XLSX格式</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">SheetJS</span>
+                    <span class="feature-chip">可编辑表格</span>
+                    <span class="feature-chip">排序</span>
+                    <span class="feature-chip">导入导出</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>可直接在表格中编辑单元格内容</li>
+                    <li>支持导入CSV和Excel(xlsx/xls)文件</li>
+                    <li>点击列标题可排序，点击列标题旁✕可删除列</li>
+                    <li>可导出为CSV(带BOM支持中文)或XLSX格式</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+
+    const setStatus = (m,t) => { const s=document.getElementById('statusBar'); s.textContent=m; s.className='status-bar '+(t||'info'); };
+    let data = [['列1','列2','列3'],['','',''],['','',''],['','','']];
+
+    function renderTable() {
+        const t = document.getElementById('ceTable');
+        let html = '<thead><tr>';
+        data[0].forEach((c, i) => {
+            html += `<th onclick="sortCol(${i})" title="点击排序">${c}<span class="ce-del-col" onclick="event.stopPropagation();delCol(${i})">✕</span></th>`;
+        });
+        html += '</tr></thead><tbody>';
+        for (let r = 1; r < data.length; r++) {
+            html += '<tr>';
+            data[r].forEach((v, c) => {
+                html += `<td contenteditable="true" onblur="updateCell(${r},${c},this.textContent)">${escapeHtml(v)}</td>`;
+            });
+            html += `<td><button class="btn btn-ghost" style="padding:2px 8px;font-size:0.8em;" onclick="delRow(${r})">🗑</button></td></tr>`;
+        }
+        html += '</tbody>';
+        t.innerHTML = html;
+    }
+    window.updateCell = (r, c, v) => { data[r][c] = v; };
+    window.sortCol = c => {
+        const header = data[0];
+        const body = data.slice(1).sort((a, b) => (a[c]||'').localeCompare(b[c]||''));
+        data = [header, ...body]; renderTable(); setStatus('已按列排序', 'info');
+    };
+    window.delRow = r => { data.splice(r, 1); renderTable(); };
+    window.delCol = c => { data.forEach(row => row.splice(c, 1)); renderTable(); };
+
+    document.getElementById('ceAddRow').addEventListener('click', () => { data.push(data[0].map(() => '')); renderTable(); });
+    document.getElementById('ceAddCol').addEventListener('click', () => { data[0].push('新列' + (data[0].length+1)); data.slice(1).forEach(r => r.push('')); renderTable(); });
+    document.getElementById('ceClear').addEventListener('click', () => { data = [['列1','列2','列3'],['','','']]; renderTable(); setStatus('已清空', 'info'); });
+
+    document.getElementById('ceFile').addEventListener('change', async e => {
+        const file = e.target.files[0]; if (!file) return;
+        try {
+            const buf = await file.arrayBuffer();
+            const wb = XLSX.read(buf, { type: 'array' });
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            data = XLSX.utils.sheet_to_json(ws, { header: 1 });
+            if (data.length === 0) data = [['列1']];
+            renderTable();
+            setStatus('导入完成，共 ' + (data.length - 1) + ' 行数据', 'success');
+        } catch (e) { setStatus('导入失败: ' + e.message, 'error'); }
+    });
+
+    document.getElementById('ceExportCsv').addEventListener('click', () => {
+        const csv = data.map(r => r.map(c => `"${(c||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'export.csv'; a.click();
+        setStatus('CSV导出完成', 'success');
+    });
+
+    document.getElementById('ceExportXlsx').addEventListener('click', () => {
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+        XLSX.writeFile(wb, 'export.xlsx');
+        setStatus('XLSX导出完成', 'success');
+    });
+
+    renderTable();
+    
+    initSidebar('document');
+</script>
+</body>
+</html>

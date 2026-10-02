@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>文本转ASCII横幅 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="文本转ASCII艺术横幅，将文字转为大型字符画，支持多种字体风格，纯前端生成。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+        .opt-row { display: flex; gap: 14px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+        .opt-row .opt { display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: #475569; }
+        .opt-row select, .opt-row input { padding: 7px 10px; border: 1px solid #e0e6ed; border-radius: 6px; font-size: 0.85em; outline: none; }
+        .banner-out { background: #0f172a; color: #e2e8f0; border-radius: 10px; padding: 18px; font-family: 'Courier New', monospace; font-size: 0.78em; line-height: 1.25; overflow: auto; white-space: pre; min-height: 160px; max-height: 480px; }
+        .char-input { width: 100%; padding: 12px 14px; border: 1px solid #e0e6ed; border-radius: 8px; font-size: 1em; outline: none; font-family: inherit; }
+        .char-input:focus { border-color: #4a90e2; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="ASCII横幅生成,在线ASCII横幅生成,文本处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/text/ascii-banner-tool.html" />
+    <meta property="og:title" content="文本转ASCII横幅" />
+    <meta property="og:description" content="文本转ASCII艺术横幅，将文字转为大型字符画，支持多种字体风格，纯前端生成。" />
+    <meta property="og:url" content="https://box.lynvortex.top/text/ascii-banner-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="文本转ASCII横幅" />
+    <meta itemprop="description" content="文本转ASCII艺术横幅，将文字转为大型字符画，支持多种字体风格，纯前端生成。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文本处理",
+                "item": "https://box.lynvortex.top/text.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "ASCII横幅生成",
+                "item": "https://box.lynvortex.top/text/ascii-banner-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "ASCII横幅生成",
+        "url": "https://box.lynvortex.top/text/ascii-banner-tool.html",
+        "description": "生成ASCII艺术字体横幅文本，支持多种字体样式",
+        "applicationCategory": "文本处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🔠 文本转 ASCII 横幅</h1>
+                <p>将文字转为大型 ASCII 艺术字符画，支持多种字体风格，纯前端生成</p>
+            </div>
+
+            <div class="form-item" style="margin-bottom:16px;">
+                <label>输入文本（仅支持英文/数字/符号）</label>
+                <input type="text" class="char-input" id="textInput" value="Hello Box" maxlength="40" placeholder="如 HELLO" />
+            </div>
+
+            <div class="opt-row">
+                <div class="opt">字体
+                    <select id="fontSel">
+                        <option value="block" selected>Block（方块）</option>
+                        <option value="banner">Banner（粗体）</option>
+                        <option value="slant">Slant（斜体）</option>
+                        <option value="small">Small（紧凑）</option>
+                        <option value="shadow">Shadow（阴影）</option>
+                    </select>
+                </div>
+                <div class="opt">布局
+                    <select id="layoutSel">
+                        <option value="full" selected>默认间距</option>
+                        <option value="fitted">紧凑（无间距）</option>
+                        <option value="smush">挤压（字符融合）</option>
+                    </select>
+                </div>
+                <div class="opt">颜色
+                    <input type="color" id="colorInput" value="#4a90e2" />
+                </div>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn-primary" id="genBtn">⚡ 生成</button>
+                <button class="btn btn-outline" id="copyBtn">📋 复制</button>
+                <button class="btn btn-ghost" id="downloadBtn">💾 下载 TXT</button>
+            </div>
+
+            <div class="banner-out" id="bannerOut">点击「生成」查看 ASCII 横幅效果...</div>
+
+            <div id="statusBar" class="status-bar info">非 ASCII 字符（如中文）将被忽略</div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 ASCII 横幅生成</h3>
+                <p>将文字转换为 ASCII 艺术横幅，多种字体风格</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">ASCII Art</span>
+                    <span class="feature-chip">多字体</span>
+                    <span class="feature-chip">自实现渲染</span>
+                    <span class="feature-chip">离线可用</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>自实现字体点阵渲染引擎</li>
+                    <li>支持多种字体风格切换</li>
+                    <li>生成结果可一键复制到剪贴板</li>
+                    <li>适合用于代码注释和终端输出装饰</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    // 自包含 5x5 块字体（A-Z 0-9 与常用符号），字符宽度 5，高度 5
+    const FONT = {
+        block: {
+            height: 5,
+            // 每个字符用字符串数组表示，# 为实心
+            'A': [' ### ','#   #','#   #','#####','#   #'],
+            'B': ['#### ','#   #','#### ','#   #','#### '],
+            'C': [' ####','#    ','#    ','#    ',' ####'],
+            'D': ['#### ','#   #','#   #','#   #','#### '],
+            'E': ['#####','#    ','#### ','#    ','#####'],
+            'F': ['#####','#    ','#### ','#    ','#    '],
+            'G': [' ####','#    ','# ###','#   #',' ####'],
+            'H': ['#   #','#   #','#####','#   #','#   #'],
+            'I': ['#####','  #  ','  #  ','  #  ','#####'],
+            'J': ['  ###','   #','   #','#  #',' ##  '],
+            'K': ['#   #','#  # ','###  ','#  # ','#   #'],
+            'L': ['#    ','#    ','#    ','#    ','#####'],
+            'M': ['#   #','## ##','# # #','#   #','#   #'],
+            'N': ['#   #','##  #','# # #','#  ##','#   #'],
+            'O': [' ### ','#   #','#   #','#   #',' ### '],
+            'P': ['#### ','#   #','#### ','#    ','#    '],
+            'Q': [' ### ','#   #','#   #','#  ##',' ## #'],
+            'R': ['#### ','#   #','#### ','#  # ','#   #'],
+            'S': [' ####','#    ',' ### ','    #','#### '],
+            'T': ['#####','  #  ','  #  ','  #  ','  #  '],
+            'U': ['#   #','#   #','#   #','#   #',' ### '],
+            'V': ['#   #','#   #','#   #',' # # ','  #  '],
+            'W': ['#   #','#   #','# # #','## ##','#   #'],
+            'X': ['#   #',' # # ','  #  ',' # # ','#   #'],
+            'Y': ['#   #',' # # ','  #  ','  #  ','  #  '],
+            'Z': ['#####','   # ','  #  ',' #   ','#####'],
+            '0': [' ### ','#  ##','# # #','##  #',' ### '],
+            '1': ['  #  ',' ##  ','  #  ','  #  ','#####'],
+            '2': [' ### ','#   #','   # ',' #   ','#####'],
+            '3': ['#### ','    #',' ### ','    #','#### '],
+            '4': ['   # ','  ## ',' # # ','#####','   # '],
+            '5': ['#####','#    ','#### ','    #','#### '],
+            '6': [' ### ','#    ','#### ','#   #',' ### '],
+            '7': ['#####','    #','   # ','  #  ',' #   '],
+            '8': [' ### ','#   #',' ### ','#   #',' ### '],
+            '9': [' ### ','#   #',' ####','    #',' ### '],
+            ' ': ['     ','     ','     ','     ','     '],
+            '!': ['  #  ','  #  ','  #  ','     ','  #  '],
+            '?': [' ### ','#   #','   # ','     ','  #  '],
+            '.': ['     ','     ','     ','     ','  #  '],
+            ',': ['     ','     ','     ','  #  ',' #   '],
+            '-': ['     ','     ',' ### ','     ','     '],
+            '+': ['     ','  #  ',' ### ','  #  ','     '],
+            '/': ['    #','   # ','  #  ',' #   ','#    '],
+            ':': ['     ','  #  ','     ','  #  ','     '],
+            "'": ['  #  ','  #  ','     ','     ','     '],
+            '@': [' ### ','#   #','# ###','#   #',' ### '],
+            '#': [' # # ','#####',' # # ','#####',' # # '],
+            '$': ['  #  ',' ####','# #  ',' ## #','#### '],
+            '%': ['##  #','## # ','   # ',' # ##','#  ##'],
+            '&': [' ### ','#   #',' ### ','#  ##',' ## #'],
+            '(': ['  #  ',' #   ','#    ',' #   ','  #  '],
+            ')': ['  #  ','   # ','    #','   # ','  #  ']
+        },
+        // 其他字体基于 block 变体
+        banner: null, slant: null, small: null, shadow: null
+    };
+
+    // 生成其他字体变体
+    function buildVariants() {
+        const b = FONT.block;
+        // banner: 加粗（重复列）
+        FONT.banner = { height: 5, chars: {} };
+        // slant: 每行左侧递增加空格
+        FONT.slant = { height: 5, chars: {} };
+        // small: 3行高（取 block 的简化）
+        FONT.small = { height: 3, chars: {} };
+        // shadow: block + 阴影行
+        FONT.shadow = { height: 6, chars: {} };
+        for (const ch in b) {
+            const g = b[ch];
+            FONT.banner[ch] = g.map(row => row.replace(/#/g, '##').replace(/ /g, '  '));
+            FONT.slant[ch] = g.map((row, i) => ' '.repeat(i) + row + ' '.repeat(4 - i));
+            // small: 用 block 第0,2,4行的精简
+            const sm = [
+                row => row.replace(/#/g, '#'),
+                row => row.replace(/[# ]/g, m => m === '#' ? '#' : ' '),
+                row => row.replace(/[# ]/g, m => m === '#' ? '#' : ' ')
+            ];
+            FONT.small[ch] = [g[0], g[2] ? g[2] : g[1], g[4] ? g[4] : g[3]].map(r => r.slice(0, 5));
+            FONT.shadow[ch] = [...g.map(row => row + '    '), ' '.repeat(5) + g[4].replace(/#/g, ':').replace(/ /g, ' ')];
+        }
+    }
+    buildVariants();
+
+    const getFont = (name) => {
+        if (name === 'block') return FONT.block;
+        if (name === 'banner') return FONT.banner;
+        if (name === 'slant') return FONT.slant;
+        if (name === 'small') return FONT.small;
+        if (name === 'shadow') return FONT.shadow;
+    };
+
+    const generate = () => {
+        const text = document.getElementById('textInput').value.toUpperCase();
+        const fontName = document.getElementById('fontSel').value;
+        const layout = document.getElementById('layoutSel').value;
+        const font = getFont(fontName);
+        const h = font.height;
+        const lines = new Array(h).fill('');
+        let skipped = 0;
+        for (const ch of text) {
+            const glyph = font[ch];
+            if (!glyph) { skipped++; continue; }
+            const w = glyph[0].length;
+            const gap = layout === 'fitted' ? 0 : layout === 'smush' ? -1 : 1;
+            for (let r = 0; r < h; r++) {
+                let row = glyph[r] || '';
+                if (layout === 'smush' && lines[r].length) {
+                    // 融合：去掉左侧空格直到遇到字符
+                    const pad = row.length - row.trimStart().length;
+                    row = row.slice(Math.min(pad, 1));
+                }
+                lines[r] += row + ' '.repeat(Math.max(0, gap));
+            }
+        }
+        return { text: lines.join('\n'), skipped };
+    };
+
+    const render = () => {
+        const { text, skipped } = generate();
+        const color = document.getElementById('colorInput').value;
+        const out = document.getElementById('bannerOut');
+        out.style.color = color;
+        out.textContent = text || '（无可渲染字符）';
+        const sb = document.getElementById('statusBar');
+        sb.textContent = skipped ? `已生成，跳过 ${skipped} 个不支持字符` : '生成完成 ✓';
+        sb.className = 'status-bar success';
+    };
+
+    document.getElementById('genBtn').addEventListener('click', render);
+    document.getElementById('textInput').addEventListener('input', () => { clearTimeout(window._t); window._t = setTimeout(render, 200); });
+    ['fontSel', 'layoutSel', 'colorInput'].forEach(id => document.getElementById(id).addEventListener('change', render));
+    document.getElementById('copyBtn').addEventListener('click', () => {
+        const t = document.getElementById('bannerOut').textContent;
+        navigator.clipboard.writeText(t).then(() => { const sb = document.getElementById('statusBar'); sb.textContent = '已复制 ✓'; sb.className = 'status-bar success'; }).catch(() => { const ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); });
+    });
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+        const t = document.getElementById('bannerOut').textContent;
+        const blob = new Blob([t], { type: 'text/plain' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'ascii-banner.txt'; a.click();
+        URL.revokeObjectURL(a.href);
+    });
+
+    render();
+    initSidebar('text');
+</script>
+</body>
+</html>

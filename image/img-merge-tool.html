@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片拼接 - 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="图片拼接，多张图片横向/纵向拼接合并。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'PingFang SC', -apple-system, sans-serif; background: #f4f7f9; margin: 0; display: flex; height: 100vh; overflow: hidden; color: #333; }
+
+        .mobile-header {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 60px;
+            background: #fff;
+            padding: 0 20px;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            z-index: 1000;
+        }
+        .mobile-brand { font-size: 1.2em; font-weight: bold; color: #2c3e50; }
+        .menu-toggle { font-size: 24px; cursor: pointer; background: none; border: none; color: #4ae2b7; }
+
+        .sidebar { width: 240px; background: #fff; border-right: 1px solid #e1e4e8; display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02); transition: transform 0.3s; z-index: 1001; flex-shrink: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item { display: block; padding: 14px 22px; color: #606266; text-decoration: none; transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em; }
+        .category-item:hover, .category-item.active { background: #e6faf4; color: #4ae2b7; border-left-color: #4ae2b7; }
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+        .tool-container { width: 100%; max-width: 960px; background: #fff; border-radius: 12px; padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06); }
+        .tool-header { text-align: center; margin-bottom: 28px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+        .upload-area {
+            border: 2px dashed #e0e6ed;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.2s;
+            cursor: pointer;
+            background: #f8fafc;
+        }
+        .upload-area:hover { border-color: #4ae2b7; background: #e6faf4; }
+        .upload-area.dragover { border-color: #4ae2b7; background: #d1f7ec; }
+        .upload-icon { font-size: 3em; margin-bottom: 10px; color: #cbd5e1; }
+        .upload-text { color: #64748b; font-size: 0.9em; }
+        .upload-hint { color: #94a3b8; font-size: 0.8em; margin-top: 8px; }
+        #fileInput { display: none; }
+
+        .image-list-section { display: none; margin-bottom: 20px; }
+        .image-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .image-list-header h3 {
+            margin: 0;
+            font-size: 0.95em;
+            color: #2c3e50;
+        }
+        .image-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .image-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            background: #f8fafc;
+            transition: border-color 0.2s;
+        }
+        .image-item:hover { border-color: #4ae2b7; }
+        .image-item-thumb {
+            width: 48px;
+            height: 48px;
+            border-radius: 4px;
+            object-fit: cover;
+            background: #fff;
+            flex-shrink: 0;
+        }
+        .image-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .image-item-name {
+            font-size: 0.85em;
+            color: #475569;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .image-item-dim {
+            font-size: 0.75em;
+            color: #94a3b8;
+        }
+        .image-item-actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+        .image-item-actions button {
+            width: 28px;
+            height: 28px;
+            border: 1px solid #e0e6ed;
+            border-radius: 4px;
+            background: #fff;
+            color: #64748b;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .image-item-actions button:hover { border-color: #4ae2b7; color: #4ae2b7; }
+        .image-item-actions button.remove-btn:hover { border-color: #ef4444; color: #ef4444; }
+
+        .merge-controls {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .merge-control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .merge-control-group label {
+            font-size: 0.85em;
+            color: #64748b;
+            font-weight: 500;
+        }
+        .merge-control-group select {
+            padding: 8px 12px;
+            border: 1px solid #e0e6ed;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-family: inherit;
+            outline: none;
+            background: #fff;
+        }
+        .merge-control-group select:focus { border-color: #4ae2b7; }
+
+        .preview-section { display: none; margin-bottom: 20px; }
+        .preview-box {
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            padding: 12px;
+            background: #f8fafc;
+        }
+        .preview-label {
+            font-size: 0.85em;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .preview-img-wrap {
+            max-height: 400px;
+            overflow: auto;
+            background: #fff;
+            border-radius: 6px;
+            border: 1px solid #f0f2f5;
+            text-align: center;
+        }
+        .preview-img-wrap img {
+            max-width: 100%;
+            display: block;
+        }
+        .preview-info {
+            font-size: 0.8em;
+            color: #94a3b8;
+            margin-top: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .action-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em; font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap; }
+        .btn-primary { background: #4ae2b7; color: white; }
+        .btn-primary:hover { background: #3ac9a0; }
+        .btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+.btn-outline { background: transparent; color: #4ae2b7; border: 1px solid #4ae2b7; }
+.btn-outline:hover { background: #4ae2b7; color: white; }
+.btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+.btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+        .btn-secondary { background: #f0f2f5; color: #606266; }
+        .btn-secondary:hover { background: #e1e4e8; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-success:hover { background: #059669; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-danger:hover { background: #dc2626; }
+
+        .status-bar { min-height: 20px; font-size: 0.85em; padding: 8px 12px; border-radius: 6px; margin-bottom: 16px; }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+        .footer a { color: #4ae2b7; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        .info-cards {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-top: 4px;
+        }
+        .info-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 22px 24px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+            border: 1px solid #f0f2f5;
+        }
+        .info-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1em;
+            color: #2c3e50;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .info-card p {
+            margin: 0 0 10px 0;
+            font-size: 0.82em;
+            color: #64748b;
+        }
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip {
+            background: #e0f2fe; color: #0369a1;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace;
+        }
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a {
+            font-size: 0.85em; color: #4ae2b7; text-decoration: none;
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s;
+        }
+        .tool-links a:hover { background: #e2e8f0; }
+
+    @media (max-width: 768px) {
+    body { display: block; height: auto; overflow: auto; }
+    .mobile-header { display: flex; }
+    .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+    .sidebar.active { transform: translateX(0); }
+    .close-sidebar { display: block; }
+    .main-content { display: block; }
+    .main-scroll { padding: 72px 16px 32px; gap: 20px;  }
+    .tool-container { padding: 24px 16px; border-radius: 10px; }
+    .tool-header h1 { font-size: 1.3em; }
+    .overlay.active { display: block; }
+}
+@media (max-width: 380px) { .tool-header h1 { font-size: 1.1em; } }
+
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="图片拼接,在线图片拼接,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/img-merge-tool.html" />
+    <meta property="og:title" content="图片拼接" />
+    <meta property="og:description" content="图片拼接，多张图片横向/纵向拼接合并。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/img-merge-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="图片拼接" />
+    <meta itemprop="description" content="图片拼接，多张图片横向/纵向拼接合并。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "图片拼接",
+                "item": "https://box.lynvortex.top/image/img-merge-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "图片拼接",
+        "url": "https://box.lynvortex.top/image/img-merge-tool.html",
+        "description": "多张图片横向/纵向拼接合并",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+<main class="main-content">
+    <div class="main-scroll">
+
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>图片拼接</h1>
+                <p>将多张图片横向或纵向拼接，自由调整顺序，生成组合图片</p>
+            </div>
+
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">&#x1F5BC;</div>
+                <div class="upload-text">点击或拖拽图片到此处上传（可多选）</div>
+                <div class="upload-hint">支持 JPG、PNG、WEBP 等格式，可上传多张图片</div>
+                <input type="file" id="fileInput" accept="image/*" multiple>
+            </div>
+
+            <div class="image-list-section" id="imageListSection">
+                <div class="image-list-header">
+                    <h3>已上传图片 (<span id="imageCount">0</span>)</h3>
+                    <button class="btn btn-danger btn-sm" onclick="clearAllImages()" style="padding:6px 14px; font-size:0.85em;">清空所有</button>
+                </div>
+                <div class="image-list" id="imageList"></div>
+            </div>
+
+            <div class="merge-controls" id="mergeControls" style="display:none;">
+                <div class="merge-control-group">
+                    <label for="direction">拼接方向</label>
+                    <select id="direction" onchange="doMerge()">
+                        <option value="horizontal">横向拼接</option>
+                        <option value="vertical">纵向拼接</option>
+                    </select>
+                </div>
+                <div class="merge-control-group">
+                    <label for="gapInput">间距（像素）</label>
+                    <input type="number" id="gapInput" value="0" min="0" max="100" style="width:70px; padding:8px; border:1px solid #e0e6ed; border-radius:6px; font-size:0.85em; outline:none;" onchange="doMerge()">
+                </div>
+            </div>
+
+            <div class="preview-section" id="previewSection">
+                <div class="preview-box">
+                    <div class="preview-label">拼接结果</div>
+                    <div class="preview-img-wrap" id="resultWrap">
+                        <div style="text-align:center; padding:60px 0; color:#cbd5e1;" id="mergePlaceholder">点击"开始拼接"生成结果</div>
+                        <img id="resultImg" style="display:none;" alt="拼接结果">
+                    </div>
+                    <div class="preview-info">
+                        <span id="resultDim">-</span>
+                        <span id="resultSize" style="color:#4ae2b7; font-weight:600;">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-row">
+                <button class="btn btn-primary" id="mergeBtn" onclick="doMerge()" disabled>开始拼接</button>
+                <button class="btn btn-success" id="downloadBtn" onclick="downloadMerged()" style="display:none;">下载拼接图片</button>
+                <button class="btn btn-secondary" onclick="resetAll()">重新上传</button>
+            </div>
+
+            <div class="status-bar info" id="statusBar">请上传至少2张图片进行拼接</div>
+
+            <footer class="footer">
+                &copy; 2026 绘萤者-Lynvortex &middot; 美梦多彩 理想自由
+            <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4ae2b7;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4ae2b7;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>图片拼接功能</h3>
+                <p>将多张图片横向或纵向拼接，支持调整顺序和间距</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">横向拼接</span>
+                    <span class="tld-chip">纵向拼接</span>
+                    <span class="tld-chip">顺序调整</span>
+                    <span class="tld-chip">Canvas合成</span>
+                    <span class="tld-chip">PNG下载</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>使用须知</h3>
+                <ul class="tips-list">
+                    <li>支持同时上传多张图片，可调整拼接顺序</li>
+                    <li>横向拼接以最高图片为基准，纵向拼接以最宽图片为基准</li>
+                    <li>可自定义图片之间的间距</li>
+                    <li>所有处理在浏览器本地完成，图片不会上传</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<script>
+window.escapeHtml = function(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+};
+
+let imageList = [];
+let mergedBlobUrl = null;
+
+let uploadArea = document.getElementById('uploadArea');
+let fileInput = document.getElementById('fileInput');
+
+uploadArea.addEventListener('click', function() { fileInput.click(); });
+
+uploadArea.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    uploadArea.classList.add('dragover');
+});
+
+uploadArea.addEventListener('dragleave', function() {
+    uploadArea.classList.remove('dragover');
+});
+
+uploadArea.addEventListener('drop', function(e) {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+    let files = e.dataTransfer.files;
+    if (files.length > 0) {
+        for (let i = 0; i < files.length; i++) {
+            if (files[i].type.startsWith('image/')) {
+                addImage(files[i]);
+            }
+        }
+    }
+});
+
+fileInput.addEventListener('change', function(e) {
+    let files = e.target.files;
+    for (let i = 0; i < files.length; i++) {
+        if (files[i].type.startsWith('image/')) {
+            addImage(files[i]);
+        }
+    }
+    fileInput.value = '';
+});
+
+function addImage(file) {
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        let img = new Image();
+        img.onload = function() {
+            imageList.push({
+                file: file,
+                url: e.target.result,
+                img: img,
+                name: file.name,
+                width: img.naturalWidth,
+                height: img.naturalHeight
+            });
+            renderImageList();
+            updateMergeState();
+            setStatus('已添加: ' + file.name, 'success');
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function renderImageList() {
+    let list = document.getElementById('imageList');
+    list.innerHTML = '';
+    imageList.forEach(function(item, index) {
+        let div = document.createElement('div');
+        div.className = 'image-item';
+        div.innerHTML =
+            '<img class="image-item-thumb" src="' + item.url + '" alt="' + escapeHtml(item.name) + '">' +
+            '<div class="image-item-info">' +
+                '<div class="image-item-name">' + escapeHtml(item.name) + '</div>' +
+                '<div class="image-item-dim">' + item.width + ' x ' + item.height + '</div>' +
+            '</div>' +
+            '<div class="image-item-actions">' +
+                (index > 0 ? '<button onclick="moveImage(' + index + ', -1)" title="上移">&#x2191;</button>' : '') +
+                (index < imageList.length - 1 ? '<button onclick="moveImage(' + index + ', 1)" title="下移">&#x2193;</button>' : '') +
+                '<button class="remove-btn" onclick="removeImage(' + index + ')" title="移除">&#x2715;</button>' +
+            '</div>';
+        list.appendChild(div);
+    });
+    document.getElementById('imageCount').textContent = imageList.length;
+    document.getElementById('imageListSection').style.display = imageList.length > 0 ? 'block' : 'none';
+    document.getElementById('mergeControls').style.display = imageList.length >= 2 ? 'flex' : 'none';
+}
+
+function moveImage(index, direction) {
+    let target = index + direction;
+    if (target < 0 || target >= imageList.length) return;
+    let temp = imageList[index];
+    imageList[index] = imageList[target];
+    imageList[target] = temp;
+    renderImageList();
+    if (imageList.length >= 2) doMerge();
+}
+
+function removeImage(index) {
+    imageList.splice(index, 1);
+    renderImageList();
+    updateMergeState();
+    if (imageList.length < 2) {
+        document.getElementById('previewSection').style.display = 'none';
+        document.getElementById('downloadBtn').style.display = 'none';
+        if (mergedBlobUrl) { URL.revokeObjectURL(mergedBlobUrl); mergedBlobUrl = null; }
+    } else {
+        doMerge();
+    }
+}
+
+function clearAllImages() {
+    imageList = [];
+    if (mergedBlobUrl) { URL.revokeObjectURL(mergedBlobUrl); mergedBlobUrl = null; }
+    renderImageList();
+    updateMergeState();
+    document.getElementById('previewSection').style.display = 'none';
+    document.getElementById('downloadBtn').style.display = 'none';
+    setStatus('已清空所有图片', 'info');
+}
+
+function updateMergeState() {
+    let btn = document.getElementById('mergeBtn');
+    btn.disabled = imageList.length < 2;
+}
+
+function doMerge() {
+    if (imageList.length < 2) {
+        setStatus('请至少上传2张图片', 'error');
+        return;
+    }
+
+    let direction = document.getElementById('direction').value;
+    let gap = parseInt(document.getElementById('gapInput').value) || 0;
+
+    let canvas = document.createElement('canvas');
+    let ctx = canvas.getContext('2d');
+
+    if (direction === 'horizontal') {
+        let totalWidth = 0;
+        let maxHeight = 0;
+        imageList.forEach(function(item) {
+            totalWidth += item.width;
+            if (item.height > maxHeight) maxHeight = item.height;
+        });
+        totalWidth += gap * (imageList.length - 1);
+        canvas.width = totalWidth;
+        canvas.height = maxHeight;
+
+        let x = 0;
+        imageList.forEach(function(item) {
+            let y = Math.round((maxHeight - item.height) / 2);
+            ctx.drawImage(item.img, x, y, item.width, item.height);
+            x += item.width + gap;
+        });
+    } else {
+        let maxWidth = 0;
+        let totalHeight = 0;
+        imageList.forEach(function(item) {
+            if (item.width > maxWidth) maxWidth = item.width;
+            totalHeight += item.height;
+        });
+        totalHeight += gap * (imageList.length - 1);
+        canvas.width = maxWidth;
+        canvas.height = totalHeight;
+
+        let y = 0;
+        imageList.forEach(function(item) {
+            let x = Math.round((maxWidth - item.width) / 2);
+            ctx.drawImage(item.img, x, y, item.width, item.height);
+            y += item.height + gap;
+        });
+    }
+
+    document.getElementById('previewSection').style.display = 'block';
+    if (mergedBlobUrl) { URL.revokeObjectURL(mergedBlobUrl); }
+
+    canvas.toBlob(function(blob) {
+        mergedBlobUrl = URL.createObjectURL(blob);
+        let resultImg = document.getElementById('resultImg');
+        resultImg.src = mergedBlobUrl;
+        resultImg.style.display = 'block';
+        document.getElementById('mergePlaceholder').style.display = 'none';
+        document.getElementById('resultDim').textContent = canvas.width + ' x ' + canvas.height;
+        document.getElementById('resultSize').textContent = formatSize(blob.size);
+        document.getElementById('downloadBtn').style.display = 'inline-block';
+        setStatus('拼接完成！' + canvas.width + ' x ' + canvas.height, 'success');
+    }, 'image/png');
+}
+
+function downloadMerged() {
+    if (!mergedBlobUrl) {
+        setStatus('没有可下载的图片', 'error');
+        return;
+    }
+    let a = document.createElement('a');
+    a.href = mergedBlobUrl;
+    a.download = 'merged_' + Date.now() + '.png';
+    a.click();
+    setStatus('开始下载拼接图片', 'success');
+}
+
+function resetAll() {
+    imageList = [];
+    if (mergedBlobUrl) { URL.revokeObjectURL(mergedBlobUrl); mergedBlobUrl = null; }
+    fileInput.value = '';
+    document.getElementById('imageListSection').style.display = 'none';
+    document.getElementById('mergeControls').style.display = 'none';
+    document.getElementById('previewSection').style.display = 'none';
+    document.getElementById('downloadBtn').style.display = 'none';
+    document.getElementById('mergeBtn').disabled = true;
+    document.getElementById('imageList').innerHTML = '';
+    document.getElementById('imageCount').textContent = '0';
+    setStatus('请上传至少2张图片进行拼接', 'info');
+}
+
+function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1024 / 1024).toFixed(2) + ' MB';
+}
+
+initSidebar('image');
+</script>
+</body>
+</html>

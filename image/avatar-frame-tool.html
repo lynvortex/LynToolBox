@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>头像加框 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线头像加边框工具，支持圆形/圆角/方形头像，纯色与渐变描边，可调边框宽度，制作国风/VIP风格头像，纯前端本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<style>
+.canvas-wrap canvas{max-width:300px;max-height:300px;}
+.grad-pick{display:flex;gap:8px;flex-wrap:wrap;}
+.grad-swatch{width:36px;height:36px;border-radius:8px;cursor:pointer;border:2px solid transparent;}
+.grad-swatch.sel{border-color:#4a90e2;}
+</style>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="头像加框,头像边框,渐变边框,圆形头像,VIP头像,国旗头像,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/image/avatar-frame-tool.html"/>
+<meta property="og:title" content="头像加框"/>
+<meta property="og:description" content="圆形/圆角头像加纯色或渐变描边。"/>
+<meta property="og:url" content="https://box.lynvortex.top/image/avatar-frame-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="头像加框"/>
+<meta itemprop="description" content="圆形/圆角头像加纯色或渐变描边。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"图像工具","item":"https://box.lynvortex.top/image.html"},{"@type":"ListItem","position":3,"name":"头像加框","item":"https://box.lynvortex.top/image/avatar-frame-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"头像加框","url":"https://box.lynvortex.top/image/avatar-frame-tool.html","description":"头像添加纯色渐变边框","applicationCategory":"图像工具","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>🖼️ 头像加框</h1>
+        <p>纯色 / 渐变描边，一键制作精致感头像</p>
+    </div>
+    <div class="upload-zone" id="dropZone">
+        <p style="margin:0;color:#64748b;">🖼️ 点击选择或拖入头像图片</p>
+        <input type="file" id="fileInput" accept="image/*" style="display:none;"/>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>头像形状</label>
+            <select id="shape"><option value="circle">圆形</option><option value="rounded">圆角方形</option><option value="square">方形</option></select>
+        </div>
+        <div class="form-item"><label>输出尺寸</label>
+            <select id="size"><option value="400">400 × 400</option><option value="600">600 × 600</option><option value="800">800 × 800</option><option value="1080">1080 × 1080</option></select>
+        </div>
+        <div class="form-item"><label>边框宽度</label><input type="range" id="bw" min="0" max="80" value="24"/><span class="hint" id="bwv">24px</span></div>
+        <div class="form-item"><label>圆角半径（圆角方形时）</label><input type="range" id="radius" min="0" max="200" value="80"/><span class="hint" id="rv">80px</span></div>
+        <div class="form-item"><label>边框样式</label>
+            <select id="fillType"><option value="solid">纯色</option><option value="grad">渐变</option></select>
+        </div>
+        <div class="form-item"><label>纯色颜色</label><input type="color" id="color" value="#4a90e2" style="height:40px;"/></div>
+        <div class="form-item" style="grid-column:1/-1;"><label>渐变预设</label>
+            <div class="grad-pick" id="gradPick">
+                <div class="grad-swatch sel" data-g="#ff9a9e,#fecfef" style="background:linear-gradient(135deg,#ff9a9e,#fecfef)" title="樱花粉"></div>
+                <div class="grad-swatch" data-g="#f6d365,#fda085" style="background:linear-gradient(135deg,#f6d365,#fda085)" title="落日金"></div>
+                <div class="grad-swatch" data-g="#a18cd1,#fbc2eb" style="background:linear-gradient(135deg,#a18cd1,#fbc2eb)" title="香芋紫"></div>
+                <div class="grad-swatch" data-g="#84fab0,#8fd3f4" style="background:linear-gradient(135deg,#84fab0,#8fd3f4)" title="薄荷青"></div>
+                <div class="grad-swatch" data-g="#ffecd2,#fcb69f" style="background:linear-gradient(135deg,#ffecd2,#fcb69f)" title="奶杏橘"></div>
+                <div class="grad-swatch" data-g="#ff9a9e,#fad0c4,#fad0c4" style="background:linear-gradient(135deg,#ff9a9e,#fad0c4)" title="蜜桃"></div>
+                <div class="grad-swatch" data-g="#e0c3fc,#8ec5fc" style="background:linear-gradient(135deg,#e0c3fc,#8ec5fc)" title="云雾蓝紫"></div>
+                <div class="grad-swatch" data-g="#f093fb,#f5576c" style="background:linear-gradient(135deg,#f093fb,#f5576c)" title="霓虹粉"></div>
+                <div class="grad-swatch" data-g="#4facfe,#00f2fe" style="background:linear-gradient(135deg,#4facfe,#00f2fe)" title="科技蓝"></div>
+                <div class="grad-swatch" data-g="#fa709a,#fee140" style="background:linear-gradient(135deg,#fa709a,#fee140)" title="撞色"></div>
+                <div class="grad-swatch" data-g="#c79081,#dfa579" style="background:linear-gradient(135deg,#c79081,#dfa579)" title="大地棕"></div>
+                <div class="grad-swatch" data-g="#de6161,#2657eb" style="background:linear-gradient(135deg,#de6161,#2657eb)" title="红蓝"></div>
+            </div>
+        </div>
+        <div class="form-item"><label>渐变角度</label><input type="range" id="angle" min="0" max="360" value="135"/><span class="hint" id="av">135°</span></div>
+        <div class="form-item"><label>背景色（边框外）</label><input type="color" id="bg" value="#ffffff" style="height:40px;"/></div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-outline" id="dlBtn" disabled>下载 PNG</button>
+    </div>
+    <div class="status-bar info" id="statusBar">请先选择头像图片</div>
+    <div class="canvas-wrap">
+        <div class="canvas-box"><canvas id="outCanvas"></canvas><div class="cl">加框效果</div></div>
+    </div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 头像加框</h3>
+        <p>居中方形裁剪 + 形状蒙版 + 描边环，快速产出社交头像。</p>
+        <div class="feature-chips"><span class="feature-chip">12种渐变</span><span class="feature-chip">角度可调</span><span class="feature-chip">圆形/圆角/方形</span><span class="feature-chip">高清输出</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>图片会自动居中裁剪为正方形，不影响原图</li>
+            <li>边框宽度为 0 时输出纯形状裁剪结果</li>
+            <li>推荐 800×800 以上尺寸，聊天软件更清晰</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+var srcImg = null, outCanvas = document.getElementById('outCanvas');
+var dropZone = document.getElementById('dropZone'), fileInput = document.getElementById('fileInput');
+dropZone.onclick = function(){ fileInput.click(); };
+dropZone.ondragover = function(e){ e.preventDefault(); };
+dropZone.ondrop = function(e){ e.preventDefault(); if (e.dataTransfer.files[0]) loadImg(e.dataTransfer.files[0]); };
+fileInput.onchange = function(){ if (fileInput.files[0]) loadImg(fileInput.files[0]); };
+var gradSel = 'linear-gradient(135deg,#ff9a9e,#fecfef)';
+
+function loadImg(f) {
+    var img = new Image();
+    img.onload = function(){ srcImg = img; render(); setStatus('图片已加载：' + img.width + ' × ' + img.height, 'success'); document.getElementById('dlBtn').disabled = false; };
+    img.src = URL.createObjectURL(f);
+}
+
+function shapePath(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    if (r >= w / 2) { ctx.arc(x + w / 2, y + h / 2, w / 2, 0, Math.PI * 2); }
+    else {
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+    }
+}
+
+function render() {
+    if (!srcImg) return;
+    var size = parseInt(document.getElementById('size').value);
+    var bw = parseInt(document.getElementById('bw').value);
+    var shape = document.getElementById('shape').value;
+    var angle = parseInt(document.getElementById('angle').value);
+    document.getElementById('bwv').textContent = bw + 'px';
+    document.getElementById('rv').textContent = document.getElementById('radius').value + 'px';
+    document.getElementById('av').textContent = angle + '°';
+    outCanvas.width = size; outCanvas.height = size;
+    var ctx = outCanvas.getContext('2d');
+    ctx.clearRect(0, 0, size, size);
+    ctx.fillStyle = document.getElementById('bg').value;
+    ctx.fillRect(0, 0, size, size);
+
+    var inner = size - bw * 2;
+    var innerR = shape === 'circle' ? inner / 2 : (shape === 'rounded' ? parseInt(document.getElementById('radius').value) / 100 * inner / 2 : 0);
+
+    if (bw > 0) {
+        var outerR = shape === 'circle' ? size / 2 : (shape === 'rounded' ? parseInt(document.getElementById('radius').value) / 100 * size / 2 : 0);
+        var fillStyle;
+        if (document.getElementById('fillType').value === 'solid') {
+            fillStyle = document.getElementById('color').value;
+        } else {
+            var rad = angle * Math.PI / 180;
+            var x = Math.cos(rad) * size / 2, y = Math.sin(rad) * size / 2;
+            fillStyle = ctx.createLinearGradient(size / 2 - x, size / 2 - y, size / 2 + x, size / 2 + y);
+            var stops = gradSel.match(/linear-gradient\([^,]+,(.+)\)/)[1].split(',');
+            stops.forEach(function(c, i) { fillStyle.addColorStop(i / (stops.length - 1), c.trim()); });
+        }
+        ctx.fillStyle = fillStyle;
+        shapePath(ctx, 0, 0, size, size, outerR);
+        ctx.fill();
+    }
+
+    ctx.save();
+    shapePath(ctx, bw, bw, inner, inner, innerR);
+    ctx.clip();
+    var side = Math.max(srcImg.width, srcImg.height);
+    var sx = (srcImg.width - side) / 2, sy = (srcImg.height - side) / 2;
+    ctx.drawImage(srcImg, sx, sy, side, side, bw, bw, inner, inner);
+    ctx.restore();
+}
+
+['shape', 'size', 'fillType', 'color', 'bg', 'radius'].forEach(function(id) {
+    document.getElementById(id).oninput = function(){ if (srcImg) render(); };
+    document.getElementById(id).onchange = function(){ if (srcImg) render(); };
+});
+document.getElementById('bw').oninput = function(){ if (srcImg) render(); };
+document.getElementById('angle').oninput = function(){ if (srcImg) render(); };
+document.querySelectorAll('.grad-swatch').forEach(function(el) {
+    el.onclick = function() {
+        document.querySelectorAll('.grad-swatch').forEach(function(s){ s.classList.remove('sel'); });
+        el.classList.add('sel');
+        gradSel = el.style.background;
+        document.getElementById('fillType').value = 'grad';
+        if (srcImg) render();
+    };
+});
+document.getElementById('dlBtn').onclick = function() {
+    outCanvas.toBlob(function(b) {
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(b);
+        a.download = 'avatar-frame.png';
+        a.click();
+    }, 'image/png');
+};
+initSidebar('image');
+</script>
+</body>
+</html>

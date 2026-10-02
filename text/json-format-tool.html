@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JSON 格式化 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="JSON格式化，JSON格式化、压缩、校验与树形查看。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', -apple-system, sans-serif;
+            background: #f4f7f9;
+            margin: 0;
+            display: flex;
+            height: 100vh; overflow: hidden;
+            color: #333;
+        }
+
+        .mobile-header {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: #fff; padding: 0 16px; align-items: center;
+            justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+        }
+        .mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+        .mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+        .menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #e8845a; }
+
+        .sidebar {
+            width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+            display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+            transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+            position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item {
+            display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+            transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+        }
+        .category-item:hover, .category-item.active { background: #fdf0eb; color: #e8845a; border-left-color: #e8845a; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+        .tool-container {
+            width: 100%;
+            max-width: 960px;
+            background: #fff; border-radius: 12px;
+            padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+        }
+        .tool-header { text-align: center; margin-bottom: 28px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+        .io-wrap {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        @media (max-width: 600px) { .io-wrap { grid-template-columns: 1fr; } }
+
+        .io-block label {
+            display: block; font-size: 0.85em; color: #64748b; margin-bottom: 8px; font-weight: 500;
+        }
+        textarea {
+            width: 100%;
+            height: 280px;
+            padding: 14px;
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            font-size: 0.92em;
+            font-family: 'Consolas', 'Courier New', monospace;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+        textarea:focus { border-color: #4a90e2; }
+        textarea[readonly] { background: #f8fafc; cursor: default; }
+
+        .action-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em;
+            font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap;
+        }
+        .btn-primary { background: #e8845a; color: white; }
+        .btn-primary:hover { background: #d4734a; }
+        .btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .btn-success { background: #34d399; color: white; }
+        .btn-success:hover { background: #2bb981; }
+        .btn-warning { background: #f59e0b; color: white; }
+        .btn-warning:hover { background: #d97706; }
+        .btn-outline { background: transparent; color: #e8845a; border: 1px solid #e8845a; }
+        .btn-outline:hover { background: #e8845a; color: white; }
+        .btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+        .btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+
+        .status-bar {
+            min-height: 20px; font-size: 0.85em;
+            padding: 8px 12px; border-radius: 6px; margin-bottom: 16px;
+        }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+
+        .result-area { display: none; }
+
+        .json-output {
+            background: #1e293b; color: #e2e8f0; border-radius: 8px;
+            padding: 16px; font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.85em; line-height: 1.7; overflow-x: auto; white-space: pre-wrap;
+            max-height: 400px; overflow-y: auto; margin-bottom: 12px;
+        }
+        .json-output .key { color: #67e8f9; }
+        .json-output .str { color: #a7f3d0; }
+        .json-output .num { color: #fde68a; }
+        .json-output .bool { color: #c4b5fd; }
+        .json-output .null { color: #fca5a5; }
+        .json-output .bracket { color: #e2e8f0; }
+
+        .error-detail {
+            background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px;
+            padding: 12px 16px; margin-bottom: 12px; font-size: 0.85em;
+        }
+        .error-detail .err-title { color: #ef4444; font-weight: 600; margin-bottom: 4px; }
+        .error-detail .err-msg { color: #b91c1c; font-family: 'Consolas', monospace; }
+
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+        .footer p { margin: 0; }
+        .footer a { color: #e8845a; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+
+        .info-cards {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-top: 4px;
+        }
+
+        .info-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 22px 24px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+            border: 1px solid #f0f2f5;
+        }
+
+        .info-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1em;
+            color: #2c3e50;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .info-card p {
+            margin: 0 0 10px 0;
+            font-size: 0.82em;
+            color: #64748b;
+        }
+
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip {
+            background: #e0f2fe; color: #0369a1;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace;
+        }
+
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a {
+            font-size: 0.85em; color: #4a90e2; text-decoration: none;
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s;
+        }
+        .tool-links a:hover { background: #e2e8f0; }
+
+        @media (max-width: 768px) {
+            body { display: block; height: auto; overflow: auto; }
+            .mobile-header { display: flex; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .close-sidebar { display: block; }
+            .main-content { display: block; }
+            .main-scroll { padding: 72px 16px 32px; gap: 20px;  }
+            .tool-container { padding: 24px 16px; border-radius: 10px; }
+            .tool-header h1 { font-size: 1.3em; }
+            .action-row { gap: 8px; }
+            .btn { padding: 8px 14px; font-size: 0.85em; }
+            .info-card { padding: 18px 16px; }
+            .overlay.active { display: block; }
+        }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="JSON格式化,在线JSON格式化,文本处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/text/json-format-tool.html" />
+    <meta property="og:title" content="JSON 格式化" />
+    <meta property="og:description" content="JSON格式化，JSON格式化、压缩、校验与树形查看。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/text/json-format-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="JSON 格式化" />
+    <meta itemprop="description" content="JSON格式化，JSON格式化、压缩、校验与树形查看。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文本处理",
+                "item": "https://box.lynvortex.top/text.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "JSON格式化",
+                "item": "https://box.lynvortex.top/text/json-format-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "JSON格式化",
+        "url": "https://box.lynvortex.top/text/json-format-tool.html",
+        "description": "JSON格式化、压缩、校验与树形查看",
+        "applicationCategory": "文本处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>JSON 格式化</h1>
+                <p>纯前端 JSON 格式化、压缩、校验，支持语法高亮和错误定位</p>
+            </div>
+
+            <div class="io-wrap">
+                <div class="io-block">
+                    <label>输入 JSON</label>
+                    <textarea id="inputText" placeholder="在此粘贴或输入 JSON 字符串..."></textarea>
+                </div>
+                <div class="io-block">
+                    <label>输出结果</label>
+                    <textarea id="outputText" readonly placeholder="结果将显示在这里..."></textarea>
+                </div>
+            </div>
+
+            <div class="action-row">
+                <button class="btn btn-primary" id="formatBtn">&#x1F4CB; 格式化</button>
+                <button class="btn btn-warning" id="compressBtn">&#x1F4E6; 压缩</button>
+                <button class="btn btn-success" id="validateBtn">&#x2705; 校验</button>
+                <button class="btn btn-outline" id="copyBtn">&#x1F4CB; 复制结果</button>
+                <button class="btn btn-ghost" id="clearBtn">&#x1F5D1; 清空</button>
+            </div>
+
+            <div class="status-bar info" id="statusBar">输入 JSON 字符串，点击格式化、压缩或校验</div>
+
+            <div id="resultArea" class="result-area">
+                <!-- 语法高亮输出区 -->
+                <div class="json-output" id="jsonOutput"></div>
+                <!-- 错误详情 -->
+                <div class="error-detail" id="errorDetail" style="display:none;">
+                    <div class="err-title">JSON 语法错误</div>
+                    <div class="err-msg" id="errorMsg"></div>
+                </div>
+            </div>
+
+            <footer class="footer">
+                &copy; 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+            <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#e8845a;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#e8845a;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>&#x1F4E6; 功能说明</h3>
+                <p>三种操作模式，满足不同场景需求</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">格式化</span>
+                    <span class="tld-chip">压缩</span>
+                    <span class="tld-chip">校验</span>
+                    <span class="tld-chip">语法高亮</span>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h3>&#x1F4A1; 使用须知</h3>
+                <ul class="tips-list">
+                    <li>所有处理在浏览器本地执行，数据不会上传</li>
+                    <li>格式化使用 4 空格缩进，支持嵌套对象和数组</li>
+                    <li>校验会定位到具体的错误位置（行号、列号）</li>
+                    <li>语法高亮采用深色主题，区分键、字符串、数字、布尔值等</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h3>&#x2728; 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    // 侧边栏由 sidebar.js 统一管理
+    initSidebar('text');
+    let setStatus = function(msg, type) {
+        let sb = document.getElementById('statusBar');
+        sb.textContent = msg;
+        sb.className = 'status-bar ' + type;
+    };
+
+    // JSON 语法高亮
+    let syntaxHighlight = function(jsonStr) {
+        // 先转义 HTML
+        let escaped = escapeHtml(jsonStr);
+        // 语法着色
+        return escaped.replace(
+            /("(?:[^"\\]|\\.)*")\s*:/g,  // key
+            '<span class="key">$1</span>:'
+        ).replace(
+            /("(?:[^"\\]|\\.)*")/g,  // string value
+            '<span class="str">$1</span>'
+        ).replace(
+            /\b(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\b/g,  // number
+            '<span class="num">$1</span>'
+        ).replace(
+            /\b(true|false)\b/g,  // boolean
+            '<span class="bool">$1</span>'
+        ).replace(
+            /\bnull\b/g,  // null
+            '<span class="null">$1</span>'
+        );
+    };
+
+    // 获取错误位置
+    let getErrorPosition = function(input, errMsg) {
+        // 尝试从错误信息中提取位置
+        let posMatch = errMsg.match(/position\s+(\d+)/i);
+        if (posMatch) {
+            let pos = parseInt(posMatch[1], 10);
+            let before = input.substring(0, pos);
+            let line = (before.match(/\n/g) || []).length + 1;
+            let lastNewline = before.lastIndexOf('\n');
+            let col = lastNewline >= 0 ? pos - lastNewline : pos + 1;
+            return { line: line, column: col, position: pos };
+        }
+        // 尝试从行号提取
+        let lineMatch = errMsg.match(/line\s+(\d+)/i);
+        let colMatch = errMsg.match(/column\s+(\d+)/i);
+        if (lineMatch) {
+            return {
+                line: parseInt(lineMatch[1], 10),
+                column: colMatch ? parseInt(colMatch[1], 10) : 1,
+                position: -1
+            };
+        }
+        return null;
+    };
+
+    let doFormat = function() {
+        doOperation('format');
+    };
+
+    let doCompress = function() {
+        doOperation('compress');
+    };
+
+    let doValidate = function() {
+        doOperation('validate');
+    };
+
+    let doOperation = function(op) {
+        let input = document.getElementById('inputText').value;
+        if (!input.trim()) {
+            setStatus('请输入 JSON 字符串', 'error');
+            document.getElementById('resultArea').style.display = 'none';
+            return;
+        }
+
+        let outputText = document.getElementById('outputText');
+        let jsonOutput = document.getElementById('jsonOutput');
+        let errorDetail = document.getElementById('errorDetail');
+        let resultArea = document.getElementById('resultArea');
+
+        try {
+            let parsed = JSON.parse(input);
+            let resultStr = '';
+
+            if (op === 'format') {
+                resultStr = JSON.stringify(parsed, null, 4);
+                outputText.value = resultStr;
+                jsonOutput.innerHTML = syntaxHighlight(resultStr);
+                errorDetail.style.display = 'none';
+                resultArea.style.display = 'block';
+                setStatus('格式化成功 ✓', 'success');
+            } else if (op === 'compress') {
+                resultStr = JSON.stringify(parsed);
+                outputText.value = resultStr;
+                jsonOutput.innerHTML = escapeHtml(resultStr);
+                errorDetail.style.display = 'none';
+                resultArea.style.display = 'block';
+                setStatus('压缩成功，原 ' + input.length + ' 字符 -> ' + resultStr.length + ' 字符 ✓', 'success');
+            } else if (op === 'validate') {
+                outputText.value = JSON.stringify(parsed, null, 4);
+                jsonOutput.innerHTML = syntaxHighlight(JSON.stringify(parsed, null, 4));
+                errorDetail.style.display = 'none';
+                resultArea.style.display = 'block';
+                setStatus('JSON 校验通过，语法正确 ✓', 'success');
+            }
+        } catch (err) {
+            // 错误处理
+            resultArea.style.display = 'block';
+            errorDetail.style.display = 'block';
+
+            let pos = getErrorPosition(input, err.message);
+            let detailMsg = escapeHtml(err.message);
+            if (pos) {
+                detailMsg += '<br>位置：第 ' + pos.line + ' 行，第 ' + pos.column + ' 列';
+                if (pos.position >= 0) {
+                    detailMsg += '（字符偏移 ' + pos.position + '）';
+                }
+                // 显示上下文
+                let lines = input.split('\n');
+                if (pos.line > 0 && pos.line <= lines.length) {
+                    detailMsg += '<br><br>上下文：<br>';
+                    // 显示前一行
+                    if (pos.line > 1) {
+                        detailMsg += escapeHtml(lines[pos.line - 2]) + '\n';
+                    }
+                    // 显示当前行 + 标记
+                    let currentLine = lines[pos.line - 1] || '';
+                    detailMsg += escapeHtml(currentLine) + '\n';
+                    let marker = '';
+                    for (let i = 0; i < pos.column - 1; i++) {
+                        marker += ' ';
+                    }
+                    detailMsg += '<span style="color:#ef4444;font-weight:700;">' + marker + '^</span>';
+                }
+            }
+
+            document.getElementById('errorMsg').innerHTML = detailMsg;
+            outputText.value = '';
+            jsonOutput.innerHTML = '';
+            setStatus('JSON 语法错误', 'error');
+        }
+    };
+
+    let copyResult = function() {
+        let output = document.getElementById('outputText').value;
+        if (!output) {
+            setStatus('没有可复制的内容', 'error');
+            return;
+        }
+        navigator.clipboard.writeText(output).then(function() {
+            setStatus('已复制到剪贴板 ✓', 'success');
+        }).catch(function() {
+            document.getElementById('outputText').select();
+            document.execCommand('copy');
+            setStatus('已复制到剪贴板 ✓', 'success');
+        });
+    };
+
+    let clearAll = function() {
+        document.getElementById('inputText').value = '';
+        document.getElementById('outputText').value = '';
+        document.getElementById('resultArea').style.display = 'none';
+        setStatus('已清空', 'info');
+    };
+
+    document.getElementById('formatBtn').addEventListener('click', doFormat);
+    document.getElementById('compressBtn').addEventListener('click', doCompress);
+    document.getElementById('validateBtn').addEventListener('click', doValidate);
+    document.getElementById('copyBtn').addEventListener('click', copyResult);
+    document.getElementById('clearBtn').addEventListener('click', clearAll);
+
+    document.getElementById('inputText').addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 'Enter') doFormat();
+    });
+</script>
+</body>
+</html>

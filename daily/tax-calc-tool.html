@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>个税计算器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="个人所得税计算器，纯前端计算2024年最新个税，支持起征点5000元、专项附加扣除、累计预扣预缴，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr;}}
+.form-item label{display:block;font-size:.82em;color:#64748b;font-weight:600;margin-bottom:5px;}
+.form-item input,.form-item select{width:100%;padding:10px 14px;border:1px solid #e0e6ed;border-radius:8px;font-size:.9em;outline:none;box-sizing:border-box;}
+.result-card{background:linear-gradient(135deg,#4a90e2,#3a7bd5);color:#fff;border-radius:14px;padding:24px;text-align:center;margin-bottom:16px;}
+.result-big{font-size:2.4em;font-weight:700;font-family:'Courier New',monospace;}
+.result-label{font-size:.85em;opacity:.9;margin-top:6px;}
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;}
+.detail-item{background:#f8fafc;border:1px solid #e0e6ed;border-radius:10px;padding:14px;text-align:center;}
+.detail-item .dv{font-size:1.3em;font-weight:700;color:#2c3e50;font-family:'Courier New',monospace;}
+.detail-item .dl{font-size:.78em;color:#94a3b8;margin-top:4px;}
+.bracket-table{width:100%;border-collapse:collapse;margin-top:14px;font-size:.82em;}
+.bracket-table th,.bracket-table td{padding:8px 10px;border:1px solid #e0e6ed;text-align:center;}
+.bracket-table th{background:#f1f5f9;color:#475569;font-weight:600;}
+.bracket-table tr.active{background:#e0f2fe;}
+</style>
+    <meta name="keywords" content="个税计算器,在线个税计算器,日常通用,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/daily/tax-calc-tool.html" />
+    <meta property="og:title" content="个税计算器" />
+    <meta property="og:description" content="个人所得税计算器，纯前端计算2024年最新个税，支持起征点5000元、专项附加扣除、累计预扣预缴，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/daily/tax-calc-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="个税计算器" />
+    <meta itemprop="description" content="个人所得税计算器，纯前端计算2024年最新个税，支持起征点5000元、专项附加扣除、累计预扣预缴，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "日常通用",
+                "item": "https://box.lynvortex.top/daily.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "个税计算器",
+                "item": "https://box.lynvortex.top/daily/tax-calc-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "个税计算器",
+        "url": "https://box.lynvortex.top/daily/tax-calc-tool.html",
+        "description": "2024年个税计算器，支持累进税率与专项附加扣除",
+        "applicationCategory": "日常通用",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>💰 个税计算器</h1><p>2024年最新个税税率，支持专项附加扣除</p></div>
+<div class="form-grid">
+<div class="form-item"><label>月税前收入 (元)</label><input type="number" id="salary" value="15000" min="0" step="100"/></div>
+<div class="form-item"><label>五险一金 (元)</label><input type="number" id="insurance" value="2250" min="0" step="50"/></div>
+<div class="form-item"><label>起征点 (元)</label><input type="number" id="threshold" value="5000" min="0" step="500"/></div>
+<div class="form-item"><label>专项附加扣除 (元)</label><input type="number" id="specialDeduction" value="0" min="0" step="100" placeholder="子女教育/房贷/赡养老人等"/></div>
+</div>
+<div class="result-card">
+<div class="result-big" id="taxResult">¥0</div>
+<div class="result-label">本月应缴个人所得税</div>
+</div>
+<div class="detail-grid">
+<div class="detail-item"><div class="dv" id="taxableIncome">¥0</div><div class="dl">应纳税所得额</div></div>
+<div class="detail-item"><div class="dv" id="afterTax">¥0</div><div class="dl">税后收入</div></div>
+<div class="detail-item"><div class="dv" id="taxRate">0%</div><div class="dl">适用税率</div></div>
+<div class="detail-item"><div class="dv" id="quickDeduction">¥0</div><div class="dl">速算扣除数</div></div>
+</div>
+<h3 style="margin-top:20px;font-size:.95em;color:#2c3e50;">📊 个人所得税税率表 (综合所得)</h3>
+<table class="bracket-table" id="bracketTable">
+<tr><th>级数</th><th>全年应纳税所得额</th><th>税率</th><th>速算扣除数</th></tr>
+<tr><td>1</td><td>≤36,000</td><td>3%</td><td>0</td></tr>
+<tr><td>2</td><td>36,000~144,000</td><td>10%</td><td>2,520</td></tr>
+<tr><td>3</td><td>144,000~300,000</td><td>20%</td><td>16,920</td></tr>
+<tr><td>4</td><td>300,000~420,000</td><td>25%</td><td>31,920</td></tr>
+<tr><td>5</td><td>420,000~660,000</td><td>30%</td><td>52,920</td></tr>
+<tr><td>6</td><td>660,000~960,000</td><td>35%</td><td>85,920</td></tr>
+<tr><td>7</td><td>&gt;960,000</td><td>45%</td><td>181,920</td></tr>
+</table>
+<div id="statusBar" class="status-bar info">输入收入信息实时计算个税</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 个税计算器</h3><p>计算个人所得税</p><div class="feature-chips"><span class="feature-chip">七级超额累进</span><span class="feature-chip">专项附加扣除</span><span class="feature-chip">五险一金</span><span class="feature-chip">税后收入</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>采用2024年最新七级超额累进税率</li><li>起征点默认5000元/月</li><li>专项附加扣除含子女教育、房贷利息等</li><li>计算结果仅供参考，以实际申报为准</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var brackets=[[36000,0.03,0],[144000,0.10,2520],[300000,0.20,16920],[420000,0.25,31920],[660000,0.30,52920],[960000,0.35,85920],[Infinity,0.45,181920]];
+var inputs=document.querySelectorAll('input');
+inputs.forEach(function(el){el.oninput=calc;});
+function calc(){
+var salary=parseFloat(document.getElementById('salary').value)||0;
+var insurance=parseFloat(document.getElementById('insurance').value)||0;
+var threshold=parseFloat(document.getElementById('threshold').value)||0;
+var special=parseFloat(document.getElementById('specialDeduction').value)||0;
+var monthlyTaxable=salary-insurance-threshold-special;
+if(monthlyTaxable<=0){
+document.getElementById('taxResult').textContent='¥0';
+document.getElementById('taxableIncome').textContent='¥0';
+document.getElementById('afterTax').textContent='¥'+(salary-insurance).toFixed(2);
+document.getElementById('taxRate').textContent='0%';
+document.getElementById('quickDeduction').textContent='¥0';
+document.querySelectorAll('#bracketTable tr').forEach(function(r,i){if(i>0)r.classList.remove('active');});
+return;
+}
+var annualTaxable=monthlyTaxable*12;
+var tax=0,rate=0,quickDed=0,bracketIdx=0;
+for(var i=0;i<brackets.length;i++){
+if(annualTaxable<=brackets[i][0]){
+tax=annualTaxable*brackets[i][1]-brackets[i][2];
+rate=brackets[i][1];quickDed=brackets[i][2];bracketIdx=i;
+break;
+}
+}
+var monthlyTax=tax/12;
+document.getElementById('taxResult').textContent='¥'+monthlyTax.toFixed(2);
+document.getElementById('taxableIncome').textContent='¥'+monthlyTaxable.toFixed(2);
+document.getElementById('afterTax').textContent='¥'+(salary-insurance-monthlyTax).toFixed(2);
+document.getElementById('taxRate').textContent=(rate*100)+'%';
+document.getElementById('quickDeduction').textContent='¥'+quickDed.toFixed(0);
+document.querySelectorAll('#bracketTable tr').forEach(function(r,i){if(i>0){r.classList.toggle('active',i===bracketIdx+1);}});
+}
+calc();
+initSidebar('daily');
+</script>
+</body>
+</html>

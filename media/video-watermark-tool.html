@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>视频加水印字幕 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="视频加水印字幕工具，纯前端Canvas叠加文字水印或字幕轨道，MediaRecorder录制导出WebM，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.video-wrap{text-align:center;margin-bottom:14px;}
+video#srcVideo{max-width:100%;border-radius:8px;}
+.preview-canvas{max-width:100%;border-radius:8px;border:1px solid #e0e6ed;display:none;margin:0 auto;}
+.wm-preview{position:relative;display:inline-block;margin-bottom:14px;}
+.wm-preview canvas{max-width:100%;border-radius:8px;border:1px solid #e0e6ed;}
+.subtitle-track{margin-top:10px;}
+.sub-row{display:flex;gap:8px;margin-bottom:6px;align-items:center;}
+.sub-row input{padding:6px 10px;border:1px solid #e0e6ed;border-radius:6px;font-size:.85em;}
+.sub-row input[type="text"]{flex:1;}
+.sub-row input[type="number"]{width:70px;}
+.sub-row button{padding:6px 10px;border:none;border-radius:6px;background:#ef4444;color:#fff;cursor:pointer;font-size:.8em;}
+.progress-bar{height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden;margin:14px 0;display:none;}
+.progress-fill{height:100%;background:linear-gradient(90deg,#4a90e2,#3a7bd5);border-radius:4px;width:0;transition:.3s;}
+.color-pick{width:40px;height:36px;border:1px solid #e0e6ed;border-radius:6px;padding:2px;cursor:pointer;background:none;}
+</style>
+    <meta name="keywords" content="视频加水印,在线视频加水印,音视频处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/media/video-watermark-tool.html" />
+    <meta property="og:title" content="视频加水印字幕" />
+    <meta property="og:description" content="视频加水印字幕工具，纯前端Canvas叠加文字水印或字幕轨道，MediaRecorder录制导出WebM，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/media/video-watermark-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="视频加水印字幕" />
+    <meta itemprop="description" content="视频加水印字幕工具，纯前端Canvas叠加文字水印或字幕轨道，MediaRecorder录制导出WebM，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "音视频处理",
+                "item": "https://box.lynvortex.top/media.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "视频加水印",
+                "item": "https://box.lynvortex.top/media/video-watermark-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "视频加水印",
+        "url": "https://box.lynvortex.top/media/video-watermark-tool.html",
+        "description": "为视频叠加文字水印与字幕，支持自定义位置颜色透明度，导出WebM",
+        "applicationCategory": "音视频处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>💧 视频加水印/字幕</h1><p>为视频叠加文字水印或字幕轨道，导出WebM</p></div>
+<div class="upload-zone" id="dropZone">📁 点击或拖拽上传视频文件<input type="file" id="fileInput" accept="video/*" style="display:none;"/></div>
+<div id="editorArea" style="display:none;">
+<div class="video-wrap"><video id="srcVideo" controls></video></div>
+<div class="form-grid">
+<div class="form-item"><label>水印文字</label><input type="text" id="wmText" placeholder="输入水印文字" value="绘萤工具箱"/></div>
+<div class="form-item"><label>字体大小</label><input type="number" id="wmSize" value="24" min="10" max="100"/></div>
+<div class="form-item"><label>水印颜色</label><input type="color" id="wmColor" value="#ffffff" class="color-pick"/></div>
+<div class="form-item"><label>透明度 (0-1)</label><input type="number" id="wmAlpha" value="0.6" min="0" max="1" step="0.1"/></div>
+<div class="form-item"><label>位置</label><select id="wmPos"><option value="top-left">左上角</option><option value="top-right">右上角</option><option value="bottom-left">左下角</option><option value="bottom-right" selected>右下角</option><option value="center">居中</option></select></div>
+<div class="form-item"><label>描边</label><select id="wmStroke"><option value="1" selected>有描边</option><option value="0">无描边</option></select></div>
+</div>
+<h3 style="font-size:.9em;color:#2c3e50;margin:14px 0 8px;">📝 字幕轨道（可选）</h3>
+<div id="subtitleTrack" class="subtitle-track"></div>
+<button class="btn btn-outline" id="addSubBtn" style="padding:6px 14px;font-size:.82em;margin-bottom:14px;">➕ 添加字幕段</button>
+<div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+<div style="text-align:center;">
+<button class="btn btn-primary" id="processBtn" style="padding:12px 32px;">🎬 开始处理</button>
+</div>
+<div id="resultArea" style="display:none;margin-top:16px;">
+<h3 style="font-size:.95em;color:#2c3e50;margin-bottom:10px;">✅ 处理结果</h3>
+<video id="resultVideo" controls style="width:100%;border-radius:8px;"></video>
+<div style="text-align:center;margin-top:10px;">
+<button class="btn btn-outline" id="dlBtn" style="padding:10px 24px;">⬇ 下载视频</button>
+</div>
+</div>
+<button class="btn btn-ghost" id="resetBtn" style="margin-top:14px;">重新上传</button>
+</div>
+<div id="statusBar" class="status-bar info">上传视频，添加水印或字幕</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 视频加水印/字幕</h3><p>为视频叠加文字水印与字幕</p><div class="feature-chips"><span class="feature-chip">文字水印</span><span class="feature-chip">字幕轨道</span><span class="feature-chip">自定义位置</span><span class="feature-chip">WebM导出</span><span class="feature-chip">本地处理</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>上传视频后设置水印文字、颜色、位置和透明度</li><li>可添加多段字幕，设置每段字幕的起止时间</li><li>使用Canvas逐帧叠加水印并录制导出WebM</li><li>处理时间与视频时长成正比，请耐心等待</li><li>所有处理在浏览器本地完成，数据不上传</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var videoFile=null,resultBlob=null;
+var dz=document.getElementById('dropZone'),fi=document.getElementById('fileInput');
+var video=document.getElementById('srcVideo');
+var subtitles=[];
+dz.onclick=function(){fi.click();};
+dz.ondragover=function(e){e.preventDefault();};
+dz.ondrop=function(e){e.preventDefault();if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);};
+fi.onchange=function(){if(fi.files[0])loadFile(fi.files[0]);};
+function loadFile(file){
+videoFile=file;video.src=URL.createObjectURL(file);
+video.onloadedmetadata=function(){dz.style.display='none';document.getElementById('editorArea').style.display='block';document.getElementById('statusBar').textContent='已加载: '+file.name;document.getElementById('statusBar').className='status-bar success';};
+}
+document.getElementById('addSubBtn').onclick=addSubtitle;
+function addSubtitle(){
+var sub={start:0,end:5,text:''};subtitles.push(sub);renderSubtitles();}
+function renderSubtitles(){
+var track=document.getElementById('subtitleTrack');track.innerHTML='';
+subtitles.forEach(function(sub,idx){
+var row=document.createElement('div');row.className='sub-row';
+row.innerHTML='<input type="number" value="'+sub.start+'" min="0" step="0.1" data-idx="'+idx+'" data-field="start" placeholder="开始"/><input type="number" value="'+sub.end+'" min="0" step="0.1" data-idx="'+idx+'" data-field="end" placeholder="结束"/><input type="text" value="'+sub.text+'" data-idx="'+idx+'" data-field="text" placeholder="字幕文字"/><button data-idx="'+idx+'" class="sub-del">删除</button>';
+track.appendChild(row);
+});
+track.querySelectorAll('input').forEach(function(inp){
+inp.onchange=function(){var i=parseInt(this.dataset.idx);subtitles[i][this.dataset.field]=this.dataset.field==='text'?this.value:parseFloat(this.value);};
+});
+track.querySelectorAll('.sub-del').forEach(function(btn){
+btn.onclick=function(){var i=parseInt(this.dataset.idx);subtitles.splice(i,1);renderSubtitles();};
+});
+}
+function getActiveSubtitle(time){
+for(var i=0;i<subtitles.length;i++){if(time>=subtitles[i].start&&time<=subtitles[i].end)return subtitles[i].text;}
+return null;
+}
+function drawWatermark(ctx,w,h){
+var text=document.getElementById('wmText').value;
+if(!text)return;
+var size=parseInt(document.getElementById('wmSize').value)||24;
+var color=document.getElementById('wmColor').value;
+var alpha=parseFloat(document.getElementById('wmAlpha').value)||0.6;
+var pos=document.getElementById('wmPos').value;
+var stroke=document.getElementById('wmStroke').value==='1';
+ctx.save();ctx.globalAlpha=alpha;ctx.font='bold '+size+'px sans-serif';ctx.textBaseline='top';
+var tw=ctx.measureText(text).width;var th=size;var pad=20;var x,y;
+if(pos==='top-left'){x=pad;y=pad;}
+else if(pos==='top-right'){x=w-tw-pad;y=pad;}
+else if(pos==='bottom-left'){x=pad;y=h-th-pad;}
+else if(pos==='bottom-right'){x=w-tw-pad;y=h-th-pad;}
+else{x=(w-tw)/2;y=(h-th)/2;}
+if(stroke){ctx.strokeStyle='rgba(0,0,0,0.8)';ctx.lineWidth=Math.max(2,size/8);ctx.strokeText(text,x,y);}
+ctx.fillStyle=color;ctx.fillText(text,x,y);ctx.restore();
+}
+function drawSubtitle(ctx,w,h,time){
+var text=getActiveSubtitle(time);if(!text)return;
+var size=Math.max(16,Math.round(w*0.04));
+ctx.save();ctx.font='bold '+size+'px sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';
+var lines=text.split('\n');var lineH=size*1.4;var baseY=h-30-lines.length*lineH;
+ctx.strokeStyle='rgba(0,0,0,0.8)';ctx.lineWidth=Math.max(2,size/8);
+lines.forEach(function(line,i){var y=baseY+i*lineH+lineH;var tw=ctx.measureText(line).width;ctx.strokeText(line,w/2,y);});
+ctx.fillStyle='#ffffff';lines.forEach(function(line,i){var y=baseY+i*lineH+lineH;ctx.fillText(line,w/2,y);});
+ctx.restore();
+}
+document.getElementById('processBtn').onclick=function(){
+if(!videoFile)return;
+document.getElementById('statusBar').textContent='正在处理视频...';document.getElementById('statusBar').className='status-bar info';
+document.getElementById('progressBar').style.display='block';
+document.getElementById('progressFill').style.width='5%';
+var canvas=document.createElement('canvas');
+canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+var ctx=canvas.getContext('2d');
+var stream=canvas.captureStream(30);
+try{var vs=video.captureStream?video.captureStream():video.mozCaptureStream();if(vs){vs.getAudioTracks().forEach(function(t){stream.addTrack(t);});}}catch(e){}
+var mime='video/webm;codecs=vp9';if(!MediaRecorder.isTypeSupported(mime))mime='video/webm';
+var recorder=new MediaRecorder(stream,{mimeType:mime});
+var chunks=[];recorder.ondataavailable=function(e){if(e.data.size>0)chunks.push(e.data);};
+recorder.onstop=function(){
+resultBlob=new Blob(chunks,{type:'video/webm'});
+var url=URL.createObjectURL(resultBlob);
+document.getElementById('resultVideo').src=url;
+document.getElementById('resultArea').style.display='block';
+document.getElementById('progressBar').style.display='none';
+document.getElementById('statusBar').textContent='处理完成';document.getElementById('statusBar').className='status-bar success';
+};
+video.currentTime=0;video.muted=true;video.play();recorder.start();
+function drawFrame(){
+if(video.ended||video.paused){video.pause();recorder.stop();document.getElementById('progressFill').style.width='100%';return;}
+ctx.drawImage(video,0,0,canvas.width,canvas.height);
+drawWatermark(ctx,canvas.width,canvas.height);
+drawSubtitle(ctx,canvas.width,canvas.height,video.currentTime);
+document.getElementById('progressFill').style.width=(video.currentTime/video.duration*95)+'%';
+requestAnimationFrame(drawFrame);
+}
+setTimeout(drawFrame,200);
+};
+document.getElementById('dlBtn').onclick=function(){if(resultBlob){var a=document.createElement('a');a.href=URL.createObjectURL(resultBlob);a.download='watermarked.webm';a.click();}};
+document.getElementById('resetBtn').onclick=function(){dz.style.display='block';document.getElementById('editorArea').style.display='none';videoFile=null;resultBlob=null;subtitles=[];fi.value='';document.getElementById('resultArea').style.display='none';document.getElementById('statusBar').textContent='请重新上传';document.getElementById('statusBar').className='status-bar info';};
+initSidebar('media');
+</script>
+</body>
+</html>

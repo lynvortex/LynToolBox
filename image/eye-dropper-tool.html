@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>屏幕取色器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="屏幕取色器，浏览器EyeDropper API拾取屏幕任意位置颜色，获取HEX/RGB/HSL值，纯前端。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+        .picker-center { text-align: center; margin-bottom: 24px; }
+        .pick-btn { padding: 18px 40px; font-size: 1.1em; border-radius: 12px; border: none; background: #4a90e2; color: #fff; cursor: pointer; transition: 0.2s; box-shadow: 0 8px 24px rgba(74,144,226,.35); }
+        .pick-btn:hover { background: #3a7bd5; transform: translateY(-2px); }
+        .pick-btn:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; transform: none; }
+        .current-color { display: flex; align-items: center; gap: 20px; background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 12px; padding: 20px; margin-bottom: 20px; flex-wrap: wrap; }
+        .big-swatch { width: 120px; height: 120px; border-radius: 14px; border: 3px solid #fff; box-shadow: 0 4px 14px rgba(0,0,0,.15); flex-shrink: 0; }
+        .color-vals { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 8px; }
+        .val-row { display: flex; align-items: center; gap: 10px; }
+        .val-row label { font-size: 0.8em; color: #64748b; font-weight: 600; width: 50px; }
+        .val-row input { flex: 1; padding: 8px 12px; border: 1px solid #e0e6ed; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 0.88em; outline: none; background: #fff; color: #1e293b; }
+        .val-row .copy-btn { padding: 8px 12px; font-size: 0.8em; background: #f1f5f9; color: #475569; border: 1px solid #e0e6ed; border-radius: 6px; cursor: pointer; }
+        .val-row .copy-btn:hover { background: #e2e8f0; }
+        .history-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; }
+        .hist-card { background: #fff; border: 1px solid #e1e4e8; border-radius: 8px; overflow: hidden; cursor: pointer; transition: 0.15s; }
+        .hist-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,.1); }
+        .hist-swatch { height: 56px; }
+        .hist-hex { padding: 6px; text-align: center; font-family: 'Courier New', monospace; font-size: 0.72em; color: #475569; }
+        .support-warn { background: #fef3c7; color: #92400e; padding: 12px 16px; border-radius: 8px; font-size: 0.85em; margin-bottom: 16px; display: none; }
+        .section-title { font-size: 0.9em; font-weight: 600; color: #2c3e50; margin: 18px 0 10px; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="屏幕取色器,在线屏幕取色器,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/eye-dropper-tool.html" />
+    <meta property="og:title" content="屏幕取色器" />
+    <meta property="og:description" content="屏幕取色器，浏览器EyeDropper API拾取屏幕任意位置颜色，获取HEX/RGB/HSL值，纯前端。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/eye-dropper-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="屏幕取色器" />
+    <meta itemprop="description" content="屏幕取色器，浏览器EyeDropper API拾取屏幕任意位置颜色，获取HEX/RGB/HSL值，纯前端。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "屏幕取色器",
+                "item": "https://box.lynvortex.top/image/eye-dropper-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "屏幕取色器",
+        "url": "https://box.lynvortex.top/image/eye-dropper-tool.html",
+        "description": "使用EyeDropper API拾取屏幕任意位置颜色",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>💡 屏幕取色器</h1>
+                <p>拾取屏幕任意位置颜色（需 Chromium 内核浏览器），获取 HEX/RGB/HSL 值</p>
+            </div>
+
+            <div class="support-warn" id="supportWarn">⚠️ 当前浏览器不支持 EyeDropper API，请使用 Chrome / Edge 95+ 桌面版。下方仍可手动输入颜色转换。</div>
+
+            <div class="picker-center">
+                <button class="pick-btn" id="pickBtn">🎯 点击拾取屏幕颜色</button>
+            </div>
+
+            <div class="current-color">
+                <div class="big-swatch" id="bigSwatch" style="background:#4a90e2;"></div>
+                <div class="color-vals">
+                    <div class="val-row"><label>HEX</label><input type="text" id="hexInput" value="#4A90E2" /><button class="copy-btn" data-target="hexInput">复制</button></div>
+                    <div class="val-row"><label>RGB</label><input type="text" id="rgbInput" value="rgb(74, 144, 226)" readonly /><button class="copy-btn" data-target="rgbInput">复制</button></div>
+                    <div class="val-row"><label>HSL</label><input type="text" id="hslInput" value="hsl(211, 72%, 59%)" readonly /><button class="copy-btn" data-target="hslInput">复制</button></div>
+                    <div class="val-row"><label>手动</label><input type="color" id="manualColor" value="#4a90e2" style="height:38px;width:60px;border:1px solid #e0e6ed;border-radius:6px;cursor:pointer;" /></div>
+                </div>
+            </div>
+
+            <div class="section-title">🗂️ 取色历史</div>
+            <div class="history-grid" id="historyGrid"></div>
+
+            <div id="statusBar" class="status-bar info">点击按钮拾取颜色，或手动选择颜色</div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 屏幕取色器</h3>
+                <p>使用 EyeDropper API 采集屏幕任意位置颜色</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">EyeDropper API</span>
+                    <span class="feature-chip">HEX</span>
+                    <span class="feature-chip">RGB</span>
+                    <span class="feature-chip">HSL</span>
+                    <span class="feature-chip">离线可用</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>需要 Chrome 95+ 或 Edge 95+ 浏览器支持</li>
+                    <li>可采集屏幕任意位置的颜色</li>
+                    <li>自动记录历史取色记录</li>
+                    <li>显示 HEX、RGB、HSL 多种格式</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const pickBtn = document.getElementById('pickBtn');
+    const bigSwatch = document.getElementById('bigSwatch');
+    const hexInput = document.getElementById('hexInput');
+    const rgbInput = document.getElementById('rgbInput');
+    const hslInput = document.getElementById('hslInput');
+    const manualColor = document.getElementById('manualColor');
+    const historyGrid = document.getElementById('historyGrid');
+    const statusBar = document.getElementById('statusBar');
+    const supportWarn = document.getElementById('supportWarn');
+    const setStatus = (m, t) => { statusBar.textContent = m; statusBar.className = 'status-bar ' + (t || 'info'); };
+
+    const hasEyeDropper = 'EyeDropper' in window;
+    if (!hasEyeDropper) { supportWarn.style.display = 'block'; pickBtn.disabled = true; pickBtn.textContent = '不支持屏幕取色（请用 Chrome/Edge）'; }
+
+    const history = [];
+    const hexToRgb = (hex) => { const n = parseInt(hex.replace('#', ''), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+    const rgbToHsl = (r, g, b) => {
+        r /= 255; g /= 255; b /= 255;
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        let h = 0, s = 0, l = (max + min) / 2;
+        if (max !== min) { const d = max - min; s = l > 0.5 ? d / (2 - max - min) : d / (max + min); if (max === r) h = (g - b) / d + (g < b ? 6 : 0); else if (max === g) h = (b - r) / d + 2; else h = (r - g) / d + 4; h /= 6; }
+        return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
+    };
+
+    const setColor = (hex) => {
+        const h = hex.toUpperCase();
+        const [r, g, b] = hexToRgb(h);
+        const [hh, ss, ll] = rgbToHsl(r, g, b);
+        bigSwatch.style.background = h;
+        hexInput.value = h;
+        rgbInput.value = `rgb(${r}, ${g}, ${b})`;
+        hslInput.value = `hsl(${hh}, ${ss}%, ${ll}%)`;
+        manualColor.value = h.toLowerCase();
+    };
+
+    const addHistory = (hex) => {
+        if (history[0] === hex) return;
+        history.unshift(hex);
+        if (history.length > 18) history.pop();
+        renderHistory();
+    };
+
+    const renderHistory = () => {
+        if (!history.length) { historyGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#94a3b8;padding:20px;">尚无取色记录</div>'; return; }
+        historyGrid.innerHTML = history.map(hex => `<div class="hist-card" data-hex="${hex}"><div class="hist-swatch" style="background:${hex};"></div><div class="hist-hex">${hex}</div></div>`).join('');
+    };
+    renderHistory();
+
+    pickBtn.addEventListener('click', async () => {
+        if (!hasEyeDropper) return;
+        try {
+            const ed = new EyeDropper();
+            const res = await ed.open();
+            setColor(res.sRGBHex);
+            addHistory(res.sRGBHex.toUpperCase());
+            setStatus(`已拾取颜色 ${res.sRGBHex.toUpperCase()} ✓`, 'success');
+        } catch (e) { setStatus('取色已取消', 'info'); }
+    });
+
+    hexInput.addEventListener('change', () => { const v = hexInput.value.trim(); if (/^#?[0-9a-fA-F]{6}$/.test(v)) { setColor(v.startsWith('#') ? v : '#' + v); } else { setStatus('HEX 格式错误', 'error'); } });
+    manualColor.addEventListener('input', () => { setColor(manualColor.value); });
+
+    historyGrid.addEventListener('click', (e) => {
+        const c = e.target.closest('.hist-card'); if (!c) return;
+        setColor(c.dataset.hex); setStatus(`已选中 ${c.dataset.hex}`, 'info');
+    });
+
+    document.querySelectorAll('.copy-btn').forEach(b => b.addEventListener('click', () => {
+        const inp = document.getElementById(b.dataset.target);
+        navigator.clipboard.writeText(inp.value).then(() => setStatus('已复制 ✓', 'success')).catch(() => { const ta = document.createElement('textarea'); ta.value = inp.value; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); setStatus('已复制 ✓', 'success'); });
+    }));
+
+    setColor('#4A90E2');
+    initSidebar('image');
+</script>
+</body>
+</html>

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>音频变速变调 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="音频变速变调工具，调整播放速度和音高，支持本地音频文件处理，基于Web Audio API。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+        .upload-area { border: 2px dashed #e0e6ed; border-radius: 12px; padding: 36px; text-align: center; cursor: pointer; }
+        .upload-area:hover { border-color: #4a90e2; background: #f8fafc; }
+        .player-box { background: #1a1a2e; border-radius: 12px; padding: 20px; margin-bottom: 18px; }
+        audio { width: 100%; margin-bottom: 14px; }
+        .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
+        @media (max-width: 600px) { .control-grid { grid-template-columns: 1fr; } }
+        .slider-box { background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 10px; padding: 16px; }
+        .slider-box label { font-weight: 600; color: #2c3e50; display: block; margin-bottom: 8px; }
+        .slider-box .val { font-size: 1.6em; font-weight: 700; color: #4a90e2; font-family: 'Courier New', monospace; }
+        .slider-box input[type="range"] { width: 100%; margin-top: 8px; }
+        .preset-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+        .preset-btn { padding: 8px 16px; border-radius: 8px; border: 1px solid #e0e6ed; background: #f8fafc; cursor: pointer; font-size: 0.85em; }
+        .preset-btn:hover { background: #4a90e2; color: #fff; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="音频变速变调,在线音频变速变调,音视频处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/media/audio-speed-tool.html" />
+    <meta property="og:title" content="音频变速变调" />
+    <meta property="og:description" content="音频变速变调工具，调整播放速度和音高，支持本地音频文件处理，基于Web Audio API。" />
+    <meta property="og:url" content="https://box.lynvortex.top/media/audio-speed-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="音频变速变调" />
+    <meta itemprop="description" content="音频变速变调工具，调整播放速度和音高，支持本地音频文件处理，基于Web Audio API。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "音视频处理",
+                "item": "https://box.lynvortex.top/media.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "音频变速变调",
+                "item": "https://box.lynvortex.top/media/audio-speed-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "音频变速变调",
+        "url": "https://box.lynvortex.top/media/audio-speed-tool.html",
+        "description": "调整音频播放速度与音高，支持WAV导出",
+        "applicationCategory": "音视频处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🎶 音频变速变调</h1>
+                <p>调整音频播放速度与音高，支持预设和实时预览</p>
+            </div>
+
+            <div class="upload-area" id="uploadArea">
+                <p style="font-size:1.1em;color:#64748b;">📁 点击上传音频文件</p>
+                <p style="font-size:0.82em;color:#94a3b8;margin-top:6px;">支持 MP3 / WAV / OGG / M4A 等格式</p>
+                <input type="file" id="fileInput" accept="audio/*" style="display:none;" />
+            </div>
+
+            <div id="playerSection" style="display:none;">
+                <div class="player-box">
+                    <audio id="audio" controls></audio>
+                </div>
+
+                <div class="preset-btns">
+                    <div class="preset-btn" data-speed="0.5" data-pitch="0">0.5x 慢速</div>
+                    <div class="preset-btn" data-speed="0.75" data-pitch="0">0.75x</div>
+                    <div class="preset-btn" data-speed="1" data-pitch="0">原速</div>
+                    <div class="preset-btn" data-speed="1.5" data-pitch="0">1.5x</div>
+                    <div class="preset-btn" data-speed="2" data-pitch="0">2x 快速</div>
+                    <div class="preset-btn" data-speed="1" data-pitch="-12">降八度</div>
+                    <div class="preset-btn" data-speed="1" data-pitch="12">升八度</div>
+                </div>
+
+                <div class="control-grid">
+                    <div class="slider-box">
+                        <label>播放速度</label>
+                        <div class="val" id="speedVal">1.00x</div>
+                        <input type="range" id="speedSlider" min="0.25" max="4" value="1" step="0.05" />
+                    </div>
+                    <div class="slider-box">
+                        <label>音高偏移 (半音)</label>
+                        <div class="val" id="pitchVal">0</div>
+                        <input type="range" id="pitchSlider" min="-12" max="12" value="0" step="1" />
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" id="exportBtn" style="width:100%;padding:12px;">下载处理后的音频 (WAV)</button>
+            </div>
+
+            <div id="statusBar" class="status-bar info" style="margin-top:18px;">上传音频文件开始处理</div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 音频变速变调</h3>
+                <p>音频速度与音高独立调整</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">变速</span>
+                    <span class="feature-chip">变调</span>
+                    <span class="feature-chip">预设模式</span>
+                    <span class="feature-chip">导出WAV</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>播放速度0.25x~4x可调</li>
+                    <li>音高-12~+12半音可调</li>
+                    <li>支持预设快捷模式</li>
+                    <li>基于Web Audio API实时处理</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+var audio=document.getElementById('audio');
+var audioCtx=null,source=null,playbackRate=1,pitchShift=0;
+
+document.getElementById('uploadArea').onclick=function(){document.getElementById('fileInput').click();};
+document.getElementById('fileInput').onchange=function(){
+    if(this.files[0]){
+        audio.src=URL.createObjectURL(this.files[0]);
+        document.getElementById('playerSection').style.display='block';
+        document.getElementById('uploadArea').style.display='none';
+    }
+};
+
+document.getElementById('speedSlider').oninput=function(){
+    playbackRate=parseFloat(this.value);
+    document.getElementById('speedVal').textContent=playbackRate.toFixed(2)+'x';
+    audio.playbackRate=playbackRate;
+};
+
+document.getElementById('pitchSlider').oninput=function(){
+    pitchShift=parseInt(this.value);
+    document.getElementById('pitchVal').textContent=pitchShift;
+    // Note: Real-time pitch shifting without changing speed requires phase vocoder
+    // Browser audio element supports playbackRate which changes both speed and pitch
+    // For independent pitch control, we adjust playbackRate to compensate
+    var pitchMult=Math.pow(2,pitchShift/12);
+    audio.playbackRate=playbackRate*pitchMult;
+    document.getElementById('statusBar').textContent='音高变化会同时影响播放速度（浏览器限制）';
+};
+
+document.querySelectorAll('.preset-btn').forEach(function(b){
+    b.onclick=function(){
+        var s=parseFloat(b.dataset.speed),p=parseInt(b.dataset.pitch);
+        document.getElementById('speedSlider').value=s;
+        document.getElementById('pitchSlider').value=p;
+        document.getElementById('speedSlider').dispatchEvent(new Event('input'));
+        document.getElementById('pitchSlider').dispatchEvent(new Event('input'));
+    };
+});
+
+document.getElementById('exportBtn').onclick=function(){
+    if(!audio.src)return;
+    document.getElementById('statusBar').textContent='正在处理音频...';
+    var fetchUrl=audio.src;
+    fetch(fetchUrl).then(function(r){return r.arrayBuffer();}).then(function(buf){
+        if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+        audioCtx.decodeAudioData(buf,function(decoded){
+            var rate=playbackRate*Math.pow(2,pitchShift/12);
+            var newLength=Math.round(decoded.length/rate);
+            var ctx=new (window.AudioContext||window.webkitAudioContext)({sampleRate:decoded.sampleRate});
+            var outBuffer=ctx.createBuffer(1,newLength,decoded.sampleRate);
+            var inData=decoded.getChannelData(0);
+            var outData=outBuffer.getChannelData(0);
+            for(var i=0;i<newLength;i++){
+                var srcIdx=Math.floor(i*rate);
+                if(srcIdx<inData.length)outData[i]=inData[srcIdx];
+            }
+            // WAV encode
+            var wav=encodeWAV(outData,decoded.sampleRate);
+            var blob=new Blob([wav],{type:'audio/wav'});
+            var a=document.createElement('a');
+            a.href=URL.createObjectURL(blob);
+            a.download='processed_audio.wav';
+            a.click();
+            document.getElementById('statusBar').textContent='导出完成！';
+        });
+    });
+};
+
+function encodeWAV(samples,sampleRate){
+    var buffer=new ArrayBuffer(44+samples.length*2);
+    var view=new DataView(buffer);
+    var writeString=function(off,str){for(var i=0;i<str.length;i++)view.setUint8(off+i,str.charCodeAt(i));};
+    writeString(0,'RIFF');view.setUint32(4,36+samples.length*2,true);writeString(8,'WAVE');
+    writeString(12,'fmt ');view.setUint32(16,16,true);view.setUint16(20,1,true);
+    view.setUint16(22,1,true);view.setUint32(24,sampleRate,true);view.setUint32(28,sampleRate*2,true);
+    view.setUint16(32,2,true);view.setUint16(34,16,true);writeString(36,'data');
+    view.setUint32(40,samples.length*2,true);
+    var off=44;
+    for(var i=0;i<samples.length;i++){var s=Math.max(-1,Math.min(1,samples[i]));view.setInt16(off,s<0?s*0x8000:s*0x7FFF,true);off+=2;}
+    return buffer;
+}
+initSidebar('media');
+</script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>YAML JSON 互转 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线 YAML 与 JSON 双向转换工具，配置文件互转，支持注释保留提示、缩进设置与错误定位，K8s/CI 配置调试必备，纯前端处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/js-yaml.min.js"></script>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="YAML转JSON,JSON转YAML,yaml,json,配置文件转换,K8s配置,CI配置,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/work/yaml-json-tool.html"/>
+<meta property="og:title" content="YAML JSON 互转"/>
+<meta property="og:description" content="双向转换，配置文件互转利器。"/>
+<meta property="og:url" content="https://box.lynvortex.top/work/yaml-json-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="YAML JSON 互转"/>
+<meta itemprop="description" content="双向转换，配置文件互转利器。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"编程开发","item":"https://box.lynvortex.top/work.html"},{"@type":"ListItem","position":3,"name":"YAML JSON 互转","item":"https://box.lynvortex.top/work/yaml-json-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"YAML JSON 互转","url":"https://box.lynvortex.top/work/yaml-json-tool.html","description":"YAML与JSON双向转换工具","applicationCategory":"编程开发","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>🔄 YAML ⇄ JSON</h1>
+        <p>配置文件双向转换，错误行号精确定位</p>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>转换方向</label>
+            <select id="dir">
+                <option value="y2j">YAML → JSON</option>
+                <option value="j2y">JSON → YAML</option>
+            </select>
+        </div>
+        <div class="form-item"><label>YAML 缩进</label>
+            <select id="indent"><option value="2">2 空格</option><option value="4">4 空格</option></select>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="runBtn">⚙️ 转换</button>
+        <button class="btn btn-outline" id="copyBtn">复制结果</button>
+        <button class="btn btn-ghost" id="sampleBtn">载入示例</button>
+    </div>
+    <div class="status-bar info" id="statusBar">粘贴内容后转换</div>
+    <textarea class="code" id="input" style="min-height:200px;" placeholder="# YAML 或 JSON 内容&#10;server:&#10;  port: 8080&#10;  hosts:&#10;    - a.com&#10;    - b.com"></textarea>
+    <p style="font-size:0.8em;color:#94a3b8;margin:8px 0;">↓ 结果</p>
+    <pre class="output" id="output" style="white-space:pre-wrap;"></pre>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 YAML ⇄ JSON</h3>
+        <p>js-yaml 双向引擎，锚点、多文档均支持。</p>
+        <div class="feature-chips"><span class="feature-chip">双向转换</span><span class="feature-chip">错误定位</span><span class="feature-chip">多文档</span><span class="feature-chip">缩进可选</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>YAML 中的注释转 JSON 后会丢失（JSON 无注释语法）</li>
+            <li>含 --- 分隔的多文档 YAML 会合并为数组输出</li>
+            <li>转换 Docker Compose / K8s 清单后建议人工核对一遍</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+document.getElementById('runBtn').onclick = function() {
+    var input = document.getElementById('input').value;
+    if (!input.trim()) { setStatus('请输入内容', 'error'); return; }
+    var dir = document.getElementById('dir').value;
+    var indent = parseInt(document.getElementById('indent').value);
+    try {
+        if (dir === 'y2j') {
+            var docs = jsyaml.loadAll(input);
+            var json = docs.length === 1 ? docs[0] : docs;
+            document.getElementById('output').textContent = JSON.stringify(json, null, 2);
+            setStatus('转换完成：YAML → JSON' + (docs.length > 1 ? '（含 ' + docs.length + ' 个文档）' : ''), 'success');
+        } else {
+            var obj = JSON.parse(input);
+            document.getElementById('output').textContent = jsyaml.dump(obj, { indent: indent, lineWidth: 120 });
+            setStatus('转换完成：JSON → YAML', 'success');
+        }
+    } catch (e) {
+        document.getElementById('output').textContent = '❌ ' + e.message;
+        setStatus('解析失败：' + (e.mark ? '第 ' + (e.mark.line + 1) + ' 行 第 ' + (e.mark.column + 1) + ' 列 — ' : '') + e.reason, 'error');
+    }
+};
+
+document.getElementById('copyBtn').onclick = function() {
+    var t = document.getElementById('output').textContent;
+    if (t && t.indexOf('❌') !== 0) navigator.clipboard.writeText(t).then(function(){ setStatus('已复制', 'success'); });
+};
+
+document.getElementById('sampleBtn').onclick = function() {
+    var dir = document.getElementById('dir').value;
+    if (dir === 'y2j') {
+        document.getElementById('input').value = '# 服务配置\nserver:\n  port: 8080\n  debug: false\n  hosts:\n    - a.example.com\n    - b.example.com\n  db:\n    url: postgres://localhost/app\n    pool: { min: 2, max: 10 }\nfeatures:\n  - name: cache\n    enabled: true\n  - name: metrics\n    enabled: false';
+    } else {
+        document.getElementById('input').value = '{\n  "server": {\n    "port": 8080,\n    "debug": false,\n    "hosts": ["a.example.com", "b.example.com"],\n    "db": { "url": "postgres://localhost/app", "pool": { "min": 2, "max": 10 } }\n  },\n  "features": [\n    { "name": "cache", "enabled": true },\n    { "name": "metrics", "enabled": false }\n  ]\n}';
+    }
+    setStatus('已载入示例，点击转换', 'info');
+};
+initSidebar('work');
+</script>
+</body>
+</html>

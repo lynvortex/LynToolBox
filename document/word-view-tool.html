@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Word文档预览 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="Word文档在线预览工具，纯前端使用mammoth.js将.docx转换为HTML预览，支持图片与样式，数据本地处理不上传" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <script src="../assets/sidebar.js"></script>
+    <script src="../assets/mammoth.browser.min.js"></script>
+    <style>
+        .wv-drop {
+            border: 2px dashed #cbd5e1; border-radius: 10px; padding: 28px 20px;
+            text-align: center; color: #64748b; transition: 0.2s; cursor: pointer; background: #f8fafc;
+        }
+        .wv-drop:hover { border-color: #4a90e2; color: #4a90e2; background: #ebf5ff; }
+        .wv-drop.dragover { border-color: #4a90e2; background: #e0f2fe; }
+        .wv-drop .wv-icon { font-size: 2.2em; display: block; margin-bottom: 8px; }
+        .wv-msgs { margin-top: 12px; font-size: 0.8em; }
+        .wv-msg { padding: 4px 8px; border-radius: 4px; margin-bottom: 4px; background: #f1f5f9; color: #475569; }
+        .wv-msg.warning { background: #fef3c7; color: #92400e; }
+        .wv-msg.error { background: #fef2f2; color: #b91c1c; }
+        .wv-preview {
+            margin-top: 16px; padding: 28px 32px; background: #fff; border: 1px solid #e0e6ed;
+            border-radius: 10px; min-height: 200px; max-height: 640px; overflow-y: auto; line-height: 1.8;
+            color: #1e293b; font-size: 0.92em;
+        }
+        .wv-preview:empty::before { content: '预览区为空，请上传 .docx 文件'; color: #94a3b8; font-style: italic; }
+        .wv-preview h1, .wv-preview h2, .wv-preview h3 { color: #2c3e50; margin: 1em 0 0.5em; }
+        .wv-preview h1 { font-size: 1.5em; }
+        .wv-preview h2 { font-size: 1.3em; }
+        .wv-preview h3 { font-size: 1.12em; }
+        .wv-preview p { margin: 0.6em 0; }
+        .wv-preview ul, .wv-preview ol { padding-left: 28px; margin: 0.6em 0; }
+        .wv-preview img { max-width: 100%; height: auto; border-radius: 6px; margin: 8px 0; }
+        .wv-preview table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+        .wv-preview table th, .wv-preview table td { border: 1px solid #cbd5e1; padding: 6px 10px; }
+        .wv-preview table th { background: #f1f5f9; }
+        .wv-preview a { color: #4a90e2; }
+        .wv-code { max-height: 240px; }
+    </style>
+    <meta name="keywords" content="Word文档预览,在线Word文档预览,文档处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/document/word-view-tool.html" />
+    <meta property="og:title" content="Word文档预览" />
+    <meta property="og:description" content="Word文档在线预览工具，纯前端使用mammoth.js将.docx转换为HTML预览，支持图片与样式，数据本地处理不上传" />
+    <meta property="og:url" content="https://box.lynvortex.top/document/word-view-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="Word文档预览" />
+    <meta itemprop="description" content="Word文档在线预览工具，纯前端使用mammoth.js将.docx转换为HTML预览，支持图片与样式，数据本地处理不上传" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文档处理",
+                "item": "https://box.lynvortex.top/document.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Word文档预览",
+                "item": "https://box.lynvortex.top/document/word-view-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Word文档预览",
+        "url": "https://box.lynvortex.top/document/word-view-tool.html",
+        "description": "mammoth将.docx转HTML在线预览，支持图片与样式",
+        "applicationCategory": "文档处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>📄 Word文档预览</h1>
+                <p>纯前端使用 mammoth.js 将 .docx 转换为 HTML 在线预览，支持图片与样式，数据本地处理</p>
+            </div>
+
+            <div class="form-item" style="margin-bottom:14px;">
+                <label>选择 .docx 文件（或拖拽到下方区域）</label>
+                <input type="file" id="wvFile" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
+            </div>
+
+            <div class="wv-drop" id="wvDrop">
+                <span class="wv-icon">📄</span>
+                <span>将 .docx 文件拖拽到此处，或点击上方按钮选择</span>
+                <div style="font-size:0.8em;color:#94a3b8;margin-top:6px;">仅支持 .docx 格式，不支持旧版 .doc</div>
+            </div>
+
+            <div class="btn-row" style="margin-top:16px;">
+                <button class="btn btn-primary" id="wvCopy" disabled>📋 复制HTML</button>
+                <button class="btn btn-outline" id="wvDownload" disabled>⬇ 下载HTML</button>
+                <button class="btn btn-ghost" id="wvToggle">👁 查看/隐藏源码</button>
+                <span style="flex:1;"></span>
+                <button class="btn btn-ghost" id="wvClear">🗑 清空</button>
+            </div>
+
+            <div class="wv-msgs" id="wvMsgs"></div>
+
+            <div class="wv-preview" id="wvPreview"></div>
+
+            <pre class="output wv-code" id="wvCode" style="display:none;"></pre>
+
+            <div id="statusBar" class="status-bar info">准备就绪，请上传 .docx 文件进行预览</div>
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 功能说明</h3>
+                <p>基于 mammoth.js 将 .docx 文档转换为 HTML 并在浏览器中预览，保留段落、标题、列表、表格与内嵌图片，并显示转换过程中的提示与警告。</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">.docx预览</span>
+                    <span class="feature-chip">HTML转换</span>
+                    <span class="feature-chip">图片支持</span>
+                    <span class="feature-chip">样式保留</span>
+                    <span class="feature-chip">转换提示</span>
+                    <span class="feature-chip">离线本地</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>仅支持 .docx（Office Open XML）格式，旧版 .doc 无法解析</li>
+                    <li>mammoth 侧重语义结构转换，复杂排版/特殊字体可能存在差异</li>
+                    <li>内嵌图片以 base64 方式内联渲染，无需联网</li>
+                    <li>可复制或下载转换后的 HTML 源码，便于二次处理</li>
+                    <li>所有文档处理在浏览器本地完成，不上传任何文件</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const setStatus = (m, t) => { const s = document.getElementById('statusBar'); s.textContent = m; s.className = 'status-bar ' + (t || 'info'); };
+    let lastHtml = '';
+
+    function renderMessages(messages) {
+        const box = document.getElementById('wvMsgs');
+        if (!messages || messages.length === 0) { box.innerHTML = ''; return; }
+        box.innerHTML = messages.map(msg => {
+            const type = msg.type || 'info';
+            return '<div class="wv-msg ' + (type === 'warning' ? 'warning' : type === 'error' ? 'error' : '') + '">[' + escapeHtml(type) + '] ' + escapeHtml(msg.message) + '</div>';
+        }).join('');
+    }
+
+    async function convertFile(file) {
+        if (!file) return;
+        const name = file.name.toLowerCase();
+        if (!name.endsWith('.docx')) {
+            setStatus('仅支持 .docx 格式文件', 'error');
+            return;
+        }
+        if (typeof mammoth === 'undefined') {
+            setStatus('mammoth 库未加载，请刷新页面重试', 'error');
+            return;
+        }
+        setStatus('正在转换文档...', 'info');
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
+            lastHtml = result.value || '';
+            document.getElementById('wvPreview').innerHTML = lastHtml;
+            document.getElementById('wvCode').textContent = lastHtml;
+            renderMessages(result.messages);
+            document.getElementById('wvCopy').disabled = !lastHtml;
+            document.getElementById('wvDownload').disabled = !lastHtml;
+            const warnCount = (result.messages || []).filter(m => m.type === 'warning').length;
+            setStatus('转换完成，文档已渲染' + (warnCount ? '（' + warnCount + ' 条警告）' : ''), 'success');
+        } catch (e) {
+            setStatus('转换失败: ' + e.message, 'error');
+            renderMessages([{ type: 'error', message: e.message }]);
+        }
+    }
+
+    document.getElementById('wvFile').addEventListener('change', e => {
+        convertFile(e.target.files[0]);
+    });
+
+    // 拖拽上传
+    const drop = document.getElementById('wvDrop');
+    drop.addEventListener('click', () => document.getElementById('wvFile').click());
+    ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('dragover'); }));
+    ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('dragover'); }));
+    drop.addEventListener('drop', e => {
+        const file = e.dataTransfer.files[0];
+        if (file) { document.getElementById('wvFile').files = e.dataTransfer.files; convertFile(file); }
+    });
+
+    document.getElementById('wvCopy').addEventListener('click', async () => {
+        if (!lastHtml) return;
+        try {
+            await navigator.clipboard.writeText(lastHtml);
+            setStatus('HTML 已复制到剪贴板', 'success');
+        } catch (e) {
+            const ta = document.createElement('textarea'); ta.value = lastHtml; document.body.appendChild(ta); ta.select();
+            try { document.execCommand('copy'); setStatus('HTML 已复制到剪贴板', 'success'); }
+            catch (err) { setStatus('复制失败，请手动选择复制', 'error'); }
+            document.body.removeChild(ta);
+        }
+    });
+
+    document.getElementById('wvDownload').addEventListener('click', () => {
+        if (!lastHtml) return;
+        const full = '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>导出文档</title></head><body>' + lastHtml + '</body></html>';
+        const blob = new Blob([full], { type: 'text/html;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'converted.html'; a.click();
+        setStatus('HTML 文件已下载', 'success');
+    });
+
+    document.getElementById('wvToggle').addEventListener('click', () => {
+        const code = document.getElementById('wvCode');
+        code.style.display = code.style.display === 'none' ? 'block' : 'none';
+    });
+
+    document.getElementById('wvClear').addEventListener('click', () => {
+        lastHtml = '';
+        document.getElementById('wvPreview').innerHTML = '';
+        document.getElementById('wvCode').textContent = '';
+        document.getElementById('wvMsgs').innerHTML = '';
+        document.getElementById('wvFile').value = '';
+        document.getElementById('wvCopy').disabled = true;
+        document.getElementById('wvDownload').disabled = true;
+        setStatus('已清空，请重新上传文件', 'info');
+    });
+
+    initSidebar('document');
+</script>
+</body>
+</html>

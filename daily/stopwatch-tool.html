@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>秒表计时器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="在线秒表计时器，支持精确到毫秒的计时、计圈、倒计时功能，纯前端无依赖。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+        .tab-row { display: flex; gap: 8px; margin-bottom: 22px; }
+        .tab-btn { padding: 9px 22px; border-radius: 8px; border: 1px solid #e0e6ed; background: #f8fafc; cursor: pointer; font-weight: 600; color: #64748b; }
+        .tab-btn.active { background: #4a90e2; color: #fff; border-color: #4a90e2; }
+        .timer-display { font-size: 4em; font-weight: 700; font-family: 'Courier New', monospace; text-align: center; padding: 30px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: #4ade80; border-radius: 16px; margin-bottom: 22px; letter-spacing: 2px; }
+        .timer-display .ms { font-size: 0.5em; color: #94a3b8; }
+        .btn-row { display: flex; gap: 12px; justify-content: center; margin-bottom: 20px; }
+        .btn-big { padding: 14px 36px; border-radius: 10px; border: none; font-size: 1.05em; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+        .btn-start { background: #22c55e; color: #fff; }
+        .btn-start:hover { background: #16a34a; }
+        .btn-stop { background: #ef4444; color: #fff; }
+        .btn-stop:hover { background: #dc2626; }
+        .btn-reset { background: #64748b; color: #fff; }
+        .btn-reset:hover { background: #475569; }
+        .btn-lap { background: #4a90e2; color: #fff; }
+        .btn-lap:hover { background: #3a7bd5; }
+        .lap-list { max-height: 300px; overflow-y: auto; }
+        .lap-item { display: flex; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid #e0e6ed; font-family: 'Courier New', monospace; }
+        .lap-item:nth-child(even) { background: #f8fafc; }
+        .lap-item .lap-num { color: #94a3b8; }
+        .lap-item .lap-time { font-weight: 700; color: #2c3e50; }
+        .lap-item .lap-diff { color: #4a90e2; }
+        .countdown-input { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+        @media (max-width: 600px) { .countdown-input { grid-template-columns: 1fr; } }
+        .countdown-input input { padding: 12px; border: 1px solid #e0e6ed; border-radius: 8px; font-size: 1.1em; text-align: center; font-family: 'Courier New', monospace; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="秒表倒计时,在线秒表倒计时,日常通用,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/daily/stopwatch-tool.html" />
+    <meta property="og:title" content="秒表计时器" />
+    <meta property="og:description" content="在线秒表计时器，支持精确到毫秒的计时、计圈、倒计时功能，纯前端无依赖。" />
+    <meta property="og:url" content="https://box.lynvortex.top/daily/stopwatch-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="秒表计时器" />
+    <meta itemprop="description" content="在线秒表计时器，支持精确到毫秒的计时、计圈、倒计时功能，纯前端无依赖。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "日常通用",
+                "item": "https://box.lynvortex.top/daily.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "秒表倒计时",
+                "item": "https://box.lynvortex.top/daily/stopwatch-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "秒表倒计时",
+        "url": "https://box.lynvortex.top/daily/stopwatch-tool.html",
+        "description": "高精度秒表计时与倒计时器，支持圈数记录与提醒",
+        "applicationCategory": "日常通用",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>⏱️ 秒表计时器</h1>
+                <p>精确计时、计圈、倒计时，纯前端无依赖</p>
+            </div>
+
+            <div class="tab-row">
+                <div class="tab-btn active" data-tab="stopwatch">秒表</div>
+                <div class="tab-btn" data-tab="countdown">倒计时</div>
+            </div>
+
+            <div id="stopwatchPanel">
+                <div class="timer-display" id="swDisplay">00:00:00<span class="ms">.000</span></div>
+                <div class="btn-row">
+                    <button class="btn-big btn-start" id="swStart">开始</button>
+                    <button class="btn-big btn-lap" id="swLap" disabled>计圈</button>
+                    <button class="btn-big btn-reset" id="swReset" disabled>重置</button>
+                </div>
+                <div class="lap-list" id="lapList"></div>
+            </div>
+
+            <div id="countdownPanel" style="display:none;">
+                <div class="countdown-input">
+                    <div class="form-item"><label>时</label><input type="number" id="cdH" value="0" min="0" max="99" /></div>
+                    <div class="form-item"><label>分</label><input type="number" id="cdM" value="5" min="0" max="59" /></div>
+                    <div class="form-item"><label>秒</label><input type="number" id="cdS" value="0" min="0" max="59" /></div>
+                </div>
+                <div class="timer-display" id="cdDisplay">00:05:00</div>
+                <div class="btn-row">
+                    <button class="btn-big btn-start" id="cdStart">开始</button>
+                    <button class="btn-big btn-reset" id="cdReset" disabled>重置</button>
+                </div>
+                <div id="cdStatus" class="status-bar info" style="text-align:center;">设置时间后点击开始</div>
+            </div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 秒表计时器</h3>
+                <p>秒表计时与倒计时功能</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">毫秒精度</span>
+                    <span class="feature-chip">计圈记录</span>
+                    <span class="feature-chip">倒计时</span>
+                    <span class="feature-chip">离线可用</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>秒表支持精确到毫秒的计时</li>
+                    <li>计圈功能记录每圈用时和差值</li>
+                    <li>倒计时结束会发出提示音</li>
+                    <li>纯前端运行，切换标签页仍持续计时</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+document.querySelectorAll('.tab-btn').forEach(function(b){
+    b.onclick=function(){
+        document.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active');});
+        b.classList.add('active');
+        document.getElementById('stopwatchPanel').style.display=b.dataset.tab==='stopwatch'?'block':'none';
+        document.getElementById('countdownPanel').style.display=b.dataset.tab==='countdown'?'block':'none';
+    };
+});
+
+/* ===== 秒表 ===== */
+var swRunning=false,swStartT=0,swElapsed=0,swTimer=null,laps=[];
+function swFormat(ms){
+    var h=Math.floor(ms/3600000),m=Math.floor(ms/60000)%60,s=Math.floor(ms/1000)%60,mmm=ms%1000;
+    return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')+'<span class="ms">.'+String(mmm).padStart(3,'0')+'</span>';
+}
+function swUpdate(){
+    var total=swElapsed+(Date.now()-swStartT);
+    document.getElementById('swDisplay').innerHTML=swFormat(total);
+}
+document.getElementById('swStart').onclick=function(){
+    if(!swRunning){
+        swRunning=true;swStartT=Date.now();swTimer=setInterval(swUpdate,10);
+        this.textContent='暂停';this.className='btn-big btn-stop';
+        document.getElementById('swLap').disabled=false;
+        document.getElementById('swReset').disabled=false;
+    }else{
+        swRunning=false;swElapsed+=Date.now()-swStartT;clearInterval(swTimer);
+        this.textContent='继续';this.className='btn-big btn-start';
+    }
+};
+document.getElementById('swLap').onclick=function(){
+    if(!swRunning)return;
+    var total=swElapsed+(Date.now()-swStartT);
+    var prev=laps.length?laps[laps.length-1].total:0;
+    laps.push({total:total,diff:total-prev});
+    var html=laps.map(function(l,i){
+        return '<div class="lap-item"><span class="lap-num">圈 '+String(i+1).padStart(2,'0')+'</span><span class="lap-diff">+'+swFormat(l.diff).replace(/<[^>]+>/g,'')+'</span><span class="lap-time">'+swFormat(l.total).replace(/<[^>]+>/g,'')+'</span></div>';
+    }).reverse().join('');
+    document.getElementById('lapList').innerHTML=html;
+};
+document.getElementById('swReset').onclick=function(){
+    swRunning=false;clearInterval(swTimer);swElapsed=0;laps=[];
+    document.getElementById('swDisplay').innerHTML='00:00:00<span class="ms">.000</span>';
+    document.getElementById('lapList').innerHTML='';
+    document.getElementById('swStart').textContent='开始';document.getElementById('swStart').className='btn-big btn-start';
+    document.getElementById('swLap').disabled=true;document.getElementById('swReset').disabled=true;
+};
+
+/* ===== 倒计时 ===== */
+var cdRunning=false,cdEndT=0,cdTimer=null;
+function cdFormat(s){
+    var h=Math.floor(s/3600),m=Math.floor(s/60)%60,sec=s%60;
+    return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+}
+function cdUpdate(){
+    var remain=Math.ceil((cdEndT-Date.now())/1000);
+    if(remain<=0){
+        clearInterval(cdTimer);cdRunning=false;
+        document.getElementById('cdDisplay').textContent='00:00:00';
+        document.getElementById('cdStart').textContent='开始';document.getElementById('cdStart').className='btn-big btn-start';
+        document.getElementById('cdStatus').textContent='⏰ 时间到！';document.getElementById('cdStatus').className='status-bar error';
+        try{var ctx=new (window.AudioContext||window.webkitAudioContext)();var osc=ctx.createOscillator();var gain=ctx.createGain();osc.connect(gain);gain.connect(ctx.destination);osc.frequency.value=800;gain.gain.setValueAtTime(0.3,ctx.currentTime);osc.start();osc.stop(ctx.currentTime+0.3);setTimeout(function(){osc.frequency.value=600;osc.start();osc.stop(ctx.currentTime+0.3);},350);}catch(e){}
+        return;
+    }
+    document.getElementById('cdDisplay').textContent=cdFormat(remain);
+}
+document.getElementById('cdStart').onclick=function(){
+    if(!cdRunning){
+        var h=parseInt(document.getElementById('cdH').value)||0;
+        var m=parseInt(document.getElementById('cdM').value)||0;
+        var s=parseInt(document.getElementById('cdS').value)||0;
+        var total=h*3600+m*60+s;
+        if(total<=0)return;
+        cdRunning=true;cdEndT=Date.now()+total*1000;cdTimer=setInterval(cdUpdate,200);
+        this.textContent='暂停';this.className='btn-big btn-stop';
+        document.getElementById('cdReset').disabled=false;
+        document.getElementById('cdStatus').textContent='倒计时进行中...';
+    }else{
+        cdRunning=false;clearInterval(cdTimer);
+        this.textContent='继续';this.className='btn-big btn-start';
+        document.getElementById('cdStatus').textContent='已暂停';
+    }
+};
+document.getElementById('cdReset').onclick=function(){
+    cdRunning=false;clearInterval(cdTimer);
+    var h=parseInt(document.getElementById('cdH').value)||0;
+    var m=parseInt(document.getElementById('cdM').value)||0;
+    var s=parseInt(document.getElementById('cdS').value)||0;
+    document.getElementById('cdDisplay').textContent=cdFormat(h*3600+m*60+s);
+    document.getElementById('cdStart').textContent='开始';document.getElementById('cdStart').className='btn-big btn-start';
+    document.getElementById('cdStatus').textContent='已重置';
+};
+initSidebar('daily');
+</script>
+</body>
+</html>

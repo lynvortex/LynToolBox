@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>视频画面裁剪 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="视频画面裁剪工具，纯前端Canvas裁剪视频画面区域，自定义裁剪框位置与尺寸，MediaRecorder录制导出WebM，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.video-wrap{position:relative;text-align:center;margin-bottom:14px;}
+video#srcVideo{max-width:100%;border-radius:8px;}
+.crop-overlay{position:absolute;border:2px solid #4a90e2;background:rgba(74,144,226,0.15);cursor:move;border-radius:2px;}
+.crop-handle{position:absolute;width:12px;height:12px;background:#4a90e2;border-radius:50%;bottom:-6px;right:-6px;cursor:nwse-resize;}
+.progress-bar{height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden;margin:14px 0;display:none;}
+.progress-fill{height:100%;background:linear-gradient(90deg,#4a90e2,#3a7bd5);border-radius:4px;width:0;transition:.3s;}
+</style>
+    <meta name="keywords" content="视频裁剪,在线视频裁剪,音视频处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/media/video-crop-tool.html" />
+    <meta property="og:title" content="视频画面裁剪" />
+    <meta property="og:description" content="视频画面裁剪工具，纯前端Canvas裁剪视频画面区域，自定义裁剪框位置与尺寸，MediaRecorder录制导出WebM，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/media/video-crop-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="视频画面裁剪" />
+    <meta itemprop="description" content="视频画面裁剪工具，纯前端Canvas裁剪视频画面区域，自定义裁剪框位置与尺寸，MediaRecorder录制导出WebM，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "音视频处理",
+                "item": "https://box.lynvortex.top/media.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "视频裁剪",
+                "item": "https://box.lynvortex.top/media/video-crop-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "视频裁剪",
+        "url": "https://box.lynvortex.top/media/video-crop-tool.html",
+        "description": "裁剪视频画面区域，拖拽调整裁剪框，导出WebM格式",
+        "applicationCategory": "音视频处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>✂️ 视频画面裁剪</h1><p>裁剪视频画面区域，保留指定范围导出</p></div>
+<div class="upload-zone" id="dropZone">📁 点击或拖拽上传视频文件<input type="file" id="fileInput" accept="video/*" style="display:none;"/></div>
+<div id="editorArea" style="display:none;">
+<div class="video-wrap" id="videoWrap">
+<video id="srcVideo" controls></video>
+<div class="crop-overlay" id="cropBox"><div class="crop-handle" id="cropHandle"></div></div>
+</div>
+<div class="form-grid">
+<div class="form-item"><label>裁剪 X (px)</label><input type="number" id="cropX" value="0" min="0"/></div>
+<div class="form-item"><label>裁剪 Y (px)</label><input type="number" id="cropY" value="0" min="0"/></div>
+<div class="form-item"><label>裁剪宽度 (px)</label><input type="number" id="cropW" value="0" min="10"/></div>
+<div class="form-item"><label>裁剪高度 (px)</label><input type="number" id="cropH" value="0" min="10"/></div>
+</div>
+<div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+<div style="text-align:center;">
+<button class="btn btn-primary" id="processBtn" style="padding:12px 32px;">🎬 开始裁剪</button>
+</div>
+<div id="resultArea" style="display:none;margin-top:16px;">
+<h3 style="font-size:.95em;color:#2c3e50;margin-bottom:10px;">✅ 裁剪结果</h3>
+<video id="resultVideo" controls style="width:100%;border-radius:8px;"></video>
+<div style="text-align:center;margin-top:10px;">
+<button class="btn btn-outline" id="dlBtn" style="padding:10px 24px;">⬇ 下载视频</button>
+</div>
+</div>
+<button class="btn btn-ghost" id="resetBtn" style="margin-top:14px;">重新上传</button>
+</div>
+<div id="statusBar" class="status-bar info">上传视频，拖拽裁剪框选择保留区域</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 视频画面裁剪</h3><p>裁剪视频画面指定区域</p><div class="feature-chips"><span class="feature-chip">拖拽裁剪框</span><span class="feature-chip">自定义尺寸</span><span class="feature-chip">实时预览</span><span class="feature-chip">WebM导出</span><span class="feature-chip">本地处理</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>拖拽裁剪框选择保留区域，右下角圆点可调整大小</li><li>也可直接输入裁剪位置和尺寸数值</li><li>使用Canvas逐帧裁剪并录制导出WebM</li><li>处理时间与视频时长成正比，请耐心等待</li><li>所有处理在浏览器本地完成，数据不上传</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var videoFile=null,resultBlob=null;
+var dz=document.getElementById('dropZone'),fi=document.getElementById('fileInput');
+var video=document.getElementById('srcVideo');
+var cropBox=document.getElementById('cropBox');
+var videoWrap=document.getElementById('videoWrap');
+var scale=1;
+dz.onclick=function(){fi.click();};
+dz.ondragover=function(e){e.preventDefault();};
+dz.ondrop=function(e){e.preventDefault();if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);};
+fi.onchange=function(){if(fi.files[0])loadFile(fi.files[0]);};
+function loadFile(file){
+videoFile=file;video.src=URL.createObjectURL(file);
+video.onloadedmetadata=function(){
+scale=video.clientWidth/video.videoWidth;
+var w=Math.round(video.videoWidth*0.6);
+var h=Math.round(video.videoHeight*0.6);
+var x=Math.round((video.videoWidth-w)/2);
+var y=Math.round((video.videoHeight-h)/2);
+cropBox.style.left=(x*scale)+'px';cropBox.style.top=(y*scale)+'px';
+cropBox.style.width=(w*scale)+'px';cropBox.style.height=(h*scale)+'px';
+document.getElementById('cropX').value=x;document.getElementById('cropY').value=y;
+document.getElementById('cropW').value=w;document.getElementById('cropH').value=h;
+dz.style.display='none';document.getElementById('editorArea').style.display='block';
+document.getElementById('statusBar').textContent='已加载: '+file.name;document.getElementById('statusBar').className='status-bar success';
+};
+}
+function updateCropFromInputs(){
+var x=parseInt(document.getElementById('cropX').value)||0;
+var y=parseInt(document.getElementById('cropY').value)||0;
+var w=parseInt(document.getElementById('cropW').value)||10;
+var h=parseInt(document.getElementById('cropH').value)||10;
+x=Math.max(0,Math.min(x,video.videoWidth-w));
+y=Math.max(0,Math.min(y,video.videoHeight-h));
+w=Math.max(10,Math.min(w,video.videoWidth-x));
+h=Math.max(10,Math.min(h,video.videoHeight-y));
+cropBox.style.left=(x*scale)+'px';cropBox.style.top=(y*scale)+'px';
+cropBox.style.width=(w*scale)+'px';cropBox.style.height=(h*scale)+'px';
+}
+['cropX','cropY','cropW','cropH'].forEach(function(id){document.getElementById(id).onchange=updateCropFromInputs;});
+var dragging=false,dx=0,dy=0;
+cropBox.onmousedown=function(e){if(e.target===cropBox){dragging=true;var rect=cropBox.getBoundingClientRect();dx=e.clientX-rect.left;dy=e.clientY-rect.top;e.preventDefault();}};
+document.addEventListener('mousemove',function(e){if(!dragging)return;var wrapRect=videoWrap.getBoundingClientRect();var nx=e.clientX-wrapRect.left-dx;var ny=e.clientY-wrapRect.top-dy;nx=Math.max(0,Math.min(nx,video.clientWidth-cropBox.offsetWidth));ny=Math.max(0,Math.min(ny,video.clientHeight-cropBox.offsetHeight));cropBox.style.left=nx+'px';cropBox.style.top=ny+'px';document.getElementById('cropX').value=Math.round(nx/scale);document.getElementById('cropY').value=Math.round(ny/scale);});
+document.addEventListener('mouseup',function(){dragging=false;});
+var resizing=false;
+document.getElementById('cropHandle').onmousedown=function(e){resizing=true;e.preventDefault();e.stopPropagation();};
+document.addEventListener('mousemove',function(e){if(!resizing)return;var wrapRect=videoWrap.getBoundingClientRect();var nw=e.clientX-cropBox.getBoundingClientRect().left;var nh=e.clientY-cropBox.getBoundingClientRect().top;nw=Math.max(30,Math.min(nw,video.clientWidth-cropBox.offsetLeft));nh=Math.max(30,Math.min(nh,video.clientHeight-cropBox.offsetTop));cropBox.style.width=nw+'px';cropBox.style.height=nh+'px';document.getElementById('cropW').value=Math.round(nw/scale);document.getElementById('cropH').value=Math.round(nh/scale);});
+document.addEventListener('mouseup',function(){resizing=false;});
+document.getElementById('processBtn').onclick=function(){
+if(!videoFile)return;
+var cx=parseInt(document.getElementById('cropX').value);
+var cy=parseInt(document.getElementById('cropY').value);
+var cw=parseInt(document.getElementById('cropW').value);
+var ch=parseInt(document.getElementById('cropH').value);
+document.getElementById('statusBar').textContent='正在裁剪视频...';document.getElementById('statusBar').className='status-bar info';
+document.getElementById('progressBar').style.display='block';
+var canvas=document.createElement('canvas');canvas.width=cw;canvas.height=ch;
+var ctx=canvas.getContext('2d');
+var stream=canvas.captureStream(30);
+try{var vs=video.captureStream?video.captureStream():video.mozCaptureStream();if(vs){vs.getAudioTracks().forEach(function(t){stream.addTrack(t);});}}catch(e){}
+var mime='video/webm;codecs=vp9';if(!MediaRecorder.isTypeSupported(mime))mime='video/webm';
+var recorder=new MediaRecorder(stream,{mimeType:mime});
+var chunks=[];recorder.ondataavailable=function(e){if(e.data.size>0)chunks.push(e.data);};
+recorder.onstop=function(){resultBlob=new Blob(chunks,{type:'video/webm'});var url=URL.createObjectURL(resultBlob);document.getElementById('resultVideo').src=url;document.getElementById('resultArea').style.display='block';document.getElementById('progressBar').style.display='none';document.getElementById('statusBar').textContent='裁剪完成';document.getElementById('statusBar').className='status-bar success';};
+video.currentTime=0;video.muted=true;video.play();recorder.start();
+function drawFrame(){if(video.ended||video.paused){video.pause();recorder.stop();document.getElementById('progressFill').style.width='100%';return;}ctx.drawImage(video,cx,cy,cw,ch,0,0,cw,ch);document.getElementById('progressFill').style.width=(video.currentTime/video.duration*95)+'%';requestAnimationFrame(drawFrame);}
+setTimeout(drawFrame,200);
+};
+document.getElementById('dlBtn').onclick=function(){if(resultBlob){var a=document.createElement('a');a.href=URL.createObjectURL(resultBlob);a.download='cropped.webm';a.click();}};
+document.getElementById('resetBtn').onclick=function(){dz.style.display='block';document.getElementById('editorArea').style.display='none';videoFile=null;resultBlob=null;fi.value='';document.getElementById('resultArea').style.display='none';document.getElementById('statusBar').textContent='请重新上传';document.getElementById('statusBar').className='status-bar info';};
+initSidebar('media');
+</script>
+</body>
+</html>

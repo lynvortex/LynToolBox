@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>URL 解析器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="URL解析器，解析URL各组成部分：protocol/host/path/query/params。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', -apple-system, sans-serif;
+            background: #f4f7f9;
+            margin: 0;
+            display: flex;
+            height: 100vh; overflow: hidden;
+            color: #333;
+        }
+        .mobile-header {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: #fff; padding: 0 20px; align-items: center;
+            justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+        }
+        .mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+        .mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+        .menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #4a90e2; }
+        .sidebar {
+            width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+            display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+            transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+            position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item {
+            display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+            transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+        }
+        .category-item:hover, .category-item.active { background: #ebf5ff; color: #4a90e2; border-left-color: #4a90e2; }
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+        .tool-container {
+            width: 100%;
+            max-width: 960px;
+            background: #fff; border-radius: 12px;
+            padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+        }
+        .tool-header { text-align: center; margin-bottom: 28px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 0.85em; color: #64748b; margin-bottom: 6px; font-weight: 500; }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            font-size: 0.95em;
+            outline: none;
+            transition: border-color 0.2s;
+            font-family: 'Consolas', 'Courier New', monospace;
+            color: #1e293b;
+        }
+        input[type="text"]:focus { border-color: #4a90e2; }
+        .action-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em;
+            font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap;
+        }
+        .btn-primary { background: #4a90e2; color: white; }
+        .btn-primary:hover { background: #3a7bd5; }
+        .btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+        .btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+        .status-bar {
+            min-height: 20px; font-size: 0.85em;
+            padding: 8px 12px; border-radius: 6px; margin-bottom: 16px;
+        }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+        .result-area { display: none; }
+        .parse-table {
+            width: 100%; border-collapse: collapse; margin-bottom: 20px;
+        }
+        .parse-table th {
+            background: #f8fafc; border: 1px solid #e0e6ed;
+            padding: 10px 14px; text-align: left; font-size: 0.85em; color: #64748b; font-weight: 600; width: 140px;
+        }
+        .parse-table td {
+            border: 1px solid #e0e6ed; padding: 10px 14px;
+            font-size: 0.92em; color: #1e293b; font-family: 'Consolas', 'Courier New', monospace; word-break: break-all;
+        }
+        .params-table {
+            width: 100%; border-collapse: collapse; margin-bottom: 12px;
+        }
+        .params-table th {
+            background: #f0fdf4; border: 1px solid #bbf7d0;
+            padding: 8px 12px; text-align: left; font-size: 0.82em; color: #166534; font-weight: 600;
+        }
+        .params-table td {
+            border: 1px solid #bbf7d0; padding: 8px 12px;
+            font-size: 0.88em; color: #1e293b; font-family: 'Consolas', 'Courier New', monospace; word-break: break-all;
+        }
+        .section-title { font-size: 0.9em; font-weight: 600; color: #2c3e50; margin: 12px 0 8px; }
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+        .footer p { margin: 0; }
+        .footer a { color: #4a90e2; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+        .info-cards {
+            width: 100%;
+            max-width: 960px;
+            display: flex; flex-direction: column; gap: 18px; margin-top: 4px;
+        }
+        .info-card {
+            background: #fff; border-radius: 12px; padding: 22px 24px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06); border: 1px solid #f0f2f5;
+        }
+        .info-card h3 {
+            margin: 0 0 10px 0; font-size: 1em; color: #2c3e50; font-weight: 600;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .info-card p { margin: 0 0 10px 0; font-size: 0.82em; color: #64748b; }
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip {
+            background: #e0f2fe; color: #0369a1;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace;
+        }
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a {
+            font-size: 0.85em; color: #4a90e2; text-decoration: none;
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s;
+        }
+        .tool-links a:hover { background: #e2e8f0; }
+        @media (max-width: 768px) {
+            body { display: block; height: auto; overflow: auto; }
+            .mobile-header { display: flex; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .close-sidebar { display: block; }
+            .main-content { display: block; }
+            .main-scroll { padding: 72px 16px 32px; gap: 20px;  }
+            .tool-container { padding: 24px 16px; border-radius: 10px; }
+            .tool-header h1 { font-size: 1.3em; }
+            .parse-table th { width: 100px; }
+            .info-card { padding: 18px 16px; }
+            .overlay.active { display: block; }
+        }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="URL解析器,在线URL解析器,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/url-parse-tool.html" />
+    <meta property="og:title" content="URL 解析器" />
+    <meta property="og:description" content="URL解析器，解析URL各组成部分：protocol/host/path/query/params。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/url-parse-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="URL 解析器" />
+    <meta itemprop="description" content="URL解析器，解析URL各组成部分：protocol/host/path/query/params。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "URL解析器",
+                "item": "https://box.lynvortex.top/work/url-parse-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "URL解析器",
+        "url": "https://box.lynvortex.top/work/url-parse-tool.html",
+        "description": "解析URL各组成部分：protocol/host/path/query/params",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>URL 解析器</h1>
+                <p>使用 new URL() 解析 URL 各组件，包括查询参数键值对展示</p>
+            </div>
+
+            <div class="form-group">
+                <label>输入 URL</label>
+                <input type="text" id="urlInput" placeholder="https://example.com:8080/path/to/page?name=value&key=val#section" />
+            </div>
+
+            <div class="action-row">
+                <button class="btn btn-primary" id="parseBtn">解析</button>
+                <button class="btn btn-ghost" id="clearBtn">清空</button>
+            </div>
+
+            <div class="status-bar info" id="statusBar">输入 URL 后点击解析按钮</div>
+
+            <div class="result-area" id="resultArea">
+                <div class="section-title">URL 组件</div>
+                <table class="parse-table" id="componentTable"></table>
+
+                <div class="section-title" id="paramsSection" style="display:none;">查询参数</div>
+                <table class="params-table" id="paramsTable"></table>
+            </div>
+
+            <footer class="footer">
+                &copy; 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+            <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>解析的组件</h3>
+                <p>基于标准 URL API，完整解析</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">protocol</span>
+                    <span class="tld-chip">hostname</span>
+                    <span class="tld-chip">port</span>
+                    <span class="tld-chip">pathname</span>
+                    <span class="tld-chip">search</span>
+                    <span class="tld-chip">hash</span>
+                    <span class="tld-chip">origin</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>使用须知</h3>
+                <ul class="tips-list">
+                    <li>使用浏览器内置 new URL() 解析，结果准确可靠</li>
+                    <li>支持解析协议、主机、端口、路径、查询参数、哈希等</li>
+                    <li>查询参数以键值对表格形式展示，方便查看</li>
+                    <li>所有处理在浏览器本地执行，数据不会上传</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    initSidebar('work');
+
+    let setStatus = function(msg, type) {
+        let sb = document.getElementById('statusBar');
+        sb.textContent = msg;
+        sb.className = 'status-bar ' + type;
+    };
+
+    let doParse = function() {
+        let urlStr = document.getElementById('urlInput').value.trim();
+        if (!urlStr) {
+            setStatus('请输入 URL', 'error');
+            document.getElementById('resultArea').style.display = 'none';
+            return;
+        }
+
+        // 如果没有协议，自动添加 https://
+        if (!/^[a-zA-Z][a-zA-Z0-9+\-.]*:\/\//.test(urlStr)) {
+            urlStr = 'https://' + urlStr;
+        }
+
+        try {
+            let url = new URL(urlStr);
+
+            let components = [
+                { label: '完整 URL', value: url.href },
+                { label: '协议 (protocol)', value: url.protocol },
+                { label: '主机名 (hostname)', value: url.hostname },
+                { label: '端口 (port)', value: url.port || '(默认)' },
+                { label: '主机 (host)', value: url.host },
+                { label: '路径 (pathname)', value: url.pathname },
+                { label: '查询字符串 (search)', value: url.search || '(无)' },
+                { label: '哈希 (hash)', value: url.hash || '(无)' },
+                { label: '来源 (origin)', value: url.origin },
+                { label: '用户名 (username)', value: url.username || '(无)' },
+                { label: '密码 (password)', value: url.password ? '****' : '(无)' },
+                { label: '认证信息 (auth)', value: (url.username || url.password) ? (url.username + ':' + (url.password || '')) : '(无)' }
+            ];
+
+            let compTable = document.getElementById('componentTable');
+            compTable.innerHTML = components.map(function(c) {
+                return '<tr><th>' + escapeHtml(c.label) + '</th><td>' + escapeHtml(c.value) + '</td></tr>';
+            }).join('');
+
+            // 查询参数
+            let paramsSection = document.getElementById('paramsSection');
+            let paramsTable = document.getElementById('paramsTable');
+            let params = new URLSearchParams(url.search);
+            let hasParams = false;
+            let paramRows = [];
+            for (let pair of params.entries()) {
+                hasParams = true;
+                paramRows.push({ key: pair[0], value: pair[1] });
+            }
+
+            if (hasParams) {
+                paramsSection.style.display = 'block';
+                paramsTable.innerHTML = '<tr><th>参数名</th><th>参数值</th></tr>' +
+                    paramRows.map(function(p) {
+                        return '<tr><td>' + escapeHtml(p.key) + '</td><td>' + escapeHtml(p.value) + '</td></tr>';
+                    }).join('');
+                paramsTable.style.display = 'table';
+            } else {
+                paramsSection.style.display = 'none';
+                paramsTable.style.display = 'none';
+            }
+
+            document.getElementById('resultArea').style.display = 'block';
+            setStatus('解析成功', 'success');
+        } catch (err) {
+            setStatus('URL 解析失败：' + err.message, 'error');
+            document.getElementById('resultArea').style.display = 'none';
+        }
+    };
+
+    let clearAll = function() {
+        document.getElementById('urlInput').value = '';
+        document.getElementById('resultArea').style.display = 'none';
+        setStatus('已清空', 'info');
+    };
+
+    document.getElementById('parseBtn').addEventListener('click', doParse);
+    document.getElementById('clearBtn').addEventListener('click', clearAll);
+
+    document.getElementById('urlInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') doParse();
+    });
+</script>
+</body>
+</html>

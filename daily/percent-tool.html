@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>百分比计算器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="百分比计算器，支持求百分比、增减百分比、占比计算等多种模式，纯前端无依赖。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+        .mode-tabs { display: flex; gap: 8px; margin-bottom: 22px; flex-wrap: wrap; }
+        .mode-tab { padding: 9px 18px; border-radius: 8px; border: 1px solid #e0e6ed; background: #f8fafc; cursor: pointer; font-weight: 600; color: #64748b; font-size: 0.85em; }
+        .mode-tab.active { background: #4a90e2; color: #fff; border-color: #4a90e2; }
+        .calc-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+        .calc-row input { padding: 12px 14px; border: 1px solid #e0e6ed; border-radius: 8px; font-size: 1.05em; width: 120px; font-family: 'Courier New', monospace; }
+        .calc-row span { color: #64748b; font-size: 0.95em; }
+        .result-card { background: linear-gradient(135deg, #4a90e2 0%, #3a7bd5 100%); color: #fff; border-radius: 14px; padding: 26px; text-align: center; margin-bottom: 18px; }
+        .result-big { font-size: 2.4em; font-weight: 700; font-family: 'Courier New', monospace; }
+        .result-sub { font-size: 0.88em; opacity: 0.85; margin-top: 6px; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="百分比计算器,在线百分比计算器,日常通用,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/daily/percent-tool.html" />
+    <meta property="og:title" content="百分比计算器" />
+    <meta property="og:description" content="百分比计算器，支持求百分比、增减百分比、占比计算等多种模式，纯前端无依赖。" />
+    <meta property="og:url" content="https://box.lynvortex.top/daily/percent-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="百分比计算器" />
+    <meta itemprop="description" content="百分比计算器，支持求百分比、增减百分比、占比计算等多种模式，纯前端无依赖。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "日常通用",
+                "item": "https://box.lynvortex.top/daily.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "百分比计算器",
+                "item": "https://box.lynvortex.top/daily/percent-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "百分比计算器",
+        "url": "https://box.lynvortex.top/daily/percent-tool.html",
+        "description": "多种百分比计算模式：求百分比、增减百分比、比率换算",
+        "applicationCategory": "日常通用",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🔢 百分比计算器</h1>
+                <p>多种百分比计算模式，满足日常需求</p>
+            </div>
+
+            <div class="mode-tabs">
+                <div class="mode-tab active" data-mode="1">A的B%是多少</div>
+                <div class="mode-tab" data-mode="2">A是B的百分之几</div>
+                <div class="mode-tab" data-mode="3">A比B增加/减少百分之几</div>
+                <div class="mode-tab" data-mode="4">A增加B%是多少</div>
+                <div class="mode-tab" data-mode="5">A减少B%是多少</div>
+            </div>
+
+            <div id="panel1">
+                <div class="calc-row"><input type="number" id="a1" value="200" /><span>的</span><input type="number" id="b1" value="15" /><span>% =</span></div>
+                <div class="result-card"><div class="result-big" id="r1">30</div><div class="result-sub">200 的 15% = 30</div></div>
+            </div>
+            <div id="panel2" style="display:none;">
+                <div class="calc-row"><input type="number" id="a2" value="30" /><span>是</span><input type="number" id="b2" value="200" /><span>的百分之几</span></div>
+                <div class="result-card"><div class="result-big" id="r2">15%</div><div class="result-sub">30 是 200 的 15%</div></div>
+            </div>
+            <div id="panel3" style="display:none;">
+                <div class="calc-row"><span>从</span><input type="number" id="a3" value="100" /><span>到</span><input type="number" id="b3" value="130" /></div>
+                <div class="result-card"><div class="result-big" id="r3">+30%</div><div class="result-sub">从 100 到 130 增加了 30%</div></div>
+            </div>
+            <div id="panel4" style="display:none;">
+                <div class="calc-row"><input type="number" id="a4" value="200" /><span>增加</span><input type="number" id="b4" value="15" /><span>%</span></div>
+                <div class="result-card"><div class="result-big" id="r4">230</div><div class="result-sub">200 + 15% = 230</div></div>
+            </div>
+            <div id="panel5" style="display:none;">
+                <div class="calc-row"><input type="number" id="a5" value="200" /><span>减少</span><input type="number" id="b5" value="15" /><span>%</span></div>
+                <div class="result-card"><div class="result-big" id="r5">170</div><div class="result-sub">200 - 15% = 170</div></div>
+            </div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 百分比计算器</h3>
+                <p>多种百分比计算模式</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">百分比求值</span>
+                    <span class="feature-chip">增减计算</span>
+                    <span class="feature-chip">占比计算</span>
+                    <span class="feature-chip">离线可用</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>支持5种常见百分比计算场景</li>
+                    <li>输入数字即时计算结果</li>
+                    <li>增减百分比自动显示正负号</li>
+                    <li>纯前端计算，无需网络</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+document.querySelectorAll('.mode-tab').forEach(function(t){
+    t.onclick=function(){
+        document.querySelectorAll('.mode-tab').forEach(function(x){x.classList.remove('active');});
+        t.classList.add('active');
+        for(var i=1;i<=5;i++)document.getElementById('panel'+i).style.display='none';
+        document.getElementById('panel'+t.dataset.mode).style.display='block';
+    };
+});
+
+function calc1(){var a=+document.getElementById('a1').value,b=+document.getElementById('b1').value;var r=a*b/100;document.getElementById('r1').textContent=r;document.getElementById('panel1').querySelector('.result-sub').textContent=a+' 的 '+b+'% = '+r;}
+function calc2(){var a=+document.getElementById('a2').value,b=+document.getElementById('b2').value;if(!b)return;var r=(a/b*100);document.getElementById('r2').textContent=r.toFixed(2)+'%';document.getElementById('panel2').querySelector('.result-sub').textContent=a+' 是 '+b+' 的 '+r.toFixed(2)+'%';}
+function calc3(){var a=+document.getElementById('a3').value,b=+document.getElementById('b3').value;if(!a)return;var r=((b-a)/a*100);var sign=r>=0?'+':'';document.getElementById('r3').textContent=sign+r.toFixed(2)+'%';document.getElementById('panel3').querySelector('.result-sub').textContent='从 '+a+' 到 '+b+(r>=0?' 增加了 ':' 减少了 ')+Math.abs(r).toFixed(2)+'%';}
+function calc4(){var a=+document.getElementById('a4').value,b=+document.getElementById('b4').value;var r=a*(1+b/100);document.getElementById('r4').textContent=r;document.getElementById('panel4').querySelector('.result-sub').textContent=a+' + '+b+'% = '+r;}
+function calc5(){var a=+document.getElementById('a5').value,b=+document.getElementById('b5').value;var r=a*(1-b/100);document.getElementById('r5').textContent=r;document.getElementById('panel5').querySelector('.result-sub').textContent=a+' - '+b+'% = '+r;}
+
+[['a1','b1',calc1],['a2','b2',calc2],['a3','b3',calc3],['a4','b4',calc4],['a5','b5',calc5]].forEach(function(arr){
+    document.getElementById(arr[0]).addEventListener('input',arr[2]);
+    document.getElementById(arr[1]).addEventListener('input',arr[2]);
+});
+calc1();calc2();calc3();calc4();calc5();
+initSidebar('daily');
+</script>
+</body>
+</html>

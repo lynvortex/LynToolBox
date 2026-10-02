@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>科学计算器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp" />
+<meta name="description" content="科学计算器，纯前端表达式求值工具，支持三角函数、对数、幂运算与常量，无依赖本地计算。" />
+<link rel="stylesheet" href="../assets/tool-common.css" />
+<script src="../assets/sidebar.js"></script>
+<style>
+  .expr-wrap { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+  .expr-input { flex:1; min-width:200px; padding:14px 16px; border:1px solid #e0e6ed; border-radius:8px; font-size:1.1em; font-family:'Consolas','Courier New',monospace; outline:none; transition:0.2s; color:#1e293b; }
+  .expr-input:focus { border-color:#4a90e2; }
+  .angle-toggle { display:flex; gap:6px; align-items:center; }
+  .angle-toggle button { padding:8px 16px; border:1px solid #e0e6ed; border-radius:8px; background:#f8fafc; color:#64748b; cursor:pointer; font-size:0.85em; font-weight:600; }
+  .angle-toggle button.active { background:#4a90e2; color:#fff; border-color:#4a90e2; }
+  .keypad { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin-bottom:18px; }
+  .key { padding:12px 4px; border:1px solid #e0e6ed; border-radius:8px; background:#fff; color:#2c3e50; cursor:pointer; font-size:0.9em; font-weight:600; font-family:'Consolas',monospace; transition:all .15s; text-align:center; }
+  .key:hover { background:#ebf5ff; border-color:#4a90e2; color:#4a90e2; }
+  .key:active { transform:scale(0.96); }
+  .key.op { background:#f1f5f9; color:#0369a1; }
+  .key.fn { background:#fdf4ff; color:#a21caf; font-size:0.82em; }
+  .key.const { background:#f0fdf4; color:#15803d; }
+  .key.clear { background:#fef2f2; color:#ef4444; }
+  .key.eq { background:#4a90e2; color:#fff; border-color:#4a90e2; }
+  .key.eq:hover { background:#3a7bd5; }
+  .result-box { background:#0f172a; color:#e2e8f0; padding:16px 18px; border-radius:8px; margin-bottom:18px; font-family:'Consolas',monospace; }
+  .result-box .rlabel { font-size:0.78em; color:#94a3b8; margin-bottom:4px; }
+  .result-box .rval { font-size:1.5em; font-weight:700; word-break:break-all; }
+  .result-box .rval.err { color:#fca5a5; font-size:1em; }
+  .history { border:1px solid #e0e6ed; border-radius:8px; max-height:240px; overflow:auto; background:#fff; }
+  .history-item { padding:10px 14px; border-bottom:1px solid #f1f5f9; font-family:'Consolas',monospace; font-size:0.84em; cursor:pointer; transition:background .15s; }
+  .history-item:hover { background:#f8fafc; }
+  .history-item:last-child { border-bottom:none; }
+  .history-item .hexpr { color:#475569; word-break:break-all; }
+  .history-item .heq { color:#94a3b8; margin:0 6px; }
+  .history-item .hres { color:#4a90e2; font-weight:700; word-break:break-all; }
+  .empty-tip { padding:18px; text-align:center; color:#94a3b8; font-size:0.85em; }
+  @media (max-width:600px){ .keypad{ grid-template-columns:repeat(4,1fr); } .key{ font-size:0.8em; padding:10px 2px; } .key.fn{ font-size:0.72em; } }
+</style>
+    <meta name="keywords" content="科学计算器,在线科学计算器,文本处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/text/calc-tool.html" />
+    <meta property="og:title" content="科学计算器" />
+    <meta property="og:description" content="科学计算器，纯前端表达式求值工具，支持三角函数、对数、幂运算与常量，无依赖本地计算。" />
+    <meta property="og:url" content="https://box.lynvortex.top/text/calc-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="科学计算器" />
+    <meta itemprop="description" content="科学计算器，纯前端表达式求值工具，支持三角函数、对数、幂运算与常量，无依赖本地计算。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文本处理",
+                "item": "https://box.lynvortex.top/text.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "科学计算器",
+                "item": "https://box.lynvortex.top/text/calc-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "科学计算器",
+        "url": "https://box.lynvortex.top/text/calc-tool.html",
+        "description": "表达式求值，支持三角函数、对数、幂运算与常量，无eval",
+        "applicationCategory": "文本处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+  <div class="tool-container">
+    <div class="tool-header">
+      <h1>🧮 科学计算器</h1>
+      <p>纯前端表达式求值（调度场算法），支持函数、常量与角度弧度切换，无 eval 安全计算</p>
+    </div>
+
+    <div class="expr-wrap">
+      <input type="text" class="expr-input" id="exprInput" placeholder="输入表达式，例如 sin(30) + 2^3 * pi" autocomplete="off" spellcheck="false" />
+      <div class="angle-toggle">
+        <button id="degBtn" class="active">DEG 角度</button>
+        <button id="radBtn">RAD 弧度</button>
+      </div>
+    </div>
+
+    <div class="keypad" id="keypad"></div>
+
+    <div class="result-box">
+      <div class="rlabel">计算结果</div>
+      <div class="rval" id="resultVal">—</div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:8px;">
+      <span style="font-size:0.82em;color:#64748b;font-weight:600;">计算历史（点击复用）</span>
+      <button class="btn btn-ghost" id="clearHistBtn" style="padding:4px 12px;font-size:0.8em;">清空历史</button>
+    </div>
+    <div class="history" id="historyList"><div class="empty-tip">暂无计算历史</div></div>
+
+    <div id="statusBar" class="status-bar info">输入表达式后按回车或点击「=」计算</div>
+
+    <footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+  </div>
+
+  <div class="info-cards">
+    <div class="info-card">
+      <h3>📦 功能说明</h3>
+      <p>使用调度场算法（Shunting-Yard）将中缀表达式转为逆波兰表达式再求值，完全自实现解析与计算，不使用 eval，安全可靠。支持加减乘除、幂、取模、括号及常用数学函数与常量。</p>
+      <div class="feature-chips">
+        <span class="feature-chip">表达式求值</span>
+        <span class="feature-chip">三角函数</span>
+        <span class="feature-chip">对数幂运算</span>
+        <span class="feature-chip">角度弧度</span>
+        <span class="feature-chip">历史记录</span>
+        <span class="feature-chip">无依赖</span>
+      </div>
+    </div>
+    <div class="info-card">
+      <h3>💡 使用须知</h3>
+      <ul class="tips-list">
+        <li>运算符：+ - * / ^（幂） %（取模），支持括号 ()</li>
+        <li>函数：sin cos tan asin acos atan log(log10) ln sqrt abs exp</li>
+        <li>常量：pi（π≈3.14159）e（≈2.71828）</li>
+        <li>DEG 模式下三角函数输入/输出为角度，RAD 模式为弧度</li>
+        <li>点击历史记录可将其填入输入框重新计算，全部本地运算</li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <h3>✨ 绘萤者</h3>
+      <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+      <div class="tool-links">
+        <a href="https://lynvortex.top" target="_blank">完全免费</a>
+        <a href="https://lynvortex.top" target="_blank">开源精神</a>
+        <a href="https://lynvortex.top" target="_blank">极客风范</a>
+        <a href="https://lynvortex.top" target="_blank">协作共创</a>
+      </div>
+      <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+  </div>
+</div></main>
+<script>
+initSidebar('text');
+(function () {
+  'use strict';
+  var exprInput = document.getElementById('exprInput');
+  var resultVal = document.getElementById('resultVal');
+  var statusBar = document.getElementById('statusBar');
+  var historyList = document.getElementById('historyList');
+  var useDegrees = true;
+  var history = [];
+
+  /* ---------- 按键面板 ---------- */
+  var keys = [
+    ['7','num'],['8','num'],['9','num'],['/','op'],['(','op'],[')','op'],
+    ['4','num'],['5','num'],['6','num'],['*','op'],['^','op'],['%','op'],
+    ['1','num'],['2','num'],['3','num'],['-','op'],['C','clear'],['⌫','clear'],
+    ['0','num'],['.','num'],['pi','const'],['+','op'],['=','eq'],['e','const'],
+    ['sin','fn'],['cos','fn'],['tan','fn'],['asin','fn'],['acos','fn'],['atan','fn'],
+    ['log','fn'],['ln','fn'],['sqrt','fn'],['abs','fn'],['exp','fn'],['pi','const']
+  ];
+  var keypad = document.getElementById('keypad');
+  keys.forEach(function (k) {
+    var b = document.createElement('div');
+    b.className = 'key' + (k[1] === 'op' ? ' op' : k[1] === 'fn' ? ' fn' : k[1] === 'const' ? ' const' : k[1] === 'clear' ? ' clear' : k[1] === 'eq' ? ' eq' : '');
+    b.textContent = k[0];
+    b.addEventListener('click', function () { onKey(k[0]); });
+    keypad.appendChild(b);
+  });
+
+  function onKey(label) {
+    if (label === 'C') { exprInput.value = ''; resultVal.textContent = '—'; resultVal.classList.remove('err'); setStatus('已清空', 'info'); return; }
+    if (label === '⌫') { exprInput.value = exprInput.value.slice(0, -1); exprInput.focus(); return; }
+    if (label === '=') { evaluate(); return; }
+    var insert = label;
+    // 函数名后补括号
+    if (['sin','cos','tan','asin','acos','atan','log','ln','sqrt','abs','exp'].indexOf(label) >= 0) insert = label + '(';
+    // 常量前若紧邻数字/右括号则补乘号
+    var v = exprInput.value;
+    var last = v.slice(-1);
+    if ((label === 'pi' || label === 'e') && v && /[0-9.)]/.test(last)) insert = '*' + label;
+    exprInput.value = v + insert;
+    exprInput.focus();
+  }
+
+  /* ---------- 角度切换 ---------- */
+  document.getElementById('degBtn').addEventListener('click', function () { useDegrees = true; this.classList.add('active'); document.getElementById('radBtn').classList.remove('active'); setStatus('已切换为角度（DEG）模式', 'info'); });
+  document.getElementById('radBtn').addEventListener('click', function () { useDegrees = false; this.classList.add('active'); document.getElementById('degBtn').classList.remove('active'); setStatus('已切换为弧度（RAD）模式', 'info'); });
+
+  /* ---------- 词法分析 ---------- */
+  var FUNCS = ['sin','cos','tan','asin','acos','atan','log','ln','sqrt','abs','exp'];
+  function tokenize(src) {
+    var tokens = [];
+    var i = 0;
+    while (i < src.length) {
+      var c = src[i];
+      if (c === ' ' || c === '\t') { i++; continue; }
+      // 数字
+      if (/[0-9.]/.test(c)) {
+        var num = '';
+        while (i < src.length && /[0-9.]/.test(src[i])) { num += src[i]; i++; }
+        if (num.split('.').length > 2) throw new Error('数字格式错误：' + num);
+        tokens.push({ t: 'num', v: parseFloat(num) });
+        continue;
+      }
+      // 字母（函数名或常量）
+      if (/[a-zA-Z]/.test(c)) {
+        var word = '';
+        while (i < src.length && /[a-zA-Z]/.test(src[i])) { word += src[i]; i++; }
+        var lw = word.toLowerCase();
+        if (lw === 'pi') tokens.push({ t: 'num', v: Math.PI });
+        else if (lw === 'e') tokens.push({ t: 'num', v: Math.E });
+        else if (FUNCS.indexOf(lw) >= 0) tokens.push({ t: 'func', v: lw });
+        else throw new Error('未知标识符：' + word);
+        continue;
+      }
+      // 运算符与括号
+      if ('+-*/^%()'.indexOf(c) >= 0) { tokens.push({ t: 'op', v: c }); i++; continue; }
+      throw new Error('非法字符：' + c);
+    }
+    return tokens;
+  }
+
+  /* ---------- 调度场算法：中缀 -> 后缀（RPN） ---------- */
+  var PREC = { 'u-': 5, 'u+': 5, '^': 4, '*': 3, '/': 3, '%': 3, '+': 2, '-': 2 };
+  var RIGHT = { '^': true, 'u-': true, 'u+': true };
+
+  function toRPN(tokens) {
+    var output = [];
+    var stack = [];
+    var prev = null;
+    for (var idx = 0; idx < tokens.length; idx++) {
+      var tok = tokens[idx];
+      if (tok.t === 'num') { output.push(tok); }
+      else if (tok.t === 'func') { stack.push(tok); }
+      else if (tok.t === 'op') {
+        if (tok.v === '(') { stack.push(tok); }
+        else if (tok.v === ')') {
+          // 弹出栈顶直到遇到 '('
+          while (stack.length && !(stack[stack.length - 1].t === 'op' && stack[stack.length - 1].v === '(')) {
+            output.push(stack.pop());
+          }
+          if (!stack.length) throw new Error('括号不匹配');
+          stack.pop(); // 弹出 '('
+          // 若栈顶是函数，弹出到输出
+          if (stack.length && stack[stack.length - 1].t === 'func') output.push(stack.pop());
+        }
+        else {
+          // 区分一元/二元
+          var isUnary = (tok.v === '-' || tok.v === '+') && (prev === null || (prev.t === 'op' && prev.v !== ')'));
+          var op = isUnary ? (tok.v === '-' ? 'u-' : 'u+') : tok.v;
+          while (stack.length) {
+            var top = stack[stack.length - 1];
+            if (top.t === 'func') { output.push(stack.pop()); continue; }
+            if (top.t === 'op' && top.v !== '(') {
+              var topPrec = PREC[top.v];
+              var curPrec = PREC[op];
+              if (topPrec > curPrec || (topPrec === curPrec && !RIGHT[op])) { output.push(stack.pop()); continue; }
+            }
+            break;
+          }
+          stack.push({ t: 'op', v: op });
+        }
+      }
+      prev = tok;
+      // 右括号处理后 prev 修正
+      if (tok.t === 'op' && tok.v === ')') prev = { t: 'op', v: ')' };
+    }
+    while (stack.length) {
+      var s = stack.pop();
+      if (s.t === 'op' && (s.v === '(' || s.v === ')')) throw new Error('括号不匹配');
+      output.push(s);
+    }
+    return output;
+  }
+
+  /* ---------- 求值 RPN ---------- */
+  function evalRPN(rpn) {
+    var st = [];
+    for (var i = 0; i < rpn.length; i++) {
+      var t = rpn[i];
+      if (t.t === 'num') { st.push(t.v); continue; }
+      if (t.t === 'func') {
+        if (!st.length) throw new Error('函数 ' + t.v + ' 缺少参数');
+        var a = st.pop();
+        st.push(applyFunc(t.v, a));
+        continue;
+      }
+      if (t.t === 'op') {
+        if (t.v === 'u-') { if (!st.length) throw new Error('一元负号缺少操作数'); st.push(-st.pop()); continue; }
+        if (t.v === 'u+') { continue; }
+        if (st.length < 2) throw new Error('运算符 ' + t.v + ' 缺少操作数');
+        var b = st.pop(); var a2 = st.pop();
+        st.push(applyOp(t.v, a2, b));
+        continue;
+      }
+    }
+    if (st.length !== 1) throw new Error('表达式不完整');
+    return st[0];
+  }
+
+  function applyFunc(name, x) {
+    var rad = useDegrees ? x * Math.PI / 180 : x;
+    switch (name) {
+      case 'sin': return Math.sin(rad);
+      case 'cos': return Math.cos(rad);
+      case 'tan': return Math.tan(rad);
+      case 'asin': var r1 = Math.asin(x); return useDegrees ? r1 * 180 / Math.PI : r1;
+      case 'acos': var r2 = Math.acos(x); return useDegrees ? r2 * 180 / Math.PI : r2;
+      case 'atan': var r3 = Math.atan(x); return useDegrees ? r3 * 180 / Math.PI : r3;
+      case 'log': return Math.log10(x);
+      case 'ln': return Math.log(x);
+      case 'sqrt': if (x < 0) throw new Error('sqrt 参数不能为负'); return Math.sqrt(x);
+      case 'abs': return Math.abs(x);
+      case 'exp': return Math.exp(x);
+    }
+    throw new Error('未知函数：' + name);
+  }
+  function applyOp(op, a, b) {
+    switch (op) {
+      case '+': return a + b;
+      case '-': return a - b;
+      case '*': return a * b;
+      case '/': if (b === 0) throw new Error('除数不能为零'); return a / b;
+      case '%': if (b === 0) throw new Error('取模不能为零'); return a % b;
+      case '^': return Math.pow(a, b);
+    }
+    throw new Error('未知运算符：' + op);
+  }
+
+  function formatResult(n) {
+    if (!isFinite(n)) return n > 0 ? '∞' : (n < 0 ? '-∞' : 'NaN');
+    if (Math.abs(n) < 1e-12) n = 0; // 修正浮点误差
+    // 整数直接显示
+    if (Number.isInteger(n)) return String(n);
+    // 否则保留 10 位有效数字并去尾零
+    var s = n.toPrecision(12);
+    return parseFloat(s).toString();
+  }
+
+  function evaluate() {
+    var src = exprInput.value.trim();
+    if (!src) { setStatus('请输入表达式', 'error'); return; }
+    try {
+      var tokens = tokenize(src);
+      var rpn = toRPN(tokens);
+      var res = evalRPN(rpn);
+      var out = formatResult(res);
+      resultVal.textContent = out;
+      resultVal.classList.remove('err');
+      addHistory(src, out);
+      setStatus('计算完成 ✓', 'success');
+    } catch (err) {
+      resultVal.textContent = '错误：' + err.message;
+      resultVal.classList.add('err');
+      setStatus('计算失败：' + err.message, 'error');
+    }
+  }
+
+  function addHistory(expr, res) {
+    history.unshift({ expr: expr, res: res });
+    if (history.length > 50) history.pop();
+    renderHistory();
+  }
+  function renderHistory() {
+    if (history.length === 0) { historyList.innerHTML = '<div class="empty-tip">暂无计算历史</div>'; return; }
+    historyList.innerHTML = history.map(function (h) {
+      return '<div class="history-item" data-expr="' + escapeHtml(h.expr) + '"><span class="hexpr">' + escapeHtml(h.expr) + '</span><span class="heq">=</span><span class="hres">' + escapeHtml(h.res) + '</span></div>';
+    }).join('');
+  }
+  historyList.addEventListener('click', function (e) {
+    var item = e.target.closest('.history-item');
+    if (!item) return;
+    exprInput.value = item.getAttribute('data-expr');
+    exprInput.focus();
+    setStatus('已载入历史表达式', 'info');
+  });
+  document.getElementById('clearHistBtn').addEventListener('click', function () { history = []; renderHistory(); setStatus('历史已清空', 'info'); });
+
+  exprInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); evaluate(); } });
+
+  // 初始示例
+  exprInput.value = 'sin(30) + 2^3 * pi';
+  evaluate();
+})();
+</script>
+</body>
+</html>

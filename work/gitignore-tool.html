@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>.gitignore生成器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="勾选常用语言和框架生成.gitignore文件，支持自定义规则，一键复制" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+
+        .gi-cats { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+        .gi-cat { background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 8px; padding: 12px; }
+        .gi-cat h4 { margin: 0 0 8px 0; font-size: 0.88em; color: #2c3e50; }
+        .gi-cat label { display: flex; align-items: center; gap: 6px; font-size: 0.82em; color: #64748b; cursor: pointer; padding: 3px 0; }
+        .gi-cat input { accent-color: #4a90e2; }
+    
+    </style>
+    <script src="../assets/sidebar.js"></script>
+
+    <meta name="keywords" content=".gitignore生成器,在线.gitignore生成器,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/gitignore-tool.html" />
+    <meta property="og:title" content=".gitignore生成器" />
+    <meta property="og:description" content="勾选常用语言和框架生成.gitignore文件，支持自定义规则，一键复制" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/gitignore-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content=".gitignore生成器" />
+    <meta itemprop="description" content="勾选常用语言和框架生成.gitignore文件，支持自定义规则，一键复制" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": ".gitignore生成器",
+                "item": "https://box.lynvortex.top/work/gitignore-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": ".gitignore生成器",
+        "url": "https://box.lynvortex.top/work/gitignore-tool.html",
+        "description": "勾选常用语言和框架生成.gitignore文件",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🚫 .gitignore生成器</h1>
+                <p>勾选常用语言和框架生成.gitignore文件，支持自定义规则，一键复制</p>
+            </div>
+
+            <div class="gi-cats" id="giCats"></div>
+            <div class="form-item" style="margin-bottom:12px;">
+                <label>自定义规则（每行一条）</label>
+                <textarea class="code" id="giCustom" placeholder="*.log&#10;temp/&#10;.env.local" style="min-height:80px;"></textarea>
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-primary" id="giGen">🚫 生成.gitignore</button>
+                <button class="btn btn-outline" id="giCopy">📋 复制</button>
+                <button class="btn btn-ghost" id="giDl">⬇ 下载文件</button>
+            </div>
+            <pre class="output" id="giResult" style="margin-top:12px;"></pre>
+    
+            <div id="statusBar" class="status-bar info">准备就绪，请按提示操作</div>
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 .gitignore生成器</h3>
+                <p>勾选语言和框架规则快速生成.gitignore文件</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">多语言支持</span>
+                    <span class="feature-chip">自定义规则</span>
+                    <span class="feature-chip">复制/下载</span>
+                    <span class="feature-chip">本地处理</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>勾选需要的语言、框架或系统规则</li>
+                    <li>可在自定义规则区域添加额外忽略规则</li>
+                    <li>支持复制到剪贴板或直接下载.gitignore文件</li>
+                    <li>涵盖Node.js、Python、Java、Go、Rust、PHP等常见开发环境</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+
+    const setStatus = (m,t) => { const s=document.getElementById('statusBar'); s.textContent=m; s.className='status-bar '+(t||'info'); };
+    const templates = {
+        'Node.js': ['node_modules/','npm-debug.log*','yarn-debug.log*','yarn-error.log*','.env','dist/','build/','.cache/'],
+        'Python': ['__pycache__/','*.py[cod]','*.egg-info/','dist/','build/','.eggs/','*.egg','.venv/','venv/','env/','.env'],
+        'Java': ['*.class','target/','*.jar','*.war','*.ear','hs_err_pid*','.gradle/','build/'],
+        'Go': ['*.exe','*.exe~','*.dll','*.so','*.dylib','*.test','*.out','vendor/'],
+        'Rust': ['target/','**/*.rs.bk','Cargo.lock'],
+        'PHP': ['vendor/','composer.lock','.env'],
+        'Vue/React': ['node_modules/','dist/','.cache/','.parcel-cache/','*.local','coverage/'],
+        'IDE': ['.idea/','.vscode/','*.swp','*.swo','*~','.DS_Store','Thumbs.db','desktop.ini'],
+        'OS': ['.DS_Store','Thumbs.db','desktop.ini','*.tmp','*.log'],
+        'Docker': ['Dockerfile.dev','docker-compose.override.yml','.docker/']
+    };
+
+    const cats = document.getElementById('giCats');
+    cats.innerHTML = Object.keys(templates).map(cat => `
+        <div class="gi-cat"><h4>${cat}</h4>${templates[cat].map(r => `<label><input type="checkbox" value="${r}"> ${r}</label>`).join('')}</div>
+    `).join('');
+
+    document.getElementById('giGen').addEventListener('click', () => {
+        const checked = Array.from(document.querySelectorAll('.gi-cats input:checked')).map(c => c.value);
+        const custom = document.getElementById('giCustom').value.split('\n').filter(l => l.trim());
+        const all = [...new Set([...checked, ...custom])];
+        const result = all.length ? all.join('\n') : '';
+        document.getElementById('giResult').textContent = result || '# 勾选上方规则或输入自定义规则';
+        setStatus('已生成 ' + all.length + ' 条规则', 'success');
+    });
+
+    document.getElementById('giCopy').addEventListener('click', () => {
+        const code = document.getElementById('giResult').textContent;
+        if (!code || code.startsWith('#')) { setStatus('请先生成规则', 'error'); return; }
+        navigator.clipboard.writeText(code).then(() => setStatus('已复制到剪贴板', 'success'));
+    });
+
+    document.getElementById('giDl').addEventListener('click', () => {
+        const code = document.getElementById('giResult').textContent;
+        if (!code || code.startsWith('#')) { setStatus('请先生成规则', 'error'); return; }
+        const blob = new Blob([code], { type: 'text/plain' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = '.gitignore'; a.click();
+        setStatus('文件已下载', 'success');
+    });
+    
+    initSidebar('work');
+</script>
+</body>
+</html>

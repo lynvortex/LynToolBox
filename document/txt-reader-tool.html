@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TXT阅读器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="TXT小说阅读器，支持UTF-8/GBK编码自动识别，字体大小、行距、阅读主题可调，自动记忆阅读进度，纯前端本地阅读。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<style>
+.reader{border-radius:10px;padding:28px 32px;min-height:380px;max-height:62vh;overflow-y:auto;font-size:18px;line-height:1.9;white-space:pre-wrap;word-break:break-all;transition:.3s;}
+.reader.theme-light{background:#fff;color:#2c3e50;border:1px solid #e0e6ed;}
+.reader.theme-dark{background:#1e2430;color:#c8d0dc;}
+.reader.theme-paper{background:#f5efdc;color:#5b4636;}
+.reader-ctrl{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
+.reader-ctrl button,.reader-ctrl select{padding:7px 14px;border:1px solid #e0e6ed;background:#f8fafc;border-radius:6px;cursor:pointer;font-size:.85em;font-family:inherit;color:#475569;}
+.reader-ctrl button:hover{background:#ebf5ff;border-color:#4a90e2;}
+.progress-bar{height:4px;background:#e0e6ed;border-radius:2px;margin-top:12px;overflow:hidden;}
+.progress-fill{height:100%;background:#4a90e2;width:0;transition:.1s;}
+.progress-txt{font-size:.78em;color:#94a3b8;margin-top:4px;text-align:right;}
+</style>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="TXT阅读器,小说阅读器,txt在线打开,GBK编码,文档处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/document/txt-reader-tool.html"/>
+<meta property="og:title" content="TXT阅读器"/>
+<meta property="og:description" content="在线阅读TXT小说，编码自动识别，记忆阅读进度，纯前端本地阅读。"/>
+<meta property="og:url" content="https://box.lynvortex.top/document/txt-reader-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="TXT阅读器"/>
+<meta itemprop="description" content="在线阅读TXT小说，编码自动识别，记忆阅读进度，纯前端本地阅读。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"文档处理","item":"https://box.lynvortex.top/document.html"},{"@type":"ListItem","position":3,"name":"TXT阅读器","item":"https://box.lynvortex.top/document/txt-reader-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"TXT阅读器","url":"https://box.lynvortex.top/document/txt-reader-tool.html","description":"TXT小说在线阅读，记忆进度","applicationCategory":"文档处理","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>📖 TXT阅读器</h1>
+        <p>本地阅读 TXT 小说，自动记忆进度</p>
+    </div>
+    <div class="upload-zone" id="dropZone">
+        <p style="margin:0;color:#64748b;">📄 点击选择或拖入 TXT 文件（支持 UTF-8 / GBK）</p>
+        <input type="file" id="fileInput" accept=".txt,.md,.log,text/plain" style="display:none;"/>
+    </div>
+    <div class="reader-ctrl" id="ctrlBar" style="display:none;">
+        <button id="fontMinus">A-</button>
+        <button id="fontPlus">A+</button>
+        <select id="themeSel">
+            <option value="light">☀️ 亮色</option>
+            <option value="dark">🌙 暗色</option>
+            <option value="paper">📜 羊皮纸</option>
+        </select>
+        <select id="spacingSel">
+            <option value="1.6">紧凑行距</option>
+            <option value="1.9" selected>舒适行距</option>
+            <option value="2.4">宽松行距</option>
+        </select>
+        <button id="topBtn">⬆ 回到顶部</button>
+        <span id="fileMeta" style="font-size:.8em;color:#94a3b8;"></span>
+    </div>
+    <div class="status-bar info" id="statusBar">请先选择 TXT 文件</div>
+    <div class="reader theme-light" id="reader" style="display:none;"></div>
+    <div class="progress-bar" id="progBar" style="display:none;"><div class="progress-fill" id="progFill"></div></div>
+    <div class="progress-txt" id="progTxt"></div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 TXT阅读器</h3>
+        <p>沉浸式本地阅读体验，进度自动保存到浏览器。</p>
+        <div class="feature-chips"><span class="feature-chip">UTF-8/GBK</span><span class="feature-chip">进度记忆</span><span class="feature-chip">三种主题</span><span class="feature-chip">字号调节</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>编码自动识别，乱码时可手动切换 GBK/UTF-8</li>
+            <li>阅读进度按文件名保存在本地，下次打开同一文件自动跳转</li>
+            <li>文件内容仅在浏览器中读取，不会上传</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+var reader = document.getElementById('reader');
+var currentKey = '', rawBuf = null, fontSize = 18;
+var dropZone = document.getElementById('dropZone'), fileInput = document.getElementById('fileInput');
+dropZone.onclick = function(){ fileInput.click(); };
+dropZone.ondragover = function(e){ e.preventDefault(); };
+dropZone.ondrop = function(e){ e.preventDefault(); if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); };
+fileInput.onchange = function(){ if (fileInput.files[0]) loadFile(fileInput.files[0]); };
+
+function decodeText(buf, enc) {
+    try { return new TextDecoder(enc, { fatal: false }).decode(buf); }
+    catch (e) { return new TextDecoder('utf-8').decode(buf); }
+}
+function looksGarbled(text) {
+    var sample = text.slice(0, 2000);
+    var bad = (sample.match(/\uFFFD/g) || []).length;
+    return bad > sample.length * 0.01;
+}
+
+function loadFile(f) {
+    var fr = new FileReader();
+    fr.onload = function(){
+        rawBuf = fr.result;
+        var text = decodeText(rawBuf, 'utf-8');
+        var enc = 'UTF-8';
+        if (looksGarbled(text)) { text = decodeText(rawBuf, 'gbk'); enc = 'GBK'; }
+        currentKey = 'txtreader_' + f.name + '_' + f.size;
+        reader.textContent = text;
+        reader.style.display = 'block';
+        document.getElementById('ctrlBar').style.display = 'flex';
+        document.getElementById('progBar').style.display = 'block';
+        document.getElementById('fileMeta').textContent = f.name + ' · ' + (f.size / 1024).toFixed(1) + ' KB · ' + enc;
+        dropZone.querySelector('p').textContent = '✅ 已打开：' + f.name + '（点击可更换）';
+        setStatus('开始阅读吧，进度会自动保存', 'success');
+        var saved = parseFloat(localStorage.getItem(currentKey));
+        if (!isNaN(saved) && saved > 0) {
+            reader.scrollTop = saved;
+            setStatus('已恢复到上次阅读位置', 'info');
+        } else {
+            reader.scrollTop = 0;
+        }
+        updateProgress();
+    };
+    fr.readAsArrayBuffer(f);
+}
+
+function updateProgress() {
+    var max = reader.scrollHeight - reader.clientHeight;
+    var pct = max > 0 ? (reader.scrollTop / max * 100) : 100;
+    document.getElementById('progFill').style.width = pct + '%';
+    document.getElementById('progTxt').textContent = '阅读进度 ' + pct.toFixed(1) + '%';
+}
+var saveTimer = null;
+reader.addEventListener('scroll', function(){
+    updateProgress();
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function(){
+        if (currentKey) localStorage.setItem(currentKey, String(reader.scrollTop));
+    }, 300);
+});
+
+document.getElementById('fontMinus').onclick = function(){ fontSize = Math.max(13, fontSize - 1); reader.style.fontSize = fontSize + 'px'; };
+document.getElementById('fontPlus').onclick = function(){ fontSize = Math.min(30, fontSize + 1); reader.style.fontSize = fontSize + 'px'; };
+document.getElementById('themeSel').onchange = function(){ reader.className = 'reader theme-' + this.value; };
+document.getElementById('spacingSel').onchange = function(){ reader.style.lineHeight = this.value; };
+document.getElementById('topBtn').onclick = function(){ reader.scrollTop = 0; };
+initSidebar('document');
+</script>
+</body>
+</html>

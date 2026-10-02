@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CSS 压缩美化 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线 CSS 压缩与美化工具，去注释压缩至单行减小体积，或格式化为带缩进的可读样式，显示压缩率，纯前端处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="CSS压缩,CSS美化,CSS格式化,css minify,样式压缩,前端优化,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/work/css-minify-tool.html"/>
+<meta property="og:title" content="CSS 压缩美化"/>
+<meta property="og:description" content="一键压缩至单行或格式化美化。"/>
+<meta property="og:url" content="https://box.lynvortex.top/work/css-minify-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="CSS 压缩美化"/>
+<meta itemprop="description" content="一键压缩至单行或格式化美化。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"编程开发","item":"https://box.lynvortex.top/work.html"},{"@type":"ListItem","position":3,"name":"CSS 压缩美化","item":"https://box.lynvortex.top/work/css-minify-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"CSS 压缩美化","url":"https://box.lynvortex.top/work/css-minify-tool.html","description":"CSS压缩与格式化工具","applicationCategory":"编程开发","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>💅 CSS 压缩美化</h1>
+        <p>压缩到单行减小体积 / 展开缩进便于阅读</p>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>操作</label>
+            <select id="op"><option value="min">压缩（minify）</option><option value="beauty">美化（format）</option></select>
+        </div>
+        <div class="form-item"><label>压缩选项</label>
+            <select id="agg"><option value="0">保守（保留0单位）</option><option value="1">激进（去0单位/末尾分号）</option></select>
+        </div>
+        <div class="form-item"><label>美化缩进</label>
+            <select id="indent"><option value="2">2 空格</option><option value="4">4 空格</option><option value="tab">Tab</option></select>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="runBtn">⚙️ 执行</button>
+        <button class="btn btn-outline" id="copyBtn">复制结果</button>
+        <button class="btn btn-ghost" id="dlBtn">下载 .css</button>
+    </div>
+    <div class="status-bar info" id="statusBar">粘贴 CSS 后执行</div>
+    <textarea class="code" id="input" style="min-height:200px;" placeholder="/* 粘贴 CSS 代码 */&#10;.card{color:#333;padding:0px 10px;}"></textarea>
+    <p style="font-size:0.8em;color:#94a3b8;margin:8px 0;">↓ 结果</p>
+    <pre class="output" id="output" style="white-space:pre-wrap;"></pre>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 CSS 压缩美化</h3>
+        <p>字符串级处理：去注释去空白、折叠冒号间距。</p>
+        <div class="feature-chips"><span class="feature-chip">压缩</span><span class="feature-chip">美化</span><span class="feature-chip">压缩率统计</span><span class="feature-chip">下载文件</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>压缩会移除注释与多余空白，请保留源码备份</li>
+            <li>激进模式去掉 0 的单位与最后一个分号，兼容性更好时用保守</li>
+            <li>美化对嵌套规则（CSS Nesting）按层级缩进</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+function minify(css, aggressive) {
+    css = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    css = css.replace(/\s+/g, ' ');
+    css = css.replace(/\s*([{};:,>~+])\s*/g, '$1');
+    css = css.replace(/;}/g, '}');
+    if (aggressive) {
+        css = css.replace(/(\s|:|\()0\.(?=\d)/g, '$1.');
+        css = css.replace(/(\D)0(px|em|rem|%|vh|vw|pt)/gi, '$10');
+    }
+    return css.trim();
+}
+
+function beautify(css, indent) {
+    css = css.replace(/\/\*[\s\S]*?\*\//g, function(m) { return '\u0001' + m.replace(/\n/g, '\u0002') + '\u0001'; });
+    css = css.replace(/\s+/g, ' ');
+    var pad = 0, out = '', i, ch;
+    for (i = 0; i < css.length; i++) {
+        ch = css[i];
+        if (ch === '{') {
+            pad++;
+            out = out.trimEnd() + ' {\n' + Array(pad + 1).join(indent);
+        } else if (ch === '}') {
+            pad = Math.max(0, pad - 1);
+            out = out.trimEnd() + '\n' + Array(pad + 1).join(indent) + '}\n' + Array(pad + 1).join(indent);
+        } else if (ch === ';') {
+            out += ';\n' + Array(pad + 1).join(indent);
+        } else if (ch === '\u0001') {
+            var end = css.indexOf('\u0001', i + 1);
+            var comment = css.slice(i + 1, end).replace(/\u0002/g, '\n');
+            out = out.trimEnd() + '\n' + Array(pad + 1).join(indent) + comment + '\n' + Array(pad + 1).join(indent);
+            i = end;
+        } else {
+            out += ch;
+        }
+    }
+    return out.replace(/\n\s*\n/g, '\n').trim() + '\n';
+}
+
+document.getElementById('runBtn').onclick = function() {
+    var css = document.getElementById('input').value;
+    if (!css.trim()) { setStatus('请粘贴 CSS', 'error'); return; }
+    var op = document.getElementById('op').value;
+    var result;
+    if (op === 'min') {
+        result = minify(css, document.getElementById('agg').value === '1');
+        var saved = css.length ? Math.max(0, 100 - result.length / css.length * 100) : 0;
+        setStatus('压缩完成：' + css.length + ' → ' + result.length + ' 字符，减小 ' + saved.toFixed(1) + '%', 'success');
+    } else {
+        var ind = document.getElementById('indent').value;
+        result = beautify(css, ind === 'tab' ? '\t' : ' '.repeat(parseInt(ind)));
+        setStatus('美化完成：' + result.split('\n').length + ' 行', 'success');
+    }
+    document.getElementById('output').textContent = result;
+    this.dataset.result = result;
+};
+
+document.getElementById('copyBtn').onclick = function() {
+    var t = document.getElementById('output').textContent;
+    if (t) navigator.clipboard.writeText(t).then(function(){ setStatus('已复制', 'success'); });
+};
+document.getElementById('dlBtn').onclick = function() {
+    var t = document.getElementById('output').textContent;
+    if (!t) return;
+    var op = document.getElementById('op').value;
+    var b = new Blob([t], { type: 'text/css' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(b);
+    a.download = op === 'min' ? 'style.min.css' : 'style.css';
+    a.click();
+};
+initSidebar('work');
+</script>
+</body>
+</html>

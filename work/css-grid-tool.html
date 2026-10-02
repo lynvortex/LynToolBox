@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS布局可视化生成器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="可视化生成Flexbox和Grid布局CSS代码，实时预览效果，一键复制" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+
+        .cg-mode { display: flex; gap: 8px; margin-bottom: 20px; justify-content: center; }
+        .cg-mode-btn { padding: 10px 22px; border-radius: 10px; border: 1px solid #e0e6ed; background: #f8fafc; cursor: pointer; font-size: 0.92em; font-weight: 600; transition: 0.2s; }
+        .cg-mode-btn.active { background: #4a90e2; color: #fff; border-color: #4a90e2; }
+        .cg-preview { min-height: 200px; background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 10px; padding: 12px; margin-bottom: 16px; }
+        .cg-child { background: #4a90e2; color: #fff; border-radius: 6px; padding: 16px; text-align: center; font-size: 0.85em; margin: 4px; }
+        .cg-controls { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 16px; }
+        @media(max-width:600px){.cg-controls{grid-template-columns:1fr;}}
+    
+    </style>
+    <script src="../assets/sidebar.js"></script>
+
+    <meta name="keywords" content="CSS布局可视化生成器,在线CSS布局可视化生成器,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/css-grid-tool.html" />
+    <meta property="og:title" content="CSS布局可视化生成器" />
+    <meta property="og:description" content="可视化生成Flexbox和Grid布局CSS代码，实时预览效果，一键复制" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/css-grid-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="CSS布局可视化生成器" />
+    <meta itemprop="description" content="可视化生成Flexbox和Grid布局CSS代码，实时预览效果，一键复制" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "CSS布局可视化生成器",
+                "item": "https://box.lynvortex.top/work/css-grid-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "CSS布局可视化生成器",
+        "url": "https://box.lynvortex.top/work/css-grid-tool.html",
+        "description": "可视化生成Flexbox和Grid布局CSS代码，实时预览",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>📐 CSS布局可视化生成器</h1>
+                <p>可视化生成Flexbox和Grid布局CSS代码，实时预览效果，一键复制</p>
+            </div>
+
+            <div class="cg-mode">
+                <div class="cg-mode-btn active" data-mode="flex">🔀 Flexbox</div>
+                <div class="cg-mode-btn" data-mode="grid">📊 Grid</div>
+            </div>
+            <div class="cg-preview" id="cgPreview"></div>
+            <div class="cg-controls" id="cgControls"></div>
+            <div class="form-item" style="margin-bottom:12px;">
+                <label>子元素数量</label>
+                <input type="number" id="cgCount" value="4" min="1" max="12" />
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-outline" id="cgCopy">📋 复制CSS代码</button>
+            </div>
+            <pre class="output" id="cgCode" style="margin-top:12px;"></pre>
+    
+            <div id="statusBar" class="status-bar info">准备就绪，请按提示操作</div>
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 CSS布局可视化生成器</h3>
+                <p>可视化调整Flexbox和Grid属性，实时预览并生成CSS代码</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">Flexbox</span>
+                    <span class="feature-chip">Grid</span>
+                    <span class="feature-chip">实时预览</span>
+                    <span class="feature-chip">一键复制</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>切换Flexbox或Grid模式，选择属性值即时预览效果</li>
+                    <li>可调整子元素数量（1-12个）查看布局变化</li>
+                    <li>生成的CSS代码可直接复制使用</li>
+                    <li>包含flex-direction、justify-content、grid-template等常用属性</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+
+    const setStatus = (m,t) => { const s=document.getElementById('statusBar'); s.textContent=m; s.className='status-bar '+(t||'info'); };
+    let mode = 'flex';
+    const flexProps = [
+        { name: 'flex-direction', values: ['row','row-reverse','column','column-reverse'] },
+        { name: 'justify-content', values: ['flex-start','center','flex-end','space-between','space-around','space-evenly'] },
+        { name: 'align-items', values: ['stretch','flex-start','center','flex-end','baseline'] },
+        { name: 'flex-wrap', values: ['nowrap','wrap','wrap-reverse'] },
+        { name: 'gap', values: ['0px','4px','8px','16px','24px'] }
+    ];
+    const gridProps = [
+        { name: 'grid-template-columns', values: ['1fr 1fr','1fr 1fr 1fr','repeat(2,1fr)','repeat(3,1fr)','repeat(4,1fr)','auto-fit'] },
+        { name: 'grid-template-rows', values: ['auto','100px 100px','1fr 1fr'] },
+        { name: 'justify-items', values: ['stretch','start','center','end'] },
+        { name: 'align-items', values: ['stretch','start','center','end'] },
+        { name: 'gap', values: ['0px','4px','8px','16px','24px'] }
+    ];
+    let values = {};
+
+    function renderControls() {
+        const props = mode === 'flex' ? flexProps : gridProps;
+        const container = document.getElementById('cgControls');
+        container.innerHTML = props.map(p => `
+            <div class="form-item"><label>${p.name}</label><select id="prop-${p.name}">${p.values.map(v => `<option value="${v}">${v}</option>`).join('')}</select></div>
+        `).join('');
+        props.forEach(p => {
+            const el = document.getElementById('prop-' + p.name);
+            if (values[p.name]) el.value = values[p.name];
+            el.addEventListener('change', () => { values[p.name] = el.value; update(); });
+        });
+    }
+
+    function update() {
+        const count = +document.getElementById('cgCount').value || 4;
+        const preview = document.getElementById('cgPreview');
+        preview.innerHTML = '';
+        for (let i = 0; i < count; i++) {
+            const child = document.createElement('div');
+            child.className = 'cg-child'; child.textContent = i + 1;
+            preview.appendChild(child);
+        }
+        let css = '';
+        if (mode === 'flex') {
+            css = `display: flex;\n`;
+            flexProps.forEach(p => { if (values[p.name]) css += `${p.name}: ${values[p.name]};\n`; });
+        } else {
+            css = `display: grid;\n`;
+            gridProps.forEach(p => { if (values[p.name]) css += `${p.name}: ${values[p.name]};\n`; });
+        }
+        preview.style.cssText = css.replace(/\n/g, ';');
+        document.getElementById('cgCode').textContent = '.container {\n  ' + css.trim().replace(/\n/g, '\n  ') + '\n}';
+    }
+
+    document.querySelectorAll('.cg-mode-btn').forEach(b => b.addEventListener('click', () => {
+        document.querySelectorAll('.cg-mode-btn').forEach(x => x.classList.remove('active'));
+        b.classList.add('active'); mode = b.dataset.mode; values = {}; renderControls(); update();
+    }));
+
+    document.getElementById('cgCount').addEventListener('input', update);
+
+    document.getElementById('cgCopy').addEventListener('click', () => {
+        const code = document.getElementById('cgCode').textContent;
+        navigator.clipboard.writeText(code).then(() => setStatus('CSS代码已复制', 'success'));
+    });
+
+    renderControls(); update();
+    
+    initSidebar('work');
+</script>
+</body>
+</html>

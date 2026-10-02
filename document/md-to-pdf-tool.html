@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Markdown转PDF · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="Markdown转PDF工具，输入Markdown内容实时预览并导出为PDF文档，支持标题、列表、代码块等格式。" />
+    <meta name="robots" content="noindex, follow" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <script src="../assets/jspdf.umd.min.js"></script>
+    <style>
+        .editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+        @media (max-width: 600px) { .editor-grid { grid-template-columns: 1fr; } }
+        .editor-box { border: 1px solid #e0e6ed; border-radius: 10px; overflow: hidden; }
+        .editor-box .editor-header { background: #f1f5f9; padding: 8px 14px; font-size: 0.82em; color: #64748b; font-weight: 600; border-bottom: 1px solid #e0e6ed; }
+        .editor-box textarea { width: 100%; min-height: 400px; padding: 14px; border: none; font-size: 0.88em; font-family: 'Courier New', monospace; resize: vertical; outline: none; }
+        .preview-box { border: 1px solid #e0e6ed; border-radius: 10px; overflow: hidden; }
+        .preview-box .editor-header { background: #f1f5f9; padding: 8px 14px; font-size: 0.82em; color: #64748b; font-weight: 600; border-bottom: 1px solid #e0e6ed; }
+        .preview-content { padding: 20px; min-height: 400px; overflow-y: auto; background: #fff; line-height: 1.7; font-size: 0.9em; }
+        .preview-content h1 { font-size: 1.6em; border-bottom: 2px solid #e0e6ed; padding-bottom: 6px; margin: 16px 0 10px; }
+        .preview-content h2 { font-size: 1.35em; border-bottom: 1px solid #e0e6ed; padding-bottom: 4px; margin: 14px 0 8px; }
+        .preview-content h3 { font-size: 1.15em; margin: 12px 0 6px; }
+        .preview-content p { margin: 8px 0; }
+        .preview-content code { background: #f1f5f9; padding: 2px 6px; border-radius: 3px; font-family: 'Courier New', monospace; font-size: 0.88em; }
+        .preview-content pre { background: #1a1a2e; color: #4ade80; padding: 14px; border-radius: 8px; overflow-x: auto; margin: 10px 0; }
+        .preview-content pre code { background: none; color: inherit; padding: 0; }
+        .preview-content ul, .preview-content ol { padding-left: 24px; margin: 8px 0; }
+        .preview-content blockquote { border-left: 3px solid #4a90e2; padding-left: 14px; color: #64748b; margin: 10px 0; }
+        .preview-content table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+        .preview-content th, .preview-content td { border: 1px solid #e0e6ed; padding: 6px 10px; }
+        .preview-content th { background: #f1f5f9; }
+        .opt-row { display: flex; gap: 12px; margin-bottom: 18px; align-items: center; flex-wrap: wrap; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="Markdown转PDF,在线Markdown转PDF,文档处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/document/md-to-pdf-tool.html" />
+    <meta property="og:title" content="Markdown转PDF" />
+    <meta property="og:description" content="Markdown转PDF工具，输入Markdown内容实时预览并导出为PDF文档，支持标题、列表、代码块等格式。" />
+    <meta property="og:url" content="https://box.lynvortex.top/document/md-to-pdf-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="Markdown转PDF" />
+    <meta itemprop="description" content="Markdown转PDF工具，输入Markdown内容实时预览并导出为PDF文档，支持标题、列表、代码块等格式。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文档处理",
+                "item": "https://box.lynvortex.top/document.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Markdown转PDF",
+                "item": "https://box.lynvortex.top/document/md-to-pdf-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Markdown转PDF",
+        "url": "https://box.lynvortex.top/document/md-to-pdf-tool.html",
+        "description": "Markdown渲染并导出PDF，支持自定义页面尺寸与字号",
+        "applicationCategory": "文档处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>📄 Markdown转PDF</h1>
+                <p>输入Markdown实时预览，一键导出为PDF文档</p>
+            </div>
+
+            <div class="opt-row">
+                <div class="form-item" style="min-width:120px;"><label>页面大小</label><select id="pageSize" style="padding:8px;border:1px solid #e0e6ed;border-radius:6px;">
+                    <option value="a4">A4</option><option value="a3">A3</option><option value="letter">Letter</option>
+                </select></div>
+                <div class="form-item" style="min-width:100px;"><label>方向</label><select id="orientation" style="padding:8px;border:1px solid #e0e6ed;border-radius:6px;">
+                    <option value="portrait">纵向</option><option value="landscape">横向</option>
+                </select></div>
+                <div class="form-item" style="min-width:100px;"><label>字号</label><select id="fontSize" style="padding:8px;border:1px solid #e0e6ed;border-radius:6px;">
+                    <option value="10">小</option><option value="12" selected>中</option><option value="14">大</option>
+                </select></div>
+                <button class="btn btn-primary" id="exportBtn" style="padding:10px 24px;">📥 导出PDF</button>
+            </div>
+
+            <div class="editor-grid">
+                <div class="editor-box">
+                    <div class="editor-header">📝 Markdown 输入</div>
+                    <textarea id="mdInput"># Markdown 转 PDF
+
+## 功能说明
+- 支持**粗体**、*斜体*、`行内代码`
+- 支持标题、列表、引用
+- 支持代码块和表格
+
+### 代码示例
+```javascript
+function hello() {
+    console.log("Hello World!");
+}
+```
+
+> 这是一个引用块
+
+| 列1 | 列2 | 列3 |
+|-----|-----|-----|
+| A   | B   | C   |
+| 1   | 2   | 3   |
+
+1. 有序列表项一
+2. 有序列表项二
+3. 有序列表项三
+
+- 无序列表项一
+- 无序列表项二</textarea>
+                </div>
+                <div class="preview-box">
+                    <div class="editor-header">👁️ 实时预览</div>
+                    <div class="preview-content" id="preview"></div>
+                </div>
+            </div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 Markdown转PDF</h3>
+                <p>Markdown编辑预览并导出PDF</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">实时预览</span>
+                    <span class="feature-chip">代码高亮</span>
+                    <span class="feature-chip">表格支持</span>
+                    <span class="feature-chip">PDF导出</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>支持标准Markdown语法</li>
+                    <li>实时预览渲染效果</li>
+                    <li>可调页面大小和字号</li>
+                    <li>基于jsPDF纯前端生成</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+function renderMD(md){
+    var html=md
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+        .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+        .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+        .replace(/```(\w*)\n([\s\S]*?)```/g,function(m,lang,code){return '<pre><code>'+code.replace(/\n$/,'')+'</code></pre>';})
+        .replace(/`([^`]+)`/g,'<code>$1</code>')
+        .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g,'<em>$1</em>')
+        .replace(/^&gt; (.+)$/gm,'<blockquote>$1</blockquote>')
+        .replace(/^(\d+)\. (.+)$/gm,'<oli>$2</oli>')
+        .replace(/(<oi>[\s\S]*?<\/oi>)/g,function(m){return '<ol>'+m.replace(/<\/?oi>/g,'').replace(/(<\/li>)<li>/g,'$1<li>').replace(/^/,'<li>').replace(/$/,'</li>')+'</ol>';})
+        .replace(/^[\-\*] (.+)$/gm,'<li>$1</li>')
+        .replace(/(<li>[\s\S]*?<\/li>(\n<li>[\s\S]*?<\/li>)*)/g,'<ul>$1</ul>')
+        .replace(/<\/ul>\n<ul>/g,'')
+        .replace(/^\|(.+)\|$/gm,function(m){
+            if(m.indexOf('---')>-1)return '';
+            var cells=m.split('|').filter(Boolean).map(function(c){return c.trim();});
+            return '<tr>'+cells.map(function(c){return '<td>'+c+'</td>';}).join('')+'</tr>';
+        })
+        .replace(/(<tr>[\s\S]*?<\/tr>(\n<tr>[\s\S]*?<\/tr>)*)/g,'<table border="1">$1</table>')
+        .replace(/\n\n/g,'</p><p>')
+        .replace(/^(?!<)/gm,'');
+    return '<p>'+html+'</p>';
+}
+
+function updatePreview(){
+    document.getElementById('preview').innerHTML=renderMD(document.getElementById('mdInput').value);
+}
+document.getElementById('mdInput').addEventListener('input',updatePreview);
+updatePreview();
+
+document.getElementById('exportBtn').onclick=function(){
+    var md=document.getElementById('mdInput').value;
+    var lines=md.split('\n');
+    var size=document.getElementById('pageSize').value;
+    var orient=document.getElementById('orientation').value;
+    var fs=parseInt(document.getElementById('fontSize').value);
+    var doc=new jsPDF({orientation:orient,unit:'mm',format:size});
+    var pw=doc.internal.pageSize.width,ph=doc.internal.pageSize.height;
+    var x=20,y=20,lh=fs*0.35+3;
+
+    lines.forEach(function(line){
+        if(y>ph-20){doc.addPage();y=20;}
+        if(line.startsWith('# ')){doc.setFontSize(fs*1.6);doc.setFont(undefined,'bold');doc.text(line.slice(2),x,y);y+=lh*1.8;doc.setFontSize(fs);doc.setFont(undefined,'normal');}
+        else if(line.startsWith('## ')){doc.setFontSize(fs*1.3);doc.setFont(undefined,'bold');doc.text(line.slice(3),x,y);y+=lh*1.5;doc.setFontSize(fs);doc.setFont(undefined,'normal');}
+        else if(line.startsWith('### ')){doc.setFontSize(fs*1.15);doc.setFont(undefined,'bold');doc.text(line.slice(4),x,y);y+=lh*1.3;doc.setFontSize(fs);doc.setFont(undefined,'normal');}
+        else if(line.startsWith('- ')||line.startsWith('* ')){doc.text('• '+line.slice(2),x+5,y);y+=lh;}
+        else if(/^\d+\./.test(line)){doc.text(line,x+5,y);y+=lh;}
+        else if(line.startsWith('> ')){doc.setFont(undefined,'italic');doc.text(line.slice(2),x+5,y);y+=lh;doc.setFont(undefined,'normal');}
+        else if(line.startsWith('```')){}
+        else if(line.trim()===''){y+=lh*0.5;}
+        else{
+            var wrapped=doc.splitTextToSize(line,pw-40);
+            wrapped.forEach(function(w){if(y>ph-20){doc.addPage();y=20;}doc.text(w,x,y);y+=lh;});
+        }
+    });
+    doc.save('markdown_export.pdf');
+};
+initSidebar('document');
+</script>
+</body>
+</html>

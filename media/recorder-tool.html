@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>录音机 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="在线录音工具，支持录音、回放、导出WebM音频文件，纯浏览器本地处理" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+
+        .rec-area { text-align: center; margin: 20px 0; }
+        .rec-btn { width: 80px; height: 80px; border-radius: 50%; border: none; font-size: 2em; cursor: pointer; transition: 0.3s; background: #4a90e2; color: #fff; }
+        .rec-btn:hover { background: #3a7bd5; }
+        .rec-btn.recording { background: #ef4444; animation: pulse 1.2s infinite; }
+        @keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.1);} }
+        .rec-time { font-size: 2.5em; font-family: 'Courier New', monospace; color: #2c3e50; margin: 16px 0; }
+        .rec-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+        .rec-item { display: flex; align-items: center; gap: 12px; background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 8px; padding: 12px 16px; }
+        .rec-item audio { flex: 1; height: 36px; }
+        .rec-item .rec-info { font-size: 0.82em; color: #64748b; min-width: 120px; }
+    
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="在线录音机,在线在线录音机,音视频处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/media/recorder-tool.html" />
+    <meta property="og:title" content="录音机" />
+    <meta property="og:description" content="在线录音工具，支持录音、回放、导出WebM音频文件，纯浏览器本地处理" />
+    <meta property="og:url" content="https://box.lynvortex.top/media/recorder-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="录音机" />
+    <meta itemprop="description" content="在线录音工具，支持录音、回放、导出WebM音频文件，纯浏览器本地处理" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "音视频处理",
+                "item": "https://box.lynvortex.top/media.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "在线录音机",
+                "item": "https://box.lynvortex.top/media/recorder-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "在线录音机",
+        "url": "https://box.lynvortex.top/media/recorder-tool.html",
+        "description": "浏览器录音工具，支持录音、回放、导出WebM音频文件",
+        "applicationCategory": "音视频处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🎙️ 录音机</h1>
+                <p>在线录音工具，支持录音、回放、导出WebM音频文件，纯浏览器本地处理</p>
+            </div>
+
+            <div class="rec-area">
+                <div class="rec-time" id="recTime">00:00</div>
+                <button class="rec-btn" id="recBtn">🎙️</button>
+                <p style="margin-top:12px;color:#94a3b8;font-size:0.85em;">点击按钮开始录音，再次点击停止</p>
+            </div>
+            <div class="rec-list" id="recList"></div>
+    
+            <div id="statusBar" class="status-bar info">准备就绪，请按提示操作</div>
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 录音机</h3>
+                <p>使用浏览器原生MediaRecorder API录音，支持回放与导出</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">MediaRecorder API</span>
+                    <span class="feature-chip">WebM格式</span>
+                    <span class="feature-chip">本地处理</span>
+                    <span class="feature-chip">无需安装</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>需要授予浏览器麦克风访问权限</li>
+                    <li>录音格式为WebM，可在Chrome/Edge/Firefox中播放</li>
+                    <li>所有录音数据仅在浏览器本地处理，不上传服务器</li>
+                    <li>录音完成后可在线回放、下载或删除</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+
+    let mediaRecorder = null, chunks = [], recStart = 0, recTimer = null, recordings = [];
+    const recBtn = document.getElementById('recBtn');
+    const recTime = document.getElementById('recTime');
+    const recList = document.getElementById('recList');
+    const setStatus = (m,t) => { const s=document.getElementById('statusBar'); s.textContent=m; s.className='status-bar '+(t||'info'); };
+    const fmt = s => String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+
+    recBtn.addEventListener('click', async () => {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+            return;
+        }
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            chunks = [];
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(chunks, { type: 'audio/webm' });
+                const url = URL.createObjectURL(blob);
+                const dur = Math.floor((Date.now() - recStart) / 1000);
+                recordings.push({ url, blob, dur, name: '录音_' + (recordings.length + 1) });
+                renderList();
+                stream.getTracks().forEach(t => t.stop());
+                recBtn.classList.remove('recording');
+                recBtn.textContent = '🎙️';
+                clearInterval(recTimer);
+                recTime.textContent = '00:00';
+                setStatus('录音完成，共 ' + fmt(dur), 'success');
+            };
+            mediaRecorder.start();
+            recStart = Date.now();
+            recBtn.classList.add('recording');
+            recBtn.textContent = '⏹';
+            setStatus('录音中...', 'info');
+            recTimer = setInterval(() => { recTime.textContent = fmt(Math.floor((Date.now()-recStart)/1000)); }, 500);
+        } catch (e) { setStatus('无法访问麦克风：' + e.message, 'error'); }
+    });
+
+    function renderList() {
+        recList.innerHTML = recordings.map((r, i) => `
+            <div class="rec-item">
+                <span class="rec-info">${r.name} · ${fmt(r.dur)}</span>
+                <audio controls src="${r.url}"></audio>
+                <button class="btn btn-outline" style="padding:6px 12px;font-size:0.8em;" onclick="downloadRec(${i})">⬇ 下载</button>
+                <button class="btn btn-ghost" style="padding:6px 12px;font-size:0.8em;" onclick="deleteRec(${i})">🗑</button>
+            </div>
+        `).join('');
+    }
+    window.downloadRec = i => { const a=document.createElement('a'); a.href=recordings[i].url; a.download=recordings[i].name+'.webm'; a.click(); };
+    window.deleteRec = i => { recordings.splice(i,1); renderList(); setStatus('已删除', 'info'); };
+    
+    initSidebar('media');
+</script>
+</body>
+</html>

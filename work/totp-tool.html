@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TOTP/2FA动态口令 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="生成TOTP双因素认证动态口令，支持扫码绑定和手动输入密钥，纯前端HMAC-SHA1计算" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+
+        .totp-display { text-align: center; margin: 24px 0; }
+        .totp-code { font-size: 3.5em; font-family: 'Courier New', monospace; font-weight: 700; color: #4a90e2; letter-spacing: 6px; }
+        .totp-countdown { font-size: 0.9em; color: #94a3b8; margin-top: 8px; }
+        .totp-ring { width: 60px; height: 60px; margin: 12px auto; position: relative; }
+        .totp-ring svg { transform: rotate(-90deg); }
+        .totp-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+        .totp-item { display: flex; align-items: center; gap: 14px; background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 8px; padding: 14px 16px; }
+        .totp-item .totp-item-code { font-family: 'Courier New', monospace; font-size: 1.3em; font-weight: 700; color: #4a90e2; }
+        .totp-item .totp-item-name { font-size: 0.88em; color: #64748b; flex: 1; }
+        .totp-item .totp-item-bar { width: 50px; height: 4px; background: #e0e6ed; border-radius: 2px; overflow: hidden; }
+        .totp-item .totp-item-bar div { height: 100%; background: #4a90e2; transition: width 1s linear; }
+    
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <script src="../assets/jsQR.js"></script>
+    <script src="../assets/crypto-js.min.js"></script>
+    <meta name="keywords" content="TOTP/2FA动态口令,在线TOTP/2FA动态口令,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/totp-tool.html" />
+    <meta property="og:title" content="TOTP/2FA动态口令" />
+    <meta property="og:description" content="生成TOTP双因素认证动态口令，支持扫码绑定和手动输入密钥，纯前端HMAC-SHA1计算" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/totp-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="TOTP/2FA动态口令" />
+    <meta itemprop="description" content="生成TOTP双因素认证动态口令，支持扫码绑定和手动输入密钥，纯前端HMAC-SHA1计算" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "TOTP/2FA动态口令",
+                "item": "https://box.lynvortex.top/work/totp-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "TOTP/2FA动态口令",
+        "url": "https://box.lynvortex.top/work/totp-tool.html",
+        "description": "生成TOTP双因素认证动态口令，支持扫码绑定",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🔐 TOTP/2FA动态口令</h1>
+                <p>生成TOTP双因素认证动态口令，支持扫码绑定和手动输入密钥，纯前端HMAC-SHA1计算</p>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-item"><label>密钥(Base32)</label><input type="text" id="totpSecret" placeholder="如 JBSWY3DPEHPK3PXP" /></div>
+                <div class="form-item"><label>账户名称</label><input type="text" id="totpName" placeholder="如 GitHub" /></div>
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-primary" id="totpAdd">➕ 添加</button>
+                <button class="btn btn-outline" id="totpScan">📷 扫码绑定</button>
+            </div>
+            <div class="totp-display" id="totpMain" style="display:none;">
+                <div class="totp-code" id="totpCode">------</div>
+                <div class="totp-countdown" id="totpCountdown">--</div>
+                <div class="totp-ring"><svg width="60" height="60"><circle cx="30" cy="30" r="26" fill="none" stroke="#e2e8f0" stroke-width="4" /><circle id="totpRing" cx="30" cy="30" r="26" fill="none" stroke="#4a90e2" stroke-width="4" stroke-linecap="round" stroke-dasharray="163" stroke-dashoffset="0" /></svg></div>
+            </div>
+            <div class="totp-list" id="totpList"></div>
+    
+            <div id="statusBar" class="status-bar info">准备就绪，请按提示操作</div>
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 TOTP/2FA动态口令</h3>
+                <p>基于RFC 6238标准生成TOTP动态验证码，支持扫码绑定</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">HMAC-SHA1</span>
+                    <span class="feature-chip">RFC 6238</span>
+                    <span class="feature-chip">扫码绑定</span>
+                    <span class="feature-chip">本地存储</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>手动输入Base32编码的密钥，或扫描二维码自动填充</li>
+                    <li>每30秒自动刷新验证码，与Google Authenticator兼容</li>
+                    <li>账户信息加密存储在localStorage，不上传服务器</li>
+                    <li>点击列表中的账户可切换显示对应验证码</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+
+    const setStatus = (m,t) => { const s=document.getElementById('statusBar'); s.textContent=m; s.className='status-bar '+(t||'info'); };
+    let accounts = JSON.parse(localStorage.getItem('totpAccounts') || '[]');
+    let activeIdx = -1;
+
+    function base32Decode(str) {
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+        str = str.toUpperCase().replace(/[^A-Z2-7]/g, '');
+        let bits = '', bytes = [];
+        for (const c of str) { const val = alphabet.indexOf(c); if (val < 0) continue; bits += val.toString(2).padStart(5, '0'); }
+        for (let i = 0; i + 8 <= bits.length; i += 8) bytes.push(parseInt(bits.substr(i, 8), 2));
+        return new Uint8Array(bytes);
+    }
+
+    async function generateTOTP(secret) {
+        const key = base32Decode(secret);
+        const time = Math.floor(Date.now() / 30000);
+        const timeBuf = new ArrayBuffer(8);
+        const view = new DataView(timeBuf);
+        view.setUint32(0, Math.floor(time / 0x100000000)); view.setUint32(4, time);
+        if (!window.crypto || !crypto.subtle) {
+            // Fallback using crypto-js
+            const hmac = CryptoJS.HmacSHA1(arrayToWordArray(new Uint8Array(timeBuf)), arrayToWordArray(key));
+            const hash = wordArrayToArray(hmac);
+            return truncateTOTP(hash);
+        }
+        const cryptoKey = await crypto.subtle.importKey('raw', key, { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
+        const sig = new Uint8Array(await crypto.subtle.sign('HMAC', cryptoKey, timeBuf));
+        return truncateTOTP(sig);
+    }
+
+    function truncateTOTP(hash) {
+        const offset = hash[hash.length - 1] & 0xf;
+        const code = ((hash[offset] & 0x7f) << 24 | (hash[offset+1] & 0xff) << 16 | (hash[offset+2] & 0xff) << 8 | (hash[offset+3] & 0xff)) % 1000000;
+        return String(code).padStart(6, '0');
+    }
+
+    function arrayToWordArray(u8) { let w = [], i; for (i=0;i<u8.length;i+=4) w.push((u8[i]<<24)|(u8[i+1]<<16)|(u8[i+2]<<8)|u8[i+3]); return CryptoJS.lib.WordArray.create(w, u8.length); }
+    function wordArrayToArray(wa) { const a = new Uint8Array(wa.sigBytes); for(let i=0;i<wa.words.length;i++){a[i*4]=(wa.words[i]>>>24)&0xff;a[i*4+1]=(wa.words[i]>>>16)&0xff;a[i*4+2]=(wa.words[i]>>>8)&0xff;a[i*4+3]=wa.words[i]&0xff;} return a; }
+
+    async function updateCodes() {
+        if (activeIdx >= 0 && accounts[activeIdx]) {
+            const code = await generateTOTP(accounts[activeIdx].secret);
+            document.getElementById('totpCode').textContent = code;
+            const remaining = 30 - Math.floor(Date.now() / 1000) % 30;
+            document.getElementById('totpCountdown').textContent = remaining + ' 秒后刷新';
+            document.getElementById('totpRing').style.strokeDashoffset = 163 * (1 - remaining / 30);
+        }
+        renderList();
+    }
+
+    async function renderList() {
+        const list = document.getElementById('totpList');
+        if (!accounts.length) { list.innerHTML = '<p style="text-align:center;color:#94a3b8;font-size:0.88em;">暂无绑定账户，请添加密钥</p>'; return; }
+        const remaining = 30 - Math.floor(Date.now() / 1000) % 30;
+        let html = '';
+        for (let i = 0; i < accounts.length; i++) {
+            const code = await generateTOTP(accounts[i].secret);
+            html += `<div class="totp-item" onclick="selectTotp(${i})" style="cursor:pointer;${i===activeIdx?'border-color:#4a90e2;background:#ebf5ff;':''}">
+                <div class="totp-item-code">${code}</div>
+                <div class="totp-item-name">${escapeHtml(accounts[i].name)}</div>
+                <div class="totp-item-bar"><div style="width:${remaining/30*100}%"></div></div>
+                <button class="btn btn-ghost" style="padding:4px 8px;font-size:0.8em;" onclick="event.stopPropagation();delTotp(${i})">🗑</button>
+            </div>`;
+        }
+        list.innerHTML = html;
+    }
+
+    window.selectTotp = i => { activeIdx = i; document.getElementById('totpMain').style.display = 'block'; updateCodes(); };
+    window.delTotp = i => { accounts.splice(i, 1); localStorage.setItem('totpAccounts', JSON.stringify(accounts)); if (activeIdx >= accounts.length) { activeIdx = -1; document.getElementById('totpMain').style.display = 'none'; } renderList(); setStatus('已删除', 'info'); };
+
+    document.getElementById('totpAdd').addEventListener('click', () => {
+        const secret = document.getElementById('totpSecret').value.trim();
+        const name = document.getElementById('totpName').value.trim() || '未命名';
+        if (!secret) { setStatus('请输入密钥', 'error'); return; }
+        try { base32Decode(secret); } catch(e) { setStatus('密钥格式错误', 'error'); return; }
+        accounts.push({ secret, name });
+        localStorage.setItem('totpAccounts', JSON.stringify(accounts));
+        document.getElementById('totpSecret').value = ''; document.getElementById('totpName').value = '';
+        activeIdx = accounts.length - 1;
+        document.getElementById('totpMain').style.display = 'block';
+        updateCodes();
+        setStatus('已添加账户: ' + name, 'success');
+    });
+
+    document.getElementById('totpScan').addEventListener('click', async () => {
+        const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*';
+        input.onchange = async (e) => {
+            const file = e.target.files[0]; if (!file) return;
+            const img = new Image();
+            img.onload = async () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width; canvas.height = img.height;
+                canvas.getContext('2d').drawImage(img, 0, 0);
+                const imageData = canvas.getContext('2d').getImageData(0, 0, img.width, img.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+                if (code && code.data.startsWith('otpauth://')) {
+                    const secretMatch = code.data.match(/secret=([^&]+)/);
+                    const nameMatch = code.data.match(/otpauth:\/\/totp\/([^?]+)/);
+                    if (secretMatch) {
+                        document.getElementById('totpSecret').value = secretMatch[1];
+                        document.getElementById('totpName').value = nameMatch ? decodeURIComponent(nameMatch[1]) : '扫码绑定';
+                        setStatus('扫码识别成功，点击添加', 'success');
+                    } else setStatus('二维码中未找到密钥', 'error');
+                } else setStatus('未识别到有效二维码', 'error');
+            };
+            img.src = URL.createObjectURL(file);
+        };
+        input.click();
+    });
+
+    updateCodes();
+    setInterval(updateCodes, 1000);
+    
+    initSidebar('work');
+</script>
+</body>
+</html>

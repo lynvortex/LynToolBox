@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Crontab 可视化生成器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="Crontab可视化生成器，通过勾选选择方式可视化生成Cron表达式，实时显示中文描述与接下来5次执行时间。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', -apple-system, sans-serif;
+            background: #f4f7f9;
+            margin: 0;
+            display: flex;
+            height: 100vh; overflow: hidden;
+            color: #333;
+        }
+
+        .mobile-header {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: #fff; padding: 0 20px; align-items: center;
+            justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+        }
+        .mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+        .mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+        .menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #4a90e2; }
+
+        .sidebar {
+            width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+            display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+            transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+            position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item {
+            display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+            transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+        }
+        .category-item:hover, .category-item.active { background: #ebf5ff; color: #4a90e2; border-left-color: #4a90e2; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+        .tool-container {
+            width: 100%;
+            max-width: 960px;
+            background: #fff; border-radius: 12px;
+            padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+        }
+        .tool-header { text-align: center; margin-bottom: 28px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em;
+            font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap;
+        }
+        .btn-primary { background: #4a90e2; color: white; }
+        .btn-primary:hover { background: #3a7bd5; }
+        .btn-outline { background: transparent; color: #4a90e2; border: 1px solid #4a90e2; }
+        .btn-outline:hover { background: #4a90e2; color: white; }
+        .btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+        .btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+
+        /* 常用模板 */
+        .preset-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+        .preset-btn {
+            padding: 8px 14px; border: 1px solid #e0e6ed; border-radius: 8px; background: #fff;
+            color: #475569; font-size: 0.82em; cursor: pointer; transition: all 0.2s; font-family: inherit;
+        }
+        .preset-btn:hover { border-color: #4a90e2; color: #4a90e2; background: #f0f7ff; }
+
+        /* 字段卡片 */
+        .cron-fields { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 22px; }
+        @media (max-width: 900px) { .cron-fields { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 520px) { .cron-fields { grid-template-columns: 1fr; } }
+        .cron-field-card {
+            border: 1px solid #e0e6ed; border-radius: 10px; padding: 14px; background: #fafbfc;
+        }
+        .cf-head { font-size: 0.95em; font-weight: 700; color: #2c3e50; margin-bottom: 4px; }
+        .cf-range { font-size: 0.74em; color: #94a3b8; font-weight: 500; }
+        .cf-current { font-family: 'Consolas', monospace; font-size: 0.82em; color: #4a90e2; margin-bottom: 10px; word-break: break-all; }
+        .cf-modes { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+        .radio { display: inline-flex; align-items: center; gap: 4px; font-size: 0.76em; color: #475569; cursor: pointer; }
+        .radio input { margin: 0; accent-color: #4a90e2; }
+        .cf-opts { display: flex; flex-direction: column; gap: 8px; }
+        .cf-opt { display: none; font-size: 0.8em; color: #475569; align-items: center; flex-wrap: wrap; gap: 4px; }
+        .cf-opt.active { display: flex; }
+        .num-input {
+            width: 54px; padding: 5px 8px; border: 1px solid #e0e6ed; border-radius: 6px;
+            font-size: 0.9em; font-family: 'Consolas', monospace; outline: none; color: #1e293b;
+        }
+        .num-input:focus { border-color: #4a90e2; }
+        .chk-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(34px, 1fr)); gap: 4px;
+            max-height: 120px; overflow-y: auto; padding: 4px; border: 1px solid #eef1f5; border-radius: 6px; background: #fff;
+        }
+        .chk { display: flex; align-items: center; justify-content: center; gap: 3px; font-size: 0.72em; color: #475569; cursor: pointer; padding: 2px; border-radius: 4px; }
+        .chk:hover { background: #eff6ff; }
+        .chk input { margin: 0; accent-color: #4a90e2; }
+        .chk-actions { display: flex; gap: 6px; margin-top: 6px; }
+        .mini-btn {
+            padding: 3px 8px; font-size: 0.72em; border: 1px solid #e0e6ed; border-radius: 6px;
+            background: #fff; color: #64748b; cursor: pointer; font-family: inherit;
+        }
+        .mini-btn:hover { border-color: #4a90e2; color: #4a90e2; }
+
+        /* 表达式输出 */
+        .cron-output {
+            background: linear-gradient(135deg, #4a90e2, #3a7bd5); border-radius: 12px;
+            padding: 20px 22px; color: #fff; margin-bottom: 16px;
+        }
+        .cron-output .co-label { font-size: 0.78em; opacity: 0.85; margin-bottom: 4px; }
+        .cron-output .co-expr {
+            font-family: 'Consolas', monospace; font-size: 1.5em; font-weight: 700; letter-spacing: 1px;
+            word-break: break-all; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+        }
+        .cron-output .co-desc { font-size: 0.92em; margin-top: 8px; opacity: 0.95; }
+        .co-copy {
+            padding: 6px 14px; font-size: 0.8em; background: rgba(255,255,255,0.2); color: #fff;
+            border: 1px solid rgba(255,255,255,0.5); border-radius: 6px; cursor: pointer; transition: 0.2s; font-family: inherit;
+        }
+        .co-copy:hover { background: rgba(255,255,255,0.35); }
+
+        .status-bar {
+            min-height: 20px; font-size: 0.85em;
+            padding: 8px 12px; border-radius: 6px; margin-bottom: 16px;
+        }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+
+        /* 接下来执行时间 */
+        .next-block { margin-bottom: 8px; }
+        .next-title { font-size: 0.85em; color: #64748b; font-weight: 600; margin-bottom: 8px; }
+        .next-list { display: flex; flex-direction: column; gap: 6px; }
+        .next-item {
+            display: flex; align-items: center; gap: 10px; padding: 9px 14px;
+            background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 8px;
+            font-size: 0.85em; color: #1e293b;
+        }
+        .next-item .nx-idx { font-family: 'Consolas', monospace; color: #4a90e2; font-weight: 700; min-width: 40px; }
+        .next-item .nx-time { font-family: 'Consolas', monospace; }
+        .next-item .nx-week { color: #94a3b8; margin-left: auto; font-size: 0.9em; }
+
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+        .footer p { margin: 0; }
+        .footer a { color: #4a90e2; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+
+        .info-cards {
+            width: 100%; max-width: 960px;
+            display: flex; flex-direction: column; gap: 18px; margin-top: 4px;
+        }
+        .info-card {
+            background: #fff; border-radius: 12px; padding: 22px 24px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06); border: 1px solid #f0f2f5;
+        }
+        .info-card h3 { margin: 0 0 10px 0; font-size: 1em; color: #2c3e50; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+        .info-card p { margin: 0 0 10px 0; font-size: 0.82em; color: #64748b; }
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip { background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 12px; font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace; }
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a { font-size: 0.85em; color: #4a90e2; text-decoration: none; padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s; }
+        .tool-links a:hover { background: #e2e8f0; }
+
+        @media (max-width: 768px) {
+            body { display: block; height: auto; overflow: auto; }
+            .mobile-header { display: flex; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .close-sidebar { display: block; }
+            .main-content { display: block; }
+            .main-scroll { padding: 72px 16px 32px; gap: 20px; }
+            .tool-container { padding: 24px 16px; border-radius: 10px; }
+            .tool-header h1 { font-size: 1.3em; }
+            .cron-output .co-expr { font-size: 1.2em; }
+            .overlay.active { display: block; }
+        }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="Crontab生成器,在线Crontab生成器,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/cron-gen-tool.html" />
+    <meta property="og:title" content="Crontab 可视化生成器" />
+    <meta property="og:description" content="Crontab可视化生成器，通过勾选选择方式可视化生成Cron表达式，实时显示中文描述与接下来5次执行时间。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/cron-gen-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="Crontab 可视化生成器" />
+    <meta itemprop="description" content="Crontab可视化生成器，通过勾选选择方式可视化生成Cron表达式，实时显示中文描述与接下来5次执行时间。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Crontab生成器",
+                "item": "https://box.lynvortex.top/work/cron-gen-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Crontab生成器",
+        "url": "https://box.lynvortex.top/work/cron-gen-tool.html",
+        "description": "可视化勾选生成Cron表达式，附带可读说明",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🕐 Crontab 可视化生成器</h1>
+                <p>通过勾选与选择可视化生成 Cron 表达式，实时预览中文描述与接下来 5 次执行时间</p>
+            </div>
+
+            <div class="preset-row" id="presetRow">
+                <button type="button" class="preset-btn" data-cron="* * * * *">每分钟</button>
+                <button type="button" class="preset-btn" data-cron="*/5 * * * *">每 5 分钟</button>
+                <button type="button" class="preset-btn" data-cron="0 * * * *">每小时整点</button>
+                <button type="button" class="preset-btn" data-cron="0 */2 * * *">每 2 小时</button>
+                <button type="button" class="preset-btn" data-cron="30 8 * * *">每天 8:30</button>
+                <button type="button" class="preset-btn" data-cron="0 0 * * *">每天 0 点</button>
+                <button type="button" class="preset-btn" data-cron="0 9 * * 1-5">工作日 9:00</button>
+                <button type="button" class="preset-btn" data-cron="0 0 * * 0">每周日 0 点</button>
+                <button type="button" class="preset-btn" data-cron="0 0 1 * *">每月 1 日 0 点</button>
+            </div>
+
+            <div class="cron-fields" id="cronFields"></div>
+
+            <div class="cron-output">
+                <div class="co-label">生成的 Cron 表达式</div>
+                <div class="co-expr">
+                    <span id="cronExpr">* * * * *</span>
+                    <button type="button" class="co-copy" id="copyExprBtn">📋 复制</button>
+                </div>
+                <div class="co-desc" id="cronDesc">每分钟执行一次</div>
+            </div>
+
+            <div id="statusBar" class="status-bar info">调整下方各字段即可实时生成表达式</div>
+
+            <div class="next-block">
+                <div class="next-title">⏰ 接下来 5 次执行时间</div>
+                <div class="next-list" id="nextList"></div>
+            </div>
+
+            <footer class="footer">
+                &copy; 2026 绘萤者-Lynvortex &middot; 美梦多彩 理想自由
+                <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 Cron 五段字段</h3>
+                <p>标准 5 段式 Cron 表达式：分钟 小时 日期 月份 星期</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">分钟 0-59</span>
+                    <span class="tld-chip">小时 0-23</span>
+                    <span class="tld-chip">日期 1-31</span>
+                    <span class="tld-chip">月份 1-12</span>
+                    <span class="tld-chip">星期 0-6</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>每个字段支持：通配符 <code>*</code>、间隔 <code>*/N</code>、范围 <code>A-B</code>、指定值列表</li>
+                    <li>星期中 <strong>0 表示周日</strong>；日期与星期同时指定时满足其一即触发（标准行为）</li>
+                    <li>点击常用模板可快速套用；执行时间基于本机时区逐分钟推算</li>
+                    <li>所有计算在浏览器本地完成，<strong>数据不上传</strong></li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    initSidebar('work');
+
+    var statusBar = document.getElementById('statusBar');
+    function copyText(text, onSuccess) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function () { onSuccess && onSuccess(); }).catch(function () { fallbackCopy(text, onSuccess); });
+        } else { fallbackCopy(text, onSuccess); }
+    }
+    function fallbackCopy(text, onSuccess) {
+        var ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) { } document.body.removeChild(ta); onSuccess && onSuccess();
+    }
+
+    var WEEK_NAMES = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+
+    var FIELDS = [
+        { key: 'min', label: '分钟', min: 0, max: 59, unit: '分钟' },
+        { key: 'hour', label: '小时', min: 0, max: 23, unit: '小时' },
+        { key: 'day', label: '日期', min: 1, max: 31, unit: '日' },
+        { key: 'month', label: '月份', min: 1, max: 12, unit: '月' },
+        { key: 'week', label: '星期', min: 0, max: 6, unit: '周', week: true }
+    ];
+
+    var state = {
+        min: { mode: 'every', values: new Set(), rangeFrom: 0, rangeTo: 59, step: 5 },
+        hour: { mode: 'every', values: new Set(), rangeFrom: 0, rangeTo: 23, step: 2 },
+        day: { mode: 'every', values: new Set(), rangeFrom: 1, rangeTo: 31, step: 5 },
+        month: { mode: 'every', values: new Set(), rangeFrom: 1, rangeTo: 12, step: 2 },
+        week: { mode: 'every', values: new Set(), rangeFrom: 0, rangeTo: 6, step: 2 }
+    };
+
+    function clamp(n, lo, hi) { n = parseInt(n, 10); if (isNaN(n)) n = lo; return Math.max(lo, Math.min(hi, n)); }
+
+    function buildCards() {
+        var html = '';
+        FIELDS.forEach(function (f) {
+            var s = state[f.key];
+            var checks = '';
+            for (var v = f.min; v <= f.max; v++) {
+                var lbl = f.week ? WEEK_NAMES[v] : v;
+                checks += '<label class="chk"><input type="checkbox" data-field="' + f.key + '" data-val="' + v + '"><span>' + escapeHtml(String(lbl)) + '</span></label>';
+            }
+            html += '<div class="cron-field-card" data-field="' + f.key + '">' +
+                '<div class="cf-head">' + escapeHtml(f.label) + ' <span class="cf-range">(' + f.min + '-' + f.max + ')</span></div>' +
+                '<div class="cf-current" id="cur_' + f.key + '">*</div>' +
+                '<div class="cf-modes">' +
+                '<label class="radio"><input type="radio" name="mode_' + f.key + '" value="every" data-field="' + f.key + '"' + (s.mode === 'every' ? ' checked' : '') + '> 通配符</label>' +
+                '<label class="radio"><input type="radio" name="mode_' + f.key + '" value="step" data-field="' + f.key + '"' + (s.mode === 'step' ? ' checked' : '') + '> 间隔</label>' +
+                '<label class="radio"><input type="radio" name="mode_' + f.key + '" value="range" data-field="' + f.key + '"' + (s.mode === 'range' ? ' checked' : '') + '> 范围</label>' +
+                '<label class="radio"><input type="radio" name="mode_' + f.key + '" value="specified" data-field="' + f.key + '"' + (s.mode === 'specified' ? ' checked' : '') + '> 指定</label>' +
+                '</div>' +
+                '<div class="cf-opts">' +
+                '<div class="cf-opt cf-step' + (s.mode === 'step' ? ' active' : '') + '">每 <input type="number" class="num-input" data-field="' + f.key + '" data-prop="step" min="1" max="' + f.max + '" value="' + s.step + '"> ' + escapeHtml(f.unit) + '</div>' +
+                '<div class="cf-opt cf-range' + (s.mode === 'range' ? ' active' : '') + '">从 <input type="number" class="num-input" data-field="' + f.key + '" data-prop="rangeFrom" min="' + f.min + '" max="' + f.max + '" value="' + s.rangeFrom + '"> 到 <input type="number" class="num-input" data-field="' + f.key + '" data-prop="rangeTo" min="' + f.min + '" max="' + f.max + '" value="' + s.rangeTo + '"></div>' +
+                '<div class="cf-opt cf-specified' + (s.mode === 'specified' ? ' active' : '') + '"><div class="chk-grid">' + checks + '</div>' +
+                '<div class="chk-actions"><button type="button" class="mini-btn" data-field="' + f.key + '" data-act="all">全选</button><button type="button" class="mini-btn" data-field="' + f.key + '" data-act="none">清空</button></div></div>' +
+                '</div>' +
+                '</div>';
+        });
+        document.getElementById('cronFields').innerHTML = html;
+    }
+
+    function updateCardMode(card, mode) {
+        card.querySelector('.cf-step').classList.toggle('active', mode === 'step');
+        card.querySelector('.cf-range').classList.toggle('active', mode === 'range');
+        card.querySelector('.cf-specified').classList.toggle('active', mode === 'specified');
+    }
+
+    function fieldToStr(key) {
+        var s = state[key];
+        var f = FIELDS.filter(function (x) { return x.key === key; })[0];
+        if (s.mode === 'every') return '*';
+        if (s.mode === 'step') return '*/' + clamp(s.step, 1, f.max);
+        if (s.mode === 'range') {
+            var a = clamp(s.rangeFrom, f.min, f.max), b = clamp(s.rangeTo, f.min, f.max);
+            if (a > b) { var t = a; a = b; b = t; }
+            return a + '-' + b;
+        }
+        if (s.mode === 'specified') {
+            var arr = [];
+            s.values.forEach(function (v) { arr.push(v); });
+            arr.sort(function (x, y) { return x - y; });
+            if (arr.length === 0) return '*';
+            return arr.join(',');
+        }
+        return '*';
+    }
+
+    function getCron() {
+        return FIELDS.map(function (f) { return fieldToStr(f.key); }).join(' ');
+    }
+
+    /* ---- 中文描述 ---- */
+    function pad2(n) { return String(n).padStart(2, '0'); }
+    function fieldHuman(field, unit) {
+        if (field === '*') return '每' + unit;
+        var m;
+        if ((m = field.match(/^\*\/(\d+)$/))) return '每 ' + m[1] + ' ' + unit;
+        if ((m = field.match(/^(\d+)-(\d+)\/(\d+)$/))) return m[1] + ' 到 ' + m[2] + ' 每 ' + m[3] + ' ' + unit;
+        if ((m = field.match(/^(\d+)-(\d+)$/))) return m[1] + ' 到 ' + m[2] + ' ' + unit;
+        if (field.indexOf(',') >= 0) return field.split(',').join('、') + ' ' + unit;
+        return field + ' ' + unit;
+    }
+    function hourPhrase(h) {
+        if (h === '*') return '每小时';
+        var m;
+        if ((m = h.match(/^\*\/(\d+)$/))) return '每 ' + m[1] + ' 小时整点';
+        if ((m = h.match(/^(\d+)-(\d+)$/))) return pad2(m[1]) + ':00 到 ' + pad2(m[2]) + ':00';
+        if (h.indexOf(',') >= 0) return h.split(',').map(function (x) { return pad2(x) + ':00'; }).join('、');
+        return pad2(h) + ':00';
+    }
+    function weekHuman(w) {
+        if (w === '*') return '每天';
+        var m;
+        if ((m = w.match(/^\*\/(\d+)$/))) return '每 ' + m[1] + ' 周';
+        if ((m = w.match(/^(\d+)-(\d+)$/))) return WEEK_NAMES[+m[1] % 7] + ' 到 ' + WEEK_NAMES[+m[2] % 7];
+        if (w.indexOf(',') >= 0) return w.split(',').map(function (x) { return WEEK_NAMES[+x % 7]; }).join('、');
+        return WEEK_NAMES[+w % 7];
+    }
+    function describeCron(f) {
+        var monthH = f.month === '*' ? '' : (fieldHuman(f.month, '月') + ' ');
+        var weekH = f.week !== '*' ? ('，' + weekHuman(f.week)) : '';
+        var dayH;
+        if (f.day !== '*') dayH = fieldHuman(f.day, '日');
+        else dayH = f.week === '*' ? '每天' : '';
+        var timeH;
+        if (f.min === '*' && f.hour === '*') timeH = '每分钟';
+        else if (f.hour === '*') timeH = '每小时 ' + fieldHuman(f.min, '分');
+        else if (f.min === '*') timeH = hourPhrase(f.hour);
+        else timeH = hourPhrase(f.hour) + ' ' + fieldHuman(f.min, '分');
+        var head = (monthH + dayH).trim();
+        return head + weekH + '，' + timeH + ' 执行';
+    }
+
+    /* ---- 字段展开与下次执行 ---- */
+    function expandField(field, min, max) {
+        var set = {};
+        if (field === '*') { for (var i = min; i <= max; i++) set[i] = true; return set; }
+        var parts = field.split(',');
+        for (var p = 0; p < parts.length; p++) {
+            var part = parts[p].trim();
+            var m;
+            if (part === '*') { for (var j = min; j <= max; j++) set[j] = true; }
+            else if ((m = part.match(/^\*\/(\d+)$/))) { var s1 = +m[1]; for (var k = min; k <= max; k += s1) set[k] = true; }
+            else if ((m = part.match(/^(\d+)-(\d+)\/(\d+)$/))) { var a1 = +m[1], b1 = +m[2], s2 = +m[3]; for (var k2 = a1; k2 <= b1; k2 += s2) set[k2] = true; }
+            else if ((m = part.match(/^(\d+)-(\d+)$/))) { var a2 = +m[1], b2 = +m[2]; for (var k3 = a2; k3 <= b2; k3++) set[k3] = true; }
+            else if ((m = part.match(/^(\d+)$/))) { var v = +m[1]; if (v >= min && v <= max) set[v] = true; }
+        }
+        return set;
+    }
+
+    function nextTimes(fields, count) {
+        var now = new Date();
+        var d = new Date(Math.floor(now.getTime() / 60000) * 60000 + 60000);
+        var limit = new Date(d.getTime());
+        limit.setFullYear(limit.getFullYear() + 2);
+        var results = [];
+        var sMin = expandField(fields.min, 0, 59);
+        var sHour = expandField(fields.hour, 0, 23);
+        var sDay = expandField(fields.day, 1, 31);
+        var sMonth = expandField(fields.month, 1, 12);
+        var sWeek = expandField(fields.week, 0, 6);
+        var domRestricted = fields.day !== '*';
+        var dowRestricted = fields.week !== '*';
+        var guard = 0;
+        while (results.length < count && d < limit && guard < 2000000) {
+            guard++;
+            var dow = d.getDay();
+            var dayMatch = !!sDay[d.getDate()];
+            var weekMatch = !!sWeek[dow];
+            var dayOk;
+            if (domRestricted && dowRestricted) dayOk = dayMatch || weekMatch;
+            else if (domRestricted) dayOk = dayMatch;
+            else if (dowRestricted) dayOk = weekMatch;
+            else dayOk = true;
+            if (dayOk && sMonth[d.getMonth() + 1] && sHour[d.getHours()] && sMin[d.getMinutes()]) {
+                results.push(new Date(d));
+            }
+            d = new Date(d.getTime() + 60000);
+        }
+        return results;
+    }
+
+    function fmtDate(d) {
+        return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+    }
+
+    function recompute() {
+        var fields = { min: fieldToStr('min'), hour: fieldToStr('hour'), day: fieldToStr('day'), month: fieldToStr('month'), week: fieldToStr('week') };
+        FIELDS.forEach(function (f) {
+            var el = document.getElementById('cur_' + f.key);
+            if (el) el.textContent = fields[f.key];
+        });
+        var cron = getCron();
+        document.getElementById('cronExpr').textContent = cron;
+        document.getElementById('cronDesc').textContent = describeCron(fields);
+
+        var list = nextTimes(fields, 5);
+        var html = '';
+        if (list.length === 0) {
+            html = '<div class="next-item"><span class="nx-time">未找到未来 2 年内的执行时间</span></div>';
+        } else {
+            list.forEach(function (d, i) {
+                html += '<div class="next-item"><span class="nx-idx">#' + (i + 1) + '</span><span class="nx-time">' + escapeHtml(fmtDate(d)) + '</span><span class="nx-week">' + escapeHtml(WEEK_NAMES[d.getDay()]) + '</span></div>';
+            });
+        }
+        document.getElementById('nextList').innerHTML = html;
+    }
+
+    function syncUI() {
+        FIELDS.forEach(function (f) {
+            var card = document.querySelector('.cron-field-card[data-field="' + f.key + '"]');
+            var s = state[f.key];
+            card.querySelectorAll('input[name=mode_' + f.key + ']').forEach(function (r) { r.checked = (r.value === s.mode); });
+            card.querySelector('[data-prop=step]').value = s.step;
+            card.querySelector('[data-prop=rangeFrom]').value = s.rangeFrom;
+            card.querySelector('[data-prop=rangeTo]').value = s.rangeTo;
+            card.querySelectorAll('input[type=checkbox][data-field="' + f.key + '"]').forEach(function (cb) { cb.checked = s.values.has(+cb.dataset.val); });
+            updateCardMode(card, s.mode);
+        });
+        recompute();
+    }
+
+    function parseFieldToState(str, key) {
+        var f = FIELDS.filter(function (x) { return x.key === key; })[0];
+        var s = state[key];
+        s.values = new Set();
+        str = String(str).trim();
+        if (str === '*' || str === '') { s.mode = 'every'; return; }
+        var m;
+        if ((m = str.match(/^\*\/(\d+)$/))) { s.mode = 'step'; s.step = clamp(m[1], 1, f.max); return; }
+        if ((m = str.match(/^(\d+)-(\d+)$/))) { s.mode = 'range'; s.rangeFrom = clamp(m[1], f.min, f.max); s.rangeTo = clamp(m[2], f.min, f.max); return; }
+        if (str.indexOf(',') >= 0) {
+            s.mode = 'specified';
+            str.split(',').forEach(function (x) { var n = parseInt(x, 10); if (!isNaN(n) && n >= f.min && n <= f.max) s.values.add(n); });
+            if (s.values.size === 0) s.mode = 'every';
+            return;
+        }
+        if ((m = str.match(/^(\d+)$/))) { s.mode = 'specified'; var n2 = clamp(m[1], f.min, f.max); s.values.add(n2); return; }
+        s.mode = 'every';
+    }
+
+    function applyCron(cronStr) {
+        var parts = String(cronStr).trim().split(/\s+/);
+        if (parts.length !== 5) return;
+        parseFieldToState(parts[0], 'min');
+        parseFieldToState(parts[1], 'hour');
+        parseFieldToState(parts[2], 'day');
+        parseFieldToState(parts[3], 'month');
+        parseFieldToState(parts[4], 'week');
+        syncUI();
+    }
+
+    /* ---- 事件 ---- */
+    document.getElementById('cronFields').addEventListener('change', function (e) {
+        var t = e.target;
+        var field = t.dataset.field;
+        if (!field) return;
+        if (t.type === 'radio') {
+            state[field].mode = t.value;
+            var card = t.closest('.cron-field-card');
+            updateCardMode(card, t.value);
+            recompute();
+        } else if (t.type === 'checkbox') {
+            var val = +t.dataset.val;
+            if (t.checked) state[field].values.add(val); else state[field].values.delete(val);
+            recompute();
+        } else if (t.type === 'number') {
+            var prop = t.dataset.prop;
+            state[field][prop] = parseInt(t.value, 10);
+            recompute();
+        }
+    });
+    document.getElementById('cronFields').addEventListener('input', function (e) {
+        var t = e.target;
+        if (t.type === 'number' && t.dataset.field) {
+            var prop = t.dataset.prop;
+            state[t.dataset.field][prop] = parseInt(t.value, 10);
+            recompute();
+        }
+    });
+    document.getElementById('cronFields').addEventListener('click', function (e) {
+        var btn = e.target.closest('.mini-btn');
+        if (!btn) return;
+        var key = btn.dataset.field;
+        var f = FIELDS.filter(function (x) { return x.key === key; })[0];
+        var cbs = document.querySelectorAll('input[type=checkbox][data-field="' + key + '"]');
+        if (btn.dataset.act === 'all') {
+            cbs.forEach(function (cb) { cb.checked = true; state[key].values.add(+cb.dataset.val); });
+        } else {
+            cbs.forEach(function (cb) { cb.checked = false; });
+            state[key].values = new Set();
+        }
+        recompute();
+    });
+
+    document.getElementById('presetRow').addEventListener('click', function (e) {
+        var btn = e.target.closest('.preset-btn');
+        if (!btn) return;
+        applyCron(btn.dataset.cron);
+        setStatus('已套用模板：' + btn.textContent, 'success');
+    });
+
+    document.getElementById('copyExprBtn').addEventListener('click', function () {
+        copyText(getCron(), function () { setStatus('Cron 表达式已复制到剪贴板', 'success'); });
+    });
+
+    /* 初始化 */
+    buildCards();
+    applyCron('*/5 * * * *');
+    setStatus('已加载默认表达式（每 5 分钟）', 'info');
+</script>
+</body>
+</html>

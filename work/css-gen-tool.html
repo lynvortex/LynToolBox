@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS 渐变 / 阴影生成器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="CSS渐变与阴影可视化生成器，支持线性渐变、径向渐变、盒阴影、文字阴影，实时预览并一键复制CSS代码。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', -apple-system, sans-serif;
+            background: #f4f7f9;
+            margin: 0;
+            display: flex;
+            height: 100vh; overflow: hidden;
+            color: #333;
+        }
+
+        .mobile-header {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: #fff; padding: 0 20px; align-items: center;
+            justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+        }
+        .mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+        .mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+        .menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #4a90e2; }
+
+        .sidebar {
+            width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+            display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+            transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+            position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item {
+            display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+            transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+        }
+        .category-item:hover, .category-item.active { background: #ebf5ff; color: #4a90e2; border-left-color: #4a90e2; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+        .tool-container {
+            width: 100%;
+            max-width: 960px;
+            background: #fff; border-radius: 12px;
+            padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+        }
+        .tool-header { text-align: center; margin-bottom: 24px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+        /* Tabs */
+        .css-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 22px; justify-content: center; }
+        .css-tab {
+            padding: 9px 18px; border: 1px solid #e0e6ed; border-radius: 8px;
+            background: #fff; color: #64748b; font-size: 0.88em; cursor: pointer;
+            transition: all 0.2s; font-family: inherit; font-weight: 500;
+        }
+        .css-tab:hover { border-color: #4a90e2; color: #4a90e2; }
+        .css-tab.active { background: #4a90e2; color: #fff; border-color: #4a90e2; }
+
+        /* 布局：左控制 右预览 */
+        .css-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 18px; }
+        @media (max-width: 768px) { .css-layout { grid-template-columns: 1fr; } }
+
+        .ctrl-panel { display: none; flex-direction: column; gap: 14px; }
+        .ctrl-panel.active { display: flex; }
+        .ctrl-row { display: flex; flex-direction: column; gap: 6px; }
+        .ctrl-row label { font-size: 0.82em; color: #64748b; font-weight: 600; }
+        .ctrl-inline { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        input[type="range"] { flex: 1; accent-color: #4a90e2; cursor: pointer; }
+        input[type="number"], select {
+            padding: 7px 10px; border: 1px solid #e0e6ed; border-radius: 7px;
+            font-size: 0.88em; outline: none; transition: 0.2s; background: #fff;
+            font-family: 'Consolas', monospace; color: #1e293b; width: 76px;
+        }
+        input[type="number"]:focus, select:focus { border-color: #4a90e2; }
+        select { width: auto; font-family: inherit; cursor: pointer; }
+        input[type="color"] {
+            width: 44px; height: 34px; padding: 2px; border: 1px solid #e0e6ed;
+            border-radius: 7px; background: #fff; cursor: pointer;
+        }
+        .range-val { font-family: 'Consolas', monospace; font-size: 0.82em; color: #4a90e2; min-width: 42px; text-align: right; }
+
+        /* 色标列表 */
+        .stops-list { display: flex; flex-direction: column; gap: 8px; }
+        .stop-item { display: flex; align-items: center; gap: 8px; }
+        .stop-item input[type="color"] { width: 38px; height: 30px; }
+        .stop-item .stop-pos { flex: 1; }
+        .stop-item .stop-pct { width: 56px; }
+        .stop-remove {
+            width: 30px; height: 30px; border: 1px solid #fecaca; background: #fef2f2;
+            color: #ef4444; border-radius: 7px; cursor: pointer; font-size: 1em; line-height: 1;
+        }
+        .stop-remove:hover { background: #fee2e2; }
+        .stop-remove:disabled { opacity: 0.4; cursor: not-allowed; }
+        .add-stop {
+            align-self: flex-start; padding: 6px 12px; font-size: 0.8em;
+            background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 7px; cursor: pointer; font-family: inherit;
+        }
+        .add-stop:hover { background: #dbeafe; }
+
+        .check-inline { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85em; color: #475569; cursor: pointer; }
+        .check-inline input { accent-color: #4a90e2; }
+
+        /* 预览 */
+        .preview-area {
+            border: 1px dashed #e0e6ed; border-radius: 12px; min-height: 260px;
+            display: flex; align-items: center; justify-content: center; padding: 24px;
+            background: repeating-conic-gradient(#f1f5f9 0% 25%, #fff 0% 50%) 50% / 24px 24px;
+        }
+        .preview-box {
+            width: 80%; max-width: 320px; height: 160px; border-radius: 12px;
+            background: linear-gradient(135deg, #4a90e2, #3a7bd5);
+        }
+        .preview-text {
+            font-size: 2.4em; font-weight: 800; color: #4a90e2;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3); letter-spacing: 1px;
+        }
+
+        /* 代码输出 */
+        .code-box {
+            background: #0f172a; border-radius: 10px; padding: 16px 18px; margin-bottom: 16px;
+            display: flex; align-items: flex-start; gap: 12px;
+        }
+        .code-box pre {
+            margin: 0; flex: 1; color: #e2e8f0; font-family: 'Consolas', monospace;
+            font-size: 0.88em; line-height: 1.6; white-space: pre-wrap; word-break: break-all;
+        }
+
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em;
+            font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap;
+        }
+        .btn-primary { background: #4a90e2; color: white; }
+        .btn-primary:hover { background: #3a7bd5; }
+        .btn-outline { background: transparent; color: #4a90e2; border: 1px solid #4a90e2; }
+        .btn-outline:hover { background: #4a90e2; color: white; }
+        .btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+        .btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+        .btn-copy {
+            padding: 8px 14px; font-size: 0.82em; background: rgba(255,255,255,0.12); color: #e2e8f0;
+            border: 1px solid rgba(255,255,255,0.25); border-radius: 7px; cursor: pointer; font-family: inherit; flex-shrink: 0;
+        }
+        .btn-copy:hover { background: rgba(255,255,255,0.22); }
+
+        .status-bar {
+            min-height: 20px; font-size: 0.85em;
+            padding: 8px 12px; border-radius: 6px; margin-bottom: 16px;
+        }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+        .footer p { margin: 0; }
+        .footer a { color: #4a90e2; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+
+        .info-cards { width: 100%; max-width: 960px; display: flex; flex-direction: column; gap: 18px; margin-top: 4px; }
+        .info-card { background: #fff; border-radius: 12px; padding: 22px 24px; box-shadow: 0 4px 25px rgba(0,0,0,0.06); border: 1px solid #f0f2f5; }
+        .info-card h3 { margin: 0 0 10px 0; font-size: 1em; color: #2c3e50; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+        .info-card p { margin: 0 0 10px 0; font-size: 0.82em; color: #64748b; }
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip { background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 12px; font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace; }
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a { font-size: 0.85em; color: #4a90e2; text-decoration: none; padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s; }
+        .tool-links a:hover { background: #e2e8f0; }
+
+        @media (max-width: 768px) {
+            body { display: block; height: auto; overflow: auto; }
+            .mobile-header { display: flex; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .close-sidebar { display: block; }
+            .main-content { display: block; }
+            .main-scroll { padding: 72px 16px 32px; gap: 20px; }
+            .tool-container { padding: 24px 16px; border-radius: 10px; }
+            .tool-header h1 { font-size: 1.3em; }
+            .preview-area { min-height: 200px; }
+            .overlay.active { display: block; }
+        }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="CSS渐变/阴影生成器,在线CSS渐变/阴影生成器,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/css-gen-tool.html" />
+    <meta property="og:title" content="CSS 渐变 / 阴影生成器" />
+    <meta property="og:description" content="CSS渐变与阴影可视化生成器，支持线性渐变、径向渐变、盒阴影、文字阴影，实时预览并一键复制CSS代码。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/css-gen-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="CSS 渐变 / 阴影生成器" />
+    <meta itemprop="description" content="CSS渐变与阴影可视化生成器，支持线性渐变、径向渐变、盒阴影、文字阴影，实时预览并一键复制CSS代码。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "CSS渐变/阴影生成器",
+                "item": "https://box.lynvortex.top/work/css-gen-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "CSS渐变/阴影生成器",
+        "url": "https://box.lynvortex.top/work/css-gen-tool.html",
+        "description": "可视化生成CSS渐变、盒阴影、文字阴影代码",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🎨 CSS 渐变 / 阴影生成器</h1>
+                <p>可视化生成线性渐变、径向渐变、盒阴影与文字阴影，实时预览并一键复制 CSS</p>
+            </div>
+
+            <div class="css-tabs" id="cssTabs">
+                <button type="button" class="css-tab active" data-tab="linear">🌈 线性渐变</button>
+                <button type="button" class="css-tab" data-tab="radial">🎯 径向渐变</button>
+                <button type="button" class="css-tab" data-tab="box">📦 盒阴影</button>
+                <button type="button" class="css-tab" data-tab="text">🔤 文字阴影</button>
+            </div>
+
+            <div class="css-layout">
+                <!-- 控制面板 -->
+                <div>
+                    <!-- 线性渐变 -->
+                    <div class="ctrl-panel active" id="panel-linear">
+                        <div class="ctrl-row">
+                            <label>角度 <span class="range-val" id="linAngleVal">90°</span></label>
+                            <div class="ctrl-inline">
+                                <input type="range" id="linAngle" min="0" max="360" value="90">
+                            </div>
+                        </div>
+                        <div class="ctrl-row">
+                            <label>颜色停止点</label>
+                            <div class="stops-list" id="linStops"></div>
+                            <button type="button" class="add-stop" id="linAddStop">＋ 添加色标</button>
+                        </div>
+                    </div>
+
+                    <!-- 径向渐变 -->
+                    <div class="ctrl-panel" id="panel-radial">
+                        <div class="ctrl-row">
+                            <label>形状</label>
+                            <select id="radShape">
+                                <option value="circle">circle 圆形</option>
+                                <option value="ellipse">ellipse 椭圆</option>
+                            </select>
+                        </div>
+                        <div class="ctrl-row">
+                            <label>尺寸</label>
+                            <select id="radSize">
+                                <option value="farthest-corner">farthest-corner</option>
+                                <option value="closest-corner">closest-corner</option>
+                                <option value="farthest-side">farthest-side</option>
+                                <option value="closest-side">closest-side</option>
+                            </select>
+                        </div>
+                        <div class="ctrl-row">
+                            <label>中心位置</label>
+                            <select id="radPos">
+                                <option value="center">center 居中</option>
+                                <option value="top">top 顶部</option>
+                                <option value="bottom">bottom 底部</option>
+                                <option value="left">left 左侧</option>
+                                <option value="right">right 右侧</option>
+                                <option value="top left">top left 左上</option>
+                                <option value="top right">top right 右上</option>
+                                <option value="bottom left">bottom left 左下</option>
+                                <option value="bottom right">bottom right 右下</option>
+                            </select>
+                        </div>
+                        <div class="ctrl-row">
+                            <label>颜色停止点</label>
+                            <div class="stops-list" id="radStops"></div>
+                            <button type="button" class="add-stop" id="radAddStop">＋ 添加色标</button>
+                        </div>
+                    </div>
+
+                    <!-- 盒阴影 -->
+                    <div class="ctrl-panel" id="panel-box">
+                        <div class="ctrl-row">
+                            <label>X 偏移 <span class="range-val" id="boxXVal">0px</span></label>
+                            <input type="range" id="boxX" min="-50" max="50" value="0">
+                        </div>
+                        <div class="ctrl-row">
+                            <label>Y 偏移 <span class="range-val" id="boxYVal">10px</span></label>
+                            <input type="range" id="boxY" min="-50" max="50" value="10">
+                        </div>
+                        <div class="ctrl-row">
+                            <label>模糊 <span class="range-val" id="boxBlurVal">20px</span></label>
+                            <input type="range" id="boxBlur" min="0" max="100" value="20">
+                        </div>
+                        <div class="ctrl-row">
+                            <label>扩散 <span class="range-val" id="boxSpreadVal">0px</span></label>
+                            <input type="range" id="boxSpread" min="-50" max="50" value="0">
+                        </div>
+                        <div class="ctrl-row">
+                            <label>颜色</label>
+                            <div class="ctrl-inline">
+                                <input type="color" id="boxColor" value="#4a90e2">
+                                <input type="text" id="boxColorText" value="#4a90e2" style="width:110px;padding:7px 10px;border:1px solid #e0e6ed;border-radius:7px;font-family:'Consolas',monospace;font-size:0.85em;">
+                                <label class="check-inline"><input type="checkbox" id="boxInset"> 内阴影 inset</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 文字阴影 -->
+                    <div class="ctrl-panel" id="panel-text">
+                        <div class="ctrl-row">
+                            <label>X 偏移 <span class="range-val" id="txtXVal">2px</span></label>
+                            <input type="range" id="txtX" min="-30" max="30" value="2">
+                        </div>
+                        <div class="ctrl-row">
+                            <label>Y 偏移 <span class="range-val" id="txtYVal">2px</span></label>
+                            <input type="range" id="txtY" min="-30" max="30" value="2">
+                        </div>
+                        <div class="ctrl-row">
+                            <label>模糊 <span class="range-val" id="txtBlurVal">4px</span></label>
+                            <input type="range" id="txtBlur" min="0" max="50" value="4">
+                        </div>
+                        <div class="ctrl-row">
+                            <label>颜色</label>
+                            <div class="ctrl-inline">
+                                <input type="color" id="txtColor" value="#1e293b">
+                                <input type="text" id="txtColorText" value="#1e293b" style="width:110px;padding:7px 10px;border:1px solid #e0e6ed;border-radius:7px;font-family:'Consolas',monospace;font-size:0.85em;">
+                            </div>
+                        </div>
+                        <div class="ctrl-row">
+                            <label>预览文字</label>
+                            <input type="text" id="txtPreview" value="绘萤工具箱" style="width:100%;padding:8px 10px;border:1px solid #e0e6ed;border-radius:7px;font-family:inherit;font-size:0.9em;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 预览 -->
+                <div>
+                    <div class="ctrl-row" style="margin-bottom:10px;">
+                        <label>实时预览</label>
+                    </div>
+                    <div class="preview-area" id="previewArea">
+                        <div class="preview-box" id="previewBox"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="code-box">
+                <pre id="codeOut">background: linear-gradient(90deg, #4a90e2 0%, #3a7bd5 100%);</pre>
+                <button type="button" class="btn-copy" id="copyCodeBtn">📋 复制</button>
+            </div>
+
+            <div id="statusBar" class="status-bar info">拖动滑块或选择颜色即可实时生成 CSS 代码</div>
+
+            <footer class="footer">
+                &copy; 2026 绘萤者-Lynvortex &middot; 美梦多彩 理想自由
+                <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 功能概览</h3>
+                <p>四种常用 CSS 视觉效果可视化生成，所见即所得</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">linear-gradient</span>
+                    <span class="tld-chip">radial-gradient</span>
+                    <span class="tld-chip">box-shadow</span>
+                    <span class="tld-chip">text-shadow</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用提示</h3>
+                <ul class="tips-list">
+                    <li>渐变支持多个色标，可自定义颜色与停止位置，最少保留 2 个色标</li>
+                    <li>盒阴影支持 X/Y 偏移、模糊、扩散、颜色与内阴影（inset）</li>
+                    <li>颜色框与 HEX 文本框联动，方便输入带透明度的色值</li>
+                    <li>所有生成在浏览器本地完成，<strong>数据不上传</strong>，一键复制即用</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    initSidebar('work');
+
+    var statusBar = document.getElementById('statusBar');
+    function copyText(text, onSuccess) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function () { onSuccess && onSuccess(); }).catch(function () { fallbackCopy(text, onSuccess); });
+        } else { fallbackCopy(text, onSuccess); }
+    }
+    function fallbackCopy(text, onSuccess) {
+        var ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) { } document.body.removeChild(ta); onSuccess && onSuccess();
+    }
+
+    var currentTab = 'linear';
+    var linStops = [{ color: '#4a90e2', pos: 0 }, { color: '#3a7bd5', pos: 100 }];
+    var radStops = [{ color: '#4a90e2', pos: 0 }, { color: '#9ad0ff', pos: 100 }];
+
+    /* ---- 色标渲染 ---- */
+    function renderStops(list, stops, containerId, onChange) {
+        var html = '';
+        list.forEach(function (s, i) {
+            html += '<div class="stop-item">' +
+                '<input type="color" data-idx="' + i + '" data-prop="color" value="' + escapeHtml(s.color) + '">' +
+                '<input type="range" class="stop-pos" data-idx="' + i + '" data-prop="pos" min="0" max="100" value="' + s.pos + '">' +
+                '<input type="number" class="stop-pct" data-idx="' + i + '" data-prop="pos" min="0" max="100" value="' + s.pos + '">' +
+                '<button type="button" class="stop-remove" data-idx="' + i + '"' + (list.length <= 2 ? ' disabled' : '') +'>×</button>' +
+                '</div>';
+        });
+        var c = document.getElementById(containerId);
+        c.innerHTML = html;
+    }
+
+    function bindStops(list, containerId, onChange) {
+        var c = document.getElementById(containerId);
+        c.addEventListener('input', function (e) {
+            var t = e.target;
+            var idx = +t.dataset.idx;
+            if (isNaN(idx)) return;
+            if (t.dataset.prop === 'color') {
+                list[idx].color = t.value;
+                onChange();
+            } else if (t.dataset.prop === 'pos') {
+                var v = parseInt(t.value, 10);
+                list[idx].pos = isNaN(v) ? 0 : Math.max(0, Math.min(100, v));
+                // 同步同一色标的 range / number 兄弟控件（不重建 DOM，避免拖动中断）
+                var items = c.querySelectorAll('.stop-item');
+                var row = items[idx];
+                if (row) {
+                    row.querySelectorAll('[data-prop="pos"]').forEach(function (inp) {
+                        if (inp !== t) inp.value = list[idx].pos;
+                    });
+                }
+                onChange();
+            }
+        });
+        c.addEventListener('click', function (e) {
+            var btn = e.target.closest('.stop-remove');
+            if (!btn || btn.disabled) return;
+            list.splice(+btn.dataset.idx, 1);
+            renderStops(list, list, containerId, onChange);
+            onChange();
+        });
+    }
+
+    function stopsToCss(stops) {
+        return stops.map(function (s) { return s.color + ' ' + s.pos + '%'; }).join(', ');
+    }
+
+    /* ---- 生成 CSS ---- */
+    function buildCss(tab) {
+        if (tab === 'linear') {
+            var angle = document.getElementById('linAngle').value;
+            return 'background: linear-gradient(' + angle + 'deg, ' + stopsToCss(linStops) + ');';
+        }
+        if (tab === 'radial') {
+            var shape = document.getElementById('radShape').value;
+            var size = document.getElementById('radSize').value;
+            var pos = document.getElementById('radPos').value;
+            return 'background: radial-gradient(' + shape + ' ' + size + ' at ' + pos + ', ' + stopsToCss(radStops) + ');';
+        }
+        if (tab === 'box') {
+            var x = document.getElementById('boxX').value;
+            var y = document.getElementById('boxY').value;
+            var blur = document.getElementById('boxBlur').value;
+            var spread = document.getElementById('boxSpread').value;
+            var color = document.getElementById('boxColorText').value.trim() || document.getElementById('boxColor').value;
+            var inset = document.getElementById('boxInset').checked ? 'inset ' : '';
+            return 'box-shadow: ' + inset + x + 'px ' + y + 'px ' + blur + 'px ' + spread + 'px ' + color + ';';
+        }
+        if (tab === 'text') {
+            var tx = document.getElementById('txtX').value;
+            var ty = document.getElementById('txtY').value;
+            var tb = document.getElementById('txtBlur').value;
+            var tcolor = document.getElementById('txtColorText').value.trim() || document.getElementById('txtColor').value;
+            return 'text-shadow: ' + tx + 'px ' + ty + 'px ' + tb + 'px ' + tcolor + ';';
+        }
+        return '';
+    }
+
+    function applyPreview(tab) {
+        var box = document.getElementById('previewBox');
+        var area = document.getElementById('previewArea');
+        if (tab === 'text') {
+            box.style.display = 'none';
+            var ptEl = document.getElementById('previewText');
+            if (!ptEl) {
+                ptEl = document.createElement('div');
+                ptEl.id = 'previewText';
+                ptEl.className = 'preview-text';
+                area.appendChild(ptEl);
+            }
+            ptEl.style.display = '';
+            ptEl.textContent = document.getElementById('txtPreview').value || '绘萤工具箱';
+            ptEl.style.textShadow = buildCss('text').replace('text-shadow: ', '').replace(/;$/, '');
+        } else {
+            if (ptEl) ptEl.style.display = 'none';
+            box.style.display = '';
+            if (tab === 'box') {
+                box.style.background = '#fff';
+                box.style.boxShadow = buildCss('box').replace('box-shadow: ', '').replace(/;$/, '');
+            } else {
+                box.style.boxShadow = 'none';
+                box.style.background = buildCss(tab).replace('background: ', '').replace(/;$/, '');
+            }
+        }
+    }
+
+    function update() {
+        var css = buildCss(currentTab);
+        document.getElementById('codeOut').textContent = css;
+        applyPreview(currentTab);
+        // update range value labels
+        if (currentTab === 'linear') document.getElementById('linAngleVal').textContent = document.getElementById('linAngle').value + '°';
+        if (currentTab === 'box') {
+            document.getElementById('boxXVal').textContent = document.getElementById('boxX').value + 'px';
+            document.getElementById('boxYVal').textContent = document.getElementById('boxY').value + 'px';
+            document.getElementById('boxBlurVal').textContent = document.getElementById('boxBlur').value + 'px';
+            document.getElementById('boxSpreadVal').textContent = document.getElementById('boxSpread').value + 'px';
+        }
+        if (currentTab === 'text') {
+            document.getElementById('txtXVal').textContent = document.getElementById('txtX').value + 'px';
+            document.getElementById('txtYVal').textContent = document.getElementById('txtY').value + 'px';
+            document.getElementById('txtBlurVal').textContent = document.getElementById('txtBlur').value + 'px';
+        }
+    }
+
+    /* ---- Tabs ---- */
+    document.getElementById('cssTabs').addEventListener('click', function (e) {
+        var btn = e.target.closest('.css-tab'); if (!btn) return;
+        document.querySelectorAll('.css-tab').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        currentTab = btn.dataset.tab;
+        document.querySelectorAll('.ctrl-panel').forEach(function (p) { p.classList.remove('active'); });
+        document.getElementById('panel-' + currentTab).classList.add('active');
+        update();
+    });
+
+    /* ---- 线性渐变事件 ---- */
+    document.getElementById('linAngle').addEventListener('input', update);
+    document.getElementById('linAddStop').addEventListener('click', function () {
+        var last = linStops[linStops.length - 1];
+        linStops.push({ color: last.color, pos: 100 });
+        renderStops(linStops, linStops, 'linStops', update);
+        update();
+    });
+    bindStops(linStops, 'linStops', update);
+
+    /* ---- 径向渐变事件 ---- */
+    ['radShape', 'radSize', 'radPos'].forEach(function (id) { document.getElementById(id).addEventListener('change', update); });
+    document.getElementById('radAddStop').addEventListener('click', function () {
+        var last = radStops[radStops.length - 1];
+        radStops.push({ color: last.color, pos: 100 });
+        renderStops(radStops, radStops, 'radStops', update);
+        update();
+    });
+    bindStops(radStops, 'radStops', update);
+
+    /* ---- 盒阴影事件 ---- */
+    ['boxX', 'boxY', 'boxBlur', 'boxSpread'].forEach(function (id) { document.getElementById(id).addEventListener('input', update); });
+    document.getElementById('boxInset').addEventListener('change', update);
+    document.getElementById('boxColor').addEventListener('input', function () {
+        document.getElementById('boxColorText').value = this.value; update();
+    });
+    document.getElementById('boxColorText').addEventListener('input', function () {
+        var v = this.value.trim();
+        if (/^#[0-9a-fA-F]{6}$/.test(v)) document.getElementById('boxColor').value = v;
+        update();
+    });
+
+    /* ---- 文字阴影事件 ---- */
+    ['txtX', 'txtY', 'txtBlur'].forEach(function (id) { document.getElementById(id).addEventListener('input', update); });
+    document.getElementById('txtPreview').addEventListener('input', update);
+    document.getElementById('txtColor').addEventListener('input', function () {
+        document.getElementById('txtColorText').value = this.value; update();
+    });
+    document.getElementById('txtColorText').addEventListener('input', function () {
+        var v = this.value.trim();
+        if (/^#[0-9a-fA-F]{6}$/.test(v)) document.getElementById('txtColor').value = v;
+        update();
+    });
+
+    /* ---- 复制 ---- */
+    document.getElementById('copyCodeBtn').addEventListener('click', function () {
+        copyText(document.getElementById('codeOut').textContent, function () { setStatus('CSS 代码已复制到剪贴板', 'success'); });
+    });
+
+    /* ---- 初始化 ---- */
+    renderStops(linStops, linStops, 'linStops', update);
+    renderStops(radStops, radStops, 'radStops', update);
+    update();
+</script>
+</body>
+</html>

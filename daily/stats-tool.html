@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>统计计算器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="统计计算器，纯前端使用simple-statistics计算均值、中位数、方差、标准差、相关系数与线性回归，数据本地处理。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <script src="../assets/sidebar.js"></script>
+    <script src="../assets/simple-statistics.min.js"></script>
+    <style>
+        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
+        @media (max-width: 600px) { .data-grid { grid-template-columns: 1fr; } }
+        .data-block label { font-size: 0.85em; color: #64748b; font-weight: 600; display: block; margin-bottom: 6px; }
+        .data-block textarea { width: 100%; min-height: 120px; padding: 12px 14px; border: 1px solid #e0e6ed; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.88em; outline: none; resize: vertical; background: #f8fafc; color: #1e293b; }
+        .data-block textarea:focus { border-color: #4a90e2; background: #fff; }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 18px; }
+        .stat-item { background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 10px; padding: 14px; text-align: center; }
+        .stat-item .sv { font-size: 1.3em; font-weight: 700; color: #2c3e50; font-family: 'Courier New', monospace; word-break: break-all; }
+        .stat-item .sl { font-size: 0.76em; color: #94a3b8; margin-top: 4px; }
+        .stat-item.highlight { background: linear-gradient(135deg, #ebf5ff 0%, #dbeafe 100%); border-color: #bfdbfe; }
+
+        .corr-card { background: linear-gradient(135deg, #4a90e2 0%, #3a7bd5 100%); color: #fff; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+        .corr-card h3 { margin: 0 0 12px 0; font-size: 1em; }
+        .corr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; }
+        .corr-grid .ci { background: rgba(255,255,255,0.15); border-radius: 8px; padding: 10px; text-align: center; }
+        .corr-grid .ci .cv { font-size: 1.2em; font-weight: 700; font-family: 'Courier New', monospace; }
+        .corr-grid .ci .cl { font-size: 0.78em; opacity: 0.85; margin-top: 2px; }
+
+        .reg-eq { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 14px; font-family: 'Courier New', monospace; font-size: 0.95em; color: #15803d; margin-bottom: 12px; text-align: center; }
+        .section-title { font-size: 0.9em; color: #475569; font-weight: 600; margin: 0 0 10px 0; }
+    </style>
+    <meta name="keywords" content="统计计算器,在线统计计算器,日常通用,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/daily/stats-tool.html" />
+    <meta property="og:title" content="统计计算器" />
+    <meta property="og:description" content="统计计算器，纯前端使用simple-statistics计算均值、中位数、方差、标准差、相关系数与线性回归，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/daily/stats-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="统计计算器" />
+    <meta itemprop="description" content="统计计算器，纯前端使用simple-statistics计算均值、中位数、方差、标准差、相关系数与线性回归，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "日常通用",
+                "item": "https://box.lynvortex.top/daily.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "统计计算器",
+                "item": "https://box.lynvortex.top/daily/stats-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "统计计算器",
+        "url": "https://box.lynvortex.top/daily/stats-tool.html",
+        "description": "计算均值中位数方差标准差相关系数与线性回归",
+        "applicationCategory": "日常通用",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>📈 统计计算器</h1>
+                <p>计算均值、中位数、方差、标准差、相关系数与线性回归，数据本地处理</p>
+            </div>
+
+            <div class="data-grid">
+                <div class="data-block">
+                    <label>数据集 A（必填，逗号或换行分隔）</label>
+                    <textarea id="dataA" placeholder="例如：&#10;12, 15, 18, 22, 25, 28, 30&#10;或每行一个数字"></textarea>
+                </div>
+                <div class="data-block">
+                    <label>数据集 B（可选，用于相关系数与线性回归）</label>
+                    <textarea id="dataB" placeholder="与数据集A等长，例如：&#10;8, 10, 14, 16, 20, 24, 26"></textarea>
+                </div>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn-primary" id="calcBtn">计算统计量</button>
+                <button class="btn btn-outline" id="sampleBtn">填入示例</button>
+                <button class="btn btn-ghost" id="clearBtn">清空</button>
+            </div>
+
+            <div id="resultArea"></div>
+
+            <div id="statusBar" class="status-bar info">输入数据后点击计算，所有运算在浏览器本地完成</div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 统计计算器</h3>
+                <p>对一组或多组数据进行描述性统计与回归分析</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">均值</span>
+                    <span class="feature-chip">中位数</span>
+                    <span class="feature-chip">方差</span>
+                    <span class="feature-chip">标准差</span>
+                    <span class="feature-chip">相关系数</span>
+                    <span class="feature-chip">线性回归</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>数据集A必填，支持逗号、空格或换行分隔的数字</li>
+                    <li>填入数据集B后可计算两组数据的相关系数与线性回归方程</li>
+                    <li>方差/标准差同时给出总体与样本两种口径</li>
+                    <li>基于 simple-statistics，纯前端本地计算，数据不上传</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    var dataA = document.getElementById('dataA');
+    var dataB = document.getElementById('dataB');
+    var resultArea = document.getElementById('resultArea');
+    var statusBar = document.getElementById('statusBar');
+
+    // 解析输入为数字数组
+    function parseData(text) {
+        if (!text || !text.trim()) return [];
+        var tokens = text.split(/[\s,;，；\t\n]+/).filter(function (t) { return t.length > 0; });
+        var nums = [];
+        for (var i = 0; i < tokens.length; i++) {
+            var n = parseFloat(tokens[i]);
+            if (!isNaN(n) && isFinite(n)) nums.push(n);
+        }
+        return nums;
+    }
+
+    function fmt(n) {
+        if (n === null || n === undefined || isNaN(n)) return '—';
+        if (!isFinite(n)) return '∞';
+        if (Math.abs(n) >= 1e9 || (Math.abs(n) < 1e-6 && n !== 0)) return n.toExponential(4);
+        return parseFloat(n.toPrecision(8)).toString();
+    }
+
+    function statItem(val, label, hl) {
+        return '<div class="stat-item' + (hl ? ' highlight' : '') + '"><div class="sv">' + escapeHtml(fmt(val)) + '</div><div class="sl">' + escapeHtml(label) + '</div></div>';
+    }
+
+    function calc() {
+        if (typeof ss === 'undefined') { setStatus('统计库(simple-statistics)未加载', 'error'); return; }
+        var a = parseData(dataA.value);
+        if (a.length === 0) { setStatus('数据集A为空或无有效数字，请输入数据', 'error'); resultArea.innerHTML = ''; return; }
+
+        try {
+            var n = a.length;
+            var sum = ss.sum(a);
+            var mean = ss.mean(a);
+            var median = ss.median(a);
+            var min = ss.min(a);
+            var max = ss.max(a);
+            var range = max - min;
+
+            // 众数（可能多众数，simple-statistics mode 返回单个，这里手动求）
+            var modes = computeModes(a);
+
+            // 方差与标准差
+            var popVar = ss.variance(a);
+            var popSd = ss.standardDeviation(a);
+            var samVar = null, samSd = null;
+            if (n >= 2) {
+                samVar = ss.sampleVariance(a);
+                samSd = ss.sampleStandardDeviation(a);
+            }
+
+            // 四分位数
+            var q1 = ss.quantile(a, 0.25);
+            var q3 = ss.quantile(a, 0.75);
+            var iqr = ss.iqr(a);
+
+            var html = '';
+            html += '<p class="section-title">数据集 A 描述性统计（共 ' + n + ' 个数据）</p>';
+            html += '<div class="stat-grid">';
+            html += statItem(n, '样本数', true);
+            html += statItem(sum, '总和');
+            html += statItem(mean, '均值', true);
+            html += statItem(median, '中位数');
+            html += statItem(modes.length ? modes.join(', ') : '—', '众数');
+            html += statItem(min, '最小值');
+            html += statItem(max, '最大值');
+            html += statItem(range, '极差');
+            html += '</div>';
+
+            html += '<div class="stat-grid">';
+            html += statItem(popVar, '总体方差');
+            html += statItem(popSd, '总体标准差');
+            html += statItem(samVar, '样本方差');
+            html += statItem(samSd, '样本标准差');
+            html += statItem(q1, '第一四分位 Q1');
+            html += statItem(q3, '第三四分位 Q3');
+            html += statItem(iqr, '四分位距 IQR', true);
+            html += '</div>';
+
+            // 数据集B：相关系数与线性回归
+            var bText = dataB.value.trim();
+            if (bText) {
+                var b = parseData(bText);
+                if (b.length === 0) {
+                    html += '<p class="section-title" style="color:#ef4444;">数据集B无有效数字，已跳过相关分析</p>';
+                } else if (b.length !== a.length) {
+                    html += '<p class="section-title" style="color:#ef4444;">数据集A(' + a.length + ')与B(' + b.length + ')长度不一致，相关分析需等长数据</p>';
+                } else if (b.length < 2) {
+                    html += '<p class="section-title" style="color:#ef4444;">数据过少，相关分析至少需要2组数据</p>';
+                } else {
+                    var corr = ss.sampleCorrelation(a, b);
+                    // 线性回归：数据需为 [[x, y]] 数组格式
+                    var points = [];
+                    for (var i = 0; i < a.length; i++) points.push([a[i], b[i]]);
+                    var reg = ss.linearRegression(points);
+                    var m = reg.m, bb = reg.b;
+
+                    var corrDesc = describeCorr(corr);
+
+                    html += '<div class="corr-card">';
+                    html += '<h3>🔗 数据集 A 与 B 的相关分析</h3>';
+                    html += '<div class="corr-grid">';
+                    html += '<div class="ci"><div class="cv">' + escapeHtml(fmt(corr)) + '</div><div class="cl">相关系数 r</div></div>';
+                    html += '<div class="ci"><div class="cv">' + escapeHtml(fmt(m)) + '</div><div class="cl">回归斜率</div></div>';
+                    html += '<div class="ci"><div class="cv">' + escapeHtml(fmt(bb)) + '</div><div class="cl">回归截距</div></div>';
+                    html += '<div class="ci"><div class="cv" style="font-size:0.95em;">' + escapeHtml(corrDesc) + '</div><div class="cl">相关性</div></div>';
+                    html += '</div>';
+                    html += '</div>';
+
+                    html += '<div class="reg-eq">线性回归方程： y = ' + fmt(m) + ' × x + ' + fmt(bb) + '</div>';
+                }
+            }
+
+            resultArea.innerHTML = html;
+            setStatus('计算完成：数据集A共 ' + n + ' 个数据' + (bText ? '，含相关分析' : ''), 'success');
+        } catch (e) {
+            resultArea.innerHTML = '';
+            setStatus('计算出错：' + (e && e.message ? e.message : e), 'error');
+        }
+    }
+
+    // 计算众数（支持多众数）
+    function computeModes(arr) {
+        var freq = {};
+        var maxF = 0;
+        for (var i = 0; i < arr.length; i++) {
+            var k = String(arr[i]);
+            freq[k] = (freq[k] || 0) + 1;
+            if (freq[k] > maxF) maxF = freq[k];
+        }
+        if (maxF <= 1) return []; // 无众数（每个都只出现一次）
+        var result = [];
+        for (var key in freq) {
+            if (freq[key] === maxF) result.push(key);
+        }
+        return result;
+    }
+
+    function describeCorr(r) {
+        var a = Math.abs(r);
+        var strength;
+        if (a >= 0.8) strength = '强';
+        else if (a >= 0.5) strength = '中等';
+        else if (a >= 0.3) strength = '弱';
+        else strength = '极弱';
+        var dir = r > 0 ? '正' : (r < 0 ? '负' : '无');
+        if (a < 0.1) return '几乎无相关';
+        return strength + dir + '相关';
+    }
+
+    document.getElementById('calcBtn').addEventListener('click', calc);
+    document.getElementById('clearBtn').addEventListener('click', function () {
+        dataA.value = ''; dataB.value = ''; resultArea.innerHTML = '';
+        setStatus('已清空', 'info');
+    });
+    document.getElementById('sampleBtn').addEventListener('click', function () {
+        dataA.value = '12, 15, 18, 22, 25, 28, 30, 33, 35, 40';
+        dataB.value = '8, 10, 14, 16, 20, 24, 26, 30, 32, 38';
+        calc();
+    });
+
+    initSidebar('daily');
+</script>
+</body>
+</html>

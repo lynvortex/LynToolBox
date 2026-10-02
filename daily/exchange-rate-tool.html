@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>汇率换算器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="汇率换算器，纯前端汇率计算工具，内置常用货币预设汇率，支持自定义汇率，离线可用，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.convert-box{background:#f8fafc;border:1px solid #e0e6ed;border-radius:14px;padding:24px;margin-bottom:16px;}
+.convert-row{display:flex;gap:12px;align-items:center;margin-bottom:14px;}
+.convert-row select{padding:12px;border:1px solid #e0e6ed;border-radius:8px;font-size:.9em;outline:none;width:130px;}
+.convert-row input{flex:1;padding:12px 16px;border:1px solid #e0e6ed;border-radius:8px;font-size:1.05em;font-weight:600;outline:none;text-align:right;}
+.swap-btn{padding:10px 14px;border:1px solid #e0e6ed;border-radius:8px;background:#fff;cursor:pointer;font-size:1.2em;transition:.2s;}
+.swap-btn:hover{background:#f1f5f9;transform:rotate(180deg);}
+.result-card{background:linear-gradient(135deg,#4a90e2,#3a7bd5);color:#fff;border-radius:14px;padding:20px;text-align:center;margin-bottom:16px;}
+.result-big{font-size:2em;font-weight:700;font-family:'Courier New',monospace;}
+.result-info{font-size:.82em;opacity:.9;margin-top:6px;}
+.rate-table{width:100%;border-collapse:collapse;font-size:.82em;}
+.rate-table th,.rate-table td{padding:8px 10px;border:1px solid #e0e6ed;text-align:center;}
+.rate-table th{background:#f1f5f9;color:#475569;font-weight:600;}
+.rate-table input{width:70px;padding:4px 6px;border:1px solid #e0e6ed;border-radius:4px;font-size:.85em;text-align:center;}
+.info-note{background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:10px;font-size:.8em;color:#92400e;margin-bottom:14px;}
+</style>
+    <meta name="keywords" content="汇率换算器,在线汇率换算器,日常通用,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/daily/exchange-rate-tool.html" />
+    <meta property="og:title" content="汇率换算器" />
+    <meta property="og:description" content="汇率换算器，纯前端汇率计算工具，内置常用货币预设汇率，支持自定义汇率，离线可用，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/daily/exchange-rate-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="汇率换算器" />
+    <meta itemprop="description" content="汇率换算器，纯前端汇率计算工具，内置常用货币预设汇率，支持自定义汇率，离线可用，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "日常通用",
+                "item": "https://box.lynvortex.top/daily.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "汇率换算器",
+                "item": "https://box.lynvortex.top/daily/exchange-rate-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "汇率换算器",
+        "url": "https://box.lynvortex.top/daily/exchange-rate-tool.html",
+        "description": "主流货币实时汇率换算，支持自定义汇率与离线缓存",
+        "applicationCategory": "日常通用",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>💱 汇率换算器</h1><p>多货币汇率换算，支持自定义汇率</p></div>
+<div class="info-note">💡 预设汇率为参考值，可点击汇率表中的数值自行修改。汇率实时波动，请以银行实际汇率为准。</div>
+<div class="convert-box">
+<div class="convert-row">
+<select id="fromCurrency"></select>
+<input type="number" id="fromAmount" value="100" min="0" step="0.01"/>
+</div>
+<div style="text-align:center;margin-bottom:14px;"><button class="swap-btn" id="swapBtn">⇅</button></div>
+<div class="convert-row">
+<select id="toCurrency"></select>
+<input type="number" id="toAmount" readonly style="background:#f1f5f9;"/>
+</div>
+</div>
+<div class="result-card">
+<div class="result-big" id="resultDisplay">¥0.00</div>
+<div class="result-info" id="rateInfo">1 CNY = 0.14 USD</div>
+</div>
+<h3 style="font-size:.95em;color:#2c3e50;margin-bottom:10px;">📊 汇率表 (基准: CNY 人民币)</h3>
+<div style="overflow-x:auto;"><table class="rate-table" id="rateTable">
+<tr><th>货币</th><th>代码</th><th>1 CNY =</th><th>1单位 = CNY</th></tr>
+</table></div>
+<div id="statusBar" class="status-bar info">选择货币输入金额实时换算</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 汇率换算器</h3><p>多货币汇率换算</p><div class="feature-chips"><span class="feature-chip">10+货币</span><span class="feature-chip">自定义汇率</span><span class="feature-chip">离线可用</span><span class="feature-chip">双向换算</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>内置常用货币参考汇率</li><li>点击汇率表数值可直接修改</li><li>支持双向货币换算</li><li>离线可用，无需联网</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var currencies=[
+{code:'CNY',name:'人民币',symbol:'¥',rate:1},
+{code:'USD',name:'美元',symbol:'$',rate:0.14},
+{code:'EUR',name:'欧元',symbol:'€',rate:0.13},
+{code:'GBP',name:'英镑',symbol:'£',rate:0.11},
+{code:'JPY',name:'日元',symbol:'¥',rate:21.5},
+{code:'KRW',name:'韩元',symbol:'₩',rate:188},
+{code:'HKD',name:'港币',symbol:'$',rate:1.09},
+{code:'TWD',name:'新台币',symbol:'$',rate:4.48},
+{code:'SGD',name:'新加坡元',symbol:'$',rate:0.19},
+{code:'AUD',name:'澳元',symbol:'$',rate:0.21},
+{code:'CAD',name:'加元',symbol:'$',rate:0.19},
+{code:'RUB',name:'俄罗斯卢布',symbol:'₽',rate:12.8}
+];
+var savedRates={};
+try{savedRates=JSON.parse(localStorage.getItem('exchange_rates')||'{}');}catch(e){}
+currencies.forEach(function(c){if(savedRates[c.code])c.rate=savedRates[c.code];});
+var fromSel=document.getElementById('fromCurrency'),toSel=document.getElementById('toCurrency');
+currencies.forEach(function(c){
+var o1=document.createElement('option');o1.value=c.code;o1.textContent=c.symbol+' '+c.code+' '+c.name;fromSel.appendChild(o1);
+var o2=document.createElement('option');o2.value=c.code;o2.textContent=c.symbol+' '+c.code+' '+c.name;toSel.appendChild(o2);
+});
+fromSel.value='CNY';toSel.value='USD';
+function getRate(code){var c=currencies.find(function(x){return x.code===code;});return c?c.rate:1;}
+function convert(){
+var from=fromSel.value,to=toSel.value;
+var amount=parseFloat(document.getElementById('fromAmount').value)||0;
+var fromRate=getRate(from),toRate=getRate(to);
+var cnyAmount=amount/fromRate;
+var result=cnyAmount*toRate;
+document.getElementById('toAmount').value=result.toFixed(2);
+var toCur=currencies.find(function(c){return c.code===to;});
+document.getElementById('resultDisplay').textContent=toCur.symbol+result.toFixed(2);
+var fromRatePerTo=(1/fromRate*toRate);
+document.getElementById('rateInfo').textContent='1 '+from+' = '+fromRatePerTo.toFixed(4)+' '+to;
+}
+fromSel.onchange=convert;toSel.onchange=convert;
+document.getElementById('fromAmount').oninput=convert;
+document.getElementById('swapBtn').onclick=function(){var tmp=fromSel.value;fromSel.value=toSel.value;toSel.value=tmp;convert();};
+function renderRateTable(){
+var tbody='';
+currencies.forEach(function(c){
+tbody+='<tr><td>'+c.name+'</td><td>'+c.code+'</td>';
+tbody+='<td><input type="number" value="'+c.rate.toFixed(4)+'" data-code="'+c.code+'" step="0.0001"/></td>';
+tbody+='<td>'+(1/c.rate).toFixed(4)+'</td></tr>';
+});
+document.getElementById('rateTable').innerHTML='<tr><th>货币</th><th>代码</th><th>1 CNY =</th><th>1单位 = CNY</th></tr>'+tbody;
+document.querySelectorAll('#rateTable input').forEach(function(inp){
+inp.oninput=function(){
+var code=this.dataset.code;
+var c=currencies.find(function(x){return x.code===code;});
+if(c){c.rate=parseFloat(this.value)||c.rate;savedRates[code]=c.rate;localStorage.setItem('exchange_rates',JSON.stringify(savedRates));renderRateTable();convert();}
+};
+});
+}
+renderRateTable();convert();
+initSidebar('daily');
+</script>
+</body>
+</html>

@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>大小写转换 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="大小写转换，英文文本大小写快速互转，支持首字母大写等多种模式。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', -apple-system, sans-serif;
+            background: #f4f7f9;
+            margin: 0;
+            display: flex;
+            height: 100vh; overflow: hidden;
+            color: #333;
+        }
+
+        .mobile-header {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: #fff; padding: 0 16px; align-items: center;
+            justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+        }
+        .mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+        .mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+        .menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #e8845a; }
+
+        .sidebar {
+            width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+            display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+            transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+            position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item {
+            display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+            transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+        }
+        .category-item:hover, .category-item.active { background: #fdf0eb; color: #e8845a; border-left-color: #e8845a; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+        /* 工具卡片 —— 去掉最大宽度，占满剩余区域 */
+        .tool-container {
+            width: 100%;
+            max-width: 960px;
+            background: #fff; border-radius: 12px;
+            padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+        }
+        .tool-header { text-align: center; margin-bottom: 28px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+        .mode-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
+        .mode-btn {
+            padding: 8px 18px; border: 2px solid #e1e4e8; border-radius: 8px;
+            background: white; color: #606266; font-size: 0.9em; cursor: pointer;
+            transition: all 0.2s; font-family: inherit; font-weight: 500;
+        }
+        .mode-btn:hover { border-color: #4a90e2; color: #4a90e2; }
+        .mode-btn.active { border-color: #4a90e2; background: #4a90e2; color: white; }
+
+        .io-wrap {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        @media (max-width: 600px) { .io-wrap { grid-template-columns: 1fr; } }
+
+        .io-block label {
+            display: block; font-size: 0.85em; color: #64748b; margin-bottom: 8px; font-weight: 500;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 14px;
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            font-size: 0.92em;
+            font-family: 'Consolas', 'Courier New', monospace;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+        textarea:focus { border-color: #4a90e2; }
+        textarea[readonly] { background: #f8fafc; cursor: default; }
+
+        .char-count { font-size: 0.78em; color: #c0c4cc; text-align: right; margin-top: 4px; }
+
+        .action-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em;
+            font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap;
+        }
+        .btn-primary { background: #e8845a; color: white; }
+        .btn-primary:hover { background: #d4734a; }
+        .btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .btn-outline { background: transparent; color: #e8845a; border: 1px solid #e8845a; }
+        .btn-outline:hover { background: #e8845a; color: white; }
+        .btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+        .btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+
+        .status-bar {
+            margin-top: 18px; min-height: 20px; font-size: 0.85em;
+            padding: 8px 12px; border-radius: 6px;
+        }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+        .footer p { margin: 0; }
+        .footer a { color: #e8845a; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+
+        /* 信息卡片 —— 同样宽度拉满 */
+        .info-cards {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-top: 4px;
+        }
+
+        .info-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 22px 24px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+            border: 1px solid #f0f2f5;
+        }
+
+        .info-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1em;
+            color: #2c3e50;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .info-card p {
+            margin: 0 0 10px 0;
+            font-size: 0.82em;
+            color: #64748b;
+        }
+
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip {
+            background: #e0f2fe; color: #0369a1;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace;
+        }
+
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a {
+            font-size: 0.85em; color: #4a90e2; text-decoration: none;
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s;
+        }
+        .tool-links a:hover { background: #e2e8f0; }
+
+        @media (max-width: 768px) {
+            body { display: block; height: auto; overflow: auto; }
+            .mobile-header { display: flex; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .close-sidebar { display: block; }
+            .main-content { display: block; }
+            .main-scroll { padding: 72px 16px 32px; gap: 20px;  }
+            .tool-container { padding: 24px 16px; border-radius: 10px; }
+            .tool-header h1 { font-size: 1.3em; }
+            .action-row { gap: 8px; }
+            .btn { padding: 8px 14px; font-size: 0.85em; }
+            .info-card { padding: 18px 16px; }
+            .overlay.active { display: block; }
+        }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="大小写转换,在线大小写转换,文本处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/text/case-convert-tool.html" />
+    <meta property="og:title" content="大小写转换" />
+    <meta property="og:description" content="大小写转换，英文文本大小写快速互转，支持首字母大写等多种模式。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/text/case-convert-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="大小写转换" />
+    <meta itemprop="description" content="大小写转换，英文文本大小写快速互转，支持首字母大写等多种模式。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文本处理",
+                "item": "https://box.lynvortex.top/text.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "大小写转换",
+                "item": "https://box.lynvortex.top/text/case-convert-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "大小写转换",
+        "url": "https://box.lynvortex.top/text/case-convert-tool.html",
+        "description": "英文文本大小写快速互转，支持首字母大写等多种模式",
+        "applicationCategory": "文本处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🔡 大小写转换</h1>
+                <p>纯前端转换，支持多种大小写模式，实时完成，无网络请求</p>
+            </div>
+
+            <div class="mode-group" id="modeGroup">
+                <button class="mode-btn active" data-type="1">全部大写</button>
+                <button class="mode-btn" data-type="2">全部小写</button>
+                <button class="mode-btn" data-type="3">首字母大写</button>
+                <button class="mode-btn" data-type="4">句首大写</button>
+                <button class="mode-btn" data-type="5">大小写互转</button>
+            </div>
+
+            <div class="io-wrap">
+                <div class="io-block">
+                    <label>输入文本</label>
+                    <textarea id="inputText" placeholder="在此输入需要转换的英文文本..."></textarea>
+                    <div class="char-count" id="inputCount">0 字符</div>
+                </div>
+                <div class="io-block">
+                    <label>转换结果</label>
+                    <textarea id="outputText" readonly placeholder="转换结果将显示在这里..."></textarea>
+                    <div class="char-count" id="outputCount">0 字符</div>
+                </div>
+            </div>
+
+            <div class="action-row">
+                <button class="btn btn-primary" id="convertBtn">🔄 转换</button>
+                <button class="btn btn-outline" id="copyBtn">📋 复制结果</button>
+                <button class="btn btn-ghost" id="clearBtn">🗑️ 清空</button>
+            </div>
+
+            <div class="status-bar info" id="statusBar">选择转换模式，输入文本后点击转换</div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#e8845a;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#e8845a;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片区域 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 转换模式说明</h3>
+                <p>支持五种常用的大小写转换模式，涵盖日常文本处理需求</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">全大写</span>
+                    <span class="tld-chip">全小写</span>
+                    <span class="tld-chip">首字母大写</span>
+                    <span class="tld-chip">句首大写</span>
+                    <span class="tld-chip">大小写互转</span>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>全部转换均在浏览器本地完成，数据不会上传</li>
+                    <li>首字母大写模式会将每个单词的首字母转为大写</li>
+                    <li>句首大写模式会以句号、问号、感叹号等作为句子分隔</li>
+                    <li>大小写互转会交换字母的大小写状态（大写→小写，小写→大写）</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    
+    // 侧边栏由 sidebar.js 统一管理
+    initSidebar('text');
+
+// UI 元素
+    const inputText = document.getElementById('inputText');
+    const outputText = document.getElementById('outputText');
+    const inputCount = document.getElementById('inputCount');
+    const outputCount = document.getElementById('outputCount');
+    const statusBar = document.getElementById('statusBar');
+    const convertBtn = document.getElementById('convertBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const modeGroup = document.getElementById('modeGroup');
+
+    let currentType = 1; // 1=全部大写 2=全部小写 3=首字母大写 4=句首大写 5=大小写互转
+
+    // 模式切换
+    modeGroup.addEventListener('click', (e) => {
+        const btn = e.target.closest('.mode-btn');
+        if (!btn) return;
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentType = parseInt(btn.dataset.type, 10);
+        setStatus('已切换模式，输入内容后点击转换', 'info');
+        if (inputText.value.trim()) doConvert();
+    });
+
+    // 字符计数
+    inputText.addEventListener('input', () => {
+        inputCount.textContent = `${inputText.value.length} 字符`;
+    });
+
+    // 纯前端转换逻辑
+    const convertCase = function(text, type) {
+        switch (type) {
+            case 1: // 全部大写
+                return text.toUpperCase();
+            case 2: // 全部小写
+                return text.toLowerCase();
+            case 3: // 首字母大写 (Title Case)
+                return text.replace(/\b\w/g, char => char.toUpperCase());
+            case 4: // 句首大写
+                // 以 .!? 结尾的句子，后面跟空格然后新句子首字母大写
+                return text.replace(/(^|[.!?]\s+)(\w)/g, (match, p1, p2) => p1 + p2.toUpperCase());
+            case 5: // 大小写互转
+                return text.split('').map(char => {
+                    if (char === char.toUpperCase()) {
+                        return char.toLowerCase();
+                    } else {
+                        return char.toUpperCase();
+                    }
+                }).join('');
+            default:
+                return text;
+        }
+    }
+
+    const doConvert = function() {
+        const input = inputText.value.trim();
+        if (!input) {
+            setStatus('请先输入需要转换的文本', 'error');
+            return;
+        }
+
+        convertBtn.disabled = true;
+        convertBtn.textContent = '转换中...';
+        setStatus('正在转换...', 'info');
+
+        setTimeout(() => {
+            try {
+                const result = convertCase(input, currentType);
+                outputText.value = result;
+                outputCount.textContent = `${result.length} 字符`;
+                setStatus('转换成功 ✓', 'success');
+            } catch (err) {
+                setStatus(`转换失败：${err.message}`, 'error');
+            } finally {
+                convertBtn.disabled = false;
+                convertBtn.textContent = '🔄 转换';
+            }
+        }, 50);
+    }
+
+    const copyResult = function() {
+        const output = outputText.value;
+        if (!output) {
+            setStatus('没有可复制的内容', 'error');
+            return;
+        }
+        navigator.clipboard.writeText(output).then(() => {
+            setStatus('已复制到剪贴板 ✓', 'success');
+        }).catch(() => {
+            outputText.select();
+            document.execCommand('copy');
+            setStatus('已复制到剪贴板 ✓', 'success');
+        });
+    }
+
+    const clearAll = function() {
+        inputText.value = '';
+        outputText.value = '';
+        inputCount.textContent = '0 字符';
+        outputCount.textContent = '0 字符';
+        setStatus('已清空', 'info');
+    }
+
+    const setStatus = function(msg, type) {
+        statusBar.textContent = msg;
+        statusBar.className = `status-bar ${type}`;
+    }
+
+    convertBtn.addEventListener('click', doConvert);
+    copyBtn.addEventListener('click', copyResult);
+    clearBtn.addEventListener('click', clearAll);
+
+    inputText.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === 'Enter') doConvert();
+    });
+</script>
+</body>
+</html>

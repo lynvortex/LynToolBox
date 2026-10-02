@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>农历节气查询 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="农历节气查询工具，纯前端查询公历对应农历、干支、生肖、节气与传统节日，基于lunar-javascript，数据本地处理。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <script src="../assets/sidebar.js"></script>
+    <script src="../assets/lunar.js"></script>
+    <style>
+        .date-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 22px; }
+        .date-row .form-item { flex: 1; min-width: 200px; }
+        .quick-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+        .quick-btn { padding: 6px 14px; border-radius: 16px; border: 1px solid #e0e6ed; background: #f8fafc; color: #64748b; cursor: pointer; font-size: 0.82em; transition: 0.2s; }
+        .quick-btn:hover { background: #ebf5ff; color: #4a90e2; border-color: #4a90e2; }
+
+        .hero-card { background: linear-gradient(135deg, #4a90e2 0%, #3a7bd5 100%); color: #fff; border-radius: 14px; padding: 26px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+        .hero-solar { flex: 1; min-width: 160px; }
+        .hero-solar .y { font-size: 0.95em; opacity: 0.85; }
+        .hero-solar .md { font-size: 2.4em; font-weight: 700; line-height: 1.1; font-family: 'Courier New', monospace; }
+        .hero-solar .wk { font-size: 0.95em; opacity: 0.9; margin-top: 4px; }
+        .hero-lunar { flex: 1; min-width: 160px; text-align: right; }
+        .hero-lunar .gz { font-size: 1.5em; font-weight: 700; font-family: 'Courier New', monospace; }
+        .hero-lunar .lm { font-size: 1.1em; margin-top: 6px; }
+        .hero-lunar .sx { font-size: 0.9em; opacity: 0.9; margin-top: 4px; }
+        @media (max-width: 520px) { .hero-lunar { text-align: left; } }
+
+        .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 18px; }
+        .detail-item { background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 10px; padding: 14px; text-align: center; }
+        .detail-item .dv { font-size: 1.25em; font-weight: 700; color: #2c3e50; font-family: 'Courier New', monospace; word-break: break-all; }
+        .detail-item .dl { font-size: 0.76em; color: #94a3b8; margin-top: 4px; }
+
+        .tag-section { margin-bottom: 14px; }
+        .tag-section h4 { margin: 0 0 8px 0; font-size: 0.9em; color: #475569; font-weight: 600; }
+        .tag-list { display: flex; flex-wrap: wrap; gap: 8px; }
+        .tag-pill { padding: 6px 14px; border-radius: 20px; font-size: 0.85em; font-weight: 500; }
+        .tag-jieqi { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+        .tag-festival { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+        .tag-solar { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
+        .tag-empty { color: #94a3b8; font-size: 0.85em; }
+
+        .holiday-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 8px; }
+        .holiday-item { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 12px; font-size: 0.82em; }
+        .holiday-item .hn { font-weight: 600; color: #15803d; }
+        .holiday-item .hd { color: #64748b; font-size: 0.9em; margin-top: 2px; }
+    </style>
+    <meta name="keywords" content="农历节气查询,在线农历节气查询,日常通用,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/daily/lunar-tool.html" />
+    <meta property="og:title" content="农历节气查询" />
+    <meta property="og:description" content="农历节气查询工具，纯前端查询公历对应农历、干支、生肖、节气与传统节日，基于lunar-javascript，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/daily/lunar-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="农历节气查询" />
+    <meta itemprop="description" content="农历节气查询工具，纯前端查询公历对应农历、干支、生肖、节气与传统节日，基于lunar-javascript，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "日常通用",
+                "item": "https://box.lynvortex.top/daily.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "农历节气查询",
+                "item": "https://box.lynvortex.top/daily/lunar-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "农历节气查询",
+        "url": "https://box.lynvortex.top/daily/lunar-tool.html",
+        "description": "公历对应农历干支生肖节气与传统节日查询",
+        "applicationCategory": "日常通用",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🗓️ 农历节气查询</h1>
+                <p>公历转农历、干支纪年、生肖、星座、节气与传统节日，数据本地处理</p>
+            </div>
+
+            <div class="date-row">
+                <div class="form-item"><label>选择日期</label><input type="date" id="dateInput" /></div>
+                <button class="btn btn-primary" id="todayBtn">今天</button>
+            </div>
+
+            <div class="quick-row">
+                <div class="quick-btn" data-offset="-7">一周前</div>
+                <div class="quick-btn" data-offset="-1">昨天</div>
+                <div class="quick-btn" data-offset="1">明天</div>
+                <div class="quick-btn" data-offset="7">一周后</div>
+                <div class="quick-btn" data-offset="30">一月后</div>
+                <div class="quick-btn" data-offset="365">一年后</div>
+            </div>
+
+            <div id="resultArea"></div>
+
+            <div id="statusBar" class="status-bar info">选择日期即可查询农历信息，所有数据在浏览器本地计算</div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 农历节气查询</h3>
+                <p>查询任意公历日期对应的农历、干支、生肖、节气与传统节日信息</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">公历转农历</span>
+                    <span class="feature-chip">干支纪年</span>
+                    <span class="feature-chip">生肖</span>
+                    <span class="feature-chip">节气</span>
+                    <span class="feature-chip">传统节日</span>
+                    <span class="feature-chip">星座</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>支持查询任意日期的农历、干支、生肖、星座信息</li>
+                    <li>当日若处于二十四节气则显示对应节气名称</li>
+                    <li>同时显示公历与农历传统节日</li>
+                    <li>基于 lunar-javascript，纯前端本地计算，无需联网</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    // 兼容 lunar 命名空间或 UMD 全局导出
+    var L = (function () {
+        if (typeof lunar !== 'undefined' && lunar.Solar) return lunar;
+        return {
+            Solar: (typeof Solar !== 'undefined') ? Solar : null,
+            Lunar: (typeof Lunar !== 'undefined') ? Lunar : null,
+            SolarUtil: (typeof SolarUtil !== 'undefined') ? SolarUtil : null,
+            LunarUtil: (typeof LunarUtil !== 'undefined') ? LunarUtil : null,
+            HolidayUtil: (typeof HolidayUtil !== 'undefined') ? HolidayUtil : null
+        };
+    })();
+
+    var WEEK_CN = ['日', '一', '二', '三', '四', '五', '六'];
+
+    // 安全调用方法，缺失或异常时返回默认值
+    function safeCall(obj, method, fallback) {
+        try {
+            if (obj && typeof obj[method] === 'function') return obj[method]();
+        } catch (e) { /* 忽略 */ }
+        return fallback;
+    }
+
+    var dateInput = document.getElementById('dateInput');
+    var resultArea = document.getElementById('resultArea');
+    var statusBar = document.getElementById('statusBar');
+
+    document.getElementById('todayBtn').addEventListener('click', function () {
+        dateInput.value = new Date().toISOString().slice(0, 10);
+        render();
+    });
+
+    document.querySelectorAll('.quick-btn').forEach(function (b) {
+        b.addEventListener('click', function () {
+            var base = dateInput.value ? new Date(dateInput.value) : new Date();
+            if (isNaN(base)) base = new Date();
+            base.setDate(base.getDate() + parseInt(b.dataset.offset, 10));
+            dateInput.value = base.toISOString().slice(0, 10);
+            render();
+        });
+    });
+
+    function render() {
+        if (!L.Solar) { setStatus('农历库(lunar.js)未加载，请检查资源', 'error'); return; }
+        var val = dateInput.value;
+        if (!val) { setStatus('请先选择日期', 'info'); return; }
+        var parts = val.split('-');
+        var date = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        if (isNaN(date)) { setStatus('日期格式无效', 'error'); return; }
+
+        try {
+            var solar = L.Solar.fromDate(date);
+            var lunar = safeCall(solar, 'getLunar', null);
+            if (!lunar) { setStatus('无法获取农历对象', 'error'); return; }
+
+            var sYear = solar.getYear();
+            var sMonth = solar.getMonth();
+            var sDay = solar.getDay();
+            var weekIdx = safeCall(solar, 'getWeek', date.getDay());
+
+            // 农历信息（各方法用 try/catch 保护）
+            var lYearGz = safeCall(lunar, 'getYearInGanZhi', '—');
+            var lMonthGz = safeCall(lunar, 'getMonthInGanZhi', '—');
+            var lDayGz = safeCall(lunar, 'getDayInGanZhi', '—');
+            var lMonthCn = safeCall(lunar, 'getMonthInChinese', '');
+            var lDayCn = safeCall(lunar, 'getDayInChinese', '');
+            // 生肖：尝试多种方法名
+            var shengXiao = safeCall(lunar, 'getShengXiao', null) || safeCall(lunar, 'getShengxiao', null) || safeCall(lunar, 'getYearShengXiao', '—');
+            var xingZuo = safeCall(solar, 'getXingZuo', '—');
+            var jieQi = safeCall(lunar, 'getJieQi', '');
+
+            // 节日
+            var lunarFestivals = safeCall(lunar, 'getFestivals', []) || [];
+            var solarFestivals = safeCall(solar, 'getFestivals', []) || [];
+            var lunarOther = safeCall(lunar, 'getOtherFestivals', []) || [];
+            var solarOther = safeCall(solar, 'getOtherFestivals', []) || [];
+
+            // 节气节日列表（当年）
+            var yearHolidays = [];
+            if (L.HolidayUtil) {
+                try { yearHolidays = L.HolidayUtil.getHolidays(sYear) || []; } catch (e) { yearHolidays = []; }
+            }
+
+            var html = '';
+
+            // 主卡片
+            html += '<div class="hero-card">';
+            html += '<div class="hero-solar">';
+            html += '<div class="y">公历 ' + escapeHtml(String(sYear)) + ' 年</div>';
+            html += '<div class="md">' + sMonth + '月' + sDay + '日</div>';
+            html += '<div class="wk">星期' + escapeHtml(WEEK_CN[weekIdx] || '?') + ' · ' + escapeHtml(xingZuo) + '座</div>';
+            html += '</div>';
+            html += '<div class="hero-lunar">';
+            html += '<div class="gz">' + escapeHtml(lYearGz) + '年</div>';
+            html += '<div class="lm">' + escapeHtml(lMonthCn) + '月' + escapeHtml(lDayCn) + '</div>';
+            html += '<div class="sx">生肖：' + escapeHtml(shengXiao) + '</div>';
+            html += '</div>';
+            html += '</div>';
+
+            // 干支详情
+            html += '<div class="detail-grid">';
+            html += '<div class="detail-item"><div class="dv">' + escapeHtml(lYearGz) + '</div><div class="dl">干支年</div></div>';
+            html += '<div class="detail-item"><div class="dv">' + escapeHtml(lMonthGz) + '</div><div class="dl">干支月</div></div>';
+            html += '<div class="detail-item"><div class="dv">' + escapeHtml(lDayGz) + '</div><div class="dl">干支日</div></div>';
+            html += '<div class="detail-item"><div class="dv">' + escapeHtml(shengXiao) + '</div><div class="dl">生肖</div></div>';
+            html += '<div class="detail-item"><div class="dv">' + escapeHtml(xingZuo) + '</div><div class="dl">星座</div></div>';
+            html += '<div class="detail-item"><div class="dv">' + escapeHtml(lMonthCn) + '月' + escapeHtml(lDayCn) + '</div><div class="dl">农历</div></div>';
+            html += '</div>';
+
+            // 节气
+            html += '<div class="tag-section"><h4>🌿 当日节气</h4><div class="tag-list">';
+            if (jieQi) {
+                html += '<span class="tag-pill tag-jieqi">' + escapeHtml(jieQi) + '</span>';
+            } else {
+                html += '<span class="tag-empty">当日非节气交节日</span>';
+            }
+            html += '</div></div>';
+
+            // 节日
+            html += '<div class="tag-section"><h4>🎉 当日节日</h4><div class="tag-list">';
+            var hasFestival = false;
+            lunarFestivals.forEach(function (f) { html += '<span class="tag-pill tag-festival">' + escapeHtml(String(f)) + '</span>'; hasFestival = true; });
+            solarFestivals.forEach(function (f) { html += '<span class="tag-pill tag-solar">' + escapeHtml(String(f)) + '</span>'; hasFestival = true; });
+            lunarOther.forEach(function (f) { html += '<span class="tag-pill tag-festival">' + escapeHtml(String(f)) + '</span>'; hasFestival = true; });
+            solarOther.forEach(function (f) { html += '<span class="tag-pill tag-solar">' + escapeHtml(String(f)) + '</span>'; hasFestival = true; });
+            if (!hasFestival) html += '<span class="tag-empty">当日无传统节日</span>';
+            html += '</div></div>';
+
+            // 当年法定节假日列表
+            if (yearHolidays.length > 0) {
+                html += '<div class="tag-section"><h4>📅 ' + escapeHtml(String(sYear)) + ' 年法定节假日安排</h4><div class="holiday-list">';
+                // 去重并排序
+                var seen = {};
+                var uniq = [];
+                yearHolidays.forEach(function (h) {
+                    try {
+                        var name = h.getName ? h.getName() : String(h);
+                        var target = h.getTarget ? h.getTarget() : '';
+                        var key = name + '|' + target;
+                        if (!seen[key]) { seen[key] = true; uniq.push({ name: name, target: target, isWork: h.isWork ? h.isWork() : false }); }
+                    } catch (e) { /* 忽略 */ }
+                });
+                uniq.forEach(function (h) {
+                    var label = h.isWork ? '（补班）' : '（放假）';
+                    html += '<div class="holiday-item"><div class="hn">' + escapeHtml(h.name) + label + '</div><div class="hd">' + escapeHtml(h.target) + '</div></div>';
+                });
+                html += '</div></div>';
+            }
+
+            resultArea.innerHTML = html;
+            setStatus('查询成功，共解析 ' + (lunarFestivals.length + solarFestivals.length) + ' 个当日节日', 'success');
+        } catch (e) {
+            resultArea.innerHTML = '';
+            setStatus('查询出错：' + (e && e.message ? e.message : e), 'error');
+        }
+    }
+
+    dateInput.addEventListener('change', render);
+    // 默认今天
+    dateInput.value = new Date().toISOString().slice(0, 10);
+    render();
+
+    initSidebar('daily');
+</script>
+</body>
+</html>

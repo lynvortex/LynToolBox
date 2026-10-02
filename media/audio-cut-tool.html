@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>音频剪辑 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="上传音频文件，裁剪指定时间段、调整音量、导出处理后的音频，纯浏览器本地处理" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+
+        .ac-wave { width: 100%; height: 120px; background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 8px; margin-bottom: 16px; position: relative; cursor: pointer; }
+        .ac-range { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; }
+        .ac-range input[type=range] { flex: 1; }
+        .ac-time { font-family: 'Courier New', monospace; font-size: 0.85em; color: #64748b; min-width: 60px; text-align: center; }
+        .ac-controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="音频剪辑,在线音频剪辑,音视频处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/media/audio-cut-tool.html" />
+    <meta property="og:title" content="音频剪辑" />
+    <meta property="og:description" content="上传音频文件，裁剪指定时间段、调整音量、导出处理后的音频，纯浏览器本地处理" />
+    <meta property="og:url" content="https://box.lynvortex.top/media/audio-cut-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="音频剪辑" />
+    <meta itemprop="description" content="上传音频文件，裁剪指定时间段、调整音量、导出处理后的音频，纯浏览器本地处理" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "音视频处理",
+                "item": "https://box.lynvortex.top/media.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "音频剪辑",
+                "item": "https://box.lynvortex.top/media/audio-cut-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "音频剪辑",
+        "url": "https://box.lynvortex.top/media/audio-cut-tool.html",
+        "description": "上传音频文件，裁剪指定时间段、调整音量、导出WAV",
+        "applicationCategory": "音视频处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>✂️ 音频剪辑</h1>
+                <p>上传音频文件，裁剪指定时间段、调整音量、导出处理后的音频，纯浏览器本地处理</p>
+            </div>
+
+            <div class="form-item" style="margin-bottom:16px;">
+                <label>选择音频文件</label>
+                <input type="file" id="acFile" accept="audio/*" />
+            </div>
+            <audio id="acAudio" controls style="width:100%;margin-bottom:16px;display:none;"></audio>
+            <canvas class="ac-wave" id="acWave"></canvas>
+            <div class="ac-range">
+                <span class="ac-time" id="acStartLabel">00:00</span>
+                <input type="range" id="acStart" min="0" max="100" value="0" />
+                <input type="range" id="acEnd" min="0" max="100" value="100" />
+                <span class="ac-time" id="acEndLabel">00:00</span>
+            </div>
+            <div class="form-grid">
+                <div class="form-item"><label>音量调整</label><input type="range" id="acVol" min="0" max="200" value="100" /><span class="hint" id="acVolLabel">100%</span></div>
+                <div class="form-item"><label>导出格式</label><select id="acFmt"><option value="audio/wav">WAV (无损)</option></select></div>
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-primary" id="acExport" disabled>⬇ 导出剪辑</button>
+                <button class="btn btn-ghost" id="acPlaySel">▶ 试听选中段</button>
+            </div>
+    
+            <div id="statusBar" class="status-bar info">准备就绪，请按提示操作</div>
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 音频剪辑</h3>
+                <p>基于Web Audio API裁剪音频片段，支持音量调节与WAV导出</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">Web Audio API</span>
+                    <span class="feature-chip">波形可视化</span>
+                    <span class="feature-chip">音量调节</span>
+                    <span class="feature-chip">WAV导出</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>支持MP3、WAV、OGG、M4A等常见音频格式</li>
+                    <li>拖动两个滑块选择裁剪的起止时间</li>
+                    <li>可调整音量（0%-200%）后导出</li>
+                    <li>导出格式为WAV，所有处理在本地完成</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+
+    let acBuffer = null, acCtx = null;
+    const setStatus = (m,t) => { const s=document.getElementById('statusBar'); s.textContent=m; s.className='status-bar '+(t||'info'); };
+    const fmt = s => { s=Math.floor(s); return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); };
+
+    document.getElementById('acFile').addEventListener('change', async (e) => {
+        const file = e.target.files[0]; if (!file) return;
+        acCtx = acCtx || new (window.AudioContext || window.webkitAudioContext)();
+        const ab = await file.arrayBuffer();
+        acBuffer = await acCtx.decodeAudioData(ab);
+        document.getElementById('acAudio').src = URL.createObjectURL(file);
+        document.getElementById('acAudio').style.display = 'block';
+        drawWave();
+        document.getElementById('acEnd').max = Math.floor(acBuffer.duration);
+        document.getElementById('acEnd').value = Math.floor(acBuffer.duration);
+        document.getElementById('acStart').max = Math.floor(acBuffer.duration);
+        document.getElementById('acExport').disabled = false;
+        updateLabels();
+        setStatus('音频加载完成，时长 ' + fmt(acBuffer.duration) + '，拖动滑块选择裁剪范围', 'success');
+    });
+
+    function drawWave() {
+        const canvas = document.getElementById('acWave');
+        const ctx = canvas.getContext('2d');
+        const data = acBuffer.getChannelData(0);
+        canvas.width = canvas.offsetWidth;
+        canvas.height = 120;
+        ctx.fillStyle = '#f8fafc'; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.strokeStyle = '#4a90e2'; ctx.lineWidth = 1;
+        const step = Math.ceil(data.length / canvas.width);
+        for (let i = 0; i < canvas.width; i++) {
+            const slice = data.slice(i*step, (i+1)*step);
+            let max = 0; for (let j=0;j<slice.length;j++) max=Math.max(max,Math.abs(slice[j]));
+            const h = max * canvas.height * 0.9;
+            ctx.beginPath(); ctx.moveTo(i, canvas.height/2 - h/2); ctx.lineTo(i, canvas.height/2 + h/2); ctx.stroke();
+        }
+    }
+
+    function updateLabels() {
+        const s = +document.getElementById('acStart').value;
+        const e = +document.getElementById('acEnd').value;
+        document.getElementById('acStartLabel').textContent = fmt(s);
+        document.getElementById('acEndLabel').textContent = fmt(e);
+    }
+    document.getElementById('acStart').addEventListener('input', updateLabels);
+    document.getElementById('acEnd').addEventListener('input', updateLabels);
+    document.getElementById('acVol').addEventListener('input', e => { document.getElementById('acVolLabel').textContent = e.target.value + '%'; });
+
+    document.getElementById('acPlaySel').addEventListener('click', () => {
+        if (!acBuffer) return;
+        const src = acCtx.createBufferSource();
+        src.buffer = acBuffer;
+        const gain = acCtx.createGain();
+        gain.gain.value = +document.getElementById('acVol').value / 100;
+        src.connect(gain); gain.connect(acCtx.destination);
+        const start = +document.getElementById('acStart').value;
+        const end = +document.getElementById('acEnd').value;
+        src.start(0, start, end - start);
+    });
+
+    document.getElementById('acExport').addEventListener('click', () => {
+        if (!acBuffer) return;
+        const start = +document.getElementById('acStart').value;
+        const end = +document.getElementById('acEnd').value;
+        const vol = +document.getElementById('acVol').value / 100;
+        const dur = end - start;
+        const rate = acBuffer.sampleRate;
+        const offCtx = new OfflineAudioContext(acBuffer.numberOfChannels, Math.ceil(dur * rate), rate);
+        const src = offCtx.createBufferSource();
+        src.buffer = acBuffer;
+        const gain = offCtx.createGain();
+        gain.gain.value = vol;
+        src.connect(gain); gain.connect(offCtx.destination);
+        src.start(0, start, dur);
+        offCtx.startRendering().then(rendered => {
+            const wav = audioBufferToWav(rendered);
+            const blob = new Blob([wav], { type: 'audio/wav' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'clip-' + Date.now() + '.wav';
+            a.click();
+            setStatus('导出完成，时长 ' + fmt(dur), 'success');
+        });
+    });
+
+    function audioBufferToWav(buffer) {
+        const numCh = buffer.numberOfChannels, len = buffer.length * numCh * 2 + 44;
+        const ab = new ArrayBuffer(len), view = new DataView(ab);
+        const wr = (off, str) => { for (let i=0;i<str.length;i++) view.setUint8(off+i, str.charCodeAt(i)); };
+        wr(0, 'RIFF'); view.setUint32(4, len-8, true); wr(8, 'WAVE'); wr(12, 'fmt ');
+        view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, numCh, true);
+        view.setUint32(24, buffer.sampleRate, true); view.setUint32(28, buffer.sampleRate*numCh*2, true);
+        view.setUint16(32, numCh*2, true); view.setUint16(34, 16, true); wr(36, 'data'); view.setUint32(40, len-44, true);
+        let off = 44;
+        for (let i=0;i<buffer.length;i++) for (let ch=0;ch<numCh;ch++) {
+            let s = Math.max(-1, Math.min(1, buffer.getChannelData(ch)[i]));
+            view.setInt16(off, s<0?s*0x8000:s*0x7FFF, true); off += 2;
+        }
+        return ab;
+    }
+    
+    initSidebar('media');
+</script>
+</body>
+</html>

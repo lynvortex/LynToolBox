@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>网站源码查看器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="网站源码查看器，纯前端在线查看网页HTML源码，支持格式化高亮与CORS代理，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.url-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px;}
+.url-row input{flex:1;min-width:200px;padding:10px 14px;border:1px solid #e0e6ed;border-radius:8px;font-size:.9em;font-family:'Consolas',monospace;outline:none;}
+.url-row input:focus{border-color:#4a90e2;}
+.opt-row{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:14px;padding:12px 16px;background:#f8fafc;border-radius:8px;font-size:.85em;color:#475569;}
+.opt-row label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;}
+pre.src-code{max-height:520px;font-size:.82em;line-height:1.6;}
+.tag{color:#60a5fa;}.attr{color:#fbbf24;}.val{color:#34d399;}.text{color:#e2e8f0;}.comment{color:#64748b;font-style:italic;}
+.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+@media(max-width:600px){.meta-grid{grid-template-columns:1fr;}}
+.meta-card{background:#f8fafc;border:1px solid #f0f2f5;border-radius:8px;padding:14px;}
+.meta-card .ml{font-size:.78em;color:#94a3b8;margin-bottom:4px;}
+.meta-card .mv{font-size:.88em;color:#2c3e50;font-weight:600;word-break:break-all;}
+</style>
+    <meta name="keywords" content="网站源码查看器,在线网站源码查看器,网络工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/network/source-view-tool.html" />
+    <meta property="og:title" content="网站源码查看器" />
+    <meta property="og:description" content="网站源码查看器，纯前端在线查看网页HTML源码，支持格式化高亮与CORS代理，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/network/source-view-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="网站源码查看器" />
+    <meta itemprop="description" content="网站源码查看器，纯前端在线查看网页HTML源码，支持格式化高亮与CORS代理，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "网络工具",
+                "item": "https://box.lynvortex.top/network.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "网站源码查看器",
+                "item": "https://box.lynvortex.top/network/source-view-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "网站源码查看器",
+        "url": "https://box.lynvortex.top/network/source-view-tool.html",
+        "description": "输入网址在线查看网页HTML源码，支持格式化高亮显示",
+        "applicationCategory": "网络工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🔍 网站源码查看器</h1><p>在线查看任意网页的HTML源码，支持格式化高亮</p></div>
+<div class="url-row">
+<input type="text" id="url" placeholder="https://example.com" value="https://example.com"/>
+<button class="btn btn-primary" id="fetchBtn">查看源码</button>
+</div>
+<div class="opt-row">
+<label><input type="checkbox" id="proxyBox" checked/> 使用CORS代理</label>
+<label><input type="checkbox" id="formatBox" checked/> 格式化HTML</label>
+<label><input type="checkbox" id="metaBox"/> 提取Meta信息</label>
+</div>
+<div id="metaArea" style="display:none;" class="meta-grid"></div>
+<div id="statusBar" class="status-bar info">输入网址后点击查看源码</div>
+<pre class="src-code output" id="codeArea" style="display:none;"></pre>
+<div class="btn-row" style="margin-top:12px;">
+<button class="btn btn-outline" id="copyBtn">📋 复制源码</button>
+<button class="btn btn-ghost" id="downloadBtn">⬇ 下载HTML</button>
+</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+</footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 功能说明</h3><p>在线查看网页HTML源码，支持格式化与元信息提取</p><div class="feature-chips"><span class="feature-chip">源码查看</span><span class="feature-chip">语法高亮</span><span class="feature-chip">格式化</span><span class="feature-chip">Meta提取</span><span class="feature-chip">CORS代理</span><span class="feature-chip">下载HTML</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>浏览器CORS限制下，需通过代理才能获取跨域网页源码</li><li>默认使用公共CORS代理(allorigins.win)，可能不稳定</li><li>格式化功能会自动缩进HTML标签，便于阅读</li><li>Meta提取可获取title、description、keywords等信息</li><li>所有数据在浏览器本地处理，不经过自有服务器</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+initSidebar('network');
+var sb=document.getElementById('statusBar'),rawSrc='';
+function formatHTML(html){var indent='',out='',i=0;html=html.replace(/>\s*</g,'><');var tokens=html.split(/(<[^>]+>)/);tokens.forEach(function(tok){if(!tok)return;if(tok.startsWith('<!--')){out+='\n'+indent+tok+'\n';}else if(tok.startsWith('</')){indent=indent.slice(2);out+=indent+tok+'\n';}else if(tok.startsWith('<')&&!tok.startsWith('<!')&&!tok.endsWith('/>')){out+=indent+tok+'\n';var tag=tok.match(/^<(\w+)/);if(tag&&!['br','hr','img','input','meta','link','area','base','col','embed','source','track','wbr'].includes(tag[1].toLowerCase()))indent+='  ';}else if(tok.startsWith('<')){out+=indent+tok+'\n';}else{tok=tok.trim();if(tok)out+=indent+tok+'\n';}});return out;}
+function highlightHTML(html){return escapeHtml(html).replace(/(&lt;!--[\s\S]*?--&gt;)/g,'<span class="comment">$1</span>').replace(/(&lt;\/?)([\w-]+)/g,'$1<span class="tag">$2</span>').replace(/([\w-]+)=(&quot;.*?&quot;)/g,'<span class="attr">$1</span>=<span class="val">$2</span>');}
+function extractMeta(html){var metas={};var m;m=html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);metas['标题']=m?m[1].trim():'无';['description','keywords','author','viewport'].forEach(function(name){var re=new RegExp('<meta[^>]+name=["\']'+name+'["\'][^>]+content=["\']([^"\']*)',"i");m=html.match(re);if(m)metas[name]=m[1];else{re=new RegExp('<meta[^>]+content=["\']([^"\']*)["\'][^>]+name=["\']'+name+'["\']',"i");m=html.match(re);metas[name]=m?m[1]:'无';}});m=html.match(/<meta[^>]+charset=["\']?([\w-]+)/i);metas['编码']=m?m[1]:'UTF-8';m=html.match(/<html[^>]+lang=["\']([\w-]+)/i);metas['语言']=m?m[1]:'未知';return metas;}
+document.getElementById('fetchBtn').onclick=async function(){
+var url=document.getElementById('url').value.trim();if(!url){setStatus('请输入URL','error');return;}
+if(!url.startsWith('http'))url='https://'+url;
+var useProxy=document.getElementById('proxyBox').checked;
+var fetchUrl=useProxy?'https://api.allorigins.win/raw?url='+encodeURIComponent(url):url;
+setStatus('正在获取源码...','info');document.getElementById('codeArea').style.display='none';document.getElementById('metaArea').style.display='none';
+try{
+var resp=await fetch(fetchUrl);if(!resp.ok)throw new Error('HTTP '+resp.status);
+var text=await resp.text();rawSrc=text;
+var display=document.getElementById('formatBox').checked?formatHTML(text):text;
+var codeEl=document.getElementById('codeArea');codeEl.innerHTML=highlightHTML(display);codeEl.style.display='block';
+if(document.getElementById('metaBox').checked){var metas=extractMeta(text);var ma=document.getElementById('metaArea');ma.innerHTML='';for(var k in metas){var d=document.createElement('div');d.className='meta-card';d.innerHTML='<div class="ml">'+k+'</div><div class="mv">'+escapeHtml(metas[k])+'</div>';ma.appendChild(d);}ma.style.display='grid';}
+setStatus('源码获取成功 · '+text.length+' 字符','success');
+}catch(e){setStatus('获取失败：'+e.message+(useProxy?'':'（尝试开启CORS代理）'),'error');}
+};
+document.getElementById('copyBtn').onclick=function(){if(!rawSrc){setStatus('没有可复制的内容','error');return;}navigator.clipboard.writeText(rawSrc).then(function(){setStatus('已复制到剪贴板','success');}).catch(function(){setStatus('复制失败','error');});};
+document.getElementById('downloadBtn').onclick=function(){if(!rawSrc){setStatus('没有可下载的内容','error');return;}var blob=new Blob([rawSrc],{type:'text/html'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='source.html';a.click();setStatus('已下载','success');};
+</script>
+</body>
+</html>

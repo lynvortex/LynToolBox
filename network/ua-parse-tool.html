@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User-Agent 解析 - 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="User-Agent解析，解析UA字符串中的浏览器、系统、设备信息。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+* { box-sizing: border-box; }
+body {
+    font-family: 'PingFang SC', -apple-system, sans-serif;
+    background: #f4f7f9;
+    margin: 0;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    color: #333;
+}
+
+.mobile-header {
+    display: none;
+    position: fixed; top: 0; left: 0; right: 0; height: 60px;
+    background: #fff; padding: 0 20px; align-items: center;
+    justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+}
+.mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+.mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+.menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #4a90e2; }
+
+.sidebar {
+    width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+    display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+    transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+}
+.brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+.brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+.brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+.brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+.close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+.category-list { padding: 16px 0; flex: 1; }
+.category-item {
+    display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+    transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+}
+.category-item:hover, .category-item.active { background: #ebf5ff; color: #4a90e2; border-left-color: #4a90e2; }
+
+.main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+.tool-container {
+    width: 100%;
+    max-width: 960px;
+    background: #fff; border-radius: 12px;
+    padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+}
+.tool-header { text-align: center; margin-bottom: 28px; }
+.tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+.tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+.btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em; font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap; }
+.btn-primary { background: #4a90e2; color: white; }
+.btn-primary:hover { background: #3a7bd5; }
+.btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+.btn-outline { background: transparent; color: #4a90e2; border: 1px solid #4a90e2; }
+.btn-outline:hover { background: #4a90e2; color: white; }
+.btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+.btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+
+.status-bar { min-height: 20px; font-size: 0.85em; padding: 8px 12px; border-radius: 6px; margin-bottom: 16px; }
+.status-bar.success { color: #16a34a; background: #f0fdf4; }
+.status-bar.error { color: #ef4444; background: #fef2f2; }
+.status-bar.info { color: #64748b; background: #f8fafc; }
+
+.info-cards { width: 100%; max-width: 960px; display: flex; flex-direction: column; gap: 18px; }
+.info-card { background: #fff; border-radius: 12px; padding: 22px 24px; box-shadow: 0 4px 25px rgba(0,0,0,0.06); border: 1px solid #f0f2f5; }
+.info-card h3 { margin: 0 0 10px 0; font-size: 1em; color: #2c3e50; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.info-card p { margin: 0 0 10px 0; font-size: 0.82em; color: #64748b; }
+
+.footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+.footer p { margin: 0; }
+        .footer a { color: #4a90e2; text-decoration: none; }
+
+.overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+
+@media (max-width: 768px) {
+    body { display: block; height: auto; overflow: auto; }
+    .mobile-header { display: flex; }
+    .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+    .sidebar.active { transform: translateX(0); }
+    .close-sidebar { display: block; }
+    .main-content { display: block; }
+    .main-scroll { padding: 72px 16px 32px; gap: 20px;  }
+    .tool-container { padding: 24px 16px; border-radius: 10px; }
+    .tool-header h1 { font-size: 1.3em; }
+    .overlay.active { display: block; }
+}
+        textarea:focus { border-color: #4a90e2; }
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
+        .btn:hover { background: #357abd; }
+        .btn-outline:hover { background: #f0f7ff; }
+        .btn-success { background: #22c55e; }
+        .btn-success:hover { background: #16a34a; }
+        .result-area { display: none; margin-top: 10px; border: 1px solid #f0f2f5; border-radius: 10px; overflow: hidden; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .res-table { width: 100%; border-collapse: collapse; }
+        .res-table tr th { background: #f8fafc; width: 35%; padding: 15px; text-align: left; color: #64748b; font-size: 0.85em; border-bottom: 1px solid #f0f2f5; }
+        .res-table tr td { padding: 15px; color: #1e293b; font-size: 0.95em; border-bottom: 1px solid #f0f2f5; word-break: break-all; }
+        .res-table tr:last-child th, .res-table tr:last-child td { border-bottom: none; }
+        .ua-templates { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+        .ua-tpl {
+            padding: 6px 14px;
+            border-radius: 16px;
+            border: 1px solid #e0e6ed;
+            background: #f8fafc;
+            cursor: pointer;
+            font-size: 0.8em;
+            color: #64748b;
+            transition: all 0.2s;
+        }
+        .ua-tpl:hover { border-color: #4a90e2; color: #4a90e2; background: #f0f7ff; }
+        .copy-tip { display: none; color: #22c55e; font-size: 0.85em; margin-left: 10px; }
+        .footer a { color: #4a90e2; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+        .info-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1em;
+            color: #2c3e50;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .info-card p {
+            margin: 0 0 10px 0;
+            font-size: 0.82em;
+            color: #64748b;
+        }
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a {
+            font-size: 0.85em; color: #4a90e2; text-decoration: none;
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s;
+        }
+        .tool-links a:hover { background: #e2e8f0; }
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip {
+            background: #e0f2fe; color: #0369a1;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace;
+        }
+            .overlay.active { display: block; }
+            .btn-group { flex-direction: column; }
+        }
+</style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="User-Agent解析,在线User-Agent解析,网络工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/network/ua-parse-tool.html" />
+    <meta property="og:title" content="User-Agent 解析" />
+    <meta property="og:description" content="User-Agent解析，解析UA字符串中的浏览器、系统、设备信息。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/network/ua-parse-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="User-Agent 解析" />
+    <meta itemprop="description" content="User-Agent解析，解析UA字符串中的浏览器、系统、设备信息。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "网络工具",
+                "item": "https://box.lynvortex.top/network.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "User-Agent解析",
+                "item": "https://box.lynvortex.top/network/ua-parse-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "User-Agent解析",
+        "url": "https://box.lynvortex.top/network/ua-parse-tool.html",
+        "description": "解析UA字符串中的浏览器、系统、设备信息",
+        "applicationCategory": "网络工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+    <main class="main-content">
+        <div class="main-scroll">
+
+            <div class="tool-container">
+                <div class="tool-header">
+                    <h1>User-Agent 解析</h1>
+                    <p>解析 User-Agent 字符串，识别浏览器、操作系统和设备类型</p>
+                </div>
+
+                <div class="form-group">
+                    <label>快速填充模板</label>
+                    <div class="ua-templates">
+                        <span class="ua-tpl" onclick="fillUA('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36')">Chrome Win</span>
+                        <span class="ua-tpl" onclick="fillUA('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36')">Chrome Mac</span>
+                        <span class="ua-tpl" onclick="fillUA('Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0')">Firefox Win</span>
+                        <span class="ua-tpl" onclick="fillUA('Mozilla/5.0 (iPhone; CPU iPhone OS 17_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Mobile/15E148 Safari/604.1')">Safari iOS</span>
+                        <span class="ua-tpl" onclick="fillUA('Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36')">Chrome Android</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="uaInput">User-Agent 字符串</label>
+                    <textarea id="uaInput" placeholder="粘贴 User-Agent 字符串..." spellcheck="false"></textarea>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn" onclick="parseUA()">解析</button>
+                    <button class="btn btn-outline" onclick="useCurrentUA()">使用当前浏览器 UA</button>
+                    <button class="btn btn-outline" onclick="clearUA()">清空</button>
+                </div>
+
+                <div id="resultArea" class="result-area">
+                    <table class="res-table">
+                        <tbody id="resultBody"></tbody>
+                    </table>
+                </div>
+
+                <footer class="footer">
+                    &copy; 2026 绘萤者-Lynvortex &middot; 美梦多彩 理想自由
+            <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+                </footer>
+            </div>
+
+            <div class="info-cards">
+                <div class="info-card">
+                    <h3>UA 解析说明</h3>
+                    <p>User-Agent 字符串包含浏览器、操作系统和设备信息，通过正则匹配实现纯前端解析。</p>
+                    <div class="tld-chips">
+                        <span class="tld-chip">浏览器</span>
+                        <span class="tld-chip">操作系统</span>
+                        <span class="tld-chip">设备类型</span>
+                        <span class="tld-chip">正则匹配</span>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <h3>使用须知</h3>
+                    <ul class="tips-list">
+                        <li>点击"使用当前浏览器 UA"自动填入当前浏览器的 UA 字符串</li>
+                        <li>点击模板可快速填充常见 UA 进行测试</li>
+                        <li>解析结果包含浏览器名称/版本、操作系统、设备类型</li>
+                        <li>所有解析在浏览器本地完成，数据不会上传到服务器</li>
+                    </ul>
+                </div>
+                <div class="info-card">
+                    <h3>绘萤者</h3>
+                    <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                    <div class="tool-links">
+                        <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                        <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                        <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                        <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                    </div>
+                    <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                        绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        const parseUA = function() {
+            const ua = document.getElementById('uaInput').value.trim();
+            const resultArea = document.getElementById('resultArea');
+            const resBody = document.getElementById('resultBody');
+
+            resultArea.style.display = 'none';
+
+            if (!ua) {
+                resBody.innerHTML = '<tr><th>提示</th><td style="color:#f59e0b;">请输入 User-Agent 字符串</td></tr>';
+                resultArea.style.display = 'block';
+                return;
+            }
+
+            let result = {
+                browserName: '未知',
+                browserVersion: '未知',
+                osName: '未知',
+                osVersion: '未知',
+                deviceType: '未知'
+            };
+
+            let lower = ua.toLowerCase();
+
+            // 浏览器检测
+            if (ua.includes('Edg/') || ua.includes('Edge/')) {
+                result.browserName = 'Microsoft Edge';
+                let m = ua.match(/Ed[gG]\/([\d.]+)/);
+                if (m) result.browserVersion = m[1];
+            } else if (ua.includes('Firefox/') && !ua.includes('Seamonkey')) {
+                result.browserName = 'Firefox';
+                let m = ua.match(/Firefox\/([\d.]+)/);
+                if (m) result.browserVersion = m[1];
+            } else if (ua.includes('OPR/') || ua.includes('Opera/')) {
+                result.browserName = 'Opera';
+                let m = ua.match(/(?:OPR|Opera)\/([\d.]+)/);
+                if (m) result.browserVersion = m[1];
+            } else if (lower.includes('chromium')) {
+                result.browserName = 'Chromium';
+                let m = ua.match(/(?:Chrome|Chromium)\/([\d.]+)/);
+                if (m) result.browserVersion = m[1];
+            } else if (ua.includes('Chrome/') && !lower.includes('chromium')) {
+                result.browserName = 'Chrome';
+                let m = ua.match(/Chrome\/([\d.]+)/);
+                if (m) result.browserVersion = m[1];
+            } else if (ua.includes('Safari/') && !ua.includes('Chrome')) {
+                result.browserName = 'Safari';
+                let m = ua.match(/Version\/([\d.]+)/);
+                if (m) result.browserVersion = m[1];
+            } else if (ua.includes('Trident/') || ua.includes('MSIE ')) {
+                result.browserName = 'Internet Explorer';
+                let m = ua.match(/(?:MSIE |rv:)([\d.]+)/);
+                if (m) result.browserVersion = m[1];
+            }
+
+            // 操作系统检测
+            if (lower.includes('windows nt 10')) { result.osName = 'Windows'; result.osVersion = '10/11'; }
+            else if (lower.includes('windows nt 6.3')) { result.osName = 'Windows'; result.osVersion = '8.1'; }
+            else if (lower.includes('windows nt 6.2')) { result.osName = 'Windows'; result.osVersion = '8'; }
+            else if (lower.includes('windows nt 6.1')) { result.osName = 'Windows'; result.osVersion = '7'; }
+            else if (lower.includes('windows nt 6.0')) { result.osName = 'Windows'; result.osVersion = 'Vista'; }
+            else if (lower.includes('windows nt 5.')) { result.osName = 'Windows'; result.osVersion = 'XP'; }
+            else if (lower.includes('mac os x')) {
+                result.osName = 'macOS';
+                let m = ua.match(/Mac OS X ([\d_]+)/);
+                if (m) result.osVersion = m[1].replace(/_/g, '.');
+            }
+            else if (lower.includes('android')) {
+                result.osName = 'Android';
+                let m = ua.match(/Android ([\d.]+)/);
+                if (m) result.osVersion = m[1];
+            }
+            else if (lower.includes('iphone') || lower.includes('ipad')) {
+                result.osName = 'iOS';
+                let m = ua.match(/(?:iPhone OS|CPU OS) ([\d_]+)/);
+                if (m) result.osVersion = m[1].replace(/_/g, '.');
+            }
+            else if (lower.includes('linux')) { result.osName = 'Linux'; }
+
+            // 设备类型检测
+            if (lower.includes('iphone')) { result.deviceType = '手机 (iPhone)'; }
+            else if (lower.includes('ipad')) { result.deviceType = '平板 (iPad)'; }
+            else if (lower.includes('ipod')) { result.deviceType = '便携设备 (iPod)'; }
+            else if (lower.includes('android') && lower.includes('mobile')) { result.deviceType = '手机'; }
+            else if (lower.includes('android') && !lower.includes('mobile')) { result.deviceType = '平板'; }
+            else if (lower.includes('windows phone')) { result.deviceType = '手机 (Windows Phone)'; }
+            else if (lower.includes('tablet')) { result.deviceType = '平板'; }
+            else if (lower.includes('mobile')) { result.deviceType = '手机'; }
+            else if (lower.includes('win') || lower.includes('mac') || lower.includes('linux') || lower.includes('x11')) { result.deviceType = '桌面电脑'; }
+            else { result.deviceType = '未知'; }
+
+            resBody.innerHTML =
+                '<tr><th>浏览器</th><td>' + window.escapeHtml(result.browserName) + ' ' + window.escapeHtml(result.browserVersion) + '</td></tr>' +
+                '<tr><th>操作系统</th><td>' + window.escapeHtml(result.osName) + ' ' + window.escapeHtml(result.osVersion) + '</td></tr>' +
+                '<tr><th>设备类型</th><td>' + window.escapeHtml(result.deviceType) + '</td></tr>' +
+                '<tr><th>原始 UA</th><td style="font-size:0.8em;word-break:break-all;font-family:Consolas,monospace;line-height:1.6;">' + window.escapeHtml(ua) + '</td></tr>';
+
+            resultArea.style.display = 'block';
+        };
+
+        const fillUA = function(ua) {
+            document.getElementById('uaInput').value = ua;
+            parseUA();
+        };
+
+        const useCurrentUA = function() {
+            document.getElementById('uaInput').value = navigator.userAgent;
+            parseUA();
+        };
+
+        const clearUA = function() {
+            document.getElementById('uaInput').value = '';
+            document.getElementById('resultArea').style.display = 'none';
+        };
+
+        initSidebar('network');
+    </script>
+</body>
+</html>

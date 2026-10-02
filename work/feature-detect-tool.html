@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>特性检测 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线浏览器特性检测工具，60+ Web API 支持性检测，存储/媒体/图形/传感器/网络分类，带搜索过滤，前端兼容性调试必备。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<style>
+.fd-search{width:100%;padding:10px 14px;border:1px solid #e0e6ed;border-radius:8px;font-size:0.9em;margin-bottom:14px;}
+.fd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;}
+.fd-item{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:8px;font-size:0.82em;font-family:Consolas,monospace;border:1px solid #eef2f7;}
+.fd-item.ok{background:#f0fdf4;border-color:#dcfce7;color:#166534;}
+.fd-item.no{background:#fef2f2;border-color:#fee2e2;color:#991b1b;}
+.fd-badge{font-weight:700;font-size:1.1em;}
+.fd-group-title{grid-column:1/-1;font-size:0.85em;font-weight:700;color:#4a90e2;margin-top:6px;padding-bottom:4px;border-bottom:2px solid #ebf5ff;}
+</style>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="特性检测,API兼容性,浏览器支持,caniuse,Web API检测,前端调试,编程开发,免费工具,在线工具,纯前端,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/work/feature-detect-tool.html"/>
+<meta property="og:title" content="特性检测"/>
+<meta property="og:description" content="60+ Web API 支持性一键检测。"/>
+<meta property="og:url" content="https://box.lynvortex.top/work/feature-detect-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="特性检测"/>
+<meta itemprop="description" content="60+ Web API 支持性一键检测。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"编程开发","item":"https://box.lynvortex.top/work.html"},{"@type":"ListItem","position":3,"name":"特性检测","item":"https://box.lynvortex.top/work/feature-detect-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"特性检测","url":"https://box.lynvortex.top/work/feature-detect-tool.html","description":"浏览器特性检测工具","applicationCategory":"编程开发","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>🧪 特性检测</h1>
+        <p>当前浏览器 60+ Web API 支持情况一览</p>
+    </div>
+    <input class="fd-search" id="search" placeholder="🔍 搜索 API 名称，如 webgl、storage…"/>
+    <div class="status-bar info" id="statusBar">检测中…</div>
+    <div class="fd-grid" id="grid"></div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 特性检测</h3>
+        <p>按分组检测 API 存在性与关键方法可用性。</p>
+        <div class="feature-chips"><span class="feature-chip">60+ API</span><span class="feature-chip">8大分组</span><span class="feature-chip">搜索过滤</span><span class="feature-chip">实时检测</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>检测的是「能力存在」，权限类 API 仍需用户授权</li>
+            <li>结果仅代表当前浏览器与版本，隐身模式可能不同</li>
+            <li>可当作轻量版 caniuse，用于排查线上兼容问题</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+var CHECKS = [
+    ['💾 存储', [
+        ['localStorage', function(){ try { return !!window.localStorage; } catch(e){ return false; } }],
+        ['sessionStorage', function(){ try { return !!window.sessionStorage; } catch(e){ return false; } }],
+        ['indexedDB', function(){ return 'indexedDB' in window; }],
+        ['Cache API', function(){ return 'caches' in window; }],
+        ['Storage Manager', function(){ return navigator.storage && !!navigator.storage.estimate; }],
+        ['Storage quota API', function(){ return navigator.storage && 'persist' in navigator.storage; }]
+    ]],
+    ['🎬 媒体', [
+        ['getUserMedia', function(){ return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia); }],
+        ['enumerateDevices', function(){ return !!(navigator.mediaDevices && navigator.mediaDevices.enumerateDevices); }],
+        ['getDisplayMedia', function(){ return !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia); }],
+        ['MediaRecorder', function(){ return typeof MediaRecorder !== 'undefined'; }],
+        ['AudioContext', function(){ return !!(window.AudioContext || window.webkitAudioContext); }],
+        ['Web Speech (TTS)', function(){ return 'speechSynthesis' in window; }],
+        ['Web Speech (ASR)', function(){ return 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window; }],
+        ['Picture-in-Picture', function(){ return 'pictureInPictureEnabled' in document; }]
+    ]],
+    ['🎨 图形', [
+        ['Canvas 2D', function(){ return !!document.createElement('canvas').getContext('2d'); }],
+        ['WebGL', function(){ return !!document.createElement('canvas').getContext('webgl'); }],
+        ['WebGL2', function(){ return !!document.createElement('canvas').getContext('webgl2'); }],
+        ['WebGPU', function(){ return 'gpu' in navigator; }],
+        ['OffscreenCanvas', function(){ return 'OffscreenCanvas' in window; }],
+        ['SVG filters', function(){ return 'SVGFEColorMatrixElement' in window; }],
+        ['CSS Grid', function(){ return CSS.supports('display', 'grid'); }],
+        ['CSS Container Query', function(){ return CSS.supports('container-type', 'inline-size'); }],
+        [':has() 选择器', function(){ return CSS.supports('selector(:has(a))'); }],
+        ['CSS Anchor', function(){ return CSS.supports('anchor-name', 'x'); }]
+    ]],
+    ['📡 网络', [
+        ['WebSocket', function(){ return 'WebSocket' in window; }],
+        ['WebRTC', function(){ return 'RTCPeerConnection' in window; }],
+        ['WebRTC DataChannel', function(){ try { var p = new RTCPeerConnection(); var c = p.createDataChannel('t'); return !!c; } catch(e){ return false; } }],
+        ['WebTransport', function(){ return 'WebTransport' in window; }],
+        ['Web Serial', function(){ return 'serial' in navigator; }],
+        ['Web USB', function(){ return 'usb' in navigator; }],
+        ['Web Bluetooth', function(){ return 'bluetooth' in navigator; }],
+        ['Web NFC', function(){ return 'NDEFReader' in window; }],
+        ['Fetch', function(){ return 'fetch' in window; }],
+        ['Network Info', function(){ return !!(navigator.connection || navigator.webkitConnection); }],
+        ['Beacon', function(){ return 'sendBeacon' in navigator; }],
+        ['Server-Sent Events', function(){ return 'EventSource' in window; }]
+    ]],
+    ['📱 传感器与设备', [
+        ['Geolocation', function(){ return 'geolocation' in navigator; }],
+        ['DeviceOrientation', function(){ return 'DeviceOrientationEvent' in window; }],
+        ['DeviceMotion', function(){ return 'DeviceMotionEvent' in window; }],
+        ['Ambient Light', function(){ return 'AmbientLightSensor' in window; }],
+        ['Accelerometer', function(){ return 'Accelerometer' in window; }],
+        ['Gyroscope', function(){ return 'Gyroscope' in window; }],
+        ['Magnetometer', function(){ return 'Magnetometer' in window; }],
+        ['Vibration', function(){ return 'vibrate' in navigator; }],
+        ['Battery', function(){ return 'getBattery' in navigator; }],
+        ['Wake Lock', function(){ return 'wakeLock' in navigator; }],
+        ['Clipboard', function(){ return !!(navigator.clipboard && navigator.clipboard.writeText); }],
+        ['Share', function(){ return 'share' in navigator; }]
+    ]],
+    ['🧠 性能与计算', [
+        ['WebAssembly', function(){ return typeof WebAssembly === 'object'; }],
+        ['SharedArrayBuffer', function(){ return 'SharedArrayBuffer' in window; }],
+        ['Web Workers', function(){ return 'Worker' in window; }],
+        ['Service Worker', function(){ return 'serviceWorker' in navigator; }],
+        ['Performance Observer', function(){ return 'PerformanceObserver' in window; }],
+        ['requestIdleCallback', function(){ return 'requestIdleCallback' in window; }],
+        ['BigInt', function(){ return typeof BigInt === 'function'; }],
+        ['Temporal API', function(){ return 'Temporal' in window; }]
+    ]],
+    ['🔐 安全与身份', [
+        ['Web Crypto', function(){ return !!(window.crypto && crypto.subtle); }],
+        ['WebAuthn', function(){ return 'PublicKeyCredential' in window; }],
+        ['Credential Management', function(){ return 'credentials' in navigator; }],
+        ['Permissions API', function(){ return 'permissions' in navigator; }],
+        ['SubtleCrypto digest', function(){ return !!(crypto.subtle && crypto.subtle.digest); }],
+        ['Passive listeners', function(){ var s = false; try { addEventListener('t', null, { get passive(){ s = true; return false; } }); } catch(e){} return s; }]
+    ]],
+    ['🛠️ 其他', [
+        ['Notification', function(){ return 'Notification' in window; }],
+        ['Push API', function(){ return 'PushManager' in window; }],
+        ['File System Access', function(){ return 'showOpenFilePicker' in window; }],
+        ['IntersectionObserver', function(){ return 'IntersectionObserver' in window; }],
+        ['ResizeObserver', function(){ return 'ResizeObserver' in window; }],
+        ['MutationObserver', function(){ return 'MutationObserver' in window; }],
+        ['Popover API', function(){ return 'showPopover' in HTMLElement.prototype; }],
+        ['View Transitions', function(){ return 'startViewTransition' in document; }],
+        ['Scrollend 事件', function(){ return 'onscrollend' in window; }],
+        ['Structured Clone', function(){ return 'structuredClone' in window; }],
+        ['Custom Elements', function(){ return 'customElements' in window; }],
+        ['Shadow DOM', function(){ return 'attachShadow' in document.createElement('div'); }]
+    ]]
+];
+
+function render(filter) {
+    var grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    var total = 0, supported = 0;
+    CHECKS.forEach(function(group) {
+        var items = group[1].filter(function(c) { return !filter || c[0].toLowerCase().indexOf(filter) !== -1 || group[0].toLowerCase().indexOf(filter) !== -1; });
+        if (!items.length) return;
+        var t = document.createElement('div');
+        t.className = 'fd-group-title';
+        t.textContent = group[0];
+        grid.appendChild(t);
+        items.forEach(function(check) {
+            total++;
+            var ok;
+            try { ok = !!check[1](); } catch (e) { ok = false; }
+            if (ok) supported++;
+            var d = document.createElement('div');
+            d.className = 'fd-item ' + (ok ? 'ok' : 'no');
+            d.innerHTML = '<span>' + check[0] + '</span><span class="fd-badge">' + (ok ? '✓' : '✗') + '</span>';
+            grid.appendChild(d);
+        });
+    });
+    setStatus('共检测 ' + total + ' 项，支持 ' + supported + ' 项（' + Math.round(supported / total * 100) + '%）', 'success');
+}
+
+document.getElementById('search').oninput = function() {
+    render(this.value.trim().toLowerCase());
+};
+render();
+initSidebar('work');
+</script>
+</body>
+</html>

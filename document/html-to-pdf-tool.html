@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HTML转PDF · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="HTML转PDF工具，输入HTML代码或网址内容，将网页渲染为PDF文档导出，基于jsPDF和html2canvas。" />
+    <meta name="robots" content="noindex, follow" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <script src="../assets/jspdf.umd.min.js"></script>
+    <script src="../assets/html2canvas.min.js"></script>
+    <style>
+        .editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+        @media (max-width: 600px) { .editor-grid { grid-template-columns: 1fr; } }
+        .editor-box { border: 1px solid #e0e6ed; border-radius: 10px; overflow: hidden; }
+        .editor-box .editor-header { background: #f1f5f9; padding: 8px 14px; font-size: 0.82em; color: #64748b; font-weight: 600; border-bottom: 1px solid #e0e6ed; }
+        .editor-box textarea { width: 100%; min-height: 400px; padding: 14px; border: none; font-size: 0.85em; font-family: 'Courier New', monospace; resize: vertical; outline: none; }
+        .preview-content { padding: 20px; min-height: 400px; overflow-y: auto; background: #fff; }
+        .opt-row { display: flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="HTML转PDF,在线HTML转PDF,文档处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/document/html-to-pdf-tool.html" />
+    <meta property="og:title" content="HTML转PDF" />
+    <meta property="og:description" content="HTML转PDF工具，输入HTML代码或网址内容，将网页渲染为PDF文档导出，基于jsPDF和html2canvas。" />
+    <meta property="og:url" content="https://box.lynvortex.top/document/html-to-pdf-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="HTML转PDF" />
+    <meta itemprop="description" content="HTML转PDF工具，输入HTML代码或网址内容，将网页渲染为PDF文档导出，基于jsPDF和html2canvas。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文档处理",
+                "item": "https://box.lynvortex.top/document.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "HTML转PDF",
+                "item": "https://box.lynvortex.top/document/html-to-pdf-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "HTML转PDF",
+        "url": "https://box.lynvortex.top/document/html-to-pdf-tool.html",
+        "description": "输入HTML代码预览并导出PDF，基于html2canvas渲染",
+        "applicationCategory": "文档处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>📄 HTML转PDF</h1>
+                <p>输入HTML代码，渲染为PDF文档导出</p>
+            </div>
+
+            <div class="opt-row">
+                <div class="form-item" style="min-width:120px;"><label>页面大小</label><select id="pageSize" style="padding:8px;border:1px solid #e0e6ed;border-radius:6px;">
+                    <option value="a4">A4</option><option value="a3">A3</option><option value="letter">Letter</option>
+                </select></div>
+                <div class="form-item" style="min-width:100px;"><label>方向</label><select id="orientation" style="padding:8px;border:1px solid #e0e6ed;border-radius:6px;">
+                    <option value="p">纵向</option><option value="l">横向</option>
+                </select></div>
+                <button class="btn btn-primary" id="exportBtn" style="padding:10px 24px;">📥 导出PDF</button>
+            </div>
+
+            <div class="editor-grid">
+                <div class="editor-box">
+                    <div class="editor-header">📝 HTML 输入</div>
+                    <textarea id="htmlInput"><div style="text-align:center;padding:40px;">
+<h1 style="color:#4a90e2;">Hello World</h1>
+<p style="color:#666;">这是一个HTML转PDF示例</p>
+<table border="1" style="border-collapse:collapse;width:100%;margin-top:20px;">
+<tr style="background:#4a90e2;color:#fff;"><th>项目</th><th>说明</th></tr>
+<tr><td>HTML转PDF</td><td>支持样式渲染</td></tr>
+<tr><td>表格</td><td>自动分页</td></tr>
+</table>
+<ul style="margin-top:20px;">
+<li>列表项一</li>
+<li>列表项二</li>
+</ul>
+</div></textarea>
+                </div>
+                <div class="editor-box">
+                    <div class="editor-header">👁️ 预览</div>
+                    <div class="preview-content" id="preview"></div>
+                </div>
+            </div>
+
+            <div id="statusBar" class="status-bar info">输入HTML代码，点击导出PDF</div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 HTML转PDF</h3>
+                <p>HTML内容渲染导出为PDF</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">HTML渲染</span>
+                    <span class="feature-chip">CSS样式</span>
+                    <span class="feature-chip">表格支持</span>
+                    <span class="feature-chip">PDF导出</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>支持内联CSS样式</li>
+                    <li>html2canvas截图渲染</li>
+                    <li>自动分页处理长内容</li>
+                    <li>基于jsPDF纯前端生成</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+function updatePreview(){
+    document.getElementById('preview').innerHTML=document.getElementById('htmlInput').value;
+}
+document.getElementById('htmlInput').addEventListener('input',updatePreview);
+updatePreview();
+
+document.getElementById('exportBtn').onclick=function(){
+    var statusBar=document.getElementById('statusBar');
+    statusBar.textContent='正在生成PDF...';statusBar.className='status-bar info';
+    var preview=document.getElementById('preview');
+    html2canvas(preview,{scale:2,backgroundColor:'#ffffff'}).then(function(canvas){
+        var size=document.getElementById('pageSize').value;
+        var orient=document.getElementById('orientation').value;
+        var doc=new jsPDF({orientation:orient,unit:'mm',format:size});
+        var pw=doc.internal.pageSize.width,ph=doc.internal.pageSize.height;
+        var imgData=canvas.toDataURL('image/png');
+        var imgWidth=pw-20;
+        var imgHeight=canvas.height*imgWidth/canvas.width;
+        var heightLeft=imgHeight;
+        var position=10;
+        doc.addImage(imgData,'PNG',10,position,imgWidth,imgHeight);
+        heightLeft-=ph;
+        while(heightLeft>0){
+            position=heightLeft-imgHeight+10;
+            doc.addPage();
+            doc.addImage(imgData,'PNG',10,position,imgWidth,imgHeight);
+            heightLeft-=ph;
+        }
+        doc.save('html_export.pdf');
+        statusBar.textContent='PDF导出完成！';statusBar.className='status-bar success';
+    }).catch(function(e){
+        statusBar.textContent='导出失败：'+e.message;statusBar.className='status-bar error';
+    });
+};
+initSidebar('document');
+</script>
+</body>
+</html>

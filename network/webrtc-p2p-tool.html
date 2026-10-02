@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>WebRTC P2P 通道 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线 WebRTC 点对点通道测试工具，无需信令服务器，手动交换 SDP 建立 P2P 连接，支持文本聊天与文件直传，数据不经服务器。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<style>
+.role-tabs{display:flex;gap:8px;margin-bottom:16px;}
+.role-tab{flex:1;padding:12px;text-align:center;border:2px solid #e0e6ed;border-radius:8px;cursor:pointer;font-weight:600;color:#64748b;}
+.role-tab.active{border-color:#4a90e2;color:#4a90e2;background:#ebf5ff;}
+.sdp-box{width:100%;min-height:110px;padding:10px;border:1px solid #e0e6ed;border-radius:8px;font-family:monospace;font-size:0.78em;background:#f8fafc;word-break:break-all;}
+.chat-log{max-height:220px;overflow-y:auto;border:1px solid #e0e6ed;border-radius:8px;padding:10px;font-size:0.85em;background:#fafbfc;}
+.chat-msg{margin-bottom:6px;padding:6px 10px;border-radius:6px;background:#eef2f7;}
+.chat-msg.self{background:#d9ecff;text-align:right;}
+</style>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="WebRTC,P2P,点对点,DataChannel,SDP,ICE,直连传输,网络工具,免费工具,在线工具,纯前端,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/network/webrtc-p2p-tool.html"/>
+<meta property="og:title" content="WebRTC P2P 通道"/>
+<meta property="og:description" content="无需服务器，手动交换 SDP 建立点对点连接。"/>
+<meta property="og:url" content="https://box.lynvortex.top/network/webrtc-p2p-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="WebRTC P2P 通道"/>
+<meta itemprop="description" content="无需服务器，手动交换 SDP 建立点对点连接。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"网络工具","item":"https://box.lynvortex.top/network.html"},{"@type":"ListItem","position":3,"name":"WebRTC P2P 通道","item":"https://box.lynvortex.top/network/webrtc-p2p-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"WebRTC P2P 通道","url":"https://box.lynvortex.top/network/webrtc-p2p-tool.html","description":"WebRTC点对点通道测试工具","applicationCategory":"网络工具","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>🔗 WebRTC P2P 通道</h1>
+        <p>两台设备浏览器直连，文本/文件点对点传输，不经过任何服务器</p>
+    </div>
+    <div class="role-tabs">
+        <div class="role-tab active" id="tabA">🖥️ A 端（发起方）</div>
+        <div class="role-tab" id="tabB">📱 B 端（接收方）</div>
+    </div>
+    <div id="panelA">
+        <div class="btn-row">
+            <button class="btn btn-primary" id="createOffer">📡 生成邀请码</button>
+            <button class="btn btn-outline" id="copyOffer">复制邀请码</button>
+        </div>
+        <label style="font-size:0.85em;color:#64748b;font-weight:600;">① 我的邀请码（发给对方）</label>
+        <textarea class="sdp-box" id="offerOut" readonly placeholder="点击「生成邀请码」后出现"></textarea>
+        <label style="font-size:0.85em;color:#64748b;font-weight:600;margin-top:10px;display:block;">② 粘贴对方的回执码，然后点连接</label>
+        <textarea class="sdp-box" id="answerIn" placeholder="粘贴 B 端回执码"></textarea>
+        <div class="btn-row" style="margin-top:10px;">
+            <button class="btn btn-primary" id="acceptAnswer">✅ 完成 A 端连接</button>
+        </div>
+    </div>
+    <div id="panelB" style="display:none;">
+        <label style="font-size:0.85em;color:#64748b;font-weight:600;">① 粘贴 A 端邀请码</label>
+        <textarea class="sdp-box" id="offerIn" placeholder="粘贴 A 端邀请码"></textarea>
+        <div class="btn-row" style="margin-top:10px;">
+            <button class="btn btn-primary" id="createAnswer">📨 生成回执码</button>
+            <button class="btn btn-outline" id="copyAnswer">复制回执码</button>
+        </div>
+        <label style="font-size:0.85em;color:#64748b;font-weight:600;display:block;">② 我的回执码（发回给 A 端）</label>
+        <textarea class="sdp-box" id="answerOut" readonly placeholder="生成后出现，连接将自动完成"></textarea>
+    </div>
+    <hr style="border:none;border-top:1px solid #eef2f7;margin:20px 0;"/>
+    <div class="form-grid">
+        <div class="form-item"><label>发送文本</label><input type="text" id="msgIn" placeholder="连接后输入消息"/></div>
+        <div class="form-item"><label>发送小文件（&lt;2MB）</label><input type="file" id="fileIn"/></div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="sendBtn">发送消息</button>
+        <button class="btn btn-ghost" id="closeBtn">断开连接</button>
+    </div>
+    <div class="chat-log" id="chatLog"><div class="chat-msg" style="color:#94a3b8;">等待建立 P2P 连接…</div></div>
+    <div class="status-bar info" id="statusBar">选择角色，A 端先生成邀请码</div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 WebRTC P2P 通道</h3>
+        <p>RTCPeerConnection + DataChannel，ICE 候选全部内嵌于 SDP。</p>
+        <div class="feature-chips"><span class="feature-chip">零服务器</span><span class="feature-chip">手动信令</span><span class="feature-chip">文本聊天</span><span class="feature-chip">文件直传</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>两台设备各自打开本页面，一台当 A 端一台当 B 端</li>
+            <li>邀请码/回执码通过微信、QQ 等任意方式互发</li>
+            <li>严格 NAT 环境可能需要 TURN 中继（本工具仅 STUN）</li>
+            <li>生成邀请码需收集候选，请等待按钮恢复后再复制</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+var pc = null, dc = null, isA = true;
+var chatLog = document.getElementById('chatLog');
+
+function log(msg, self) {
+    if (chatLog.firstChild && chatLog.firstChild.style && chatLog.firstChild.style.color) chatLog.innerHTML = '';
+    var div = document.createElement('div');
+    div.className = 'chat-msg' + (self ? ' self' : '');
+    div.textContent = msg;
+    chatLog.appendChild(div);
+    chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+function newPC() {
+    pc = new RTCPeerConnection({ iceServers: [ { urls: 'stun:stun.l.google.com:19302' } ] });
+    pc.onconnectionstatechange = function() {
+        setStatus('连接状态：' + pc.connectionState, pc.connectionState === 'connected' ? 'success' : 'info');
+    };
+    pc.ondatachannel = function(e) { bindDC(e.channel); };
+}
+
+function bindDC(channel) {
+    dc = channel;
+    dc.onopen = function(){ log('⚡ 数据通道已打开，可以互发消息', false); setStatus('P2P 已连接', 'success'); };
+    dc.onclose = function(){ log('连接已关闭', false); };
+    dc.onmessage = function(e) {
+        if (e.data instanceof Blob) {
+            var fr = new FileReader();
+            fr.onload = function() {
+                var a = document.createElement('a');
+                a.href = fr.result;
+                a.download = 'p2p-file';
+                a.textContent = '';
+                log('📩 收到文件，已触发下载');
+                a.click();
+            };
+            fr.readAsDataURL(e.data);
+        } else {
+            try {
+                var obj = JSON.parse(e.data);
+                if (obj.t === 'f') {
+                    var a2 = document.createElement('a');
+                    a2.href = obj.d;
+                    a2.download = obj.n;
+                    a2.click();
+                    log('📩 收到文件：' + obj.n, false);
+                    return;
+                }
+            } catch (err) {}
+            log('对方：' + e.data, false);
+        }
+    };
+}
+
+function waitIce(pc) {
+    return new Promise(function(resolve) {
+        if (pc.iceGatheringState === 'complete') return resolve();
+        var t = setTimeout(resolve, 3000);
+        pc.onicegatheringstatechange = function() {
+            if (pc.iceGatheringState === 'complete') { clearTimeout(t); resolve(); }
+        };
+    });
+}
+
+document.getElementById('tabA').onclick = function() { switchRole(true); };
+document.getElementById('tabB').onclick = function() { switchRole(false); };
+function switchRole(a) {
+    isA = a;
+    document.getElementById('tabA').classList.toggle('active', a);
+    document.getElementById('tabB').classList.toggle('active', !a);
+    document.getElementById('panelA').style.display = a ? 'block' : 'none';
+    document.getElementById('panelB').style.display = a ? 'none' : 'block';
+    setStatus(a ? '当前角色：A 端（发起方）' : '当前角色：B 端（接收方）', 'info');
+}
+
+document.getElementById('createOffer').onclick = async function() {
+    var btn = this; btn.disabled = true; btn.textContent = '收集候选中…';
+    try {
+        newPC();
+        bindDC(pc.createDataChannel('p2p', { ordered: true }));
+        var offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        await waitIce(pc);
+        document.getElementById('offerOut').value = btoa(unescape(encodeURIComponent(JSON.stringify(pc.localDescription))));
+        setStatus('邀请码已生成，发给对方后等待回执', 'success');
+    } catch (e) { setStatus('生成失败：' + e.message, 'error'); }
+    btn.disabled = false; btn.textContent = '📡 生成邀请码';
+};
+
+document.getElementById('acceptAnswer').onclick = async function() {
+    var txt = document.getElementById('answerIn').value.trim();
+    if (!txt) { setStatus('请先粘贴 B 端回执码', 'error'); return; }
+    try {
+        var answer = JSON.parse(decodeURIComponent(escape(atob(txt))));
+        await pc.setRemoteDescription(answer);
+        setStatus('A 端连接完成，等待数据通道打开…', 'success');
+    } catch (e) { setStatus('回执码无效：' + e.message, 'error'); }
+};
+
+document.getElementById('createAnswer').onclick = async function() {
+    var txt = document.getElementById('offerIn').value.trim();
+    if (!txt) { setStatus('请先粘贴 A 端邀请码', 'error'); return; }
+    var btn = this; btn.disabled = true; btn.textContent = '生成中…';
+    try {
+        var offer = JSON.parse(decodeURIComponent(escape(atob(txt))));
+        newPC();
+        await pc.setRemoteDescription(offer);
+        var answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        await waitIce(pc);
+        document.getElementById('answerOut').value = btoa(unescape(encodeURIComponent(JSON.stringify(pc.localDescription))));
+        setStatus('回执码已生成，发回给 A 端即可完成连接', 'success');
+    } catch (e) { setStatus('邀请码无效：' + e.message, 'error'); }
+    btn.disabled = false; btn.textContent = '📨 生成回执码';
+};
+
+document.getElementById('copyOffer').onclick = function() { copyBox('offerOut'); };
+document.getElementById('copyAnswer').onclick = function() { copyBox('answerOut'); };
+function copyBox(id) {
+    var box = document.getElementById(id);
+    if (!box.value) { setStatus('内容为空', 'error'); return; }
+    box.select();
+    try { document.execCommand('copy'); setStatus('已复制到剪贴板', 'success'); } catch (e) { setStatus('请手动 Ctrl+C 复制', 'info'); }
+}
+
+document.getElementById('sendBtn').onclick = function() {
+    if (!dc || dc.readyState !== 'open') { setStatus('尚未连接', 'error'); return; }
+    var msg = document.getElementById('msgIn').value.trim();
+    if (!msg) return;
+    dc.send(msg);
+    log('我：' + msg, true);
+    document.getElementById('msgIn').value = '';
+};
+
+document.getElementById('msgIn').onkeydown = function(e) {
+    if (e.key === 'Enter') document.getElementById('sendBtn').click();
+};
+
+document.getElementById('fileIn').onchange = function() {
+    if (!dc || dc.readyState !== 'open') { setStatus('尚未连接', 'error'); return; }
+    var f = this.files[0];
+    if (!f || f.size > 2 * 1024 * 1024) { setStatus('文件为空或超过 2MB 限制', 'error'); return; }
+    var fr = new FileReader();
+    fr.onload = function() {
+        dc.send(JSON.stringify({ t: 'f', n: f.name, d: fr.result }));
+        log('📤 已发送文件：' + f.name + '（' + (f.size / 1024).toFixed(1) + ' KB）', true);
+    };
+    fr.readAsDataURL(f);
+    this.value = '';
+};
+
+document.getElementById('closeBtn').onclick = function() {
+    if (dc) dc.close();
+    if (pc) pc.close();
+    pc = null; dc = null;
+    log('已主动断开');
+    setStatus('已断开', 'info');
+};
+initSidebar('network');
+</script>
+</body>
+</html>

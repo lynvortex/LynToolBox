@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>图片拼图对比 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="图片拼图对比工具，纯前端Canvas左右滑动分割线对比两张图片差异，支持拖拽与重叠切换，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.upload-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+@media(max-width:600px){.upload-row{grid-template-columns:1fr;}}
+.upload-slot{border:2px dashed #e0e6ed;border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:.2s;min-height:80px;display:flex;align-items:center;justify-content:center;}
+.upload-slot:hover{border-color:#4a90e2;}
+.upload-slot.has-img{border-style:solid;border-color:#4a90e2;background:#ebf5ff;}
+.upload-slot .us-text{color:#94a3b8;font-size:.85em;}
+.upload-slot .us-name{color:#4a90e2;font-size:.82em;font-weight:600;word-break:break-all;}
+.compare-container{position:relative;width:100%;max-width:600px;margin:0 auto;border-radius:10px;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,0.1);user-select:none;}
+.compare-container canvas{display:block;width:100%;height:auto;}
+.compare-overlay{position:absolute;top:0;left:50%;width:100%;height:100%;pointer-events:none;}
+.compare-divider{position:absolute;top:0;bottom:0;width:3px;background:#fff;box-shadow:0 0 10px rgba(0,0,0,0.3);cursor:ew-resize;pointer-events:auto;left:50%;transform:translateX(-50%);}
+.compare-divider::before{content:'⇆';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:1em;color:#4a90e2;box-shadow:0 2px 8px rgba(0,0,0,0.2);}
+.compare-label{position:absolute;top:8px;padding:4px 12px;background:rgba(0,0,0,0.6);color:#fff;border-radius:20px;font-size:.78em;font-weight:600;}
+.compare-label.left{left:8px;}.compare-label.right{right:8px;}
+</style>
+    <meta name="keywords" content="图片对比工具,在线图片对比工具,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/compare-tool.html" />
+    <meta property="og:title" content="图片拼图对比" />
+    <meta property="og:description" content="图片拼图对比工具，纯前端Canvas左右滑动分割线对比两张图片差异，支持拖拽与重叠切换，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/compare-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="图片拼图对比" />
+    <meta itemprop="description" content="图片拼图对比工具，纯前端Canvas左右滑动分割线对比两张图片差异，支持拖拽与重叠切换，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "图片对比工具",
+                "item": "https://box.lynvortex.top/image/compare-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "图片对比工具",
+        "url": "https://box.lynvortex.top/image/compare-tool.html",
+        "description": "并排或滑动对比两张图片差异，支持放大与像素级检查",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🔍 图片拼图对比</h1><p>左右滑动分割线对比两张图片差异</p></div>
+<div class="upload-row">
+<div class="upload-slot" id="slotA"><div class="us-text">📁 点击上传图片A</div><input type="file" accept="image/*" style="display:none;"/></div>
+<div class="upload-slot" id="slotB"><div class="us-text">📁 点击上传图片B</div><input type="file" accept="image/*" style="display:none;"/></div>
+</div>
+<div id="compareArea" style="display:none;">
+<div class="compare-container" id="compareContainer">
+<canvas id="compareCanvas"></canvas>
+<div class="compare-overlay" id="overlay">
+<div class="compare-label left" id="labelA">图片A</div>
+<div class="compare-label right" id="labelB">图片B</div>
+</div>
+<div class="compare-divider" id="divider"></div>
+</div>
+<div class="btn-row" style="margin-top:14px;justify-content:center;">
+<button class="btn btn-outline" id="downloadBtn">⬇ 下载对比图</button>
+<button class="btn btn-ghost" id="resetBtn">重新选择</button>
+</div>
+</div>
+<div id="statusBar" class="status-bar info">上传两张图片后拖动分割线进行对比</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+</footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 功能说明</h3><p>滑动分割线对比两张图片，直观展示差异</p><div class="feature-chips"><span class="feature-chip">滑动对比</span><span class="feature-chip">拖拽分割</span><span class="feature-chip">左右标注</span><span class="feature-chip">自动适配</span><span class="feature-chip">下载对比</span><span class="feature-chip">离线本地</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>上传两张图片，自动适配为相同尺寸</li><li>拖动中间分割线左右滑动对比</li><li>适用于设计稿对比、修图前后对比等场景</li><li>所有图片处理在浏览器本地完成</li><li>建议两张图片尺寸接近以获得最佳效果</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+initSidebar('image');
+var sb=document.getElementById('statusBar'),imgA=null,imgB=null,splitPos=0.5;
+function setupSlot(slotId,fileInputSelector){var slot=document.getElementById(slotId);slot.onclick=function(){slot.querySelector('input').click();};slot.querySelector('input').onchange=function(){if(this.files[0]){var r=new FileReader();r.onload=function(e){var img=new Image();img.onload=function(){if(slotId==='slotA')imgA=img;else imgB=img;slot.classList.add('has-img');slot.querySelector('.us-text').className='us-name';slot.querySelector('.us-text').textContent=this.files?this.files[0].name:'已加载';checkBoth();}.bind(this);img.src=e.target.result;}.bind(this);r.readAsDataURL(this.files[0]);}};}
+setupSlot('slotA');setupSlot('slotB');
+function checkBoth(){if(imgA&&imgB){document.getElementById('compareArea').style.display='block';renderCompare();setStatus('两张图片已加载，拖动分割线对比','success');}}
+function renderCompare(){var canvas=document.getElementById('compareCanvas'),ctx=canvas.getContext('2d');var w=Math.max(imgA.width,imgB.width),h=Math.max(imgA.height,imgB.height);w=Math.min(w,600);h=Math.min(h,600);canvas.width=w;canvas.height=h;ctx.drawImage(imgA,0,0,w,h);var splitX=Math.floor(w*splitPos);ctx.save();ctx.beginPath();ctx.rect(splitX,0,w-splitX,h);ctx.clip();ctx.drawImage(imgB,0,0,w,h);ctx.restore();document.getElementById('divider').style.left=(splitPos*100)+'%';}
+var dragging=false,container=document.getElementById('compareContainer');
+document.getElementById('divider').addEventListener('mousedown',function(e){dragging=true;e.preventDefault();});
+document.addEventListener('mousemove',function(e){if(!dragging)return;var rect=container.getBoundingClientRect();splitPos=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));renderCompare();});
+document.addEventListener('mouseup',function(){dragging=false;});
+container.addEventListener('touchstart',function(e){var t=e.touches[0];var rect=container.getBoundingClientRect();splitPos=Math.max(0,Math.min(1,(t.clientX-rect.left)/rect.width));renderCompare();});
+container.addEventListener('touchmove',function(e){e.preventDefault();var t=e.touches[0];var rect=container.getBoundingClientRect();splitPos=Math.max(0,Math.min(1,(t.clientX-rect.left)/rect.width));renderCompare();},{passive:false});
+document.getElementById('downloadBtn').onclick=function(){var a=document.createElement('a');a.href=document.getElementById('compareCanvas').toDataURL('image/png');a.download='compare.png';a.click();setStatus('已下载对比图','success');};
+document.getElementById('resetBtn').onclick=function(){imgA=imgB=null;document.getElementById('compareArea').style.display='none';document.querySelectorAll('.upload-slot').forEach(function(s){s.classList.remove('has-img');s.querySelector('.us-text').className='us-text';});s.querySelector('input').value='';document.getElementById('slotA').querySelector('.us-text').textContent='📁 点击上传图片A';document.getElementById('slotB').querySelector('.us-text').textContent='📁 点击上传图片B';setStatus('请重新选择图片','info');};
+</script>
+</body>
+</html>

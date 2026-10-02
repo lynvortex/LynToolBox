@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>浏览器指纹 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线浏览器指纹检测工具，Canvas/WebGL/Audio/字体多维指纹采集与哈希，检测你的浏览器唯一性，所有计算本地完成。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<style>
+.fp-hero{background:linear-gradient(135deg,#667eea,#764ba2);border-radius:12px;padding:26px;text-align:center;color:#fff;margin-bottom:20px;}
+.fp-hash{font-family:Consolas,monospace;font-size:1.5em;font-weight:700;letter-spacing:2px;word-break:break-all;}
+.fp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
+.fp-card{border:1px solid #eef2f7;border-radius:8px;padding:12px 14px;background:#fafbfc;}
+.fp-card h4{margin:0 0 8px;font-size:0.85em;color:#4a90e2;}
+.fp-row{display:flex;justify-content:space-between;gap:10px;font-size:0.8em;padding:3px 0;border-bottom:1px dashed #eef2f7;}
+.fp-row span:first-child{color:#64748b;flex-shrink:0;}
+.fp-row span:last-child{color:#1e293b;text-align:right;word-break:break-all;font-family:Consolas,monospace;}
+.chips{display:flex;flex-wrap:wrap;gap:4px;}
+.f-chip{background:#e2e8f0;border-radius:4px;padding:1px 6px;font-size:0.72em;color:#475569;}
+.f-chip.no{background:#fee2e2;color:#b91c1c;}
+</style>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="浏览器指纹,fingerprint,canvas指纹,webgl指纹,设备指纹,隐私检测,反指纹,编程开发,免费工具,在线工具,纯前端,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/work/fingerprint-tool.html"/>
+<meta property="og:title" content="浏览器指纹"/>
+<meta property="og:description" content="Canvas/WebGL/Audio/字体多维指纹检测。"/>
+<meta property="og:url" content="https://box.lynvortex.top/work/fingerprint-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="浏览器指纹"/>
+<meta itemprop="description" content="Canvas/WebGL/Audio/字体多维指纹检测。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"编程开发","item":"https://box.lynvortex.top/work.html"},{"@type":"ListItem","position":3,"name":"浏览器指纹","item":"https://box.lynvortex.top/work/fingerprint-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"浏览器指纹","url":"https://box.lynvortex.top/work/fingerprint-tool.html","description":"浏览器指纹检测工具","applicationCategory":"编程开发","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>🫆 浏览器指纹</h1>
+        <p>Canvas / WebGL / Audio / 字体多维指纹，全部本地计算</p>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="runBtn">🔍 开始采集指纹</button>
+        <button class="btn btn-outline" id="copyBtn">复制指纹哈希</button>
+    </div>
+    <div class="status-bar info" id="statusBar">点击按钮开始检测，数据不会离开你的浏览器</div>
+    <div class="fp-hero" id="hero" style="display:none;">
+        <div style="font-size:0.85em;opacity:0.85;margin-bottom:6px;">你的综合浏览器指纹</div>
+        <div class="fp-hash" id="fpHash"></div>
+        <div style="font-size:0.8em;opacity:0.8;margin-top:8px;" id="fpBits"></div>
+    </div>
+    <div class="fp-grid" id="grid"></div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 浏览器指纹</h3>
+        <p>采集 30+ 维度设备特征，拼接后计算稳定哈希。</p>
+        <div class="feature-chips"><span class="feature-chip">Canvas哈希</span><span class="feature-chip">WebGL渲染器</span><span class="feature-chip">AudioContext</span><span class="feature-chip">字体探测</span><span class="feature-chip">屏幕/时区</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>指纹用于了解自身浏览器的可识别程度（隐私自查）</li>
+            <li>无痕模式不会改变指纹；更换浏览器/显卡驱动会变</li>
+            <li>字体探测只检测预置字体列表的渲染宽度差异</li>
+            <li>所有采集与哈希计算均在本地 JS 完成</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+function fnv1a(str) {
+    var h = 0x811c9dc5;
+    for (var i = 0; i < str.length; i++) {
+        h ^= str.charCodeAt(i);
+        h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return ('0000000' + h.toString(16)).slice(-8);
+}
+
+function canvasFP() {
+    try {
+        var c = document.createElement('canvas');
+        c.width = 280; c.height = 70;
+        var ctx = c.getContext('2d');
+        ctx.textBaseline = 'top';
+        ctx.font = '14px "Arial"';
+        ctx.fillStyle = '#f60';
+        ctx.fillRect(125, 1, 62, 20);
+        ctx.fillStyle = '#069';
+        ctx.fillText('绘萤指纹🔥fingerprint', 2, 15);
+        ctx.fillStyle = 'rgba(102,204,0,0.7)';
+        ctx.fillText('绘萤指纹🔥fingerprint', 4, 17);
+        var g = ctx.createLinearGradient(0, 0, 280, 0);
+        g.addColorStop(0, '#ff0000'); g.addColorStop(0.5, '#00ff00'); g.addColorStop(1, '#0000ff');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 40, 280, 25);
+        ctx.shadowBlur = 8; ctx.shadowColor = 'blue';
+        ctx.beginPath(); ctx.arc(240, 20, 12, 0, Math.PI * 2); ctx.fill();
+        return fnv1a(c.toDataURL());
+    } catch (e) { return 'unavailable'; }
+}
+
+function webglFP() {
+    try {
+        var c = document.createElement('canvas');
+        var gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+        if (!gl) return { vendor: 'unavailable', renderer: 'unavailable', hash: 'unavailable' };
+        var ext = gl.getExtension('WEBGL_debug_renderer_info');
+        var vendor = ext ? gl.getParameter(ext.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR);
+        var renderer = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+        var params = [];
+        [gl.VERSION, gl.SHADING_LANGUAGE_VERSION, gl.MAX_TEXTURE_SIZE, gl.MAX_RENDERBUFFER_SIZE, gl.MAX_VIEWPORT_DIMS, gl.MAX_VERTEX_ATTRIBS, gl.MAX_VARYING_VECTORS, gl.MAX_FRAGMENT_UNIFORM_VECTORS].forEach(function(p) {
+            try { params.push(String(gl.getParameter(p))); } catch (e) { params.push('?'); }
+        });
+        var exts = (gl.getSupportedExtensions() || []).slice(0, 60).join(',');
+        return { vendor: vendor, renderer: renderer, hash: fnv1a(params.join('|') + exts) };
+    } catch (e) { return { vendor: 'error', renderer: 'error', hash: 'error' }; }
+}
+
+function audioFP() {
+    return new Promise(function(resolve) {
+        try {
+            var ctx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, 44100, 44100);
+            var osc = ctx.createOscillator();
+            osc.type = 'triangle';
+            osc.frequency.value = 10000;
+            var comp = ctx.createDynamicsCompressor();
+            comp.threshold.value = -50; comp.knee.value = 40; comp.ratio.value = 12;
+            comp.attack.value = 0; comp.release.value = 0.25;
+            osc.connect(comp); comp.connect(ctx.destination);
+            osc.start(0);
+            ctx.startRendering().then(function(buf) {
+                var d = buf.getChannelData(0);
+                var sum = 0;
+                for (var i = 4500; i < 5000; i++) sum += Math.abs(d[i]);
+                resolve(fnv1a(sum.toString()));
+            }).catch(function(){ resolve('render-fail'); });
+        } catch (e) { resolve('unavailable'); }
+    });
+}
+
+var FONT_LIST = ['Microsoft YaHei','PingFang SC','Hiragino Sans GB','SimSun','SimHei','KaiTi','FangSong','STKaiti','STSong','STXihei','STHeiti','LiSu','YouYuan','HuaWenKaiTi','WenQuanYi Micro Hei','Noto Sans CJK SC','Source Han Sans CN','Arial','Arial Black','Arial Narrow','Arial Rounded MT Bold','Calibri','Cambria','Candara','Consolas','Constantia','Corbel','Courier New','Franklin Gothic Medium','Gabriola','Georgia','Impact','Lucida Console','Lucida Sans Unicode','Malgun Gothic','MS Gothic','MS PGothic','Palatino Linotype','Segoe Print','Segoe Script','Segoe UI','Segoe UI Emoji','Tahoma','Times New Roman','Trebuchet MS','Verdana','Webdings','Wingdings','Yu Gothic','Meiryo','MS Mincho','Comic Sans MS','Monaco','Menlo','Optima','Helvetica','Helvetica Neue','SF Pro Text','Geneva','Copperplate','Papyrus','Baskerville','Brush Script MT','Curlz MT','Rockwell','Bahnschrift','Ink Free','Javanese Text','Segoe UI Historic','SimSun-ExtB','NSimSun','DFKai-SB','FreeSans','Ubuntu','DejaVu Sans','DejaVu Serif','Liberation Sans','Liberation Serif','Roboto','Open Sans','Lato','Montserrat','Fira Code','JetBrains Mono','Cascadia Code','Cascadia Mono'];
+
+function fontDetect() {
+    var base = document.createElement('span');
+    base.style.cssText = 'position:absolute;left:-9999px;font-size:72px;white-space:nowrap;';
+    base.textContent = 'mmmmmmmmmmlli测试w@#';
+    document.body.appendChild(base);
+    function measure(f) {
+        base.style.fontFamily = f;
+        return base.offsetWidth + 'x' + base.offsetHeight;
+    }
+    var m1 = measure('monospace'), m2 = measure('sans-serif'), m3 = measure('serif');
+    var found = [];
+    FONT_LIST.forEach(function(f) {
+        var s = f + ',monospace';
+        if (measure(s) !== m1) found.push(f);
+    });
+    var second = [];
+    FONT_LIST.forEach(function(f) {
+        var s = f + ',sans-serif';
+        if (measure(s) !== m2) second.push(f);
+    });
+    document.body.removeChild(base);
+    var merged = [];
+    found.concat(second).forEach(function(f){ if (merged.indexOf(f) === -1) merged.push(f); });
+    return merged;
+}
+
+document.getElementById('runBtn').onclick = async function() {
+    var btn = this; btn.disabled = true;
+    setStatus('正在采集各项指纹…', 'info');
+    var grid = document.getElementById('grid');
+    grid.innerHTML = '';
+
+    function card(title, rows) {
+        var div = document.createElement('div');
+        div.className = 'fp-card';
+        var h = '<h4>' + title + '</h4>';
+        rows.forEach(function(r) {
+            h += '<div class="fp-row"><span>' + escapeHtml(r[0]) + '</span><span>' + (r[1] === undefined ? '—' : escapeHtml(r[1])) + '</span></div>';
+        });
+        div.innerHTML = h;
+        grid.appendChild(div);
+    }
+
+    var canvasHash = canvasFP();
+    var webgl = webglFP();
+    var audioHash = await audioFP();
+    var fonts = fontDetect();
+    var tz = '';
+    try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { tz = '—'; }
+
+    var nav = navigator;
+    card('🖥️ 屏幕与显示', [
+        ['分辨率', screen.width + '×' + screen.height],
+        ['可用区域', screen.availWidth + '×' + screen.availHeight],
+        ['色深', screen.colorDepth + ' bit'],
+        ['设备像素比', devicePixelRatio],
+        ['窗口内尺寸', innerWidth + '×' + innerHeight],
+        ['色彩伽马', (screen.pixelDepth || '—')]
+    ]);
+    card('🧭 浏览器环境', [
+        ['UserAgent', (nav.userAgent || '').slice(0, 60) + '…'],
+        ['平台', nav.platform || '—'],
+        ['语言', nav.language + (nav.languages ? ' / ' + nav.languages.length + ' 种' : '')],
+        ['时区', tz + ' (UTC' + (-new Date().getTimezoneOffset() / 60) + ')'],
+        ['CPU 核心', nav.hardwareConcurrency || '—'],
+        ['设备内存', nav.deviceMemory ? nav.deviceMemory + ' GB' : '未暴露'],
+        ['触控点', nav.maxTouchPoints || 0]
+    ]);
+    card('🎨 Canvas 指纹', [
+        ['绘制哈希', canvasHash],
+        ['算法', '文字+渐变+阴影 toDataURL FNV']
+    ]);
+    card('🔮 WebGL 指纹', [
+        ['Vendor', webgl.vendor],
+        ['Renderer', webgl.renderer],
+        ['参数哈希', webgl.hash]
+    ]);
+    card('🔊 AudioContext 指纹', [
+        ['渲染哈希', audioHash],
+        ['算法', '三角波10kHz+压缩器输出求和']
+    ]);
+    var ff = document.createElement('div');
+    ff.className = 'fp-card';
+    ff.innerHTML = '<h4>🔤 字体探测（' + fonts.length + '/' + FONT_LIST.length + '）</h4><div class="chips">' +
+        (fonts.length ? fonts.map(function(f){ return '<span class="f-chip">' + f + '</span>'; }).join('') : '<span class="f-chip no">无可探测字体</span>') + '</div>';
+    grid.appendChild(ff);
+
+    var feat = [];
+    [['Cookie', nav.cookieEnabled], ['Do Not Track', nav.doNotTrack === '1'], ['WebGL2', !!document.createElement('canvas').getContext('webgl2')], ['ServiceWorker', 'serviceWorker' in nav], ['WebAssembly', typeof WebAssembly === 'object'], ['通知权限', typeof Notification !== 'undefined'], ['蓝牙', 'bluetooth' in nav], ['USB', 'usb' in nav], ['串口', 'serial' in nav], ['传感器', 'AmbientLightSensor' in window]];
+    var fdiv = document.createElement('div');
+    fdiv.className = 'fp-card';
+    fdiv.innerHTML = '<h4>🧩 特性开关</h4><div class="chips">' + feat.map(function(f){ return '<span class="f-chip' + (f[1] ? '' : ' no') + '">' + f[0] + (f[1] ? ' ✓' : ' ✗') + '</span>'; }).join('') + '</div>';
+    grid.appendChild(fdiv);
+
+    var all = [canvasHash, webgl.hash, audioHash, fonts.join(','), nav.userAgent, nav.platform, nav.language, tz, screen.width + 'x' + screen.height + 'x' + screen.colorDepth, devicePixelRatio, nav.hardwareConcurrency, nav.maxTouchPoints, innerWidth + 'x' + innerHeight].join('||');
+    var full = fnv1a(all) + fnv1a(all.split('').reverse().join('')) + fnv1a(all + 'x2');
+    document.getElementById('fpHash').textContent = full.toUpperCase();
+    var bits = Math.round(Math.log2(Math.pow(16, full.length)) / 4) * 4;
+    document.getElementById('fpBits').textContent = '综合维度：' + 14 + ' 项静态 + 3 项动态渲染 · 组合熵约 ' + (Math.min(33, 14 + fonts.length * 0.3 + 3)).toFixed(1) + ' bits';
+    document.getElementById('hero').style.display = 'block';
+    setStatus('指纹采集完成', 'success');
+    btn.disabled = false;
+};
+
+document.getElementById('copyBtn').onclick = function() {
+    var t = document.getElementById('fpHash').textContent;
+    if (t) navigator.clipboard.writeText(t).then(function(){ setStatus('已复制指纹哈希', 'success'); });
+    else setStatus('请先采集指纹', 'error');
+};
+initSidebar('work');
+</script>
+</body>
+</html>

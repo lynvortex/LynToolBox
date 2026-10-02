@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>图片锐化增强 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="图片锐化增强工具，纯前端Canvas卷积核锐化与USM锐化算法，提升图片清晰度，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.mode-tabs{display:flex;gap:8px;justify-content:center;margin-bottom:12px;}
+.mode-tab{padding:8px 16px;border-radius:6px;border:1px solid #e0e6ed;background:#f8fafc;color:#64748b;cursor:pointer;font-size:.82em;font-weight:600;}
+.mode-tab.active{background:#4a90e2;color:#fff;border-color:#4a90e2;}
+.ctrl-row{display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:16px;flex-wrap:wrap;}
+.ctrl-row label{font-size:.85em;color:#64748b;font-weight:600;}
+.ctrl-row input[type=range]{width:180px;}
+.val-span{font-weight:700;color:#4a90e2;min-width:40px;font-family:'Courier New',monospace;}
+</style>
+    <meta name="keywords" content="图片锐化,在线图片锐化,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/sharpen-tool.html" />
+    <meta property="og:title" content="图片锐化增强" />
+    <meta property="og:description" content="图片锐化增强工具，纯前端Canvas卷积核锐化与USM锐化算法，提升图片清晰度，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/sharpen-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="图片锐化增强" />
+    <meta itemprop="description" content="图片锐化增强工具，纯前端Canvas卷积核锐化与USM锐化算法，提升图片清晰度，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "图片锐化",
+                "item": "https://box.lynvortex.top/image/sharpen-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "图片锐化",
+        "url": "https://box.lynvortex.top/image/sharpen-tool.html",
+        "description": "卷积核锐化图片增强边缘细节，支持锐化强度与阈值调节",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🔬 图片锐化增强</h1><p>卷积核锐化与USM锐化，提升图片清晰度</p></div>
+<div class="upload-zone" id="dropZone">📁 上传图片<input type="file" id="fileInput" accept="image/*" style="display:none;"/></div>
+<div id="editorArea" style="display:none;">
+<div class="mode-tabs">
+<div class="mode-tab active" data-mode="sharpen">基础锐化</div>
+<div class="mode-tab" data-mode="strong">强锐化</div>
+<div class="mode-tab" data-mode="usm">USM锐化</div>
+</div>
+<div class="ctrl-row" id="usmCtrl" style="display:none;">
+<label>强度：</label><input type="range" id="amountSlider" min="0" max="200" value="50"/><span class="val-span" id="amountVal">50%</span>
+<label>半径：</label><input type="range" id="radiusSlider" min="1" max="10" value="2"/><span class="val-span" id="radiusVal">2px</span>
+</div>
+<div class="canvas-wrap">
+<div class="canvas-box"><canvas id="origCanvas"></canvas><div class="cl">原图</div></div>
+<div class="canvas-box"><canvas id="resultCanvas"></canvas><div class="cl">锐化结果</div></div>
+</div>
+<div style="text-align:center;">
+<button class="btn" id="downloadBtn" style="padding:8px 20px;border:1px solid #4a90e2;border-radius:8px;background:#fff;color:#4a90e2;cursor:pointer;font-size:.85em;font-weight:600;">⬇ 下载图片</button>
+</div>
+</div>
+<div id="statusBar" class="status-bar info">上传图片后选择锐化模式处理</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 图片锐化增强</h3><p>卷积核与USM锐化算法</p><div class="feature-chips"><span class="feature-chip">基础锐化</span><span class="feature-chip">强锐化</span><span class="feature-chip">USM锐化</span><span class="feature-chip">离线可用</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>基础锐化使用拉普拉斯卷积核增强边缘</li><li>强锐化使用更大卷积核效果更明显</li><li>USM锐化可调强度和半径，更精细控制</li><li>过度锐化可能产生噪点，建议适度</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var mode='sharpen';
+document.getElementById('dropZone').onclick=function(){document.getElementById('fileInput').click();};
+document.getElementById('fileInput').onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){var img=new Image();img.onload=function(){var oc=document.getElementById('origCanvas');var maxW=400,scale=Math.min(1,maxW/img.width);oc.width=img.width*scale;oc.height=img.height*scale;oc.getContext('2d').drawImage(img,0,0,oc.width,oc.height);var rc=document.getElementById('resultCanvas');rc.width=oc.width;rc.height=oc.height;document.getElementById('editorArea').style.display='block';process();};img.src=ev.target.result;};r.readAsDataURL(f);};
+document.querySelectorAll('.mode-tab').forEach(function(t){t.onclick=function(){document.querySelectorAll('.mode-tab').forEach(function(x){x.classList.remove('active');});t.classList.add('active');mode=t.dataset.mode;document.getElementById('usmCtrl').style.display=mode==='usm'?'flex':'none';process();};});
+document.getElementById('amountSlider').oninput=function(){document.getElementById('amountVal').textContent=this.value+'%';process();};
+document.getElementById('radiusSlider').oninput=function(){document.getElementById('radiusVal').textContent=this.value+'px';process();};
+function process(){var oc=document.getElementById('origCanvas');var octx=oc.getContext('2d');var w=oc.width,h=oc.height;var orig=octx.getImageData(0,0,w,h);var od=orig.data;var result=new Uint8ClampedArray(od);if(mode==='sharpen'){var kernel=[0,-1,0,-1,5,-1,0,-1,0];convolve(od,result,w,h,kernel,1);}else if(mode==='strong'){var kernel=[-1,-1,-1,-1,9,-1,-1,-1,-1];convolve(od,result,w,h,kernel,1);}else if(mode==='usm'){var amount=parseInt(document.getElementById('amountSlider').value)/100;var radius=parseInt(document.getElementById('radiusSlider').value);var blurred=new Uint8ClampedArray(od.length);var kSize=radius*2+1;var kernel=[];for(var i=0;i<kSize*kSize;i++)kernel.push(1/(kSize*kSize));convolve(od,blurred,w,h,kernel,kSize);for(var i=0;i<od.length;i+=4){for(var c=0;c<3;c++){var highpass=od[i+c]-blurred[i+c];result[i+c]=Math.min(255,Math.max(0,od[i+c]+amount*highpass));}}}var rc=document.getElementById('resultCanvas');var rctx=rc.getContext('2d');var imgData=new ImageData(result,w,h);rctx.putImageData(imgData,0,0);}
+function convolve(src,dst,w,h,kernel,kSize){var half=Math.floor(kSize/2);for(var y=0;y<h;y++){for(var x=0;x<w;x++){for(var c=0;c<3;c++){var sum=0;for(var ky=0;ky<kSize;ky++){for(var kx=0;kx<kSize;kx++){var px=Math.min(w-1,Math.max(0,x+kx-half));var py=Math.min(h-1,Math.max(0,y+ky-half));sum+=src[(py*w+px)*4+c]*kernel[ky*kSize+kx];}}dst[(y*w+x)*4+c]=Math.min(255,Math.max(0,sum));}dst[(y*w+x)*4+3]=src[(y*w+x)*4+3];}}}
+document.getElementById('downloadBtn').onclick=function(){var rc=document.getElementById('resultCanvas');rc.toBlob(function(blob){var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sharpened.png';a.click();});};
+var dz=document.getElementById('dropZone');dz.ondragover=function(e){e.preventDefault();dz.style.borderColor='#4a90e2';};dz.ondragleave=function(){dz.style.borderColor='#e0e6ed';};dz.ondrop=function(e){e.preventDefault();dz.style.borderColor='#e0e6ed';var f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/')){document.getElementById('fileInput').files=e.dataTransfer.files;document.getElementById('fileInput').onchange({target:{files:[f]}});}};
+initSidebar('image');
+</script>
+</body>
+</html>

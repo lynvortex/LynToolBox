@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SQL 格式化 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="SQL格式化，SQL关键字高亮与格式化，支持缩进。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', -apple-system, sans-serif;
+            background: #f4f7f9;
+            margin: 0;
+            display: flex;
+            height: 100vh; overflow: hidden;
+            color: #333;
+        }
+        .mobile-header {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: #fff; padding: 0 20px; align-items: center;
+            justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+        }
+        .mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+        .mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+        .menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #4a90e2; }
+        .sidebar {
+            width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+            display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+            transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+            position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item {
+            display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+            transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+        }
+        .category-item:hover, .category-item.active { background: #ebf5ff; color: #4a90e2; border-left-color: #4a90e2; }
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+        .tool-container {
+            width: 100%;
+            max-width: 960px;
+            background: #fff; border-radius: 12px;
+            padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+        }
+        .tool-header { text-align: center; margin-bottom: 28px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 0.85em; color: #64748b; margin-bottom: 6px; font-weight: 500; }
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 14px;
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            font-size: 0.92em;
+            font-family: 'Consolas', 'Courier New', monospace;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+        textarea:focus { border-color: #4a90e2; }
+        textarea[readonly] { background: #f8fafc; cursor: default; }
+        .mode-group { display: flex; gap: 10px; margin-bottom: 16px; }
+        .mode-btn {
+            padding: 8px 18px; border: 2px solid #e1e4e8; border-radius: 8px;
+            background: white; color: #606266; font-size: 0.9em; cursor: pointer;
+            transition: all 0.2s; font-family: inherit; font-weight: 500;
+        }
+        .mode-btn:hover { border-color: #4a90e2; color: #4a90e2; }
+        .mode-btn.active { border-color: #4a90e2; background: #4a90e2; color: white; }
+        .action-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em;
+            font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap;
+        }
+        .btn-primary { background: #4a90e2; color: white; }
+        .btn-primary:hover { background: #3a7bd5; }
+        .btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .btn-outline { background: transparent; color: #4a90e2; border: 1px solid #4a90e2; }
+        .btn-outline:hover { background: #4a90e2; color: white; }
+        .btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+        .btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+        .status-bar {
+            min-height: 20px; font-size: 0.85em;
+            padding: 8px 12px; border-radius: 6px; margin-bottom: 16px;
+        }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+        .sql-output {
+            background: #1e293b; color: #e2e8f0; border-radius: 8px;
+            padding: 16px; font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.85em; line-height: 1.7; overflow-x: auto; white-space: pre-wrap;
+            max-height: 400px; overflow-y: auto; margin-bottom: 12px;
+        }
+        .sql-output .sql-keyword { color: #67e8f9; font-weight: 700; }
+        .sql-output .sql-string { color: #a7f3d0; }
+        .sql-output .sql-number { color: #fde68a; }
+        .sql-output .sql-comment { color: #6b7280; font-style: italic; }
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+        .footer p { margin: 0; }
+        .footer a { color: #4a90e2; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+        .info-cards {
+            width: 100%;
+            max-width: 960px;
+            display: flex; flex-direction: column; gap: 18px; margin-top: 4px;
+        }
+        .info-card {
+            background: #fff; border-radius: 12px; padding: 22px 24px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06); border: 1px solid #f0f2f5;
+        }
+        .info-card h3 {
+            margin: 0 0 10px 0; font-size: 1em; color: #2c3e50; font-weight: 600;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .info-card p { margin: 0 0 10px 0; font-size: 0.82em; color: #64748b; }
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip {
+            background: #e0f2fe; color: #0369a1;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace;
+        }
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a {
+            font-size: 0.85em; color: #4a90e2; text-decoration: none;
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s;
+        }
+        .tool-links a:hover { background: #e2e8f0; }
+        @media (max-width: 768px) {
+            body { display: block; height: auto; overflow: auto; }
+            .mobile-header { display: flex; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .close-sidebar { display: block; }
+            .main-content { display: block; }
+            .main-scroll { padding: 72px 16px 32px; gap: 20px;  }
+            .tool-container { padding: 24px 16px; border-radius: 10px; }
+            .tool-header h1 { font-size: 1.3em; }
+            .info-card { padding: 18px 16px; }
+            .overlay.active { display: block; }
+        }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="SQL格式化,在线SQL格式化,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/sql-format-tool.html" />
+    <meta property="og:title" content="SQL 格式化" />
+    <meta property="og:description" content="SQL格式化，SQL关键字高亮与格式化，支持缩进。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/sql-format-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="SQL 格式化" />
+    <meta itemprop="description" content="SQL格式化，SQL关键字高亮与格式化，支持缩进。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "SQL格式化",
+                "item": "https://box.lynvortex.top/work/sql-format-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "SQL格式化",
+        "url": "https://box.lynvortex.top/work/sql-format-tool.html",
+        "description": "SQL关键字高亮与格式化，支持缩进",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>SQL 格式化</h1>
+                <p>SQL 语句格式化与压缩，支持关键字高亮</p>
+            </div>
+
+            <div class="form-group">
+                <label>输入 SQL</label>
+                <textarea id="inputText" placeholder="在此粘贴 SQL 语句...">SELECT id, name, email, created_at FROM users WHERE status = 'active' AND age > 18 ORDER BY created_at DESC LIMIT 10</textarea>
+            </div>
+
+            <div class="mode-group" id="modeGroup">
+                <button class="mode-btn active" data-mode="format">格式化</button>
+                <button class="mode-btn" data-mode="compress">压缩</button>
+            </div>
+
+            <div class="action-row">
+                <button class="btn btn-primary" id="convertBtn">转换</button>
+                <button class="btn btn-outline" id="copyBtn">复制结果</button>
+                <button class="btn btn-ghost" id="clearBtn">清空</button>
+            </div>
+
+            <div class="status-bar info" id="statusBar">选择格式化或压缩模式，点击转换</div>
+
+            <div class="sql-output" id="sqlOutput" style="display:none;"></div>
+            <textarea id="outputText" readonly placeholder="结果将显示在这里..." style="display:none;"></textarea>
+
+            <footer class="footer">
+                &copy; 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+            <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>格式化的关键字</h3>
+                <p>自动高亮大写的 SQL 关键字</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">SELECT</span>
+                    <span class="tld-chip">FROM</span>
+                    <span class="tld-chip">WHERE</span>
+                    <span class="tld-chip">JOIN</span>
+                    <span class="tld-chip">ORDER BY</span>
+                    <span class="tld-chip">GROUP BY</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>使用须知</h3>
+                <ul class="tips-list">
+                    <li>格式化后自动缩进对齐，增加可读性</li>
+                    <li>压缩模式移除多余空格和换行，减小体积</li>
+                    <li>SQL 关键字自动高亮显示（仅格式化模式）</li>
+                    <li>所有处理在浏览器本地执行，数据不会上传</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    initSidebar('work');
+
+    let setStatus = function(msg, type) {
+        let sb = document.getElementById('statusBar');
+        sb.textContent = msg;
+        sb.className = 'status-bar ' + type;
+    };
+
+    let currentMode = 'format';
+
+    document.getElementById('modeGroup').addEventListener('click', function(e) {
+        let btn = e.target.closest('.mode-btn');
+        if (!btn) return;
+        document.querySelectorAll('.mode-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        currentMode = btn.dataset.mode;
+    });
+
+    // SQL 关键字列表
+    let sqlKeywords = [
+        'SELECT', 'FROM', 'WHERE', 'AND', 'OR', 'NOT', 'IN', 'IS', 'NULL',
+        'JOIN', 'LEFT', 'RIGHT', 'INNER', 'OUTER', 'CROSS', 'ON',
+        'ORDER BY', 'ORDER', 'BY', 'GROUP BY', 'GROUP',
+        'HAVING', 'LIMIT', 'OFFSET',
+        'INSERT', 'INTO', 'VALUES', 'UPDATE', 'SET', 'DELETE',
+        'CREATE', 'TABLE', 'ALTER', 'DROP', 'INDEX', 'VIEW',
+        'AS', 'DISTINCT', 'COUNT', 'SUM', 'AVG', 'MIN', 'MAX',
+        'BETWEEN', 'LIKE', 'EXISTS', 'UNION', 'ALL',
+        'ASC', 'DESC', 'CASE', 'WHEN', 'THEN', 'ELSE', 'END',
+        'PRIMARY', 'KEY', 'FOREIGN', 'REFERENCES', 'CONSTRAINT',
+        'DEFAULT', 'CHECK', 'UNIQUE', 'AUTO_INCREMENT',
+        'INT', 'INTEGER', 'VARCHAR', 'TEXT', 'BOOLEAN', 'DATE', 'DATETIME',
+        'FLOAT', 'DOUBLE', 'DECIMAL', 'BIGINT', 'SMALLINT', 'TINYINT',
+        'TRUE', 'FALSE'
+    ];
+
+    let formatSql = function(sql) {
+        let trimmed = sql.trim();
+        if (!trimmed) return '';
+
+        // 将关键字转为大写
+        let upper = trimmed.toUpperCase();
+        let result = trimmed;
+
+        // 简单格式化：在每个主要关键字前换行并缩进
+        let keywords = ['SELECT', 'FROM', 'WHERE', 'AND', 'OR', 'ORDER BY', 'GROUP BY', 'HAVING', 'LIMIT', 'OFFSET',
+            'JOIN', 'LEFT JOIN', 'RIGHT JOIN', 'INNER JOIN', 'OUTER JOIN', 'CROSS JOIN',
+            'ON', 'UNION', 'INSERT INTO', 'VALUES', 'UPDATE', 'SET', 'DELETE FROM',
+            'CREATE TABLE', 'ALTER TABLE', 'DROP TABLE'];
+
+        // 先按关键字拆分（不区分大小写）
+        let regexParts = [];
+        for (let i = 0; i < keywords.length; i++) {
+            regexParts.push(keywords[i].replace(/ /g, '\\s+'));
+        }
+        let regex = new RegExp('\\b(' + regexParts.join('|') + ')\\b', 'gi');
+
+        result = result.replace(regex, function(match) {
+            return '\n' + match.toUpperCase();
+        });
+
+        // 清理开头的换行
+        result = result.replace(/^\n+/, '');
+
+        // 处理逗号后的换行
+        result = result.replace(/,\s*/g, ',\n    ');
+
+        // 处理括号内的缩进
+        let depth = 0;
+        let lines = result.split('\n');
+        let formatted = [];
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i].trim();
+            if (!line) continue;
+
+            // 减少缩进：右括号
+            if (line.indexOf(')') !== -1) {
+                depth = Math.max(0, depth - 1);
+            }
+
+            let indent = '';
+            // 对于 SELECT 字段列表的缩进
+            if (line.match(/^\s*[A-Z]/) && depth === 0) {
+                // 关键字行不缩进
+            } else if (depth > 0) {
+                indent = '    ';
+            } else if (line.indexOf(',') !== -1 || line.match(/^[a-z]/i)) {
+                indent = '    ';
+            }
+
+            formatted.push(indent + line);
+
+            // 增加缩进：左括号
+            let openParens = (line.match(/\(/g) || []).length;
+            let closeParens = (line.match(/\)/g) || []).length;
+            depth += openParens - closeParens;
+            if (depth < 0) depth = 0;
+        }
+
+        return formatted.join('\n');
+    };
+
+    let compressSql = function(sql) {
+        return sql.replace(/\s+/g, ' ').trim();
+    };
+
+    let highlightSql = function(sql) {
+        let escaped = escapeHtml(sql);
+        // 高亮关键字
+        let kwRegex = new RegExp('\\b(' + sqlKeywords.join('|') + ')\\b', 'gi');
+        escaped = escaped.replace(kwRegex, '<span class="sql-keyword">$1</span>');
+        // 高亮字符串
+        escaped = escaped.replace(/'([^']*)'/g, '<span class="sql-string">\'$1\'</span>');
+        // 高亮数字
+        escaped = escaped.replace(/\b(\d+\.?\d*)\b/g, '<span class="sql-number">$1</span>');
+        // 高亮注释
+        escaped = escaped.replace(/--.*$/gm, '<span class="sql-comment">$&</span>');
+        return escaped;
+    };
+
+    let doConvert = function() {
+        let input = document.getElementById('inputText').value;
+        if (!input.trim()) {
+            setStatus('请输入 SQL 语句', 'error');
+            return;
+        }
+
+        let result;
+        if (currentMode === 'format') {
+            result = formatSql(input);
+        } else {
+            result = compressSql(input);
+        }
+
+        // 显示高亮输出
+        let sqlOutput = document.getElementById('sqlOutput');
+        let outputText = document.getElementById('outputText');
+
+        if (currentMode === 'format') {
+            sqlOutput.innerHTML = highlightSql(result);
+            sqlOutput.style.display = 'block';
+            outputText.style.display = 'none';
+        } else {
+            outputText.value = result;
+            outputText.style.display = 'block';
+            sqlOutput.style.display = 'none';
+        }
+
+        setStatus('转换成功', 'success');
+    };
+
+    let copyResult = function() {
+        let outputText = document.getElementById('outputText');
+        let sqlOutput = document.getElementById('sqlOutput');
+        let text;
+        if (outputText.style.display !== 'none') {
+            text = outputText.value;
+        } else {
+            text = sqlOutput.textContent;
+        }
+        if (!text) { setStatus('没有可复制的内容', 'error'); return; }
+        navigator.clipboard.writeText(text).then(function() {
+            setStatus('已复制到剪贴板', 'success');
+        }).catch(function() {
+            let ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            setStatus('已复制到剪贴板', 'success');
+        });
+    };
+
+    let clearAll = function() {
+        document.getElementById('inputText').value = '';
+        document.getElementById('sqlOutput').style.display = 'none';
+        document.getElementById('sqlOutput').innerHTML = '';
+        document.getElementById('outputText').style.display = 'none';
+        document.getElementById('outputText').value = '';
+        setStatus('已清空', 'info');
+    };
+
+    document.getElementById('convertBtn').addEventListener('click', doConvert);
+    document.getElementById('copyBtn').addEventListener('click', copyResult);
+    document.getElementById('clearBtn').addEventListener('click', clearAll);
+
+    document.getElementById('inputText').addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 'Enter') doConvert();
+    });
+</script>
+</body>
+</html>

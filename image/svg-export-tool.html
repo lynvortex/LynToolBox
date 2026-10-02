@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SVG转PNG导出 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="SVG转PNG/JPG导出工具，支持上传SVG文件或粘贴SVG代码，自定义导出尺寸、倍率与背景色，纯前端渲染。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<style>
+.preview-box{text-align:center;background:repeating-conic-gradient(#f1f5f9 0 25%,#fff 0 50%) 0 0/20px 20px;border:1px solid #e0e6ed;border-radius:8px;padding:16px;margin-bottom:16px;min-height:120px;display:flex;align-items:center;justify-content:center;}
+.preview-box img,.preview-box canvas{max-width:100%;max-height:360px;}
+</style>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="SVG转PNG,SVG导出,SVG转JPG,SVG转换,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/image/svg-export-tool.html"/>
+<meta property="og:title" content="SVG转PNG导出"/>
+<meta property="og:description" content="SVG转PNG/JPG，自定义尺寸与背景，纯前端渲染。"/>
+<meta property="og:url" content="https://box.lynvortex.top/image/svg-export-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="SVG转PNG导出"/>
+<meta itemprop="description" content="SVG转PNG/JPG，自定义尺寸与背景，纯前端渲染。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"图像工具","item":"https://box.lynvortex.top/image.html"},{"@type":"ListItem","position":3,"name":"SVG转PNG导出","item":"https://box.lynvortex.top/image/svg-export-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"SVG转PNG导出","url":"https://box.lynvortex.top/image/svg-export-tool.html","description":"SVG转PNG/JPG位图导出","applicationCategory":"图像工具","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>🖼️ SVG转PNG导出</h1>
+        <p>SVG 矢量图一键导出为 PNG / JPG 位图</p>
+    </div>
+    <div class="upload-zone" id="dropZone">
+        <p style="margin:0;color:#64748b;">🎨 点击选择或拖入 SVG 文件，或在下方粘贴 SVG 代码</p>
+        <input type="file" id="fileInput" accept=".svg,image/svg+xml" style="display:none;"/>
+    </div>
+    <div class="form-item" style="margin-bottom:16px;">
+        <label>或直接粘贴 SVG 代码</label>
+        <textarea class="code" id="svgCode" rows="5" placeholder="&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; ...&gt;...&lt;/svg&gt;"></textarea>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>导出宽度（px，0=按原图）</label><input type="number" id="outW" value="0" min="0"/></div>
+        <div class="form-item"><label>导出高度（px，0=按比例）</label><input type="number" id="outH" value="0" min="0"/></div>
+        <div class="form-item"><label>导出格式</label><select id="fmt"><option value="png">PNG（保留透明）</option><option value="jpeg">JPG</option></select></div>
+        <div class="form-item"><label>背景色（JPG 或需填充时）</label><input type="color" id="bgColor" value="#ffffff"/></div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="renderBtn">渲染预览</button>
+        <button class="btn btn-outline" id="dlBtn" disabled>下载图片</button>
+        <label style="font-size:.85em;color:#64748b;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="fillBg"/> 填充背景色</label>
+    </div>
+    <div class="status-bar info" id="statusBar">请提供 SVG 文件</div>
+    <div class="preview-box" id="preview"></div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 SVG转PNG导出</h3>
+        <p>浏览器原生渲染 SVG，无需服务端转换。</p>
+        <div class="feature-chips"><span class="feature-chip">SVG→PNG</span><span class="feature-chip">SVG→JPG</span><span class="feature-chip">自定义尺寸</span><span class="feature-chip">透明背景</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>SVG 未指定宽高时请按 viewBox 比例导出</li>
+            <li>含外部引用（外链图片/字体）的 SVG 可能无法完整渲染</li>
+            <li>渲染在本地完成，SVG 内容不会上传</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+var svgText = '', outCanvas = null;
+var dropZone = document.getElementById('dropZone'), fileInput = document.getElementById('fileInput');
+dropZone.onclick = function(){ fileInput.click(); };
+dropZone.ondragover = function(e){ e.preventDefault(); };
+dropZone.ondrop = function(e){ e.preventDefault(); if (e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]); };
+fileInput.onchange = function(){ if (fileInput.files[0]) readFile(fileInput.files[0]); };
+function readFile(f) {
+    var r = new FileReader();
+    r.onload = function(){
+        svgText = r.result;
+        document.getElementById('svgCode').value = svgText;
+        setStatus('已加载 ' + f.name, 'success');
+        render();
+    };
+    r.readAsText(f);
+}
+
+function parseSvgSize(text) {
+    var doc = new DOMParser().parseFromString(text, 'image/svg+xml');
+    var svg = doc.querySelector('svg');
+    if (!svg) throw new Error('无效的 SVG');
+    var w = parseFloat(svg.getAttribute('width')), h = parseFloat(svg.getAttribute('height'));
+    if ((!w || !h) && svg.getAttribute('viewBox')) {
+        var vb = svg.getAttribute('viewBox').split(/[\s,]+/).map(Number);
+        w = vb[2]; h = vb[3];
+    }
+    if (!w || !h) { w = w || 512; h = h || 512; }
+    return { w: w, h: h };
+}
+
+function render() {
+    var code = document.getElementById('svgCode').value.trim();
+    if (code) svgText = code;
+    if (!svgText) { setStatus('请先提供 SVG', 'error'); return; }
+    var size;
+    try { size = parseSvgSize(svgText); } catch (e) { setStatus(e.message, 'error'); return; }
+    var outW = parseInt(document.getElementById('outW').value) || 0;
+    var outH = parseInt(document.getElementById('outH').value) || 0;
+    if (outW && !outH) outH = Math.round(outW * size.h / size.w);
+    if (outH && !outW) outW = Math.round(outH * size.w / size.h);
+    if (!outW && !outH) { outW = Math.round(size.w); outH = Math.round(size.h); }
+    var blob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var img = new Image();
+    img.onload = function(){
+        var canvas = document.createElement('canvas');
+        canvas.width = outW; canvas.height = outH;
+        var ctx = canvas.getContext('2d');
+        if (document.getElementById('fillBg').checked || document.getElementById('fmt').value === 'jpeg') {
+            ctx.fillStyle = document.getElementById('bgColor').value;
+            ctx.fillRect(0, 0, outW, outH);
+        }
+        ctx.drawImage(img, 0, 0, outW, outH);
+        outCanvas = canvas;
+        var prev = document.getElementById('preview');
+        prev.innerHTML = '';
+        prev.appendChild(canvas);
+        document.getElementById('dlBtn').disabled = false;
+        URL.revokeObjectURL(url);
+        setStatus('渲染完成：' + outW + ' × ' + outH + ' px', 'success');
+    };
+    img.onerror = function(){ URL.revokeObjectURL(url); setStatus('SVG 渲染失败，请检查代码是否完整', 'error'); };
+    img.src = url;
+}
+
+document.getElementById('renderBtn').onclick = render;
+document.getElementById('dlBtn').onclick = function(){
+    if (!outCanvas) return;
+    var fmt = document.getElementById('fmt').value;
+    outCanvas.toBlob(function(blob){
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'svg-export.' + (fmt === 'jpeg' ? 'jpg' : 'png');
+        a.click();
+    }, 'image/' + fmt, 0.92);
+};
+initSidebar('image');
+</script>
+</body>
+</html>

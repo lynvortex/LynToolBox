@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>端口扫描-绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="网站端口扫描，扫描常用端口开放状态。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+* { box-sizing: border-box; }
+body {
+    font-family: 'PingFang SC', -apple-system, sans-serif;
+    background: #f4f7f9;
+    margin: 0;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    color: #333;
+}
+
+.mobile-header {
+    display: none;
+    position: fixed; top: 0; left: 0; right: 0; height: 60px;
+    background: #fff; padding: 0 20px; align-items: center;
+    justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+}
+.mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+.mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+.menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #4a90e2; }
+
+.sidebar {
+    width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+    display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+    transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+}
+.brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+.brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+.brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+.brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+.close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+.category-list { padding: 16px 0; flex: 1; }
+.category-item {
+    display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+    transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+}
+.category-item:hover, .category-item.active { background: #ebf5ff; color: #4a90e2; border-left-color: #4a90e2; }
+
+.main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+.tool-container {
+    width: 100%;
+    max-width: 960px;
+    background: #fff; border-radius: 12px;
+    padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+}
+.tool-header { text-align: center; margin-bottom: 28px; }
+.tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+.tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+.btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em; font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap; }
+.btn-primary { background: #4a90e2; color: white; }
+.btn-primary:hover { background: #3a7bd5; }
+.btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+.btn-outline { background: transparent; color: #4a90e2; border: 1px solid #4a90e2; }
+.btn-outline:hover { background: #4a90e2; color: white; }
+.btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+.btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+
+.status-bar { min-height: 20px; font-size: 0.85em; padding: 8px 12px; border-radius: 6px; margin-bottom: 16px; }
+.status-bar.success { color: #16a34a; background: #f0fdf4; }
+.status-bar.error { color: #ef4444; background: #fef2f2; }
+.status-bar.info { color: #64748b; background: #f8fafc; }
+
+.info-cards { width: 100%; max-width: 960px; display: flex; flex-direction: column; gap: 18px; }
+.info-card { background: #fff; border-radius: 12px; padding: 22px 24px; box-shadow: 0 4px 25px rgba(0,0,0,0.06); border: 1px solid #f0f2f5; }
+.info-card h3 { margin: 0 0 10px 0; font-size: 1em; color: #2c3e50; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.info-card p { margin: 0 0 10px 0; font-size: 0.82em; color: #64748b; }
+
+.footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+.footer p { margin: 0; }
+        .footer a { color: #4a90e2; text-decoration: none; }
+
+.overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+
+@media (max-width: 768px) {
+    body { display: block; height: auto; overflow: auto; }
+    .mobile-header { display: flex; }
+    .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+    .sidebar.active { transform: translateX(0); }
+    .close-sidebar { display: block; }
+    .main-content { display: block; }
+    .main-scroll { padding: 72px 16px 32px; gap: 20px;  }
+    .tool-container { padding: 24px 16px; border-radius: 10px; }
+    .tool-header h1 { font-size: 1.3em; }
+    .overlay.active { display: block; }
+}
+        .summary-card {
+            flex: 1;
+            border-radius: 8px;
+            padding: 12px 15px;
+            text-align: center;
+        }
+        .summary-card.total  { background: #f0f6ff; color: #4a90e2; }
+        .summary-card.open   { background: #f0fdf4; color: #16a34a; }
+        .summary-card.closed { background: #fef2f2; color: #ef4444; }
+        .summary-card .num   { font-size: 1.6em; font-weight: 700; display: block; }
+        .summary-card .label { font-size: 0.78em; margin-top: 2px; display: block; opacity: 0.8; }
+        .port-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 10px;
+        }
+        .port-card {
+            border-radius: 8px;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .port-card.open   { background: #f0fdf4; border: 1px solid #bbf7d0; }
+        .port-card.closed { background: #fafafa; border: 1px solid #e5e7eb; }
+        .port-num   { font-size: 1.1em; font-weight: 700; font-family: 'Consolas', monospace; color: #1e293b; }
+        .port-name  { font-size: 0.75em; color: #94a3b8; }
+        .port-badge { display: inline-block; border-radius: 4px; padding: 2px 8px; font-size: 0.78em; font-weight: 600; margin-top: 4px; width: fit-content; }
+        .port-badge.open   { background: #dcfce7; color: #16a34a; }
+        .port-badge.closed { background: #f1f5f9; color: #94a3b8; }
+        .footer a { color: #4a90e2; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+        .info-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1em;
+            color: #2c3e50;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .info-card p {
+            margin: 0 0 10px 0;
+            font-size: 0.82em;
+            color: #64748b;
+        }
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip {
+            background: #e0f2fe; color: #0369a1;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace;
+        }
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a {
+            font-size: 0.85em; color: #4a90e2; text-decoration: none;
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s;
+        }
+        .tool-links a:hover { background: #e2e8f0; }
+</style>
+    <script src="../assets/api-config.js"></script>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="网站端口扫描,在线网站端口扫描,网络工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/network/host-port-tool.html" />
+    <meta property="og:title" content="端口扫描" />
+    <meta property="og:description" content="网站端口扫描，扫描常用端口开放状态。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/network/host-port-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="端口扫描" />
+    <meta itemprop="description" content="网站端口扫描，扫描常用端口开放状态。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "网络工具",
+                "item": "https://box.lynvortex.top/network.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "网站端口扫描",
+                "item": "https://box.lynvortex.top/network/host-port-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "网站端口扫描",
+        "url": "https://box.lynvortex.top/network/host-port-tool.html",
+        "description": "扫描常用端口开放状态",
+        "applicationCategory": "网络工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+    <main class="main-content">
+        <div class="main-scroll">
+
+            <!-- 工具卡片 -->
+            <div class="tool-container">
+                <div class="tool-header">
+                    <h1>🛰️ 端口扫描</h1>
+                    <p>输入目标 IP 或域名，扫描常用端口开放状态</p>
+                </div>
+
+                <div class="input-group">
+                    <input type="text" id="addressInput" placeholder="IP 或域名（如: 49.234.56.78）" spellcheck="false">
+                    <button id="runBtn" onclick="performScan()">扫描</button>
+                </div>
+
+                <div id="loader" class="loader"></div>
+                <div id="errorTip" class="error-tip"></div>
+
+                <div id="resultArea" class="result-area">
+                    <div class="summary">
+                        <div class="summary-card total">
+                            <span class="num" id="totalCount">0</span>
+                            <span class="label">扫描端口</span>
+                        </div>
+                        <div class="summary-card open">
+                            <span class="num" id="openCount">0</span>
+                            <span class="label">开放</span>
+                        </div>
+                        <div class="summary-card closed">
+                            <span class="num" id="closedCount">0</span>
+                            <span class="label">关闭</span>
+                        </div>
+                    </div>
+                    <div class="port-grid" id="portGrid"></div>
+                </div>
+
+                <footer class="footer">
+                    © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+                </footer>
+            </div>
+
+            <!-- 捐赠卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>🛰️ 端口扫描功能</h3>
+                <p>扫描目标 IP 或域名的常用端口开放状态</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">端口扫描</span>
+                    <span class="tld-chip">常用端口</span>
+                    <span class="tld-chip">安全检测</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>输入 IP 地址或域名即可扫描 18 个常用端口</li>
+                    <li>结果以网格形式展示每个端口的开放/关闭状态</li>
+                    <li>开放端口以绿色标注，关闭端口以灰色标注</li>
+                    <li>扫描结果仅供参考，实际状态可能受防火墙影响</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+
+        </div>
+    </main>
+
+    <script>
+        // 端口名称映射
+        const PORT_NAMES = {
+            21: 'FTP', 22: 'SSH', 23: 'Telnet', 25: 'SMTP',
+            53: 'DNS', 80: 'HTTP', 110: 'POP3', 143: 'IMAP',
+            443: 'HTTPS', 3306: 'MySQL', 3389: 'RDP', 5432: 'PostgreSQL',
+            6379: 'Redis', 8080: 'HTTP-Alt', 8443: 'HTTPS-Alt', 8888: 'Jupyter',
+            27017: 'MongoDB', 9200: 'Elasticsearch'
+        };
+
+        const performScan = async function() {
+            const addressInput = document.getElementById('addressInput');
+            const btn          = document.getElementById('runBtn');
+            const loader       = document.getElementById('loader');
+            const resultArea   = document.getElementById('resultArea');
+            const errorTip     = document.getElementById('errorTip');
+
+            const address = addressInput.value.trim();
+            if (!address) { alert('请输入 IP 或域名'); return; }
+
+            loader.style.display     = 'block';
+            resultArea.style.display = 'none';
+            errorTip.style.display   = 'none';
+            btn.disabled = true;
+
+            try {
+                const cfg = window.API_CONFIG ? window.API_CONFIG.apihz : null;
+                if (!cfg) { throw new Error('API 配置加载失败'); }
+                const url = `../proxy.php?action=portscan&address=${encodeURIComponent(address)}`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('接口响应异常，请检查网络或稍后再试');
+
+                const res = await response.json();
+                loader.style.display = 'none';
+
+                if (res.code === 200 && res.data) {
+                    renderResult(res.data);
+                } else {
+                    throw new Error(res.msg || '扫描失败，请稍后再试');
+                }
+            } catch (err) {
+                loader.style.display   = 'none';
+                errorTip.style.display = 'block';
+                errorTip.innerHTML = `⚠️ <strong>扫描提示：</strong><br>${window.escapeHtml(err.message)}`;
+            } finally {
+                btn.disabled = false;
+            }
+        };
+
+        const renderResult = function(data) {
+            const ports  = Object.entries(data).sort((a, b) => Number(a[0]) - Number(b[0]));
+            const total  = ports.length;
+            const opened = ports.filter(([, v]) => v).length;
+
+            document.getElementById('totalCount').textContent  = total;
+            document.getElementById('openCount').textContent   = opened;
+            document.getElementById('closedCount').textContent = total - opened;
+
+            const grid = document.getElementById('portGrid');
+            grid.innerHTML = ports.map(([port, isOpen]) => {
+                const name  = PORT_NAMES[Number(port)] || '';
+                const state = isOpen ? 'open' : 'closed';
+                const label = isOpen ? '✓ 开放' : '✗ 关闭';
+                return `
+                    <div class="port-card ${state}">
+                        <span class="port-num">${window.escapeHtml(port)}</span>
+                        <span class="port-name">${window.escapeHtml(name)}</span>
+                        <span class="port-badge ${state}">${label}</span>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('resultArea').style.display = 'block';
+        };
+
+        document.getElementById('addressInput').addEventListener('keypress', e => {
+            if (e.key === 'Enter') performScan();
+        });
+
+        initSidebar('network');
+    </script>
+</body>
+</html>

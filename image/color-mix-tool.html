@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>颜色混合与调色工具 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp"/>
+    <meta name="description" content="颜色混合与调色工具，纯前端使用chroma.js混合颜色、调整色相饱和度、生成色阶与对比度检测，数据本地处理。"/>
+    <link rel="stylesheet" href="../assets/tool-common.css"/>
+    <script src="../assets/chroma.min.js"></script>
+    <script src="../assets/sidebar.js"></script>
+    <style>
+        /* 工具特有样式 */
+        .color-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+        @media (max-width: 600px) { .color-pair { grid-template-columns: 1fr; } }
+        .color-field { display: flex; align-items: center; gap: 12px; background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 8px; padding: 12px; }
+        .color-field input[type="color"] { width: 56px; height: 56px; border: none; border-radius: 8px; cursor: pointer; background: none; padding: 0; flex-shrink: 0; }
+        .color-field input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        .color-field input[type="color"]::-webkit-color-swatch { border: 1px solid #e0e6ed; border-radius: 8px; }
+        .color-field .field-body { flex: 1; min-width: 0; }
+        .color-field .field-label { font-size: 0.78em; color: #94a3b8; font-weight: 600; margin-bottom: 4px; }
+        .color-field input[type="text"] { width: 100%; padding: 7px 10px; border: 1px solid #e0e6ed; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 0.9em; outline: none; background: #fff; }
+        .color-field input[type="text"]:focus { border-color: #4a90e2; }
+
+        .slider-block { background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; }
+        .slider-block .slider-title { font-size: 0.85em; font-weight: 600; color: #2c3e50; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+        .slider-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .slider-row:last-child { margin-bottom: 0; }
+        .slider-row label { width: 64px; font-size: 0.82em; color: #64748b; font-weight: 600; flex-shrink: 0; }
+        .slider-row input[type="range"] { flex: 1; accent-color: #4a90e2; cursor: pointer; }
+        .slider-row .slider-val { width: 56px; text-align: right; font-size: 0.82em; color: #334155; font-family: 'Courier New', monospace; font-weight: 600; }
+        .mix-mode { padding: 5px 8px; border: 1px solid #e0e6ed; border-radius: 6px; font-size: 0.82em; font-family: inherit; background: #fff; outline: none; }
+        .mix-mode:focus { border-color: #4a90e2; }
+
+        .result-swatch { display: flex; gap: 16px; align-items: stretch; background: #fff; border: 1px solid #e0e6ed; border-radius: 8px; padding: 14px; margin-bottom: 16px; }
+        @media (max-width: 600px) { .result-swatch { flex-direction: column; } }
+        .big-swatch { width: 140px; min-height: 120px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0; display: flex; align-items: flex-end; justify-content: flex-end; padding: 8px; font-size: 0.7em; font-weight: 600; }
+        .swatch-values { flex: 1; display: flex; flex-direction: column; gap: 8px; justify-content: center; }
+        .value-line { display: flex; align-items: center; gap: 8px; }
+        .value-line .vlabel { width: 48px; font-size: 0.78em; color: #94a3b8; font-weight: 600; }
+        .value-line .vval { flex: 1; font-family: 'Courier New', monospace; font-size: 0.88em; color: #1e293b; background: #f1f5f9; padding: 5px 10px; border-radius: 6px; }
+        .copy-btn { padding: 5px 10px; border: 1px solid #4a90e2; background: #fff; color: #4a90e2; border-radius: 6px; cursor: pointer; font-size: 0.78em; font-family: inherit; transition: all 0.2s; }
+        .copy-btn:hover { background: #4a90e2; color: #fff; }
+
+        .scale-row { display: flex; border-radius: 8px; overflow: hidden; border: 1px solid #e0e6ed; margin-bottom: 8px; }
+        .scale-chip { flex: 1; padding: 24px 4px 8px; text-align: center; font-size: 0.7em; font-family: 'Courier New', monospace; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); min-width: 0; overflow: hidden; }
+
+        .contrast-box { background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; }
+        .contrast-head { font-size: 0.85em; font-weight: 600; color: #2c3e50; margin-bottom: 10px; }
+        .contrast-demo { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+        .contrast-demo .demo-item { flex: 1; min-width: 140px; border-radius: 6px; padding: 14px; text-align: center; }
+        .contrast-demo .demo-item.lg { font-size: 1.4em; font-weight: 700; }
+        .contrast-demo .demo-item.sm { font-size: 0.85em; font-weight: 400; }
+        .badges { display: flex; gap: 6px; flex-wrap: wrap; }
+        .badge { padding: 3px 10px; border-radius: 12px; font-size: 0.75em; font-weight: 600; }
+        .badge.pass { background: #dcfce7; color: #16a34a; }
+        .badge.fail { background: #fee2e2; color: #ef4444; }
+        .ratio-big { font-size: 1.3em; font-weight: 700; color: #2c3e50; font-family: 'Courier New', monospace; }
+
+        .btn-success { background: #10b981; color: #fff; }
+        .btn-success:hover { background: #059669; }
+        .btn-secondary { background: #f0f2f5; color: #606266; }
+        .btn-secondary:hover { background: #e1e4e8; }
+    </style>
+    <meta name="keywords" content="颜色混合调色,在线颜色混合调色,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/color-mix-tool.html" />
+    <meta property="og:title" content="颜色混合与调色工具" />
+    <meta property="og:description" content="颜色混合与调色工具，纯前端使用chroma.js混合颜色、调整色相饱和度、生成色阶与对比度检测，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/color-mix-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="颜色混合与调色工具" />
+    <meta itemprop="description" content="颜色混合与调色工具，纯前端使用chroma.js混合颜色、调整色相饱和度、生成色阶与对比度检测，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "颜色混合调色",
+                "item": "https://box.lynvortex.top/image/color-mix-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "颜色混合调色",
+        "url": "https://box.lynvortex.top/image/color-mix-tool.html",
+        "description": "chroma混合颜色、调整色相、生成色阶与WCAG对比度",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+  <div class="tool-container">
+    <div class="tool-header"><h1>🎨 颜色混合与调色</h1><p>使用 chroma.js 混合颜色、调整色相饱和度、生成色阶与对比度检测</p></div>
+
+    <div class="color-pair">
+      <div class="color-field">
+        <input type="color" id="color1" value="#ff5e5e">
+        <div class="field-body">
+          <div class="field-label">颜色 A</div>
+          <input type="text" id="color1Text" value="#ff5e5e" maxlength="7">
+        </div>
+      </div>
+      <div class="color-field">
+        <input type="color" id="color2" value="#3a7bd5">
+        <div class="field-body">
+          <div class="field-label">颜色 B</div>
+          <input type="text" id="color2Text" value="#3a7bd5" maxlength="7">
+        </div>
+      </div>
+    </div>
+
+    <div class="slider-block">
+      <div class="slider-title">
+        <span>🔀 混合比例</span>
+        <span><label style="font-weight:500;color:#64748b;font-size:0.8em;">模式</label>
+        <select id="mixMode" class="mix-mode">
+          <option value="rgb" selected>RGB</option>
+          <option value="lab">LAB（感知）</option>
+          <option value="hsl">HSL</option>
+          <option value="lrgb">线性 RGB</option>
+        </select></span>
+      </div>
+      <div class="slider-row">
+        <label>A → B</label>
+        <input type="range" id="mixRatio" min="0" max="100" value="50" step="1">
+        <span class="slider-val" id="mixRatioVal">50%</span>
+      </div>
+    </div>
+
+    <div class="result-swatch">
+      <div class="big-swatch" id="bigSwatch" style="background:#9a6d9a;">#9A6D9A</div>
+      <div class="swatch-values">
+        <div class="value-line"><span class="vlabel">HEX</span><span class="vval" id="valHex">#9A6D9A</span><button class="copy-btn" onclick="copyVal('valHex')">复制</button></div>
+        <div class="value-line"><span class="vlabel">RGB</span><span class="vval" id="valRgb">rgb(...)</span><button class="copy-btn" onclick="copyVal('valRgb')">复制</button></div>
+        <div class="value-line"><span class="vlabel">HSL</span><span class="vval" id="valHsl">hsl(...)</span><button class="copy-btn" onclick="copyVal('valHsl')">复制</button></div>
+      </div>
+    </div>
+
+    <div class="slider-block">
+      <div class="slider-title"><span>🎛️ 色相 / 饱和度 / 亮度调整（基于混合结果）</span></div>
+      <div class="slider-row">
+        <label>色相 H</label>
+        <input type="range" id="hslH" min="0" max="360" value="0" step="1">
+        <span class="slider-val" id="hslHVal">0°</span>
+      </div>
+      <div class="slider-row">
+        <label>饱和 S</label>
+        <input type="range" id="hslS" min="0" max="100" value="50" step="1">
+        <span class="slider-val" id="hslSVal">50%</span>
+      </div>
+      <div class="slider-row">
+        <label>亮度 L</label>
+        <input type="range" id="hslL" min="0" max="100" value="50" step="1">
+        <span class="slider-val" id="hslLVal">50%</span>
+      </div>
+    </div>
+
+    <div class="slider-block">
+      <div class="slider-title">
+        <span>🌈 色阶生成（A → B）</span>
+        <span><label style="font-weight:500;color:#64748b;font-size:0.8em;">阶数</label>
+        <select id="scaleSteps" class="mix-mode">
+          <option value="5">5 阶</option>
+          <option value="7" selected>7 阶</option>
+          <option value="9">9 阶</option>
+        </select></span>
+      </div>
+      <div class="scale-row" id="scaleRow"></div>
+    </div>
+
+    <div class="contrast-box">
+      <div class="contrast-head">🔍 对比度检测（WCAG）— 颜色 A 与 颜色 B</div>
+      <div class="contrast-demo">
+        <div class="demo-item lg" id="demoALg">Aa 文字示例</div>
+        <div class="demo-item sm" id="demoASm">小号正文文字示例 Text</div>
+        <div class="demo-item lg" id="demoBLg">Aa 文字示例</div>
+        <div class="demo-item sm" id="demoBSm">小号正文文字示例 Text</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <span class="ratio-big" id="contrastRatio">0.00:1</span>
+        <div class="badges" id="badges"></div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="swapColors()">🔄 交换 A/B</button>
+      <button class="btn btn-secondary" onclick="resetAdjust()">↩️ 重置 HSL 调整</button>
+      <button class="btn btn-secondary" onclick="randomColors()">🎲 随机配色</button>
+    </div>
+
+    <div id="statusBar" class="status-bar info">拖动滑块实时混合颜色，调整色相饱和度并查看对比度</div>
+
+    <footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+  </div>
+
+  <div class="info-cards">
+    <div class="info-card">
+      <h3>📦 功能说明</h3>
+      <p>基于 chroma.js 实现颜色混合、HSL 色相饱和度调整、A→B 色阶生成与 WCAG 对比度检测，支持 HEX/RGB/HSL 多格式输出。</p>
+      <div class="feature-chips">
+        <span class="feature-chip">颜色混合</span>
+        <span class="feature-chip">色相调整</span>
+        <span class="feature-chip">色阶生成</span>
+        <span class="feature-chip">对比度检测</span>
+        <span class="feature-chip">多格式输出</span>
+        <span class="feature-chip">离线本地</span>
+      </div>
+    </div>
+    <div class="info-card">
+      <h3>💡 使用须知</h3>
+      <ul class="tips-list">
+        <li>选择颜色 A、B 并拖动混合比例滑块，可切换 RGB / LAB / HSL 等混合模式。</li>
+        <li>混合结果下方可继续调整色相 H、饱和度 S、亮度 L，实时更新输出值。</li>
+        <li>色阶条按所选阶数在 A 与 B 之间生成均匀过渡色，点击可复制对应 HEX。</li>
+        <li>对比度检测基于 WCAG 标准，给出 AA / AAA 合规判定，用于无障碍配色参考。</li>
+        <li>所有计算在浏览器本地完成，无需联网。</li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <h3>✨ 绘萤者</h3>
+      <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+      <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+      <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+  </div>
+</div></main>
+
+<script>
+(function () {
+    'use strict';
+    initSidebar('image');
+
+    var setStatus = function (msg, type) {
+        var bar = document.getElementById('statusBar');
+        bar.textContent = msg;
+        bar.className = 'status-bar ' + (type || 'info');
+    };
+
+    var state = { c1: '#ff5e5e', c2: '#3a7bd5', ratio: 0.5, mode: 'rgb', h: 0, s: 50, l: 50, mixed: null };
+
+    var $ = function (id) { return document.getElementById(id); };
+
+    // 校验并归一化为 HEX
+    var safeHex = function (input) {
+        try {
+            var c = chroma(input);
+            if (c && chroma.valid(input)) return c.hex();
+        } catch (e) {}
+        return null;
+    };
+
+    // ---- 颜色输入同步 ----
+    var bindColorField = function (colorEl, textEl, key) {
+        colorEl.addEventListener('input', function () {
+            state[key] = colorEl.value;
+            textEl.value = colorEl.value;
+            syncMix();
+        });
+        textEl.addEventListener('input', function () {
+            var hx = safeHex(textEl.value);
+            if (hx) {
+                state[key] = hx;
+                colorEl.value = hx;
+                syncMix();
+            }
+        });
+        textEl.addEventListener('blur', function () {
+            var hx = safeHex(textEl.value);
+            textEl.value = hx ? hx : state[key];
+            if (hx) { colorEl.value = hx; }
+        });
+    };
+    bindColorField($('color1'), $('color1Text'), 'c1');
+    bindColorField($('color2'), $('color2Text'), 'c2');
+
+    $('mixRatio').addEventListener('input', function () {
+        state.ratio = parseInt($('mixRatio').value, 10) / 100;
+        $('mixRatioVal').textContent = $('mixRatio').value + '%';
+        syncMix();
+    });
+    $('mixMode').addEventListener('change', function () {
+        state.mode = $('mixMode').value;
+        syncMix();
+    });
+
+    var hslChanging = false;
+    ['hslH', 'hslS', 'hslL'].forEach(function (id) {
+        $(id).addEventListener('input', function () {
+            state.h = parseInt($('hslH').value, 10);
+            state.s = parseInt($('hslS').value, 10);
+            state.l = parseInt($('hslL').value, 10);
+            $('hslHVal').textContent = state.h + '°';
+            $('hslSVal').textContent = state.s + '%';
+            $('hslLVal').textContent = state.l + '%';
+            render();
+        });
+    });
+
+    $('scaleSteps').addEventListener('change', render);
+
+    // 重新计算混合色，并把 HSL 滑块同步到混合色
+    function syncMix() {
+        try {
+            var a = safeHex(state.c1), b = safeHex(state.c2);
+            if (!a || !b) { setStatus('颜色格式无效，请输入正确的 HEX', 'error'); return; }
+            state.mixed = chroma.mix(a, b, state.ratio, state.mode);
+            var hsl = state.mixed.hsl();
+            var hh = hsl[0], ss = hsl[1], ll = hsl[2];
+            state.h = (isNaN(hh) || hh == null) ? 0 : Math.round(hh);
+            state.s = (isNaN(ss) || ss == null) ? 0 : Math.round(ss * 100);
+            state.l = (isNaN(ll) || ll == null) ? 0 : Math.round(ll * 100);
+            hslChanging = true;
+            $('hslH').value = state.h; $('hslS').value = state.s; $('hslL').value = state.l;
+            $('hslHVal').textContent = state.h + '°';
+            $('hslSVal').textContent = state.s + '%';
+            $('hslLVal').textContent = state.l + '%';
+            hslChanging = false;
+            render();
+        } catch (err) {
+            setStatus('混合计算失败：' + (err && err.message ? err.message : err), 'error');
+        }
+    }
+
+    function render() {
+        if (!state.mixed) return;
+        try {
+            // 在混合色基础上应用 HSL 调整
+            var adjusted = chroma(state.mixed.hex())
+                .set('hsl.h', state.h)
+                .set('hsl.s', state.s / 100)
+                .set('hsl.l', state.l / 100);
+
+            var hex = adjusted.hex();
+            var rgb = adjusted.css('rgb');
+            var hslCss = adjusted.css('hsl');
+
+            var sw = $('bigSwatch');
+            sw.style.background = hex;
+            sw.textContent = hex.toUpperCase();
+            // 文字颜色根据亮度自动切换
+            sw.style.color = adjusted.luminance() > 0.5 ? '#1e293b' : '#fff';
+
+            $('valHex').textContent = hex.toUpperCase();
+            $('valRgb').textContent = rgb;
+            $('valHsl').textContent = hslCss;
+
+            // 色阶
+            var n = parseInt($('scaleSteps').value, 10);
+            var a = safeHex(state.c1), b = safeHex(state.c2);
+            var colors = chroma.scale([a, b]).colors(n);
+            var row = $('scaleRow');
+            row.innerHTML = '';
+            colors.forEach(function (c) {
+                var cc = chroma(c);
+                var chip = document.createElement('div');
+                chip.className = 'scale-chip';
+                chip.style.background = cc.hex();
+                chip.style.color = cc.luminance() > 0.5 ? '#1e293b' : '#fff';
+                chip.textContent = cc.hex().toUpperCase();
+                chip.title = '点击复制 ' + cc.hex().toUpperCase();
+                chip.style.cursor = 'pointer';
+                chip.onclick = function () { copyText(cc.hex().toUpperCase()); };
+                row.appendChild(chip);
+            });
+
+            // 对比度
+            var ratio = chroma.contrast(a, b);
+            $('contrastRatio').textContent = ratio.toFixed(2) + ':1';
+            // 演示：A 背景 B 文字，B 背景 A 文字
+            $('demoALg').style.background = a; $('demoALg').style.color = b;
+            $('demoASm').style.background = a; $('demoASm').style.color = b;
+            $('demoBLg').style.background = b; $('demoBLg').style.color = a;
+            $('demoBSm').style.background = b; $('demoBSm').style.color = a;
+
+            // WCAG 徽章
+            var badges = [];
+            var aaNormal = ratio >= 4.5, aaLarge = ratio >= 3, aaaNormal = ratio >= 7, aaaLarge = ratio >= 4.5;
+            badges.push(makeBadge('AA 正文', aaNormal));
+            badges.push(makeBadge('AA 大字', aaLarge));
+            badges.push(makeBadge('AAA 正文', aaaNormal));
+            badges.push(makeBadge('AAA 大字', aaaLarge));
+            var box = $('badges');
+            box.innerHTML = '';
+            badges.forEach(function (bd) { box.appendChild(bd); });
+
+            setStatus('混合完成 · ' + hex.toUpperCase(), 'success');
+        } catch (err) {
+            setStatus('渲染失败：' + (err && err.message ? err.message : err), 'error');
+        }
+    }
+
+    function makeBadge(text, pass) {
+        var span = document.createElement('span');
+        span.className = 'badge ' + (pass ? 'pass' : 'fail');
+        span.textContent = (pass ? '✓ ' : '✗ ') + text;
+        return span;
+    }
+
+    window.copyVal = function (id) {
+        copyText($(id).textContent);
+    };
+    function copyText(text) {
+        try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function () { setStatus('已复制：' + text, 'success'); }, function () { fallbackCopy(text); });
+            } else { fallbackCopy(text); }
+        } catch (e) { fallbackCopy(text); }
+    }
+    function fallbackCopy(text) {
+        try {
+            var ta = document.createElement('textarea');
+            ta.value = text; document.body.appendChild(ta); ta.select();
+            document.execCommand('copy'); document.body.removeChild(ta);
+            setStatus('已复制：' + text, 'success');
+        } catch (e) { setStatus('复制失败，请手动选择复制', 'error'); }
+    }
+
+    window.swapColors = function () {
+        var tmp = state.c1; state.c1 = state.c2; state.c2 = tmp;
+        $('color1').value = state.c1; $('color1Text').value = state.c1;
+        $('color2').value = state.c2; $('color2Text').value = state.c2;
+        syncMix();
+    };
+    window.resetAdjust = function () {
+        syncMix(); // 重新同步 HSL 到混合色（即重置调整）
+        setStatus('HSL 调整已重置为混合结果', 'info');
+    };
+    window.randomColors = function () {
+        var r1 = chroma.random().hex(), r2 = chroma.random().hex();
+        state.c1 = r1; state.c2 = r2;
+        $('color1').value = r1; $('color1Text').value = r1;
+        $('color2').value = r2; $('color2Text').value = r2;
+        syncMix();
+    };
+
+    // 初始化
+    syncMix();
+})();
+</script>
+</body></html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>WebSocket测试客户端 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="WebSocket测试客户端，纯前端连接WebSocket服务，订阅发送消息，实时调试双向通信，支持心跳保活，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.conn-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px;}
+.conn-row input{flex:1;min-width:200px;padding:10px 14px;border:1px solid #e0e6ed;border-radius:8px;font-size:.9em;font-family:'Consolas',monospace;outline:none;}
+.conn-row input:focus{border-color:#4a90e2;}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#cbd5e1;margin-right:6px;vertical-align:middle;transition:.3s;}
+.dot.connected{background:#22c55e;box-shadow:0 0 6px #22c55e;}
+.dot.connecting{background:#f59e0b;box-shadow:0 0 6px #f59e0b;}
+.log-area{width:100%;height:340px;background:#0f172a;border-radius:10px;padding:14px;overflow-y:auto;font-family:'Consolas',monospace;font-size:.82em;color:#e2e8f0;line-height:1.6;}
+.log-line{margin-bottom:4px;word-break:break-all;}
+.log-recv{color:#34d399;}
+.log-send{color:#60a5fa;}
+.log-sys{color:#fbbf24;}
+.log-err{color:#f87171;}
+.log-time{color:#64748b;margin-right:8px;}
+.send-row{display:flex;gap:10px;margin-top:12px;}
+.send-row textarea{flex:1;min-height:60px;padding:10px 14px;border:1px solid #e0e6ed;border-radius:8px;font-family:'Consolas',monospace;font-size:.85em;resize:vertical;outline:none;}
+.send-row textarea:focus{border-color:#4a90e2;}
+.opt-row{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding:12px 16px;background:#f8fafc;border-radius:8px;border:1px solid #f0f2f5;font-size:.85em;color:#475569;}
+.opt-row label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;}
+.opt-row input[type="number"]{width:60px;padding:4px 8px;border:1px solid #e0e6ed;border-radius:6px;font-size:.9em;}
+</style>
+    <meta name="keywords" content="WebSocket客户端,在线WebSocket客户端,网络工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/network/websocket-tool.html" />
+    <meta property="og:title" content="WebSocket测试客户端" />
+    <meta property="og:description" content="WebSocket测试客户端，纯前端连接WebSocket服务，订阅发送消息，实时调试双向通信，支持心跳保活，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/network/websocket-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="WebSocket测试客户端" />
+    <meta itemprop="description" content="WebSocket测试客户端，纯前端连接WebSocket服务，订阅发送消息，实时调试双向通信，支持心跳保活，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "网络工具",
+                "item": "https://box.lynvortex.top/network.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "WebSocket客户端",
+                "item": "https://box.lynvortex.top/network/websocket-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "WebSocket客户端",
+        "url": "https://box.lynvortex.top/network/websocket-tool.html",
+        "description": "连接WebSocket服务器，实时收发消息调试WS协议",
+        "applicationCategory": "网络工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🔌 WebSocket测试客户端</h1><p>连接WebSocket服务，实时收发消息调试双向通信</p></div>
+<div class="conn-row">
+<input type="text" id="wsUrl" placeholder="wss://echo.websocket.org" value="wss://echo.websocket.org"/>
+<button class="btn btn-primary" id="connBtn">连接</button>
+<button class="btn btn-outline" id="discBtn" disabled>断开</button>
+</div>
+<div class="opt-row">
+<label><span class="dot" id="dot"></span><span id="connState">未连接</span></label>
+<label><input type="checkbox" id="heartbeatBox"/> 心跳保活</label>
+<label>间隔(秒)<input type="number" id="hbInterval" value="30" min="5"/></label>
+<label>心跳内容<input type="text" id="hbMsg" value="ping" style="width:80px;padding:4px 8px;border:1px solid #e0e6ed;border-radius:6px;"/></label>
+</div>
+<div class="log-area" id="logArea"></div>
+<div class="send-row">
+<textarea id="sendText" placeholder="输入要发送的消息..." onkeydown="if(event.ctrlKey&&event.key==='Enter')sendMsg();"></textarea>
+<button class="btn btn-primary" id="sendBtn" onclick="sendMsg()" disabled>发送</button>
+</div>
+<div class="btn-row" style="margin-top:10px;">
+<button class="btn btn-ghost" id="clearLog">清空日志</button>
+<button class="btn btn-ghost" id="autoScrollBtn">自动滚动: 开</button>
+</div>
+<div id="statusBar" class="status-bar info">输入WebSocket地址后点击连接</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+</footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 功能说明</h3><p>WebSocket双向通信调试，支持心跳保活与消息日志</p><div class="feature-chips"><span class="feature-chip">WSS连接</span><span class="feature-chip">消息收发</span><span class="feature-chip">心跳保活</span><span class="feature-chip">实时日志</span><span class="feature-chip">自动滚动</span><span class="feature-chip">离线本地</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>建议使用wss加密连接，ws明文连接可能被浏览器拦截</li><li>所有通信在浏览器本地进行，数据不经过自有服务器</li><li>心跳保活可防止连接因空闲超时被服务端断开</li><li>日志区分接收(绿)、发送(蓝)、系统(黄)、错误(红)</li><li>Ctrl+Enter快捷发送消息</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+initSidebar('network');
+var ws=null,hbTimer=null,autoScroll=true;
+var sb=document.getElementById('statusBar');
+function log(msg,type){var la=document.getElementById('logArea');var d=document.createElement('div');d.className='log-line log-'+type;var ts=new Date().toLocaleTimeString();d.innerHTML='<span class="log-time">['+ts+']</span>'+escapeHtml(msg);la.appendChild(d);if(autoScroll)la.scrollTop=la.scrollHeight;while(la.children.length>500)la.removeChild(la.firstChild);}
+function setConn(state){var dot=document.getElementById('dot');dot.className='dot '+(state==='open'?'connected':state==='connecting'?'connecting':'');document.getElementById('connState').textContent=state==='open'?'已连接':state==='connecting'?'连接中...':'未连接';document.getElementById('connBtn').disabled=state==='open'||state==='connecting';document.getElementById('discBtn').disabled=state!=='open';document.getElementById('sendBtn').disabled=state!=='open';}
+document.getElementById('connBtn').onclick=function(){
+var url=document.getElementById('wsUrl').value.trim();if(!url){setStatus('请输入WebSocket地址','error');return;}
+setConn('connecting');setStatus('正在连接...','info');log('正在连接 '+url,'sys');
+try{ws=new WebSocket(url);}catch(e){setStatus('连接失败：'+e.message,'error');setConn('closed');return;}
+ws.onopen=function(){setConn('open');setStatus('连接成功','success');log('连接已建立','sys');if(document.getElementById('heartbeatBox').checked)startHeartbeat();};
+ws.onmessage=function(e){log('← '+e.data,'recv');};
+ws.onerror=function(){log('连接错误','err');setStatus('连接发生错误','error');};
+ws.onclose=function(e){setConn('closed');setStatus('连接已关闭'+(e.code?' (code:'+e.code+')':''),'info');log('连接关闭'+(e.reason?' '+e.reason:'')+(e.code?' [code:'+e.code+']':''),'sys');stopHeartbeat();};
+};
+document.getElementById('discBtn').onclick=function(){if(ws){ws.close();}};
+function startHeartbeat(){var interval=parseInt(document.getElementById('hbInterval').value)||30;var msg=document.getElementById('hbMsg').value||'ping';hbTimer=setInterval(function(){if(ws&&ws.readyState===1){ws.send(msg);log('→ '+msg+' (心跳)','send');}},interval*1000);}
+function stopHeartbeat(){if(hbTimer){clearInterval(hbTimer);hbTimer=null;}}
+function sendMsg(){if(!ws||ws.readyState!==1){setStatus('未连接','error');return;}var t=document.getElementById('sendText').value;if(!t)return;ws.send(t);log('→ '+t,'send');document.getElementById('sendText').value='';}
+document.getElementById('clearLog').onclick=function(){document.getElementById('logArea').innerHTML='';};
+document.getElementById('autoScrollBtn').onclick=function(){autoScroll=!autoScroll;this.textContent='自动滚动: '+(autoScroll?'开':'关');};
+</script>
+</body>
+</html>

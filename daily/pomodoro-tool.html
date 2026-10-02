@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>番茄钟·秒表·倒计时 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="番茄钟、秒表、倒计时三合一时间管理工具，专注工作与时间追踪，纯前端无依赖。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+        .mode-tabs { display: flex; gap: 8px; margin-bottom: 24px; justify-content: center; }
+        .mode-tab { padding: 10px 22px; border-radius: 10px; border: 1px solid #e0e6ed; background: #f8fafc; color: #64748b; cursor: pointer; font-size: 0.92em; font-weight: 600; transition: 0.2s; }
+        .mode-tab.active { background: #4a90e2; color: #fff; border-color: #4a90e2; box-shadow: 0 4px 12px rgba(74,144,226,.3); }
+        .timer-display { text-align: center; margin: 30px 0; }
+        .time-big { font-size: 5.5em; font-weight: 700; font-family: 'Courier New', monospace; color: #2c3e50; letter-spacing: 2px; line-height: 1; }
+        .time-big.work { color: #ef4444; }
+        .time-big.break { color: #16a34a; }
+        .time-label { color: #94a3b8; font-size: 0.9em; margin-top: 8px; }
+        .ctrl-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; }
+        .ring-wrap { position: relative; width: 320px; height: 320px; margin: 0 auto 10px; }
+        .ring-wrap svg { transform: rotate(-90deg); }
+        .ring-bg { fill: none; stroke: #e2e8f0; stroke-width: 10; }
+        .ring-fg { fill: none; stroke: #4a90e2; stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 0.5s; }
+        .ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .preset-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px; }
+        .preset-btn { padding: 6px 16px; border-radius: 20px; border: 1px solid #e0e6ed; background: #fff; color: #475569; cursor: pointer; font-size: 0.82em; }
+        .preset-btn.active { background: #ebf5ff; color: #4a90e2; border-color: #4a90e2; }
+        .stat-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+        .stat-pill { background: #f1f5f9; padding: 8px 16px; border-radius: 20px; font-size: 0.85em; color: #475569; }
+        .stat-pill strong { color: #4a90e2; }
+        .laps { max-height: 200px; overflow: auto; margin-top: 16px; border: 1px solid #e1e4e8; border-radius: 8px; }
+        .lap-row { display: flex; justify-content: space-between; padding: 8px 14px; border-bottom: 1px solid #f1f5f9; font-family: 'Courier New', monospace; font-size: 0.85em; }
+        .lap-row:last-child { border-bottom: none; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="番茄钟计时器,在线番茄钟计时器,日常通用,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/daily/pomodoro-tool.html" />
+    <meta property="og:title" content="番茄钟·秒表·倒计时" />
+    <meta property="og:description" content="番茄钟、秒表、倒计时三合一时间管理工具，专注工作与时间追踪，纯前端无依赖。" />
+    <meta property="og:url" content="https://box.lynvortex.top/daily/pomodoro-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="番茄钟·秒表·倒计时" />
+    <meta itemprop="description" content="番茄钟、秒表、倒计时三合一时间管理工具，专注工作与时间追踪，纯前端无依赖。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "日常通用",
+                "item": "https://box.lynvortex.top/daily.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "番茄钟计时器",
+                "item": "https://box.lynvortex.top/daily/pomodoro-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "番茄钟计时器",
+        "url": "https://box.lynvortex.top/daily/pomodoro-tool.html",
+        "description": "番茄工作法计时器，工作休息循环，统计完成数量",
+        "applicationCategory": "日常通用",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>⏱️ 番茄钟 · 秒表 · 倒计时</h1>
+                <p>三合一时间管理工具，专注工作与时间追踪</p>
+            </div>
+
+            <div class="mode-tabs">
+                <div class="mode-tab active" data-mode="pomodoro">🍅 番茄钟</div>
+                <div class="mode-tab" data-mode="stopwatch">⏱️ 秒表</div>
+                <div class="mode-tab" data-mode="countdown">⏲️ 倒计时</div>
+            </div>
+
+            <div id="pomodoroPanel">
+                <div class="ring-wrap">
+                    <svg width="320" height="320"><circle class="ring-bg" cx="160" cy="160" r="145" /><circle class="ring-fg" id="pomoRing" cx="160" cy="160" r="145" stroke-dasharray="911" stroke-dashoffset="0" /></svg>
+                    <div class="ring-center">
+                        <div class="time-big work" id="pomoTime">25:00</div>
+                        <div class="time-label" id="pomoLabel">专注工作中</div>
+                    </div>
+                </div>
+                <div class="preset-row">
+                    <div class="preset-btn active" data-work="25" data-brk="5">25/5</div>
+                    <div class="preset-btn" data-work="50" data-brk="10">50/10</div>
+                    <div class="preset-btn" data-work="15" data-brk="3">15/3</div>
+                    <div class="preset-btn" data-work="90" data-brk="20">90/20</div>
+                </div>
+                <div class="ctrl-row">
+                    <button class="btn btn-primary" id="pomoStart">▶ 开始</button>
+                    <button class="btn btn-ghost" id="pomoReset">↺ 重置</button>
+                    <button class="btn btn-outline" id="pomoSkip">⏭ 跳过</button>
+                </div>
+                <div class="stat-row">
+                    <div class="stat-pill">今日番茄：<strong id="pomoCount">0</strong></div>
+                    <div class="stat-pill">阶段：<strong id="pomoPhase">工作</strong></div>
+                </div>
+            </div>
+
+            <div id="stopwatchPanel" style="display:none;">
+                <div class="timer-display"><div class="time-big" id="swTime">00:00.00</div><div class="time-label">秒表计时</div></div>
+                <div class="ctrl-row">
+                    <button class="btn btn-primary" id="swStart">▶ 开始</button>
+                    <button class="btn btn-outline" id="swLap">🏁 记圈</button>
+                    <button class="btn btn-ghost" id="swReset">↺ 重置</button>
+                </div>
+                <div class="laps" id="swLaps"></div>
+            </div>
+
+            <div id="countdownPanel" style="display:none;">
+                <div class="ring-wrap">
+                    <svg width="320" height="320"><circle class="ring-bg" cx="160" cy="160" r="145" /><circle class="ring-fg" id="cdRing" cx="160" cy="160" r="145" stroke-dasharray="911" stroke-dashoffset="0" /></svg>
+                    <div class="ring-center"><div class="time-big" id="cdTime">00:10</div><div class="time-label">倒计时</div></div>
+                </div>
+                <div class="preset-row">
+                    <div class="preset-btn" data-sec="60">1 分钟</div>
+                    <div class="preset-btn active" data-sec="600">10 分钟</div>
+                    <div class="preset-btn" data-sec="1800">30 分钟</div>
+                    <div class="preset-btn" data-sec="3600">1 小时</div>
+                </div>
+                <div class="form-item" style="max-width:300px;margin:0 auto 16px;">
+                    <label>自定义（分:秒）</label>
+                    <input type="text" id="cdCustom" placeholder="如 05:30" style="text-align:center;font-family:'Courier New',monospace;" />
+                </div>
+                <div class="ctrl-row">
+                    <button class="btn btn-primary" id="cdStart">▶ 开始</button>
+                    <button class="btn btn-ghost" id="cdReset">↺ 重置</button>
+                </div>
+            </div>
+
+            <div id="statusBar" class="status-bar info">选择模式开始使用，番茄钟数据保存在本地</div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 番茄钟计时器</h3>
+                <p>番茄工作法计时工具，提升专注力与效率</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">番茄工作法</span>
+                    <span class="feature-chip">专注计时</span>
+                    <span class="feature-chip">秒表</span>
+                    <span class="feature-chip">倒计时</span>
+                    <span class="feature-chip">离线可用</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>默认 25 分钟工作 + 5 分钟休息，可自定义时长</li>
+                    <li>同时提供秒表和倒计时两种模式</li>
+                    <li>计时数据仅在本地保存，不上传服务器</li>
+                    <li>切换模式时自动清理定时器防止泄漏</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const setStatus = (m, t) => { const sb = document.getElementById('statusBar'); sb.textContent = m; sb.className = 'status-bar ' + (t || 'info'); };
+    const RING_LEN = 911; // 2*PI*145
+
+    let activeTimer = null;
+
+    // ============ 番茄钟 ============
+    let pomoWork = 25, pomoBrk = 5, pomoSec = 25 * 60, pomoIsWork = true, pomoRunning = false, pomoCount = parseInt(localStorage.getItem('pomoCount') || '0', 10);
+    const pomoTime = document.getElementById('pomoTime');
+    const pomoLabel = document.getElementById('pomoLabel');
+    const pomoRing = document.getElementById('pomoRing');
+    const pomoCountEl = document.getElementById('pomoCount');
+    const pomoPhase = document.getElementById('pomoPhase');
+    pomoCountEl.textContent = pomoCount;
+
+    const fmt = (s) => { const m = Math.floor(s / 60), sec = s % 60; return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0'); };
+    const renderPomo = () => {
+        pomoTime.textContent = fmt(pomoSec);
+        const total = (pomoIsWork ? pomoWork : pomoBrk) * 60;
+        pomoRing.style.strokeDashoffset = RING_LEN * (1 - pomoSec / total);
+        pomoTime.className = 'time-big ' + (pomoIsWork ? 'work' : 'break');
+        pomoLabel.textContent = pomoIsWork ? '专注工作中' : '休息放松中';
+        pomoPhase.textContent = pomoIsWork ? '工作' : '休息';
+    };
+    renderPomo();
+
+    document.querySelectorAll('#pomodoroPanel .preset-btn').forEach(b => b.addEventListener('click', () => {
+        document.querySelectorAll('#pomodoroPanel .preset-btn').forEach(x => x.classList.remove('active'));
+        b.classList.add('active'); pomoWork = +b.dataset.work; pomoBrk = +b.dataset.brk;
+        pomoIsWork = true; pomoSec = pomoWork * 60; renderPomo(); if (pomoRunning) { clearInterval(activeTimer); pomoRunning = false; document.getElementById('pomoStart').textContent = '▶ 开始'; }
+    }));
+
+    document.getElementById('pomoStart').addEventListener('click', function () {
+        if (pomoRunning) { clearInterval(activeTimer); pomoRunning = false; this.textContent = '▶ 开始'; setStatus('已暂停', 'info'); return; }
+        pomoRunning = true; this.textContent = '⏸ 暂停'; setStatus(pomoIsWork ? '专注中...' : '休息中...', 'info');
+        activeTimer = setInterval(() => {
+            pomoSec--;
+            if (pomoSec <= 0) {
+                if (pomoIsWork) { pomoCount++; localStorage.setItem('pomoCount', pomoCount); pomoCountEl.textContent = pomoCount; setStatus('🍅 一个番茄完成！进入休息', 'success'); try { notify('番茄完成', '专注结束，休息一下吧～'); } catch (e) {} }
+                else { setStatus('休息结束，开始下一个番茄', 'info'); }
+                pomoIsWork = !pomoIsWork; pomoSec = (pomoIsWork ? pomoWork : pomoBrk) * 60;
+            }
+            renderPomo();
+        }, 1000);
+    });
+    document.getElementById('pomoReset').addEventListener('click', () => { clearInterval(activeTimer); pomoRunning = false; pomoIsWork = true; pomoSec = pomoWork * 60; renderPomo(); document.getElementById('pomoStart').textContent = '▶ 开始'; setStatus('已重置', 'info'); });
+    document.getElementById('pomoSkip').addEventListener('click', () => { pomoIsWork = !pomoIsWork; pomoSec = (pomoIsWork ? pomoWork : pomoBrk) * 60; renderPomo(); setStatus('已跳过', 'info'); });
+
+    // ============ 秒表 ============
+    let swStart = 0, swElapsed = 0, swRunning = false, swLaps = [];
+    const swTime = document.getElementById('swTime');
+    const fmtSw = (ms) => { const t = Math.floor(ms / 10); const h = Math.floor(t / 360000), m = Math.floor(t / 6000) % 60, s = Math.floor(t / 100) % 60, cs = t % 100; return (h ? String(h).padStart(2, '0') + ':' : '') + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0') + '.' + String(cs).padStart(2, '0'); };
+    document.getElementById('swStart').addEventListener('click', function () {
+        if (swRunning) { swElapsed += Date.now() - swStart; swRunning = false; clearInterval(activeTimer); this.textContent = '▶ 继续'; return; }
+        swRunning = true; swStart = Date.now(); this.textContent = '⏸ 暂停';
+        activeTimer = setInterval(() => { swTime.textContent = fmtSw(swElapsed + Date.now() - swStart); }, 50);
+    });
+    document.getElementById('swLap').addEventListener('click', () => {
+        if (!swRunning && !swElapsed) return;
+        const cur = swElapsed + (swRunning ? Date.now() - swStart : 0);
+        const prev = swLaps.length ? swLaps[swLaps.length - 1].total : 0;
+        swLaps.push({ total: cur, diff: cur - prev });
+        document.getElementById('swLaps').innerHTML = swLaps.map((l, i) => `<div class="lap-row"><span>#${i + 1}</span><span>+${fmtSw(l.diff)}</span><span>${fmtSw(l.total)}</span></div>`).join('');
+    });
+    document.getElementById('swReset').addEventListener('click', () => { clearInterval(activeTimer); swElapsed = 0; swRunning = false; swLaps = []; swTime.textContent = '00:00.00'; document.getElementById('swLaps').innerHTML = ''; document.getElementById('swStart').textContent = '▶ 开始'; });
+
+    // ============ 倒计时 ============
+    let cdTotal = 600, cdSec = 600, cdRunning = false;
+    const cdTime = document.getElementById('cdTime');
+    const cdRing = document.getElementById('cdRing');
+    const renderCd = () => { cdTime.textContent = fmt(cdSec); cdRing.style.strokeDashoffset = RING_LEN * (1 - cdSec / cdTotal); };
+    renderCd();
+    document.querySelectorAll('#countdownPanel .preset-btn').forEach(b => b.addEventListener('click', () => {
+        document.querySelectorAll('#countdownPanel .preset-btn').forEach(x => x.classList.remove('active'));
+        b.classList.add('active'); cdTotal = cdSec = +b.dataset.sec; renderCd(); if (cdRunning) { clearInterval(activeTimer); cdRunning = false; document.getElementById('cdStart').textContent = '▶ 开始'; }
+    }));
+    document.getElementById('cdCustom').addEventListener('change', (e) => {
+        const m = e.target.value.match(/^(\d+):(\d+)$/); if (!m) { setStatus('格式应为 分:秒，如 05:30', 'error'); return; }
+        cdTotal = cdSec = +m[1] * 60 + +m[2]; renderCd();
+    });
+    document.getElementById('cdStart').addEventListener('click', function () {
+        if (cdRunning) { clearInterval(activeTimer); cdRunning = false; this.textContent = '▶ 继续'; return; }
+        if (cdSec <= 0) { cdSec = cdTotal; renderCd(); }
+        cdRunning = true; this.textContent = '⏸ 暂停';
+        activeTimer = setInterval(() => {
+            cdSec--; renderCd();
+            if (cdSec <= 0) { clearInterval(activeTimer); cdRunning = false; this.textContent = '▶ 开始'; setStatus('⏰ 倒计时结束！', 'success'); try { notify('倒计时结束', '时间到！'); } catch (e) {} try { beep(); } catch (e) {} }
+        }, 1000);
+    });
+    document.getElementById('cdReset').addEventListener('click', () => { clearInterval(activeTimer); cdRunning = false; cdSec = cdTotal; renderCd(); document.getElementById('cdStart').textContent = '▶ 开始'; });
+
+    function notify(t, b) { if ('Notification' in window && Notification.permission === 'granted') new Notification(t, { body: b }); }
+    function beep() { try { const ac = new (window.AudioContext || window.webkitAudioContext)(); const o = ac.createOscillator(); const g = ac.createGain(); o.connect(g); g.connect(ac.destination); o.frequency.value = 880; g.gain.setValueAtTime(0.3, ac.currentTime); g.gain.exponentialRampToValueAtTime(0.01, ac.currentTime + 0.6); o.start(); o.stop(ac.currentTime + 0.6); } catch (e) {} }
+    if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+
+    // ============ 模式切换（停止所有计时器，重置运行状态） ============
+    document.querySelectorAll('.mode-tab').forEach(t => t.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+        const m = t.dataset.mode;
+        document.getElementById('pomodoroPanel').style.display = m === 'pomodoro' ? 'block' : 'none';
+        document.getElementById('stopwatchPanel').style.display = m === 'stopwatch' ? 'block' : 'none';
+        document.getElementById('countdownPanel').style.display = m === 'countdown' ? 'block' : 'none';
+        // 停止所有正在运行的计时器，防止后台泄漏
+        if (activeTimer) { clearInterval(activeTimer); activeTimer = null; }
+        if (pomoRunning) { pomoRunning = false; document.getElementById('pomoStart').textContent = '▶ 开始'; }
+        if (swRunning) { swElapsed += Date.now() - swStart; swRunning = false; document.getElementById('swStart').textContent = '▶ 继续'; }
+        if (cdRunning) { cdRunning = false; document.getElementById('cdStart').textContent = '▶ 继续'; }
+    }));
+
+    initSidebar('daily');
+</script>
+</body>
+</html>

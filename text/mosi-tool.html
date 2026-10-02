@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>摩斯密码转换 - 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="摩斯密码编解码，文本与摩斯密码快速互转，支持自定义分隔符。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', -apple-system, sans-serif;
+            background: #f4f7f9;
+            margin: 0;
+            display: flex;
+            height: 100vh; overflow: hidden;
+            color: #333;
+        }
+
+        .mobile-header {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: #fff; padding: 0 16px; align-items: center;
+            justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+        }
+        .mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+        .mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+        .menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #e8845a; }
+
+        .sidebar {
+            width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+            display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+            transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+            position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item {
+            display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+            transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+        }
+        .category-item:hover, .category-item.active { background: #fdf0eb; color: #e8845a; border-left-color: #e8845a; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+        /* 全宽工具容器 – 去除了 max-width 限制 */
+        .tool-container {
+            width: 100%;
+            max-width: 960px;
+            background: #fff; border-radius: 12px;
+            padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+        }
+        .tool-header { text-align: center; margin-bottom: 28px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+        .tip-box {
+            background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 8px;
+            padding: 12px 16px; margin-bottom: 24px; font-size: 0.83em; color: #64748b; line-height: 1.7;
+        }
+        .tip-box span { font-weight: 600; color: #4a90e2; }
+        .tip-box code { background: #eef2ff; color: #4a90e2; padding: 1px 5px; border-radius: 4px; font-family: 'Consolas', monospace; }
+
+        .mode-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
+        .mode-btn {
+            padding: 8px 20px; border: 2px solid #e1e4e8; border-radius: 8px;
+            background: white; color: #606266; font-size: 0.9em; cursor: pointer;
+            transition: all 0.2s; font-family: inherit; font-weight: 500;
+        }
+        .mode-btn:hover { border-color: #4a90e2; color: #4a90e2; }
+        .mode-btn.active { border-color: #4a90e2; background: #4a90e2; color: white; }
+
+        .io-wrap {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;
+        }
+        @media (max-width: 600px) { .io-wrap { grid-template-columns: 1fr; } }
+
+        .io-block label {
+            display: block; font-size: 0.85em; color: #64748b; margin-bottom: 8px; font-weight: 500;
+        }
+        textarea {
+            width: 100%; height: 180px; padding: 14px; border: 1px solid #e0e6ed;
+            border-radius: 8px; font-size: 0.92em; font-family: 'Consolas', 'Courier New', monospace;
+            resize: vertical; outline: none; transition: border-color 0.2s; color: #1e293b; line-height: 1.6;
+        }
+        textarea:focus { border-color: #4a90e2; }
+        textarea[readonly] { background: #f8fafc; cursor: default; }
+
+        .char-count { font-size: 0.78em; color: #c0c4cc; text-align: right; margin-top: 4px; }
+
+        .action-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+        .btn {
+            padding: 10px 18px; border: none; border-radius: 8px; font-size: 0.9em;
+            font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap;
+        }
+        .btn-primary { background: #e8845a; color: white; }
+        .btn-primary:hover { background: #d4734a; }
+        .btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .btn-outline { background: transparent; color: #e8845a; border: 1px solid #e8845a; }
+        .btn-outline:hover { background: #e8845a; color: white; }
+        .btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+        .btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+
+        .status-bar {
+            margin-top: 18px; min-height: 20px; font-size: 0.85em;
+            padding: 8px 12px; border-radius: 6px;
+        }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+        .footer p { margin: 0; }
+        .footer a { color: #e8845a; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+
+        /* 信息卡片 – 同样全宽 */
+        .info-cards {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-top: 4px;
+        }
+
+        .info-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 22px 24px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+            border: 1px solid #f0f2f5;
+        }
+
+        .info-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1em;
+            color: #2c3e50;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .info-card p {
+            margin: 0 0 10px 0;
+            font-size: 0.82em;
+            color: #64748b;
+        }
+
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip {
+            background: #e0f2fe; color: #0369a1;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace;
+        }
+
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a {
+            font-size: 0.85em; color: #4a90e2; text-decoration: none;
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s;
+        }
+        .tool-links a:hover { background: #e2e8f0; }
+
+        @media (max-width: 768px) {
+            body { display: block; height: auto; overflow: auto; }
+            .mobile-header { display: flex; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .close-sidebar { display: block; }
+            .main-content { display: block; }
+            .main-scroll { padding: 72px 12px 32px; gap: 20px;  }
+            .tool-container { padding: 24px 16px; border-radius: 10px; }
+            .tool-header h1 { font-size: 1.3em; }
+            .action-row { gap: 8px; }
+            .btn { padding: 8px 14px; font-size: 0.85em; }
+            .info-card { padding: 18px 16px; }
+            .overlay.active { display: block; }
+        }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="摩斯密码编解码,在线摩斯密码编解码,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/text/mosi-tool.html" />
+    <meta property="og:title" content="摩斯密码转换" />
+    <meta property="og:description" content="摩斯密码编解码，文本与摩斯密码快速互转，支持自定义分隔符。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/text/mosi-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="摩斯密码转换" />
+    <meta itemprop="description" content="摩斯密码编解码，文本与摩斯密码快速互转，支持自定义分隔符。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "摩斯密码编解码",
+                "item": "https://box.lynvortex.top/text/mosi-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "摩斯密码编解码",
+        "url": "https://box.lynvortex.top/text/mosi-tool.html",
+        "description": "文本与摩斯密码快速互转，支持自定义分隔符",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>📡 摩斯密码转换</h1>
+                <p>纯前端实现，安全高效，支持文字 ↔ 摩斯密码实时互转</p>
+            </div>
+
+            <div class="tip-box">
+                <span>格式说明：</span>每个字符用空格分隔，单词之间用 <code>/</code> 分隔。<br>例：<code>.... . .-.. .-.. --- / .-- --- .-. .-.. -..</code> 表示 HELLO WORLD
+            </div>
+
+            <div class="mode-group" id="modeGroup">
+                <button class="mode-btn active" data-type="text2morse">📝 文字 → 摩斯密码</button>
+                <button class="mode-btn" data-type="morse2text">📡 摩斯密码 → 文字</button>
+            </div>
+
+            <div class="io-wrap">
+                <div class="io-block">
+                    <label id="inputLabel">输入文字</label>
+                    <textarea id="inputText" placeholder="在此输入需要转换的文字..."></textarea>
+                    <div class="char-count" id="inputCount">0 字符</div>
+                </div>
+                <div class="io-block">
+                    <label id="outputLabel">摩斯密码</label>
+                    <textarea id="outputText" readonly placeholder="转换结果将显示在这里..."></textarea>
+                    <div class="char-count" id="outputCount">0 字符</div>
+                </div>
+            </div>
+
+            <div class="action-row">
+                <button class="btn btn-primary" id="convertBtn">🔐 转换</button>
+                <button class="btn btn-outline" id="copyBtn">📋 复制结果</button>
+                <button class="btn btn-ghost" id="swapBtn">🔁 交换</button>
+                <button class="btn btn-ghost" id="clearBtn">🗑️ 清空</button>
+            </div>
+
+            <div class="status-bar info" id="statusBar">选择转换方向，输入内容后点击转换</div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#e8845a;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#e8845a;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 支持转换的字符</h3>
+                <p>涵盖字母、数字及常用标点符号</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">A-Z</span>
+                    <span class="tld-chip">0-9</span>
+                    <span class="tld-chip">.,?!/()</span>
+                    <span class="tld-chip">@#$&</span>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>文字→摩斯：自动将空格转为 <code>/</code> 分隔单词</li>
+                    <li>摩斯→文字：用空格分隔字符，<code>/</code> 分隔单词</li>
+                    <li>所有转换均在浏览器本地完成，无任何网络上传</li>
+                    <li>不支持的字符会自动忽略，可放心输入</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p class="brand-tagline">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:8px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+
+<script>
+    // 侧边栏由 sidebar.js 统一管理
+    initSidebar('text');
+
+    // 摩斯密码映射表（纯前端）
+    const MORSE_MAP = {
+        'A': '.-',   'B': '-...', 'C': '-.-.', 'D': '-..',  'E': '.',
+        'F': '..-.', 'G': '--.',  'H': '....', 'I': '..',   'J': '.---',
+        'K': '-.-',  'L': '.-..', 'M': '--',   'N': '-.',   'O': '---',
+        'P': '.--.', 'Q': '--.-', 'R': '.-.',  'S': '...',  'T': '-',
+        'U': '..-',  'V': '...-', 'W': '.--',  'X': '-..-', 'Y': '-.--',
+        'Z': '--..',
+        '0': '-----', '1': '.----', '2': '..---', '3': '...--', '4': '....-',
+        '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.',
+        '.': '.-.-.-', ',': '--..--', '?': '..--..', "'": '.----.', '!': '-.-.--',
+        '/': '-..-.', '(': '-.--.', ')': '-.--.-', '&': '.-...', ':': '---...',
+        ';': '-.-.-.', '=': '-...-', '+': '.-.-.', '-': '-....-', '_': '..--.-',
+        '"': '.-..-.', '$': '...-..-', '@': '.--.-.'
+    };
+    const REVERSE_MAP = Object.fromEntries(Object.entries(MORSE_MAP).map(([k,v]) => [v, k]));
+
+    // UI 元素
+    const inputText = document.getElementById('inputText');
+    const outputText = document.getElementById('outputText');
+    const inputCount = document.getElementById('inputCount');
+    const outputCount = document.getElementById('outputCount');
+    const inputLabel = document.getElementById('inputLabel');
+    const outputLabel = document.getElementById('outputLabel');
+    const statusBar = document.getElementById('statusBar');
+    const convertBtn = document.getElementById('convertBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const swapBtn = document.getElementById('swapBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const modeGroup = document.getElementById('modeGroup');
+
+    let currentType = 'text2morse';
+
+    // 模式切换
+    modeGroup.addEventListener('click', (e) => {
+        const btn = e.target.closest('.mode-btn');
+        if (!btn) return;
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentType = btn.dataset.type;
+        updateLabels();
+        if (inputText.value.trim()) doConvert();
+    });
+
+    const updateLabels = function() {
+        if (currentType === 'text2morse') {
+            inputLabel.textContent = '输入文字';
+            outputLabel.textContent = '摩斯密码';
+            inputText.placeholder = '在此输入需要转换的文字...';
+        } else {
+            inputLabel.textContent = '摩斯密码';
+            outputLabel.textContent = '解码文字';
+            inputText.placeholder = '在此输入摩斯密码...';
+        }
+    };
+
+    // 字符计数
+    inputText.addEventListener('input', () => {
+        inputCount.textContent = `${inputText.value.length} 字符`;
+    });
+
+    // 文字 -> 摩斯密码
+    const textToMorse = function(text) {
+        const upper = text.toUpperCase();
+        const words = upper.split(/\s+/);
+        const morseWords = words.map(word => {
+            const chars = word.split('');
+            const morseChars = chars.map(char => MORSE_MAP[char] || char);
+            return morseChars.join(' ');
+        });
+        return morseWords.join(' / ');
+    };
+
+    // 摩斯密码 -> 文字
+    const morseToText = function(morse) {
+        const words = morse.split(/\s*\/\s*/);
+        const textWords = words.map(word => {
+            const chars = word.trim().split(/\s+/);
+            const textChars = chars.map(char => REVERSE_MAP[char] || char);
+            return textChars.join('');
+        });
+        return textWords.join(' ');
+    };
+
+    const doConvert = function() {
+        const input = inputText.value.trim();
+        if (!input) {
+            setStatus('请先输入需要转换的内容', 'error');
+            return;
+        }
+
+        convertBtn.disabled = true;
+        convertBtn.textContent = '转换中...';
+        setStatus('正在转换...', 'info');
+
+        setTimeout(() => {
+            try {
+                let result = '';
+                if (currentType === 'text2morse') {
+                    result = textToMorse(input);
+                } else {
+                    result = morseToText(input);
+                }
+                outputText.value = result;
+                outputCount.textContent = `${result.length} 字符`;
+                setStatus('转换成功 ✓', 'success');
+            } catch (err) {
+                setStatus(`转换失败：${err.message}`, 'error');
+            } finally {
+                convertBtn.disabled = false;
+                convertBtn.textContent = '🔐 转换';
+            }
+        }, 50);
+    };
+
+    const copyResult = function() {
+        const output = outputText.value;
+        if (!output) {
+            setStatus('没有可复制的内容', 'error');
+            return;
+        }
+        navigator.clipboard.writeText(output).then(() => {
+            setStatus('已复制到剪贴板 ✓', 'success');
+        }).catch(() => {
+            outputText.select();
+            document.execCommand('copy');
+            setStatus('已复制到剪贴板 ✓', 'success');
+        });
+    };
+
+    const swapMode = function() {
+        // 切换模式
+        const btns = document.querySelectorAll('.mode-btn');
+        btns.forEach(b => b.classList.toggle('active'));
+        currentType = currentType === 'text2morse' ? 'morse2text' : 'text2morse';
+        updateLabels();
+        // 交换输入输出
+        const temp = inputText.value;
+        inputText.value = outputText.value;
+        outputText.value = temp;
+        inputCount.textContent = `${inputText.value.length} 字符`;
+        outputCount.textContent = `${outputText.value.length} 字符`;
+        setStatus('已交换输入输出', 'info');
+    };
+
+    const clearAll = function() {
+        inputText.value = '';
+        outputText.value = '';
+        inputCount.textContent = '0 字符';
+        outputCount.textContent = '0 字符';
+        setStatus('已清空', 'info');
+    };
+
+    const setStatus = function(msg, type) {
+        statusBar.textContent = msg;
+        statusBar.className = `status-bar ${type}`;
+    };
+
+    // 事件绑定
+    convertBtn.addEventListener('click', doConvert);
+    copyBtn.addEventListener('click', copyResult);
+    swapBtn.addEventListener('click', swapMode);
+    clearBtn.addEventListener('click', clearAll);
+    inputText.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === 'Enter') doConvert();
+    });
+
+    updateLabels();
+</script>
+</body>
+</html>

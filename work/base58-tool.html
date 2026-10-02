@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Base58 编码解码 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="Base58编码，Base58 编码解码，支持比特币地址格式。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', -apple-system, sans-serif;
+            background: #f4f7f9;
+            margin: 0;
+            display: flex;
+            height: 100vh; overflow: hidden;
+            color: #333;
+        }
+
+        .mobile-header {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: #fff; padding: 0 20px; align-items: center;
+            justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+        }
+        .mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+        .mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+        .menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #4a90e2; }
+
+        .sidebar {
+            width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+            display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+            transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+            position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item {
+            display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+            transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+        }
+        .category-item:hover, .category-item.active { background: #ebf5ff; color: #4a90e2; border-left-color: #4a90e2; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+        .tool-container {
+            width: 100%;
+            max-width: 960px;
+            background: #fff; border-radius: 12px;
+            padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+        }
+        .tool-header { text-align: center; margin-bottom: 28px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+        .mode-tabs {
+            display: flex; gap: 0; margin-bottom: 24px;
+            background: #f1f5f9; border-radius: 10px; padding: 4px;
+        }
+        .mode-tab {
+            flex: 1; text-align: center; padding: 10px 20px; border: none;
+            background: transparent; border-radius: 8px; font-size: 0.9em;
+            font-family: inherit; cursor: pointer; transition: all 0.2s;
+            font-weight: 500; color: #64748b;
+        }
+        .mode-tab.active { background: #fff; color: #4a90e2; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .mode-tab:hover:not(.active) { color: #475569; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 20px; }
+
+        .form-item { display: flex; flex-direction: column; gap: 6px; }
+        .form-item label { font-size: 0.85em; color: #64748b; font-weight: 600; }
+        .form-item textarea {
+            padding: 10px 14px; border: 1px solid #e0e6ed; border-radius: 8px;
+            font-size: 0.9em; outline: none; transition: 0.2s; background: #fff;
+            font-family: 'Consolas', 'Courier New', monospace; resize: vertical; min-height: 100px;
+        }
+        .form-item textarea:focus { border-color: #4a90e2; }
+        .hint { font-size: 0.78em; color: #94a3b8; margin-top: 4px; }
+
+        .btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; align-items: center; }
+
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em;
+            font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap;
+        }
+        .btn-primary { background: #4a90e2; color: white; }
+        .btn-primary:hover { background: #3a7bd5; }
+        .btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .btn-outline { background: transparent; color: #4a90e2; border: 1px solid #4a90e2; }
+        .btn-outline:hover { background: #4a90e2; color: white; }
+        .btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+        .btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+
+        .status-bar {
+            min-height: 20px; font-size: 0.85em;
+            padding: 8px 12px; border-radius: 6px; margin-bottom: 16px;
+        }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+
+        .result-wrap { margin-top: 16px; }
+        .result-label {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 6px; font-size: 0.85em; color: #475569; font-weight: 600;
+        }
+        .result-label .result-actions { display: flex; gap: 6px; }
+        .result-label .result-actions button {
+            padding: 4px 10px; font-size: 0.78em; border-radius: 6px;
+            border: 1px solid #e0e6ed; background: #f8fafc; cursor: pointer;
+            color: #475569; transition: all 0.2s; font-family: inherit;
+        }
+        .result-label .result-actions button:hover { background: #e2e8f0; }
+        .result-label .result-actions button.copied { background: #dcfce7; color: #16a34a; border-color: #bbf7d0; }
+
+        .result-textarea {
+            width: 100%; min-height: 100px; padding: 12px; border: 1px solid #e0e6ed;
+            border-radius: 8px; font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.82em; line-height: 1.5; resize: vertical; background: #fafbfc;
+            color: #1e293b; outline: none; transition: border-color 0.2s;
+        }
+        .result-textarea:focus { border-color: #4a90e2; }
+        .result-textarea.copied { border-color: #22c55e; background: #f0fdf4; }
+
+        .alphabet-section {
+            margin-top: 16px; padding: 12px 16px; background: #f8fafc;
+            border: 1px solid #e0e6ed; border-radius: 8px;
+        }
+        .alphabet-section h4 {
+            margin: 0 0 8px 0; font-size: 0.85em; color: #475569; font-weight: 600;
+        }
+        .alphabet-chars {
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.82em; color: #1e293b; word-break: break-all; line-height: 1.8;
+        }
+        .alphabet-chars span { display: inline-block; padding: 0 1px; }
+        .alphabet-chars .excluded { color: #ef4444; text-decoration: line-through; }
+
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+        .footer p { margin: 0; }
+        .footer a { color: #4a90e2; text-decoration: none; }
+
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+
+        .info-cards {
+            width: 100%;
+            max-width: 960px;
+            display: flex; flex-direction: column; gap: 18px; margin-top: 4px;
+        }
+        .info-card {
+            background: #fff; border-radius: 12px; padding: 22px 24px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06); border: 1px solid #f0f2f5;
+        }
+        .info-card h3 {
+            margin: 0 0 10px 0; font-size: 1em; color: #2c3e50; font-weight: 600;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .info-card p { margin: 0 0 10px 0; font-size: 0.82em; color: #64748b; }
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip {
+            background: #e0f2fe; color: #0369a1;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace;
+        }
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a {
+            font-size: 0.85em; color: #4a90e2; text-decoration: none;
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s;
+        }
+        .tool-links a:hover { background: #e2e8f0; }
+
+        @media (max-width: 768px) {
+            body { display: block; height: auto; overflow: auto; }
+            .mobile-header { display: flex; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .close-sidebar { display: block; }
+            .main-content { display: block; }
+            .main-scroll { padding: 72px 16px 32px; gap: 20px;  }
+            .tool-container { padding: 24px 16px; border-radius: 10px; }
+            .tool-header h1 { font-size: 1.3em; }
+            .result-textarea { font-size: 0.78em; }
+            .result-label { flex-direction: column; align-items: flex-start; gap: 6px; }
+            .overlay.active { display: block; }
+        }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="Base58编码,在线Base58编码,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/base58-tool.html" />
+    <meta property="og:title" content="Base58 编码解码" />
+    <meta property="og:description" content="Base58编码，Base58 编码解码，支持比特币地址格式。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/base58-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="Base58 编码解码" />
+    <meta itemprop="description" content="Base58编码，Base58 编码解码，支持比特币地址格式。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Base58编码",
+                "item": "https://box.lynvortex.top/work/base58-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Base58编码",
+        "url": "https://box.lynvortex.top/work/base58-tool.html",
+        "description": "Base58 编码解码，支持比特币地址格式",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>Base58 编码解码器</h1>
+                <p>支持比特币地址格式的 Base58 编码解码，数据完全本地化</p>
+            </div>
+
+            <div class="mode-tabs" id="modeTabs">
+                <button class="mode-tab active" data-mode="encode">编码（文本 → Base58）</button>
+                <button class="mode-tab" data-mode="decode">解码（Base58 → 文本）</button>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-item">
+                    <label id="inputLabel">输入文本</label>
+                    <textarea id="inputText" placeholder="在此输入要编码的文本..."></textarea>
+                    <div class="hint" id="inputHint">输入将被编码为 Base58 字符串</div>
+                </div>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn-primary" id="actionBtn">编码</button>
+                <button class="btn btn-ghost" id="swapBtn">交换输入输出</button>
+                <button class="btn btn-ghost" id="clearBtn">清空</button>
+            </div>
+
+            <div id="statusBar" class="status-bar info">选择模式，输入内容后点击编码或解码按钮</div>
+
+            <div id="resultArea" style="display:none;">
+                <div class="result-wrap">
+                    <div class="result-label">
+                        <span id="outputLabel">编码结果</span>
+                        <span class="result-actions">
+                            <button id="copyResultBtn">复制结果</button>
+                        </span>
+                    </div>
+                    <textarea class="result-textarea" id="outputText" readonly></textarea>
+                </div>
+            </div>
+
+            <div class="alphabet-section">
+                <h4>Base58 字符集（比特币 Alphabet）</h4>
+                <div class="alphabet-chars">
+                    123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz
+                </div>
+                <div class="hint" style="margin-top:6px;">
+                    排除的字符：<span style="color:#ef4444;">0 O I l</span>（避免混淆）
+                </div>
+            </div>
+
+            <footer class="footer">
+                &copy; 2026 绘萤者-Lynvortex &middot; 美梦多彩 理想自由
+            <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>Base58 算法说明</h3>
+                <p>Base58 是一种二进制到文本的编码方式，类似于 Base64，但去除了容易混淆的字符（0, O, I, l），常用于比特币地址、IPFS 等场景</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">Base58</span>
+                    <span class="tld-chip">比特币地址</span>
+                    <span class="tld-chip">纯 JS 实现</span>
+                    <span class="tld-chip">离线可用</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>使用须知</h3>
+                <ul class="tips-list">
+                    <li>所有编解码<strong>完全在本地完成</strong>，无需网络请求</li>
+                    <li>使用比特币 Base58 字符集（不含 0 O I l）</li>
+                    <li>编码时将文本（UTF-8）转换为字节，再编码为 Base58</li>
+                    <li>解码时将 Base58 字符串还原为原始字节并显示为 UTF-8 文本</li>
+                    <li>与 Base64 相比，Base58 避免了视觉混淆字符，更适合人工抄写</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+(function() {
+    'use strict';
+
+    // --- Base58 核心实现 ---
+    let ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+    let ALPHABET_MAP = {};
+    for (let idx = 0; idx < ALPHABET.length; idx++) {
+        ALPHABET_MAP[ALPHABET.charAt(idx)] = idx;
+    }
+
+    let Base58 = {
+        encode: function(buffer) {
+            if (buffer.length === 0) return '';
+            let bytes = new Uint8Array(buffer);
+            // 统计前导零
+            let zeros = 0;
+            while (zeros < bytes.length && bytes[zeros] === 0) zeros++;
+
+            // 将 bytes 转换为大数（big-endian）
+            let result = [];
+            for (let i = zeros; i < bytes.length; i++) {
+                let carry = bytes[i];
+                for (let j = 0; j < result.length; j++) {
+                    carry += result[j] * 256;
+                    result[j] = carry % 58;
+                    carry = Math.floor(carry / 58);
+                }
+                while (carry > 0) {
+                    result.push(carry % 58);
+                    carry = Math.floor(carry / 58);
+                }
+            }
+
+            // 前导零映射为 '1'
+            let encoded = '';
+            for (let z = 0; z < zeros; z++) {
+                encoded += '1';
+            }
+            // result 是低位在前，需要反转
+            for (let r = result.length - 1; r >= 0; r--) {
+                encoded += ALPHABET[result[r]];
+            }
+            return encoded;
+        },
+
+        decode: function(str) {
+            if (str.length === 0) return new Uint8Array(0);
+            // 统计前导 '1'
+            let zeros = 0;
+            while (zeros < str.length && str[zeros] === '1') zeros++;
+
+            // 将 Base58 字符转换为大数
+            let result = [];
+            for (let i = zeros; i < str.length; i++) {
+                let c = str[i];
+                let index = ALPHABET_MAP[c];
+                if (index === undefined) {
+                    throw new Error('无效的 Base58 字符: ' + c);
+                }
+                let carry = index;
+                for (let j = 0; j < result.length; j++) {
+                    carry += result[j] * 58;
+                    result[j] = carry & 0xff;
+                    carry = Math.floor(carry / 256);
+                }
+                while (carry > 0) {
+                    result.push(carry & 0xff);
+                    carry = Math.floor(carry / 256);
+                }
+            }
+
+            // 前导零
+            let out = new Uint8Array(zeros + result.length);
+            for (let z = 0; z < zeros; z++) {
+                out[z] = 0;
+            }
+            // result 是低位在前，需要反转
+            for (let r = result.length - 1; r >= 0; r--) {
+                out[zeros + (result.length - 1 - r)] = result[r];
+            }
+            return out;
+        }
+    };
+
+    // --- DOM 引用 ---
+    let modeTabs = document.getElementById('modeTabs');
+    let inputText = document.getElementById('inputText');
+    let outputText = document.getElementById('outputText');
+    let actionBtn = document.getElementById('actionBtn');
+    let swapBtn = document.getElementById('swapBtn');
+    let clearBtn = document.getElementById('clearBtn');
+    let statusBar = document.getElementById('statusBar');
+    let resultArea = document.getElementById('resultArea');
+    let copyResultBtn = document.getElementById('copyResultBtn');
+    let inputLabel = document.getElementById('inputLabel');
+    let outputLabel = document.getElementById('outputLabel');
+    let inputHint = document.getElementById('inputHint');
+
+    let currentMode = 'encode';
+
+    // --- 工具函数 ---
+    let setStatus = function(msg, type) {
+        statusBar.textContent = msg;
+        statusBar.className = 'status-bar ' + type;
+    };
+
+    // 复制文本
+    let copyToClipboard = function(text, btnElement) {
+        navigator.clipboard.writeText(text).then(function() {
+            let original = btnElement.textContent;
+            btnElement.textContent = '已复制';
+            btnElement.classList.add('copied');
+            setTimeout(function() {
+                btnElement.textContent = original;
+                btnElement.classList.remove('copied');
+            }, 1500);
+        }).catch(function() {
+            let ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            let original = btnElement.textContent;
+            btnElement.textContent = '已复制';
+            btnElement.classList.add('copied');
+            setTimeout(function() {
+                btnElement.textContent = original;
+                btnElement.classList.remove('copied');
+            }, 1500);
+        });
+    };
+
+    // --- 切换模式 ---
+    let setMode = function(mode) {
+        currentMode = mode;
+        let tabs = modeTabs.querySelectorAll('.mode-tab');
+        for (let t = 0; t < tabs.length; t++) {
+            tabs[t].classList.toggle('active', tabs[t].getAttribute('data-mode') === mode);
+        }
+        if (mode === 'encode') {
+            inputLabel.textContent = '输入文本';
+            inputHint.textContent = '输入将被编码为 Base58 字符串';
+            outputLabel.textContent = '编码结果（Base58）';
+            actionBtn.textContent = '编码';
+            // 如果已有输出且是 base58 格式，可当作提示
+        } else {
+            inputLabel.textContent = '输入 Base58';
+            inputHint.textContent = '输入 Base58 字符串将被解码为原始文本';
+            outputLabel.textContent = '解码结果（原始文本）';
+            actionBtn.textContent = '解码';
+        }
+        // 清空结果区域
+        resultArea.style.display = 'none';
+        outputText.value = '';
+    };
+
+    // 模式切换事件
+    modeTabs.addEventListener('click', function(e) {
+        let tab = e.target.closest('.mode-tab');
+        if (!tab) return;
+        let mode = tab.getAttribute('data-mode');
+        if (mode === currentMode) return;
+        setMode(mode);
+    });
+
+    // --- 执行操作 ---
+    let performAction = function() {
+        let input = inputText.value.trim();
+        if (!input) {
+            setStatus('请输入内容', 'error');
+            return;
+        }
+
+        try {
+            if (currentMode === 'encode') {
+                let enc = new TextEncoder();
+                let bytes = enc.encode(input);
+                let encoded = Base58.encode(bytes);
+                outputText.value = encoded;
+                resultArea.style.display = 'block';
+                setStatus('编码成功，共 ' + encoded.length + ' 个字符', 'success');
+            } else {
+                let decoded = Base58.decode(input);
+                let dec = new TextDecoder();
+                let text = dec.decode(decoded);
+                outputText.value = text;
+                resultArea.style.display = 'block';
+                setStatus('解码成功，共 ' + text.length + ' 个字符', 'success');
+            }
+        } catch (err) {
+            setStatus('操作失败: ' + (err.message || err), 'error');
+        }
+    };
+
+    // --- 交换输入输出 ---
+    let swapInputOutput = function() {
+        let output = outputText.value;
+        if (!output) {
+            setStatus('没有可交换的结果', 'error');
+            return;
+        }
+        inputText.value = output;
+        resultArea.style.display = 'none';
+        outputText.value = '';
+        // 自动切换模式
+        if (currentMode === 'encode') {
+            setMode('decode');
+        } else {
+            setMode('encode');
+        }
+        setStatus('已交换，请点击' + actionBtn.textContent + '按钮', 'info');
+    };
+
+    // --- 清空 ---
+    let clearAll = function() {
+        inputText.value = '';
+        outputText.value = '';
+        resultArea.style.display = 'none';
+        setStatus('已清空，选择模式后输入内容', 'info');
+    };
+
+    // --- 事件绑定 ---
+    actionBtn.addEventListener('click', performAction);
+    swapBtn.addEventListener('click', swapInputOutput);
+    clearBtn.addEventListener('click', clearAll);
+
+    copyResultBtn.addEventListener('click', function() {
+        if (!outputText.value) return;
+        copyToClipboard(outputText.value, copyResultBtn);
+    });
+
+    // 初始化共享侧边栏
+    initSidebar('work');
+})();
+</script>
+</body>
+</html>

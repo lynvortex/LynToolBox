@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>CSS关键帧动画编辑器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="CSS关键帧动画编辑器，纯前端可视化编辑@keyframes动画，支持位移缩放旋转透明度，实时预览并生成CSS代码，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.main-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+@media(max-width:768px){.main-grid{grid-template-columns:1fr;}}
+.form-panel{background:#f8fafc;border:1px solid #e0e6ed;border-radius:10px;padding:16px;}
+.form-panel h3{font-size:.95em;margin-bottom:12px;color:#2c3e50;}
+.form-item{margin-bottom:10px;}
+.form-item label{display:block;font-size:.82em;color:#64748b;font-weight:600;margin-bottom:4px;}
+.form-item input,.form-item select{width:100%;padding:7px 10px;border:1px solid #e0e6ed;border-radius:6px;font-size:.85em;outline:none;box-sizing:border-box;}
+.kf-list{margin-bottom:12px;}
+.kf-item{display:flex;gap:8px;align-items:center;margin-bottom:8px;padding:8px;background:#fff;border:1px solid #e0e6ed;border-radius:8px;}
+.kf-item .pos{width:60px;font-size:.8em;font-weight:700;color:#4a90e2;}
+.kf-item input{flex:1;padding:5px 8px;border:1px solid #e0e6ed;border-radius:5px;font-size:.8em;}
+.kf-item .del{cursor:pointer;color:#ef4444;font-size:1.1em;padding:4px;}
+.preview-box{background:#1e293b;border-radius:10px;padding:40px;display:flex;align-items:center;justify-content:center;min-height:200px;margin-bottom:12px;}
+.preview-elem{width:80px;height:80px;background:linear-gradient(135deg,#4a90e2,#3a7bd5);border-radius:12px;}
+.output-panel{background:#1e293b;color:#e2e8f0;border-radius:10px;padding:16px;font-family:'Courier New',monospace;font-size:.82em;white-space:pre-wrap;word-break:break-all;min-height:200px;max-height:300px;overflow-y:auto;line-height:1.5;}
+.range-row{display:flex;gap:8px;align-items:center;}
+.range-row input[type=range]{flex:1;}
+.range-row .val{width:50px;text-align:center;font-size:.8em;font-weight:600;color:#4a90e2;}
+</style>
+    <meta name="keywords" content="CSS关键帧动画编辑器,在线CSS关键帧动画编辑器,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/css-keyframe-tool.html" />
+    <meta property="og:title" content="CSS关键帧动画编辑器" />
+    <meta property="og:description" content="CSS关键帧动画编辑器，纯前端可视化编辑@keyframes动画，支持位移缩放旋转透明度，实时预览并生成CSS代码，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/css-keyframe-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="CSS关键帧动画编辑器" />
+    <meta itemprop="description" content="CSS关键帧动画编辑器，纯前端可视化编辑@keyframes动画，支持位移缩放旋转透明度，实时预览并生成CSS代码，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "CSS关键帧动画编辑器",
+                "item": "https://box.lynvortex.top/work/css-keyframe-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "CSS关键帧动画编辑器",
+        "url": "https://box.lynvortex.top/work/css-keyframe-tool.html",
+        "description": "可视化编辑CSS @keyframes动画，实时预览并生成代码",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🎬 CSS关键帧动画编辑器</h1><p>可视化编辑@keyframes动画，实时预览并生成CSS代码</p></div>
+<div class="main-grid">
+<div class="form-panel">
+<h3>⚙️ 动画设置</h3>
+<div class="form-item"><label>动画名称</label><input type="text" id="animName" value="myAnimation"/></div>
+<div class="form-item"><label>持续时间(秒)</label><input type="number" id="duration" value="2" step="0.1" min="0.1"/></div>
+<div class="form-item"><label>缓动函数</label><select id="easing">
+<option value="ease">ease</option>
+<option value="linear">linear</option>
+<option value="ease-in">ease-in</option>
+<option value="ease-out">ease-out</option>
+<option value="ease-in-out">ease-in-out</option>
+<option value="cubic-bezier(0.68,-0.55,0.27,1.55)">弹性 cubic-bezier</option>
+</select></div>
+<div class="form-item"><label>循环次数</label><select id="iterCount">
+<option value="1">1次</option>
+<option value="infinite" selected>无限循环</option>
+<option value="3">3次</option>
+<option value="5">5次</option>
+</select></div>
+<div class="form-item"><label>方向</label><select id="direction">
+<option value="normal">normal</option>
+<option value="reverse">reverse</option>
+<option value="alternate">alternate</option>
+<option value="alternate-reverse">alternate-reverse</option>
+</select></div>
+<h3 style="margin-top:14px;">🔑 关键帧</h3>
+<div class="kf-list" id="kfList"></div>
+<button class="btn btn-outline" id="addKfBtn" style="font-size:.82em;padding:6px 14px;">+ 添加关键帧</button>
+</div>
+<div>
+<h3 style="margin-bottom:10px;">👁️ 实时预览</h3>
+<div class="preview-box"><div class="preview-elem" id="previewElem"></div></div>
+<div class="output-panel" id="output"></div>
+<div style="text-align:center;margin-top:12px;">
+<button class="btn" id="copyBtn" style="padding:10px 16px;border:1px solid #4a90e2;border-radius:8px;background:#fff;color:#4a90e2;cursor:pointer;font-size:.85em;font-weight:600;">📋 复制CSS</button>
+</div>
+</div>
+</div>
+<div id="statusBar" class="status-bar info">编辑关键帧属性实时预览动画效果</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 CSS动画编辑器</h3><p>可视化编辑关键帧动画</p><div class="feature-chips"><span class="feature-chip">位移变换</span><span class="feature-chip">缩放旋转</span><span class="feature-chip">透明度</span><span class="feature-chip">实时预览</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>添加关键帧设置各时间点的CSS属性</li><li>支持transform所有子属性</li><li>实时预览动画效果</li><li>一键复制生成的CSS代码</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var keyframes=[
+{pos:0,transform:'translateX(0) scale(1) rotate(0deg)',opacity:'1'},
+{pos:50,transform:'translateX(100px) scale(1.2) rotate(180deg)',opacity:'0.8'},
+{pos:100,transform:'translateX(0) scale(1) rotate(360deg)',opacity:'1'}
+];
+function renderKfList(){
+var html='';
+keyframes.forEach(function(kf,i){
+html+='<div class="kf-item"><span class="pos">'+kf.pos+'%</span>';
+html+='<input type="text" value="'+kf.transform+'" data-idx="'+i+'" data-prop="transform" placeholder="transform"/>';
+html+='<input type="text" value="'+kf.opacity+'" data-idx="'+i+'" data-prop="opacity" placeholder="opacity" style="width:60px;flex:none;"/>';
+html+='<span class="del" data-idx="'+i+'">✕</span></div>';
+});
+document.getElementById('kfList').innerHTML=html;
+document.querySelectorAll('.kf-item input').forEach(function(inp){
+inp.oninput=function(){var idx=parseInt(this.dataset.idx);keyframes[idx][this.dataset.prop]=this.value;generate();};
+});
+document.querySelectorAll('.kf-item .del').forEach(function(btn){
+btn.onclick=function(){var idx=parseInt(this.dataset.idx);if(keyframes.length>2){keyframes.splice(idx,1);renderKfList();generate();}};
+});
+}
+document.getElementById('addKfBtn').onclick=function(){
+var lastPos=keyframes[keyframes.length-1].pos;
+var newPos=Math.min(100,lastPos+25);
+if(newPos===100)newPos=75;
+keyframes.push({pos:newPos,transform:'translateX(0) scale(1) rotate(0deg)',opacity:'1'});
+keyframes.sort(function(a,b){return a.pos-b.pos;});
+renderKfList();generate();
+};
+function generate(){
+var name=document.getElementById('animName').value;
+var dur=document.getElementById('duration').value;
+var easing=document.getElementById('easing').value;
+var iter=document.getElementById('iterCount').value;
+var dir=document.getElementById('direction').value;
+var css='@keyframes '+name+' {\n';
+keyframes.forEach(function(kf){
+css+='  '+kf.pos+'% {\n';
+css+='    transform: '+kf.transform+';\n';
+css+='    opacity: '+kf.opacity+';\n';
+css+='  }\n';
+});
+css+='}\n\n';
+css+='.'+name+' {\n';
+css+='  animation: '+name+' '+dur+'s '+easing+' '+iter+' '+dir+';\n';
+css+='}';
+document.getElementById('output').textContent=css;
+var pe=document.getElementById('previewElem');
+pe.style.animation='none';
+void pe.offsetWidth;
+pe.style.animation=name+' '+dur+'s '+easing+' '+iter+' '+dir;
+var styleEl=document.getElementById('kfStyle')||document.createElement('style');
+styleEl.id='kfStyle';
+styleEl.textContent=css;
+if(!styleEl.parentNode)document.head.appendChild(styleEl);
+}
+var inputs=document.querySelectorAll('#animName,#duration,#easing,#iterCount,#direction');
+inputs.forEach(function(el){el.oninput=generate;el.onchange=generate;});
+document.getElementById('copyBtn').onclick=function(){navigator.clipboard.writeText(document.getElementById('output').textContent).then(function(){document.getElementById('statusBar').textContent='已复制CSS代码';document.getElementById('statusBar').className='status-bar success';});};
+renderKfList();generate();
+initSidebar('work');
+</script>
+</body>
+</html>

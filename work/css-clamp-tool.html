@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CSS clamp流式字号计算器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线 CSS clamp() 流式字号计算器，输入最小/最大视口与字号，自动计算流体排版公式，附各断点字号对照表与实时预览，纯前端运行。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="clamp计算器,流式字号,流体排版,响应式字号,CSS clamp,fluid typography,前端开发,免费工具,在线工具,纯前端处理,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/work/css-clamp-tool.html"/>
+<meta property="og:title" content="CSS clamp流式字号计算器"/>
+<meta property="og:description" content="流体排版公式一键生成。"/>
+<meta property="og:url" content="https://box.lynvortex.top/work/css-clamp-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="CSS clamp流式字号计算器"/>
+<meta itemprop="description" content="流体排版公式一键生成。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"编程开发","item":"https://box.lynvortex.top/work.html"},{"@type":"ListItem","position":3,"name":"CSS clamp流式字号计算器","item":"https://box.lynvortex.top/work/css-clamp-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"CSS clamp流式字号计算器","url":"https://box.lynvortex.top/work/css-clamp-tool.html","description":"CSS clamp流式排版计算器","applicationCategory":"编程开发","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>📐 CSS clamp() 流式计算器</h1>
+        <p>流体排版公式生成，告别断点媒体查询</p>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>最小视口宽 (px)</label>
+            <input type="number" id="minVw" value="360" min="200"/>
+        </div>
+        <div class="form-item"><label>最大视口宽 (px)</label>
+            <input type="number" id="maxVw" value="1280" min="300"/>
+        </div>
+        <div class="form-item"><label>最小字号 (px)</label>
+            <input type="number" id="minSize" value="16" min="1" step="0.5"/>
+        </div>
+        <div class="form-item"><label>最大字号 (px)</label>
+            <input type="number" id="maxSize" value="32" min="1" step="0.5"/>
+        </div>
+        <div class="form-item"><label>根字号 1rem = (px)</label>
+            <input type="number" id="rootPx" value="16" min="1"/>
+        </div>
+        <div class="form-item"><label>CSS 属性</label>
+            <select id="prop">
+                <option value="font-size">font-size</option>
+                <option value="line-height">line-height</option>
+                <option value="padding">padding</option>
+                <option value="margin">margin</option>
+                <option value="width">width</option>
+            </select>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="calcBtn">⚙️ 计算</button>
+        <button class="btn btn-outline" id="copyBtn">复制 CSS</button>
+    </div>
+    <div class="status-bar info" id="statusBar">输入两端字号与视口宽度后计算</div>
+    <p style="font-size:0.8em;color:#94a3b8;margin:8px 0;">↓ 生成公式</p>
+    <pre class="output" id="output" style="white-space:pre-wrap;"></pre>
+    <p style="font-size:0.8em;color:#94a3b8;margin:16px 0 8px;">实时预览（按视口缩放，当前窗口 <span id="curVw">--</span>px）</p>
+    <div id="previewBox" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:24px;color:#2c3e50;font-weight:700;overflow-wrap:anywhere;">流式排版 Fluid Typography</div>
+    <div id="tableWrap" style="overflow-x:auto;margin-top:16px;"></div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📐 流体排版</h3>
+        <p>线性插值生成 clamp() 三段式公式。</p>
+        <div class="feature-chips"><span class="feature-chip">公式推导</span><span class="feature-chip">断点对照表</span><span class="feature-chip">实时预览</span><span class="feature-chip">rem+vw 混合</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 公式原理</h3>
+        <ul class="tips-list">
+            <li>斜率 slope = (最大字号 − 最小字号) / (最大视口 − 最小视口)</li>
+            <li>截距 intercept = 最小字号 − slope × 最小视口</li>
+            <li>clamp(最小值, intercept·rem + slope·100vw, 最大值)</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+var cssText = '';
+
+function clampSize(vw, minVw, maxVw, minS, maxS) {
+    if (vw <= minVw) return minS;
+    if (vw >= maxVw) return maxS;
+    return minS + (maxS - minS) * (vw - minVw) / (maxVw - minVw);
+}
+
+function calc() {
+    var minVw = parseFloat(document.getElementById('minVw').value);
+    var maxVw = parseFloat(document.getElementById('maxVw').value);
+    var minS = parseFloat(document.getElementById('minSize').value);
+    var maxS = parseFloat(document.getElementById('maxSize').value);
+    var root = parseFloat(document.getElementById('rootPx').value) || 16;
+    var prop = document.getElementById('prop').value;
+    var sb = document.getElementById('statusBar');
+
+    if (!(minVw > 0 && maxVw > 0 && minS > 0 && maxS > 0)) { sb.textContent = '请填写完整的数值'; sb.className = 'status-bar error'; return; }
+    if (maxVw <= minVw) { sb.textContent = '最大视口需大于最小视口'; sb.className = 'status-bar error'; return; }
+    if (maxS < minS) { sb.textContent = '最大字号不应小于最小字号'; sb.className = 'status-bar error'; return; }
+
+    var slope = (maxS - minS) / (maxVw - minVw);
+    var intercept = minS - slope * minVw;
+    var round = function(x) { return Math.round(x * 1000) / 1000; };
+
+    var minV = minS + 'px', maxV = maxS + 'px';
+    var remMode = document.getElementById('rootPx').value;
+    var preferred;
+    if (slope === 0) {
+        preferred = minS + 'px';
+    } else {
+        preferred = round(intercept / root) + 'rem + ' + round(slope * 100) + 'vw';
+    }
+    cssText = prop + ': clamp(' + minV + ', ' + preferred + ', ' + maxV + ');';
+    document.getElementById('output').textContent =
+        '/* ' + minVw + 'px 视口时 ' + minS + 'px，' + maxVw + 'px 视口时 ' + maxS + 'px */\n' +
+        'h1 {\n    ' + cssText + '\n}\n\n' +
+        '/* 斜率 slope = ' + round(slope) + ' px/px，截距 intercept = ' + round(intercept) + 'px */';
+
+    var vw = window.innerWidth;
+    document.getElementById('previewBox').style[prop === 'font-size' ? 'fontSize' : camelize(prop)] =
+        'clamp(' + minV + ', ' + (slope === 0 ? minS + 'px' : (round(intercept / root) + 'rem + ' + round(slope * 100) + 'vw')) + ', ' + maxV + ')';
+
+    var pts = [320, 375, 414, 480, 600, 768, 1024, 1280, 1440, 1920];
+    var html = '<table style="width:100%;border-collapse:collapse;font-size:0.85em;"><tr style="background:#f1f5f9;">' +
+        '<th style="padding:8px;border:1px solid #e2e8f0;">视口宽</th>' +
+        pts.map(function(p) { return '<th style="padding:8px;border:1px solid #e2e8f0;">' + p + 'px</th>'; }).join('') + '</tr><tr>' +
+        '<td style="padding:8px;border:1px solid #e2e8f0;font-weight:700;">计算字号</td>' +
+        pts.map(function(p) {
+            var s = clampSize(p, minVw, maxVw, minS, maxS);
+            var tag = (p < minVw || p > maxVw) ? ' style="color:#94a3b8;"' : '';
+            return '<td style="padding:8px;border:1px solid #e2e8f0;text-align:center;"' + tag + '>' + round(s) + 'px</td>';
+        }).join('') + '</tr></table><p style="font-size:0.75em;color:#94a3b8;margin-top:6px;">灰色 = 已被 clamp 边界截断的区间</p>';
+    document.getElementById('tableWrap').innerHTML = html;
+    sb.textContent = '计算完成：' + minVw + 'px→' + minS + 'px，' + maxVw + 'px→' + maxS + 'px';
+    sb.className = 'status-bar success';
+}
+
+function camelize(s) { return s.replace(/-([a-z])/g, function(m, c) { return c.toUpperCase(); }); }
+
+['minVw','maxVw','minSize','maxSize','rootPx'].forEach(function(id) {
+    document.getElementById(id).addEventListener('input', calc);
+});
+document.getElementById('prop').addEventListener('change', calc);
+window.addEventListener('resize', function() {
+    document.getElementById('curVw').textContent = window.innerWidth;
+});
+
+document.getElementById('calcBtn').onclick = calc;
+document.getElementById('copyBtn').onclick = function() {
+    if (cssText) navigator.clipboard.writeText(cssText).then(function() {
+        var sb = document.getElementById('statusBar');
+        sb.textContent = 'CSS 规则已复制'; sb.className = 'status-bar success';
+    });
+};
+
+document.getElementById('curVw').textContent = window.innerWidth;
+calc();
+initSidebar('work');
+</script>
+</body>
+</html>

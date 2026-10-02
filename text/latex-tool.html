@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>LaTeX公式渲染 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp" />
+<meta name="description" content="LaTeX公式渲染工具，纯前端使用KaTeX实时渲染数学公式，支持行内与展示模式，可复制HTML，数据本地处理。" />
+<link rel="stylesheet" href="../assets/tool-common.css" />
+<link rel="stylesheet" href="../assets/katex.min.css" />
+<script src="../assets/sidebar.js"></script>
+<script src="../assets/katex.min.js"></script>
+<style>
+  .mode-tabs { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .mode-tab { padding:9px 20px; border:1px solid #e0e6ed; border-radius:8px; background:#f8fafc; color:#64748b; cursor:pointer; font-size:0.88em; font-weight:600; transition:all .2s; }
+  .mode-tab.active { background:#4a90e2; color:#fff; border-color:#4a90e2; }
+  .io-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:16px; }
+  @media (max-width:600px){ .io-grid{ grid-template-columns:1fr; } }
+  .io-pane label { font-size:0.82em; color:#64748b; font-weight:600; margin-bottom:6px; display:block; }
+  textarea.code { width:100%; min-height:200px; padding:12px 14px; border:1px solid #e0e6ed; border-radius:8px; font-family:'Courier New',monospace; font-size:0.9em; outline:none; resize:vertical; background:#f8fafc; color:#1e293b; line-height:1.6; }
+  textarea.code:focus { border-color:#4a90e2; background:#fff; }
+  .preview-pane { width:100%; min-height:200px; max-height:420px; overflow:auto; padding:18px; border:1px solid #e0e6ed; border-radius:8px; background:#fff; color:#1e293b; }
+  .preview-pane.err { color:#ef4444; }
+  .preview-pane .katex-display { margin:0.4em 0; }
+  .syntax-box { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:14px 16px; margin-top:6px; }
+  .syntax-box h4 { margin:0 0 8px 0; font-size:0.85em; color:#2c3e50; }
+  .syntax-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:6px; }
+  .syntax-item { display:flex; justify-content:space-between; gap:8px; font-size:0.78em; padding:3px 0; }
+  .syntax-item code { font-family:'Consolas',monospace; color:#0369a1; background:#e0f2fe; padding:1px 6px; border-radius:4px; cursor:pointer; }
+  .syntax-item span { color:#64748b; }
+</style>
+    <meta name="keywords" content="LaTeX公式渲染,在线LaTeX公式渲染,文本处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/text/latex-tool.html" />
+    <meta property="og:title" content="LaTeX公式渲染" />
+    <meta property="og:description" content="LaTeX公式渲染工具，纯前端使用KaTeX实时渲染数学公式，支持行内与展示模式，可复制HTML，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/text/latex-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="LaTeX公式渲染" />
+    <meta itemprop="description" content="LaTeX公式渲染工具，纯前端使用KaTeX实时渲染数学公式，支持行内与展示模式，可复制HTML，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文本处理",
+                "item": "https://box.lynvortex.top/text.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "LaTeX公式渲染",
+                "item": "https://box.lynvortex.top/text/latex-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "LaTeX公式渲染",
+        "url": "https://box.lynvortex.top/text/latex-tool.html",
+        "description": "KaTeX实时渲染数学公式，支持行内与展示模式，复制HTML",
+        "applicationCategory": "文本处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+  <div class="tool-container">
+    <div class="tool-header">
+      <h1>∑ LaTeX公式渲染</h1>
+      <p>纯前端 KaTeX 实时渲染数学公式，支持行内与展示模式，可复制 HTML</p>
+    </div>
+
+    <div class="mode-tabs" id="modeTabs">
+      <div class="mode-tab active" data-mode="display">展示模式（$$）</div>
+      <div class="mode-tab" data-mode="inline">行内模式（$）</div>
+    </div>
+
+    <div class="io-grid">
+      <div class="io-pane">
+        <label>LaTeX 输入</label>
+        <textarea class="code" id="inputArea" spellcheck="false" placeholder="输入 LaTeX 公式，例如 \frac{1}{2}+\sqrt{x^2}"></textarea>
+      </div>
+      <div class="io-pane">
+        <label>渲染预览 <span style="float:right;color:#4a90e2;cursor:pointer;font-weight:600;" id="copyHtmlBtn">📋 复制HTML</span></label>
+        <div class="preview-pane" id="previewPane"></div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-ghost" id="sampleBtn">载入示例</button>
+      <button class="btn btn-ghost" id="clearBtn">🗑️ 清空</button>
+    </div>
+
+    <div class="syntax-box">
+      <h4>常见公式语法速查（点击插入到输入框）</h4>
+      <div class="syntax-grid" id="syntaxGrid"></div>
+    </div>
+
+    <div id="statusBar" class="status-bar info">输入 LaTeX 公式即可实时渲染</div>
+
+    <footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+  </div>
+
+  <div class="info-cards">
+    <div class="info-card">
+      <h3>📦 功能说明</h3>
+      <p>使用 KaTeX 在浏览器本地实时渲染 LaTeX 数学公式，支持行内与展示两种模式切换，可一键复制渲染后的 HTML 片段用于网页嵌入。</p>
+      <div class="feature-chips">
+        <span class="feature-chip">实时渲染</span>
+        <span class="feature-chip">行内模式</span>
+        <span class="feature-chip">展示模式</span>
+        <span class="feature-chip">复制HTML</span>
+        <span class="feature-chip">KaTeX</span>
+        <span class="feature-chip">离线本地</span>
+      </div>
+    </div>
+    <div class="info-card">
+      <h3>💡 使用须知</h3>
+      <ul class="tips-list">
+        <li>展示模式公式居中独占一行，行内模式公式嵌入文本流</li>
+        <li>无需输入 $ 或 $$ 定界符，工具会按所选模式自动渲染</li>
+        <li>支持分数 \frac、根号 \sqrt、上下标 ^_、希腊字母 \alpha 等</li>
+        <li>复制 HTML 可直接粘贴到网页中（需页面已引入 KaTeX 样式）</li>
+        <li>所有渲染在本地完成，公式内容不会上传</li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <h3>✨ 绘萤者</h3>
+      <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+      <div class="tool-links">
+        <a href="https://lynvortex.top" target="_blank">完全免费</a>
+        <a href="https://lynvortex.top" target="_blank">开源精神</a>
+        <a href="https://lynvortex.top" target="_blank">极客风范</a>
+        <a href="https://lynvortex.top" target="_blank">协作共创</a>
+      </div>
+      <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+  </div>
+</div></main>
+<script>
+initSidebar('text');
+(function () {
+  'use strict';
+  var inputArea = document.getElementById('inputArea');
+  var previewPane = document.getElementById('previewPane');
+  var statusBar = document.getElementById('statusBar');
+  var mode = 'display';
+  var lastHtml = '';
+
+  document.querySelectorAll('.mode-tab').forEach(function (t) {
+    t.addEventListener('click', function () {
+      document.querySelectorAll('.mode-tab').forEach(function (x) { x.classList.remove('active'); });
+      t.classList.add('active');
+      mode = t.dataset.mode;
+      render();
+    });
+  });
+
+  function render() {
+    var src = inputArea.value;
+    if (!src.trim()) { previewPane.innerHTML = '<span style="color:#94a3b8;">渲染预览将显示在这里...</span>'; previewPane.classList.remove('err'); lastHtml = ''; setStatus('请输入 LaTeX 公式', 'info'); return; }
+    if (typeof katex === 'undefined') { setStatus('KaTeX 库未加载，请刷新页面', 'error'); return; }
+    try {
+      previewPane.innerHTML = '';
+      katex.render(src, previewPane, { throwOnError: true, displayMode: mode === 'display' });
+      lastHtml = previewPane.innerHTML;
+      previewPane.classList.remove('err');
+      setStatus('渲染成功 ✓（' + (mode === 'display' ? '展示' : '行内') + '模式）', 'success');
+    } catch (err) {
+      // 出错时用 throwOnError:false 显示错误信息
+      previewPane.innerHTML = '';
+      katex.render(src, previewPane, { throwOnError: false, displayMode: mode === 'display', errorColor: '#ef4444' });
+      previewPane.classList.add('err');
+      lastHtml = previewPane.innerHTML;
+      setStatus('渲染错误：' + err.message, 'error');
+    }
+  }
+
+  inputArea.addEventListener('input', render);
+
+  document.getElementById('copyHtmlBtn').addEventListener('click', function () {
+    if (!lastHtml) { setStatus('没有可复制的 HTML，请先输入公式', 'error'); return; }
+    var html = '<span class="katex-mode-' + mode + '">' + lastHtml + '</span>';
+    navigator.clipboard.writeText(html).then(function () { setStatus('已复制渲染 HTML 到剪贴板 ✓', 'success'); })
+      .catch(function () {
+        var ta = document.createElement('textarea'); ta.value = html; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+        setStatus('已复制渲染 HTML 到剪贴板 ✓', 'success');
+      });
+  });
+
+  document.getElementById('sampleBtn').addEventListener('click', function () {
+    inputArea.value = 'e^{i\\pi} + 1 = 0';
+    render();
+  });
+  document.getElementById('clearBtn').addEventListener('click', function () {
+    inputArea.value = ''; render(); setStatus('已清空', 'info');
+  });
+
+  // 语法速查
+  var syntax = [
+    ['\\frac{a}{b}', '分数'],
+    ['\\sqrt{x}', '平方根'],
+    ['\\sqrt[n]{x}', 'n次根'],
+    ['x^2', '上标'],
+    ['x_{i}', '下标'],
+    ['\\sum_{i=1}^{n}', '求和'],
+    ['\\int_{a}^{b}', '积分'],
+    ['\\lim_{x\\to0}', '极限'],
+    ['\\alpha', 'α'],
+    ['\\beta', 'β'],
+    ['\\gamma', 'γ'],
+    ['\\pi', 'π'],
+    ['\\infty', '∞'],
+    ['\\pm', '±'],
+    ['\\times', '×'],
+    ['\\div', '÷'],
+    ['\\leq', '≤'],
+    ['\\geq', '≥'],
+    ['\\neq', '≠'],
+    ['\\approx', '≈'],
+    ['\\vec{a}', '向量'],
+    ['\\overline{x}', '上划线'],
+    ['\\binom{n}{k}', '组合数'],
+    ['\\left( \\right)', '自适应括号']
+  ];
+  var sg = document.getElementById('syntaxGrid');
+  syntax.forEach(function (s) {
+    var div = document.createElement('div');
+    div.className = 'syntax-item';
+    div.innerHTML = '<code data-insert="' + s[0].replace(/"/g, '&quot;') + '">' + s[0] + '</code><span>' + s[1] + '</span>';
+    sg.appendChild(div);
+  });
+  sg.addEventListener('click', function (e) {
+    var code = e.target.closest('code');
+    if (!code) return;
+    var text = code.getAttribute('data-insert');
+    var pos = inputArea.selectionStart || inputArea.value.length;
+    inputArea.value = inputArea.value.slice(0, pos) + text + inputArea.value.slice(pos);
+    inputArea.focus();
+    inputArea.setSelectionRange(pos + text.length, pos + text.length);
+    render();
+  });
+
+  // 初始示例
+  inputArea.value = '\\frac{1}{2}+\\sqrt{x^2}';
+  render();
+})();
+</script>
+</body>
+</html>

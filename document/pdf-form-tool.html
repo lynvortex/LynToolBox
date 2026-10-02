@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PDF表单填写 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="PDF表单填写工具，自动识别PDF中的AcroForm表单域（文本框、复选框、单选组、下拉框），在线填写并导出，纯前端处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<style>
+.field-item{border:1px solid #e0e6ed;border-radius:8px;padding:14px;margin-bottom:12px;background:#fbfcfe;}
+.field-name{font-size:.8em;color:#4a90e2;font-family:Consolas,monospace;margin-bottom:6px;word-break:break-all;}
+.field-type{font-size:.72em;color:#94a3b8;background:#f1f5f9;padding:1px 8px;border-radius:10px;margin-left:6px;}
+.field-item input[type=text],.field-item select{width:100%;padding:9px 12px;border:1px solid #e0e6ed;border-radius:6px;font-size:.9em;font-family:inherit;}
+.field-item label.chk{display:flex;align-items:center;gap:8px;font-size:.9em;color:#334155;cursor:pointer;}
+.radio-opt{display:inline-flex;align-items:center;gap:6px;margin-right:14px;font-size:.9em;color:#334155;}
+</style>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="PDF表单填写,PDF表单,AcroForm,PDF填写导出,文档处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/document/pdf-form-tool.html"/>
+<meta property="og:title" content="PDF表单填写"/>
+<meta property="og:description" content="自动识别PDF表单域，在线填写并导出，纯前端处理。"/>
+<meta property="og:url" content="https://box.lynvortex.top/document/pdf-form-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="PDF表单填写"/>
+<meta itemprop="description" content="自动识别PDF表单域，在线填写并导出，纯前端处理。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"文档处理","item":"https://box.lynvortex.top/document.html"},{"@type":"ListItem","position":3,"name":"PDF表单填写","item":"https://box.lynvortex.top/document/pdf-form-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"PDF表单填写","url":"https://box.lynvortex.top/document/pdf-form-tool.html","description":"识别并填写PDF AcroForm表单域","applicationCategory":"文档处理","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>📝 PDF表单填写</h1>
+        <p>自动识别表单域，填写后导出新 PDF</p>
+    </div>
+    <div class="upload-zone" id="dropZone">
+        <p style="margin:0;color:#64748b;">📄 点击选择或拖入带表单的 PDF 文件</p>
+        <input type="file" id="fileInput" accept="application/pdf" style="display:none;"/>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="exportBtn" style="display:none;">填写完成，导出 PDF</button>
+        <label style="font-size:.85em;color:#64748b;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="flattenChk"/> 导出时扁平化（锁定不可再编辑）</label>
+    </div>
+    <div class="status-bar info" id="statusBar">请先选择 PDF 文件</div>
+    <div id="fieldsWrap"></div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📦 PDF表单填写</h3>
+        <p>支持 AcroForm 标准的文本框、复选框、单选组、下拉列表等表单域。</p>
+        <div class="feature-chips"><span class="feature-chip">文本框</span><span class="feature-chip">复选框</span><span class="feature-chip">单选组</span><span class="feature-chip">下拉框</span><span class="feature-chip">扁平化导出</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>仅支持 AcroForm 表单；XFA 动态表单暂不支持</li>
+            <li>勾选"扁平化"后表单内容将固化，无法再修改</li>
+            <li>文件在浏览器本地处理，不会上传</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script src="../assets/pdf-lib.min.js"></script>
+<script>
+var srcBytes = null, fileName = '', formFields = [];
+var dropZone = document.getElementById('dropZone'), fileInput = document.getElementById('fileInput');
+dropZone.onclick = function(){ fileInput.click(); };
+dropZone.ondragover = function(e){ e.preventDefault(); };
+dropZone.ondrop = function(e){ e.preventDefault(); if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); };
+fileInput.onchange = function(){ if (fileInput.files[0]) loadFile(fileInput.files[0]); };
+
+async function loadFile(f) {
+    fileName = f.name.replace(/\.pdf$/i, '');
+    srcBytes = new Uint8Array(await f.arrayBuffer());
+    try {
+        var doc = await PDFLib.PDFDocument.load(srcBytes, { ignoreEncryption: true });
+        var form = doc.getForm();
+        var fields = form.getFields();
+        formFields = [];
+        var wrap = document.getElementById('fieldsWrap');
+        wrap.innerHTML = '';
+        if (!fields.length) { setStatus('该 PDF 没有可填写的表单域（AcroForm）', 'error'); return; }
+        fields.forEach(function(field, idx){
+            var type = field.constructor.name.replace('PDF', '');
+            var info = { field: field, type: type, name: field.getName() };
+            var div = document.createElement('div');
+            div.className = 'field-item';
+            var nameEl = document.createElement('div');
+            nameEl.className = 'field-name';
+            nameEl.innerHTML = escapeHtml(info.name) + '<span class="field-type">' + type + '</span>';
+            div.appendChild(nameEl);
+            try {
+                if (field instanceof PDFLib.PDFTextField) {
+                    var inp = document.createElement('input');
+                    inp.type = 'text';
+                    inp.value = field.getText() || '';
+                    inp.placeholder = field.isMultiline() ? '多行文本' : '单行文本';
+                    info.kind = 'text'; info.el = inp;
+                    div.appendChild(inp);
+                } else if (field instanceof PDFLib.PDFCheckBox) {
+                    var lbl = document.createElement('label');
+                    lbl.className = 'chk';
+                    var chk = document.createElement('input');
+                    chk.type = 'checkbox';
+                    chk.checked = field.isChecked();
+                    lbl.appendChild(chk);
+                    lbl.appendChild(document.createTextNode(' 勾选此项'));
+                    info.kind = 'check'; info.el = chk;
+                    div.appendChild(lbl);
+                } else if (field instanceof PDFLib.PDFRadioGroup) {
+                    info.kind = 'radio'; info.el = [];
+                    var opts = field.getOptions();
+                    opts.forEach(function(opt, oi){
+                        var l = document.createElement('label');
+                        l.className = 'radio-opt';
+                        var r = document.createElement('input');
+                        r.type = 'radio'; r.name = 'rg' + idx; r.value = opt;
+                        l.appendChild(r);
+                        l.appendChild(document.createTextNode(opt));
+                        div.appendChild(l);
+                        info.el.push(r);
+                    });
+                } else if (field instanceof PDFLib.PDFDropdown) {
+                    var sel = document.createElement('select');
+                    field.getOptions().forEach(function(opt){
+                        var o = document.createElement('option');
+                        o.value = opt; o.textContent = opt;
+                        sel.appendChild(o);
+                    });
+                    info.kind = 'select'; info.el = sel;
+                    div.appendChild(sel);
+                } else {
+                    var p = document.createElement('div');
+                    p.style.cssText = 'font-size:.82em;color:#94a3b8;';
+                    p.textContent = '该域类型（' + type + '）不支持在线填写，将保持原样';
+                    info.kind = 'skip';
+                    div.appendChild(p);
+                }
+            } catch (e) { info.kind = 'skip'; }
+            formFields.push(info);
+            wrap.appendChild(div);
+        });
+        document.getElementById('exportBtn').style.display = '';
+        setStatus('识别到 ' + fields.length + ' 个表单域，请填写后导出', 'success');
+    } catch (e) { setStatus('PDF 解析失败：' + e.message, 'error'); }
+}
+
+document.getElementById('exportBtn').onclick = async function(){
+    this.disabled = true;
+    setStatus('正在生成…', 'info');
+    try {
+        var doc = await PDFLib.PDFDocument.load(srcBytes, { ignoreEncryption: true });
+        var form = doc.getForm();
+        formFields.forEach(function(info){
+            try {
+                var f = form.getField(info.name);
+                if (info.kind === 'text') f.setText(info.el.value);
+                else if (info.kind === 'check') { info.el.checked ? f.check() : f.uncheck(); }
+                else if (info.kind === 'radio') {
+                    info.el.forEach(function(r){ if (r.checked) f.select(r.value); });
+                }
+                else if (info.kind === 'select') f.select(info.el.value);
+            } catch (e) { /* 单个域失败不影响整体 */ }
+        });
+        if (document.getElementById('flattenChk').checked) form.flatten();
+        var bytes = await doc.save();
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+        a.download = fileName + '_已填写.pdf';
+        a.click();
+        setStatus('导出成功', 'success');
+    } catch (e) { setStatus('导出失败：' + e.message, 'error'); }
+    this.disabled = false;
+};
+initSidebar('document');
+</script>
+</body>
+</html>

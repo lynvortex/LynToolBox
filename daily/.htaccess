@@ -1,0 +1,39 @@
+RewriteEngine On
+
+# 工具路径简写：/daily/工具名 → /daily/工具名.html
+RewriteRule ^pomodoro-tool$ pomodoro-tool.html [L]
+RewriteRule ^date-calc-tool$ date-calc-tool.html [L]
+RewriteRule ^unit-convert-tool$ unit-convert-tool.html [L]
+RewriteRule ^password-strength-tool$ password-strength-tool.html [L]
+RewriteRule ^contrast-check-tool$ contrast-check-tool.html [L]
+
+# 2026-08 新增工具
+RewriteRule ^wifi-qrcode-tool$ wifi-qrcode-tool.html [L]
+RewriteRule ^carbon-tool$ carbon-tool.html [L]
+RewriteRule ^sleep-cycle-tool$ sleep-cycle-tool.html [L]
+RewriteRule ^reading-time-tool$ reading-time-tool.html [L]
+RewriteRule ^pet-age-tool$ pet-age-tool.html [L]
+RewriteRule ^body-fat-tool$ body-fat-tool.html [L]
+RewriteRule ^calorie-tool$ calorie-tool.html [L]
+RewriteRule ^fuel-cost-tool$ fuel-cost-tool.html [L]
+RewriteRule ^checkin-tool$ checkin-tool.html [L]
+
+# 补全简写规则
+RewriteRule ^lunar-tool$ lunar-tool.html [L]
+RewriteRule ^stats-tool$ stats-tool.html [L]
+RewriteRule ^geo-distance-tool$ geo-distance-tool.html [L]
+RewriteRule ^rrule-tool$ rrule-tool.html [L]
+RewriteRule ^idcard-tool$ idcard-tool.html [L]
+RewriteRule ^bmi-tool$ bmi-tool.html [L]
+RewriteRule ^stopwatch-tool$ stopwatch-tool.html [L]
+RewriteRule ^mortgage-tool$ mortgage-tool.html [L]
+RewriteRule ^percent-tool$ percent-tool.html [L]
+RewriteRule ^random-tool$ random-tool.html [L]
+RewriteRule ^dice-tool$ dice-tool.html [L]
+RewriteRule ^world-clock-tool$ world-clock-tool.html [L]
+RewriteRule ^tax-calc-tool$ tax-calc-tool.html [L]
+RewriteRule ^interest-calc-tool$ interest-calc-tool.html [L]
+RewriteRule ^lottery-wheel-tool$ lottery-wheel-tool.html [L]
+RewriteRule ^countdown-tool$ countdown-tool.html [L]
+RewriteRule ^business-card-tool$ business-card-tool.html [L]
+RewriteRule ^exchange-rate-tool$ exchange-rate-tool.html [L]

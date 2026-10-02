@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>油费计算器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线油费计算器，输入里程、百公里油耗与油价即时计算油费与每公里成本，支持往返/拼车分摊/电车充电对比，通勤出行成本一目了然，纯前端计算。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="油费计算,油耗计算,每公里油钱,出行成本,通勤费用,拼车分摊,电车对比,免费工具,在线工具,纯前端处理,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/daily/fuel-cost-tool.html"/>
+<meta property="og:title" content="油费计算器"/>
+<meta property="og:description" content="每公里油钱一算便知。"/>
+<meta property="og:url" content="https://box.lynvortex.top/daily/fuel-cost-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="油费计算器"/>
+<meta itemprop="description" content="每公里油钱一算便知。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"日常通用","item":"https://box.lynvortex.top/daily.html"},{"@type":"ListItem","position":3,"name":"油费计算器","item":"https://box.lynvortex.top/daily/fuel-cost-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"油费计算器","url":"https://box.lynvortex.top/daily/fuel-cost-tool.html","description":"油费计算器","applicationCategory":"日常通用","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>⛽ 油费计算器</h1>
+        <p>里程 × 油耗 × 油价，出行成本一目了然</p>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>行驶里程 (km)</label>
+            <input type="number" id="distance" value="30" min="0.1" step="0.5"/>
+            <span class="hint">单程里程，往返自动 ×2</span>
+        </div>
+        <div class="form-item"><label>往返</label>
+            <select id="round"><option value="1">单程</option><option value="2" selected>往返（×2）</option></select>
+        </div>
+        <div class="form-item"><label>百公里油耗 (L)</label>
+            <input type="number" id="consumption" value="8" min="0.5" max="30" step="0.1"/>
+            <span class="hint">家用车 6-10L，SUV 9-12L</span>
+        </div>
+        <div class="form-item"><label>油价 (元/L)</label>
+            <input type="number" id="price" value="7.8" min="1" max="20" step="0.01"/>
+        </div>
+        <div class="form-item"><label>每月出行天数</label>
+            <input type="number" id="days" value="22" min="1" max="31"/>
+        </div>
+        <div class="form-item"><label>拼车人数（含自己）</label>
+            <select id="people"><option value="1" selected>1（不拼车）</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+        </div>
+        <div class="form-item"><label>对比：电车百公里电耗 (kWh)</label>
+            <input type="number" id="evKwh" value="14" min="5" max="30" step="0.5"/>
+        </div>
+        <div class="form-item"><label>电价 (元/kWh)</label>
+            <input type="number" id="evPrice" value="1.0" min="0.1" max="3" step="0.01"/>
+            <span class="hint">家充约 0.5，公共桩 1-2 元</span>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="calcBtn">⚙️ 计算油费</button>
+    </div>
+    <div class="status-bar info" id="statusBar">填写里程与油耗后即时计算</div>
+    <div id="resultWrap"></div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>⛽ 全场景成本</h3>
+        <p>单程、往返、月度、年化、拼车分摊。</p>
+        <div class="feature-chips"><span class="feature-chip">每公里成本</span><span class="feature-chip">油电对比</span><span class="feature-chip">拼车均摊</span><span class="feature-chip">年化预估</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 省钱小贴士</h3>
+        <ul class="tips-list">
+            <li>胎压不足会增加 2-4% 油耗，定期检查</li>
+            <li>急加速急刹车的油耗比平稳驾驶高 20%+</li>
+            <li>高速开窗比开空调更费油（80km/h 以上）</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+function calc() {
+    var d = parseFloat(document.getElementById('distance').value);
+    var round = parseFloat(document.getElementById('round').value);
+    var cons = parseFloat(document.getElementById('consumption').value);
+    var price = parseFloat(document.getElementById('price').value);
+    var days = parseInt(document.getElementById('days').value) || 22;
+    var people = parseInt(document.getElementById('people').value) || 1;
+    var evKwh = parseFloat(document.getElementById('evKwh').value);
+    var evPrice = parseFloat(document.getElementById('evPrice').value);
+    var sb = document.getElementById('statusBar');
+
+    if (!(d > 0 && cons > 0 && price > 0)) { sb.textContent = '请填写里程、油耗与油价'; sb.className = 'status-bar error'; return; }
+
+    var km = d * round;
+    var liters = km * cons / 100;
+    var cost = liters * price;
+    var perKm = cost / km;
+    var monthCost = cost * days;
+    var yearCost = monthCost * 12;
+    var perPerson = cost / people;
+
+    var evCost = km * evKwh / 100 * evPrice;
+    var evMonth = evCost * days;
+    var save = monthCost - evMonth;
+    var saveYear = save * 12;
+
+    function big(label, val, sub, color) {
+        return '<div style="border:1px solid #e2e8f0;border-radius:12px;padding:16px;text-align:center;"><div style="font-size:1.45em;font-weight:700;color:' + color + '">' + val + '</div><div style="color:#64748b;font-size:0.82em;">' + label + '</div>' + (sub ? '<div style="color:#94a3b8;font-size:0.75em;margin-top:2px;">' + sub + '</div>' : '') + '</div>';
+    }
+
+    document.getElementById('resultWrap').innerHTML =
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px;">' +
+        big('本次油费', '¥' + cost.toFixed(2), km.toFixed(1) + ' km · ' + liters.toFixed(2) + ' L', '#4a90e2') +
+        big('每公里成本', '¥' + perKm.toFixed(2), '合每 100km ¥' + (perKm * 100).toFixed(0), '#27ae60') +
+        big('月度油费', '¥' + monthCost.toFixed(0), '按每月 ' + days + ' 天', '#e67e22') +
+        big('年度油费', '¥' + yearCost.toFixed(0), '一年约 ' + (yearCost / price / cons * 100).toFixed(0) + ' km', '#8e44ad') +
+        '</div>' +
+        (people > 1 ? '<div style="padding:12px 18px;border-radius:10px;background:#f0f9f1;border:1px solid #d4efdf;margin-bottom:12px;color:#1e8e5a;font-weight:600;">拼车 ' + people + ' 人均摊：每人 <span style="font-size:1.2em;">¥' + perPerson.toFixed(2) + '</span>（本次 ' + km.toFixed(1) + ' km）</div>' : '') +
+        '<div style="padding:14px 18px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;">' +
+        '<b style="color:#2c3e50;">⚡ 油电对比（同里程电车成本）</b>' +
+        '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;align-items:center;">' +
+        '<div>燃油 🚗 <b style="color:#e67e22;font-size:1.1em;">¥' + cost.toFixed(2) + '</b> <span style="color:#94a3b8;font-size:0.85em;">（' + liters.toFixed(2) + 'L）</span></div>' +
+        '<div>电车 🔋 <b style="color:#2980b9;font-size:1.1em;">¥' + evCost.toFixed(2) + '</b> <span style="color:#94a3b8;font-size:0.85em;">（' + (km * evKwh / 100).toFixed(2) + 'kWh）</span></div>' +
+        '<div style="flex:1;min-width:200px;"><div style="background:#fdeeee;height:12px;border-radius:6px;overflow:hidden;margin-bottom:2px;"><div style="width:' + Math.min(100, cost / Math.max(cost, evCost) * 100) + '%;background:#e67e22;height:12px;"></div></div>' +
+        '<div style="background:#e8f4fc;height:12px;border-radius:6px;overflow:hidden;"><div style="width:' + Math.min(100, evCost / Math.max(cost, evCost) * 100) + '%;background:#2980b9;height:12px;"></div></div></div>' +
+        '</div>' +
+        '<p style="margin:10px 0 0;color:#64748b;font-size:0.86em;">电车每月省 <b>¥' + save.toFixed(0) + '</b>，一年约省 <b>¥' + saveYear.toFixed(0) + '</b>（按每月 ' + days + ' 天计）</p></div>';
+
+    sb.textContent = '本次 ' + km.toFixed(1) + 'km 油费 ¥' + cost.toFixed(2) + '，每公里 ¥' + perKm.toFixed(2);
+    sb.className = 'status-bar success';
+}
+
+['distance','consumption','price','days','evKwh','evPrice'].forEach(function(id) {
+    document.getElementById(id).addEventListener('input', calc);
+});
+['round','people'].forEach(function(id) { document.getElementById(id).addEventListener('change', calc); });
+document.getElementById('calcBtn').onclick = calc;
+calc();
+initSidebar('daily');
+</script>
+</body>
+</html>

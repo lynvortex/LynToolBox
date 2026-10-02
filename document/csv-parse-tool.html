@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSV智能解析 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="CSV智能解析工具，纯前端使用PapaParse解析CSV/TSV大文件，自动识别分隔符与表头，导出JSON，数据本地处理" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <script src="../assets/sidebar.js"></script>
+    <script src="../assets/papaparse.min.js"></script>
+    <style>
+        .cp-opts { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+        .cp-opt { display: flex; flex-direction: column; gap: 4px; }
+        .cp-opt label { font-size: 0.8em; color: #64748b; font-weight: 600; }
+        .cp-opt select, .cp-opt input { padding: 7px 10px; border: 1px solid #e0e6ed; border-radius: 6px; font-size: 0.88em; outline: none; background: #fff; }
+        .cp-opt select:focus, .cp-opt input:focus { border-color: #4a90e2; }
+        .cp-checks { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; font-size: 0.85em; color: #475569; }
+        .cp-checks label { display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: 600; }
+        .cp-stats { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+        .cp-stat { background: #f1f5f9; color: #475569; padding: 5px 12px; border-radius: 6px; font-size: 0.8em; font-weight: 600; }
+        .cp-stat b { color: #4a90e2; }
+        .cp-table-wrap { overflow: auto; max-height: 440px; border: 1px solid #e0e6ed; border-radius: 8px; margin-bottom: 14px; }
+        .cp-table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+        .cp-table th, .cp-table td { border: 1px solid #e0e6ed; padding: 6px 10px; text-align: left; white-space: nowrap; }
+        .cp-table th { background: #f1f5f9; font-weight: 600; position: sticky; top: 0; z-index: 1; color: #334155; }
+        .cp-table tr:nth-child(even) td { background: #fafbfc; }
+        .cp-paste { min-height: 90px; }
+        .cp-mode-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+        .cp-mode-tab { padding: 8px 18px; border-radius: 8px; border: 1px solid #e0e6ed; background: #f8fafc; cursor: pointer; font-size: 0.88em; font-weight: 600; transition: 0.2s; }
+        .cp-mode-tab.active { background: #4a90e2; color: #fff; border-color: #4a90e2; }
+    </style>
+    <meta name="keywords" content="CSV智能解析,在线CSV智能解析,文档处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/document/csv-parse-tool.html" />
+    <meta property="og:title" content="CSV智能解析" />
+    <meta property="og:description" content="CSV智能解析工具，纯前端使用PapaParse解析CSV/TSV大文件，自动识别分隔符与表头，导出JSON，数据本地处理" />
+    <meta property="og:url" content="https://box.lynvortex.top/document/csv-parse-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="CSV智能解析" />
+    <meta itemprop="description" content="CSV智能解析工具，纯前端使用PapaParse解析CSV/TSV大文件，自动识别分隔符与表头，导出JSON，数据本地处理" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文档处理",
+                "item": "https://box.lynvortex.top/document.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "CSV智能解析",
+                "item": "https://box.lynvortex.top/document/csv-parse-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "CSV智能解析",
+        "url": "https://box.lynvortex.top/document/csv-parse-tool.html",
+        "description": "PapaParse解析CSV/TSV大文件，自动分隔符导出JSON",
+        "applicationCategory": "文档处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>📊 CSV智能解析</h1>
+                <p>纯前端使用 PapaParse 解析 CSV/TSV 大文件，自动识别分隔符与表头，导出 JSON，数据本地处理</p>
+            </div>
+
+            <div class="cp-mode-tabs">
+                <div class="cp-mode-tab active" data-mode="file">📁 上传文件</div>
+                <div class="cp-mode-tab" data-mode="paste">✍️ 粘贴文本</div>
+            </div>
+
+            <div id="cpFileArea">
+                <div class="form-item" style="margin-bottom:12px;">
+                    <label>选择 CSV / TSV 文件</label>
+                    <input type="file" id="cpFile" accept=".csv,.tsv,.txt,text/csv" />
+                </div>
+            </div>
+
+            <div id="cpPasteArea" style="display:none;">
+                <div class="form-item" style="margin-bottom:12px;">
+                    <label>粘贴 CSV / TSV 文本</label>
+                    <textarea class="code-area cp-paste" id="cpPaste" placeholder="将 CSV/TSV 文本粘贴到此处，例如：&#10;姓名,年龄,城市&#10;张三,28,北京&#10;李四,34,上海"></textarea>
+                </div>
+                <div class="btn-row" style="margin-bottom:14px;">
+                    <button class="btn btn-primary" id="cpParsePaste">▶ 解析文本</button>
+                </div>
+            </div>
+
+            <div class="cp-opts">
+                <div class="cp-opt">
+                    <label>分隔符</label>
+                    <select id="cpDelim">
+                        <option value="auto">自动识别</option>
+                        <option value=",">逗号 (,)</option>
+                        <option value="\t">制表符 (\t)</option>
+                        <option value=";">分号 (;)</option>
+                        <option value="|">竖线 (|)</option>
+                        <option value="custom">自定义</option>
+                    </select>
+                </div>
+                <div class="cp-opt" id="cpCustomDelimWrap" style="display:none;">
+                    <label>自定义分隔符</label>
+                    <input type="text" id="cpCustomDelim" placeholder="如 #" style="width:80px;" />
+                </div>
+                <div class="cp-checks">
+                    <label><input type="checkbox" id="cpHeader" checked /> 首行为表头</label>
+                    <label><input type="checkbox" id="cpSkipEmpty" checked /> 跳过空行</label>
+                    <label><input type="checkbox" id="cpPreview100" checked /> 仅预览前100行</label>
+                </div>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn-primary" id="cpExportJson" disabled>⬇ 导出 JSON</button>
+                <button class="btn btn-outline" id="cpExportCsv" disabled>⬇ 导出 CSV</button>
+                <span style="flex:1;"></span>
+                <button class="btn btn-ghost" id="cpClear">🗑 清空</button>
+            </div>
+
+            <div class="cp-stats" id="cpStats"></div>
+
+            <div class="cp-table-wrap" id="cpTableWrap" style="display:none;">
+                <table class="cp-table" id="cpTable"></table>
+            </div>
+
+            <div id="statusBar" class="status-bar info">准备就绪，请上传文件或粘贴文本进行解析</div>
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 功能说明</h3>
+                <p>基于 PapaParse 解析 CSV/TSV 数据，支持自动识别分隔符、表头识别、跳过空行，解析后以表格预览前 100 行并显示行列统计，可导出 JSON 或 CSV。</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">CSV解析</span>
+                    <span class="feature-chip">TSV支持</span>
+                    <span class="feature-chip">自动分隔符</span>
+                    <span class="feature-chip">表头识别</span>
+                    <span class="feature-chip">JSON导出</span>
+                    <span class="feature-chip">大文件流式</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>支持上传文件或直接粘贴文本两种输入方式</li>
+                    <li>分隔符可选自动识别或手动指定（逗号/制表符/分号/竖线/自定义）</li>
+                    <li>大文件采用流式解析，预览仅显示前 100 行，导出包含全部数据</li>
+                    <li>导出 JSON 为数组格式（表头模式为对象数组，否则为二维数组）</li>
+                    <li>所有解析在浏览器本地完成，不上传任何文件</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const setStatus = (m, t) => { const s = document.getElementById('statusBar'); s.textContent = m; s.className = 'status-bar ' + (t || 'info'); };
+    let parsedData = [];
+    let parsedFields = [];
+    let totalRows = 0;
+
+    // 模式切换
+    document.querySelectorAll('.cp-mode-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.cp-mode-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            const isFile = tab.dataset.mode === 'file';
+            document.getElementById('cpFileArea').style.display = isFile ? 'block' : 'none';
+            document.getElementById('cpPasteArea').style.display = isFile ? 'none' : 'block';
+        });
+    });
+
+    // 自定义分隔符显示控制
+    document.getElementById('cpDelim').addEventListener('change', e => {
+        document.getElementById('cpCustomDelimWrap').style.display = e.target.value === 'custom' ? 'flex' : 'none';
+    });
+
+    function getDelimConfig() {
+        const val = document.getElementById('cpDelim').value;
+        if (val === 'auto') return { delimiter: '' }; // Papa 自动识别
+        if (val === '\t') return { delimiter: '\t' };
+        if (val === 'custom') {
+            const custom = document.getElementById('cpCustomDelim').value;
+            return { delimiter: custom || '' };
+        }
+        return { delimiter: val };
+    }
+
+    function getConfig() {
+        const header = document.getElementById('cpHeader').checked;
+        const skipEmpty = document.getElementById('cpSkipEmpty').checked;
+        return Object.assign({ header: header, skipEmptyLines: skipEmpty }, getDelimConfig());
+    }
+
+    function renderResult(results) {
+        const hasHeader = document.getElementById('cpHeader').checked;
+        const preview100 = document.getElementById('cpPreview100').checked;
+        const data = results.data;
+        const fields = results.meta && results.meta.fields ? results.meta.fields : (hasHeader && data.length ? Object.keys(data[0]) : []);
+        const errors = results.errors || [];
+
+        parsedData = data;
+        parsedFields = fields;
+        totalRows = data.length;
+
+        // 统计
+        const colCount = fields.length || (data.length ? (Array.isArray(data[0]) ? data[0].length : Object.keys(data[0]).length) : 0);
+        const statsEl = document.getElementById('cpStats');
+        statsEl.innerHTML =
+            '<span class="cp-stat">总行数 <b>' + totalRows + '</b></span>' +
+            '<span class="cp-stat">列数 <b>' + colCount + '</b></span>' +
+            (results.meta && results.meta.delimiter ? '<span class="cp-stat">识别分隔符 <b>' + escapeHtml(results.meta.delimiter === '\t' ? '\\t' : results.meta.delimiter) + '</b></span>' : '') +
+            '<span class="cp-stat">解析错误 <b>' + errors.length + '</b></span>';
+
+        // 表格预览
+        const previewData = preview100 ? data.slice(0, 100) : data;
+        const table = document.getElementById('cpTable');
+        let html = '';
+        if (hasHeader && fields.length) {
+            html += '<thead><tr><th>#</th>';
+            fields.forEach(f => { html += '<th>' + escapeHtml(f) + '</th>'; });
+            html += '</tr></thead><tbody>';
+            previewData.forEach((row, i) => {
+                html += '<tr><td>' + (i + 1) + '</td>';
+                fields.forEach(f => { html += '<td>' + escapeHtml(row[f] != null ? row[f] : '') + '</td>'; });
+                html += '</tr>';
+            });
+            html += '</tbody>';
+        } else {
+            // 无表头，二维数组
+            const maxCols = previewData.reduce((m, r) => Math.max(m, Array.isArray(r) ? r.length : 0), 0);
+            html += '<thead><tr><th>#</th>';
+            for (let c = 0; c < maxCols; c++) { html += '<th>列' + (c + 1) + '</th>'; }
+            html += '</tr></thead><tbody>';
+            previewData.forEach((row, i) => {
+                html += '<tr><td>' + (i + 1) + '</td>';
+                for (let c = 0; c < maxCols; c++) { html += '<td>' + escapeHtml(row[c] != null ? row[c] : '') + '</td>'; }
+                html += '</tr>';
+            });
+            html += '</tbody>';
+        }
+        table.innerHTML = html;
+        document.getElementById('cpTableWrap').style.display = 'block';
+        document.getElementById('cpExportJson').disabled = data.length === 0;
+        document.getElementById('cpExportCsv').disabled = data.length === 0;
+
+        const shownNote = preview100 && totalRows > 100 ? '（仅显示前 100 行）' : '';
+        if (errors.length) {
+            setStatus('解析完成，共 ' + totalRows + ' 行，' + errors.length + ' 条错误' + shownNote + '：' + errors[0].message, 'error');
+        } else {
+            setStatus('解析完成，共 ' + totalRows + ' 行 ' + colCount + ' 列' + shownNote, 'success');
+        }
+    }
+
+    function parseFile(file) {
+        if (!file) return;
+        if (typeof Papa === 'undefined') { setStatus('PapaParse 库未加载，请刷新页面重试', 'error'); return; }
+        setStatus('正在流式解析大文件...', 'info');
+        const config = getConfig();
+        config.complete = renderResult;
+        config.error = err => setStatus('解析失败: ' + err.message, 'error');
+        Papa.parse(file, config);
+    }
+
+    document.getElementById('cpFile').addEventListener('change', e => {
+        parseFile(e.target.files[0]);
+    });
+
+    document.getElementById('cpParsePaste').addEventListener('click', () => {
+        const text = document.getElementById('cpPaste').value;
+        if (!text.trim()) { setStatus('请先粘贴文本内容', 'error'); return; }
+        if (typeof Papa === 'undefined') { setStatus('PapaParse 库未加载，请刷新页面重试', 'error'); return; }
+        setStatus('正在解析...', 'info');
+        try {
+            const results = Papa.parse(text, getConfig());
+            renderResult(results);
+        } catch (e) {
+            setStatus('解析失败: ' + e.message, 'error');
+        }
+    });
+
+    document.getElementById('cpExportJson').addEventListener('click', () => {
+        if (!parsedData.length) return;
+        const json = JSON.stringify(parsedData, null, 2);
+        const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'parsed.json'; a.click();
+        setStatus('JSON 已导出（' + totalRows + ' 行）', 'success');
+    });
+
+    document.getElementById('cpExportCsv').addEventListener('click', () => {
+        if (!parsedData.length) return;
+        const csv = Papa.unparse(parsedData, { columns: parsedFields.length ? parsedFields : undefined });
+        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'export.csv'; a.click();
+        setStatus('CSV 已导出（' + totalRows + ' 行）', 'success');
+    });
+
+    document.getElementById('cpClear').addEventListener('click', () => {
+        parsedData = []; parsedFields = []; totalRows = 0;
+        document.getElementById('cpFile').value = '';
+        document.getElementById('cpPaste').value = '';
+        document.getElementById('cpTable').innerHTML = '';
+        document.getElementById('cpTableWrap').style.display = 'none';
+        document.getElementById('cpStats').innerHTML = '';
+        document.getElementById('cpExportJson').disabled = true;
+        document.getElementById('cpExportCsv').disabled = true;
+        setStatus('已清空', 'info');
+    });
+
+    initSidebar('document');
+</script>
+</body>
+</html>

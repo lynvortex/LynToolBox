@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AES 加密解密 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="AES加密解密，AES对称加密解密，支持CBC/ECB/CFB等多种模式。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', -apple-system, sans-serif;
+            background: #f4f7f9;
+            margin: 0;
+            display: flex;
+            height: 100vh; overflow: hidden;
+            color: #333;
+        }
+        .mobile-header {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: #fff; padding: 0 20px; align-items: center;
+            justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+        }
+        .mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+        .mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+        .menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #4a90e2; }
+        .sidebar {
+            width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+            display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+            transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+            position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item {
+            display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+            transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+        }
+        .category-item:hover, .category-item.active { background: #ebf5ff; color: #4a90e2; border-left-color: #4a90e2; }
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+        .tool-container {
+            width: 100%;
+            max-width: 960px;
+            background: #fff; border-radius: 12px;
+            padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+        }
+        .tool-header { text-align: center; margin-bottom: 28px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+        @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+        .form-item { display: flex; flex-direction: column; gap: 6px; }
+        .form-item label { font-size: 0.85em; color: #64748b; font-weight: 600; }
+        .form-item select, .form-item input, .form-item textarea {
+            padding: 10px 14px; border: 1px solid #e0e6ed; border-radius: 8px;
+            font-size: 0.9em; outline: none; transition: 0.2s; background: #fff;
+            font-family: inherit;
+        }
+        .form-item select:focus, .form-item input:focus, .form-item textarea:focus { border-color: #4a90e2; }
+        .form-item textarea { min-height: 80px; resize: vertical; font-family: 'Courier New', monospace; font-size: 0.85em; }
+        .hint { font-size: 0.78em; color: #94a3b8; margin-top: 4px; }
+        .btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; align-items: center; }
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em;
+            font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap;
+        }
+        .btn-primary { background: #4a90e2; color: white; }
+        .btn-primary:hover { background: #3a7bd5; }
+        .btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .btn-success { background: #22c55e; color: white; }
+        .btn-success:hover { background: #16a34a; }
+        .btn-outline { background: transparent; color: #4a90e2; border: 1px solid #4a90e2; }
+        .btn-outline:hover { background: #4a90e2; color: white; }
+        .btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+        .btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+        .btn-warning { background: #f59e0b; color: white; }
+        .btn-warning:hover { background: #d97706; }
+        .status-bar {
+            min-height: 20px; font-size: 0.85em;
+            padding: 8px 12px; border-radius: 6px; margin-bottom: 16px;
+        }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+        .result-box {
+            background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 8px;
+            padding: 14px 16px; margin-top: 12px; display: none;
+        }
+        .result-box .result-label { font-size: 0.78em; color: #94a3b8; margin-bottom: 6px; font-weight: 600; }
+        .result-box .result-content {
+            font-family: 'Courier New', monospace; font-size: 0.85em;
+            color: #1e293b; word-break: break-all; line-height: 1.6;
+        }
+        .result-box .result-actions { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+        .footer p { margin: 0; }
+        .footer a { color: #4a90e2; text-decoration: none; }
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+        .info-cards {
+            width: 100%;
+            max-width: 960px;
+            display: flex; flex-direction: column; gap: 18px; margin-top: 4px;
+        }
+        .info-card {
+            background: #fff; border-radius: 12px; padding: 22px 24px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06); border: 1px solid #f0f2f5;
+        }
+        .info-card h3 {
+            margin: 0 0 10px 0; font-size: 1em; color: #2c3e50; font-weight: 600;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .info-card p { margin: 0 0 10px 0; font-size: 0.82em; color: #64748b; }
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip {
+            background: #e0f2fe; color: #0369a1;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace;
+        }
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a {
+            font-size: 0.85em; color: #4a90e2; text-decoration: none;
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s;
+        }
+        .tool-links a:hover { background: #e2e8f0; }
+        .mode-hint { font-size: 0.75em; color: #94a3b8; margin-top: 2px; }
+        .inline-flex { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+        @media (max-width: 768px) {
+            body { display: block; height: auto; overflow: auto; }
+            .mobile-header { display: flex; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .close-sidebar { display: block; }
+            .main-content { display: block; }
+            .main-scroll { padding: 72px 16px 32px; gap: 20px;  }
+            .tool-container { padding: 24px 16px; border-radius: 10px; }
+            .tool-header h1 { font-size: 1.3em; }
+            .form-grid { grid-template-columns: 1fr; }
+            .overlay.active { display: block; }
+        }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="AES加密解密,在线AES加密解密,编程开发,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/work/aes-tool.html" />
+    <meta property="og:title" content="AES 加密解密" />
+    <meta property="og:description" content="AES加密解密，AES对称加密解密，支持CBC/ECB/CFB等多种模式。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/work/aes-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="AES 加密解密" />
+    <meta itemprop="description" content="AES加密解密，AES对称加密解密，支持CBC/ECB/CFB等多种模式。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "编程开发",
+                "item": "https://box.lynvortex.top/work.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "AES加密解密",
+                "item": "https://box.lynvortex.top/work/aes-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "AES加密解密",
+        "url": "https://box.lynvortex.top/work/aes-tool.html",
+        "description": "AES对称加密解密，支持CBC/ECB/CFB等多种模式",
+        "applicationCategory": "编程开发",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>AES 加密解密</h1>
+                <p>纯前端 AES 对称加密/解密，支持多模式多密钥长度，数据完全本地化</p>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-item" style="grid-column:1/-1;">
+                    <label>内容</label>
+                    <textarea id="inputText" placeholder="输入要加密的明文，或要解密的 Base64 密文…"></textarea>
+                </div>
+                <div class="form-item">
+                    <label>密钥</label>
+                    <input type="text" id="keyInput" placeholder="输入密钥字符串" />
+                    <div class="hint">长度不足将自动补齐，超长将截断</div>
+                </div>
+                <div class="form-item">
+                    <label>IV 向量</label>
+                    <input type="text" id="ivInput" placeholder="16字节，留空自动填充" />
+                    <div class="hint">AES-ECB 模式不需要 IV</div>
+                </div>
+                <div class="form-item">
+                    <label>密钥长度</label>
+                    <select id="keySizeSelect">
+                        <option value="128">AES-128</option>
+                        <option value="192">AES-192</option>
+                        <option value="256" selected>AES-256</option>
+                    </select>
+                </div>
+                <div class="form-item">
+                    <label>加密模式</label>
+                    <select id="modeSelect">
+                        <option value="CBC">CBC（密码块链接）</option>
+                        <option value="ECB">ECB（电子密码本）</option>
+                        <option value="CFB">CFB（密文反馈）</option>
+                        <option value="OFB">OFB（输出反馈）</option>
+                        <option value="CTR">CTR（计数器模式）</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn-primary" id="encryptBtn">加密</button>
+                <button class="btn btn-warning" id="decryptBtn">解密</button>
+                <button class="btn btn-ghost" id="clearBtn">清空</button>
+                <button class="btn btn-outline" id="swapBtn" style="font-size:0.82em;">交换输入/输出</button>
+            </div>
+
+            <div id="statusBar" class="status-bar info">选择密钥长度和模式，输入内容后点击加密或解密</div>
+
+            <div id="resultBox" class="result-box">
+                <div class="result-label" id="resultLabel">结果</div>
+                <div class="result-content" id="resultContent"></div>
+                <div class="result-actions">
+                    <button class="btn btn-outline" id="copyResultBtn" style="padding:6px 14px;font-size:0.82em;">复制结果</button>
+                </div>
+            </div>
+
+            <footer class="footer">
+                &copy; 2026 绘萤者-Lynvortex &middot; 美梦多彩 理想自由
+            <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>AES 加密模式说明</h3>
+                <p>五种加密模式的特点与适用场景</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">CBC</span>
+                    <span class="tld-chip">ECB</span>
+                    <span class="tld-chip">CFB</span>
+                    <span class="tld-chip">OFB</span>
+                    <span class="tld-chip">CTR</span>
+                    <span class="tld-chip">PKCS7</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>使用须知</h3>
+                <ul class="tips-list">
+                    <li><strong>CBC</strong>：最常用模式，需要 IV 向量，相同明文每次加密结果不同</li>
+                    <li><strong>ECB</strong>：不需要 IV，相同明文块产生相同密文块，安全性较低</li>
+                    <li><strong>CFB</strong>：流密码模式，将块密码转为流密码，无需填充</li>
+                    <li><strong>OFB</strong>：输出反馈模式，将块密码转为流密码，支持并行处理</li>
+                    <li><strong>CTR</strong>：计数器模式，支持随机访问和并行加密解密</li>
+                    <li>所有运算在浏览器本地完成，<strong>密钥和内容不会离开您的设备</strong></li>
+                    <li>输出结果为 Base64 编码，支持直接复制使用</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+(function() {
+    'use strict';
+
+    // ---- DOM refs ----
+    const inputText     = document.getElementById('inputText');
+    const keyInput      = document.getElementById('keyInput');
+    const ivInput       = document.getElementById('ivInput');
+    const keySizeSelect = document.getElementById('keySizeSelect');
+    const modeSelect    = document.getElementById('modeSelect');
+    const encryptBtn    = document.getElementById('encryptBtn');
+    const decryptBtn    = document.getElementById('decryptBtn');
+    const clearBtn      = document.getElementById('clearBtn');
+    const swapBtn       = document.getElementById('swapBtn');
+    const statusBar     = document.getElementById('statusBar');
+    const resultBox     = document.getElementById('resultBox');
+    const resultLabel   = document.getElementById('resultLabel');
+    const resultContent = document.getElementById('resultContent');
+    const copyResultBtn = document.getElementById('copyResultBtn');
+
+    // ---- helpers ----
+    const setStatus = function(msg, type) {
+        statusBar.textContent = msg;
+        statusBar.className = 'status-bar ' + type;
+    };
+
+    const showResult = function(label, content) {
+        resultLabel.textContent = label;
+        resultContent.textContent = content;
+        resultBox.style.display = 'block';
+    };
+
+    const hideResult = function() {
+        resultBox.style.display = 'none';
+    };
+
+    // ---- Base64 helpers ----
+    const base64Encode = function(bytes) {
+        const bin = String.fromCharCode.apply(null, bytes);
+        return btoa(bin);
+    };
+
+    const base64Decode = function(str) {
+        const bin = atob(str.replace(/\s/g, ''));
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) {
+            bytes[i] = bin.charCodeAt(i);
+        }
+        return bytes;
+    };
+
+    // ---- PKCS7 padding ----
+    const pkcs7Pad = function(data, blockSize) {
+        const padLen = blockSize - (data.length % blockSize);
+        const padded = new Uint8Array(data.length + padLen);
+        padded.set(data);
+        for (let i = data.length; i < padded.length; i++) {
+            padded[i] = padLen;
+        }
+        return padded;
+    };
+
+    const pkcs7Unpad = function(data) {
+        if (data.length === 0) return data;
+        const padLen = data[data.length - 1];
+        if (padLen < 1 || padLen > 16) throw new Error('无效的 PKCS7 填充');
+        for (let i = data.length - padLen; i < data.length; i++) {
+            if (data[i] !== padLen) throw new Error('无效的 PKCS7 填充');
+        }
+        return data.slice(0, data.length - padLen);
+    };
+
+    // ---- Key derivation ----
+    const deriveKeyBytes = function(keyStr, keySize) {
+        const encoder = new TextEncoder();
+        const keyBytes = encoder.encode(keyStr);
+        const targetLen = keySize / 8;
+        if (keyBytes.length === targetLen) return keyBytes;
+        if (keyBytes.length > targetLen) return keyBytes.slice(0, targetLen);
+        // Key too short: hash with SHA-256 and truncate
+        // We use a manual approach: hash with SHA-256 via Web Crypto
+        const hashLen = Math.max(targetLen, 32);
+        // Use SHA-256 to derive
+        return crypto.subtle.digest('SHA-256', keyBytes).then(function(hash) {
+            const hashArr = new Uint8Array(hash);
+            if (hashArr.length >= targetLen) return hashArr.slice(0, targetLen);
+            // Need more bytes - double hash
+            const combined = new Uint8Array(hashArr.length + keyBytes.length);
+            combined.set(hashArr);
+            combined.set(keyBytes, hashArr.length);
+            return crypto.subtle.digest('SHA-256', combined).then(function(hash2) {
+                const arr2 = new Uint8Array(hash2);
+                const result = new Uint8Array(targetLen);
+                result.set(hashArr);
+                result.set(arr2.slice(0, targetLen - hashArr.length), hashArr.length);
+                return result;
+            });
+        });
+    };
+
+    // ---- IV handling ----
+    const getIvBytes = function(ivStr, mode) {
+        if (mode === 'ECB') return new Uint8Array(16); // not used for ECB
+        if (!ivStr || ivStr.trim() === '') {
+            // Generate random IV
+            const iv = new Uint8Array(16);
+            crypto.getRandomValues(iv);
+            return iv;
+        }
+        const encoder = new TextEncoder();
+        const bytes = encoder.encode(ivStr);
+        if (bytes.length >= 16) return bytes.slice(0, 16);
+        // Pad with zeros
+        const padded = new Uint8Array(16);
+        padded.set(bytes);
+        return padded;
+    };
+
+    // ---- AES block encrypt/decrypt using Web Crypto API ----
+    // ECB mode: encrypt/decrypt single 16-byte block
+    const aesBlockEncrypt = function(keyBytes, block) {
+        return crypto.subtle.importKey('raw', keyBytes, { name: 'AES-CBC' }, false, ['encrypt'])
+            .then(function(key) {
+                const zeroIv = new Uint8Array(16);
+                return crypto.subtle.encrypt({ name: 'AES-CBC', iv: zeroIv }, key, block);
+            })
+            .then(function(result) {
+                return new Uint8Array(result).slice(0, 16);
+            });
+    };
+
+    // ---- ECB mode ----
+    const aesEcbEncrypt = function(plainBytes, keyBytes) {
+        const padded = pkcs7Pad(plainBytes, 16);
+        const blocks = [];
+        for (let i = 0; i < padded.length; i += 16) {
+            blocks.push(padded.slice(i, i + 16));
+        }
+        // Encrypt block by block
+        return blocks.reduce(function(promise, block) {
+            return promise.then(function(results) {
+                return aesBlockEncrypt(keyBytes, block).then(function(enc) {
+                    results.push(enc);
+                    return results;
+                });
+            });
+        }, Promise.resolve([])).then(function(results) {
+            const out = new Uint8Array(results.length * 16);
+            for (let i = 0; i < results.length; i++) {
+                out.set(results[i], i * 16);
+            }
+            return out;
+        });
+    };
+
+    const aesEcbDecrypt = function(cipherBytes, keyBytes) {
+        if (cipherBytes.length % 16 !== 0) {
+            return Promise.reject(new Error('密文长度不是16的倍数'));
+        }
+        const blocks = [];
+        for (let i = 0; i < cipherBytes.length; i += 16) {
+            blocks.push(cipherBytes.slice(i, i + 16));
+        }
+        // Decrypt block by block using AES-CBC decrypt with zero IV
+        return crypto.subtle.importKey('raw', keyBytes, { name: 'AES-CBC' }, false, ['decrypt'])
+            .then(function(key) {
+                return blocks.reduce(function(promise, block) {
+                    return promise.then(function(results) {
+                        const zeroIv = new Uint8Array(16);
+                        // Concatenate zeroIv + block to simulate ECB decryption via CBC
+                        const input = new Uint8Array(32);
+                        input.set(zeroIv);
+                        input.set(block, 16);
+                        return crypto.subtle.decrypt({ name: 'AES-CBC', iv: zeroIv }, key, input)
+                            .then(function(dec) {
+                                results.push(new Uint8Array(dec).slice(0, 16));
+                                return results;
+                            });
+                    });
+                }, Promise.resolve([]));
+            })
+            .then(function(results) {
+                const out = new Uint8Array(results.length * 16);
+                for (let i = 0; i < results.length; i++) {
+                    out.set(results[i], i * 16);
+                }
+                return pkcs7Unpad(out);
+            });
+    };
+
+    // ---- CBC mode ----
+    const aesCbcEncrypt = function(plainBytes, keyBytes, ivBytes) {
+        const padded = pkcs7Pad(plainBytes, 16);
+        return crypto.subtle.importKey('raw', keyBytes, { name: 'AES-CBC' }, false, ['encrypt'])
+            .then(function(key) {
+                return crypto.subtle.encrypt({ name: 'AES-CBC', iv: ivBytes }, key, padded);
+            })
+            .then(function(result) {
+                return new Uint8Array(result);
+            });
+    };
+
+    const aesCbcDecrypt = function(cipherBytes, keyBytes, ivBytes) {
+        if (cipherBytes.length % 16 !== 0) {
+            return Promise.reject(new Error('密文长度不是16的倍数'));
+        }
+        return crypto.subtle.importKey('raw', keyBytes, { name: 'AES-CBC' }, false, ['decrypt'])
+            .then(function(key) {
+                return crypto.subtle.decrypt({ name: 'AES-CBC', iv: ivBytes }, key, cipherBytes);
+            })
+            .then(function(result) {
+                return pkcs7Unpad(new Uint8Array(result));
+            });
+    };
+
+    // ---- CFB mode (CFB-128) ----
+    const aesCfbEncrypt = function(plainBytes, keyBytes, ivBytes) {
+        let prev = new Uint8Array(ivBytes);
+        const out = new Uint8Array(plainBytes.length);
+        let offset = 0;
+        const processBlock = function() {
+            if (offset >= plainBytes.length) return Promise.resolve(out);
+            return aesBlockEncrypt(keyBytes, prev).then(function(enc) {
+                const chunkLen = Math.min(16, plainBytes.length - offset);
+                for (let i = 0; i < chunkLen; i++) {
+                    out[offset + i] = plainBytes[offset + i] ^ enc[i];
+                }
+                // Shift prev for next block
+                if (chunkLen === 16) {
+                    prev = out.slice(offset, offset + 16);
+                }
+                offset += chunkLen;
+                return processBlock();
+            });
+        };
+        return processBlock();
+    };
+
+    const aesCfbDecrypt = function(cipherBytes, keyBytes, ivBytes) {
+        // CFB decryption is the same as encryption
+        let prev = new Uint8Array(ivBytes);
+        const out = new Uint8Array(cipherBytes.length);
+        let offset = 0;
+        const processBlock = function() {
+            if (offset >= cipherBytes.length) return Promise.resolve(out);
+            return aesBlockEncrypt(keyBytes, prev).then(function(enc) {
+                const chunkLen = Math.min(16, cipherBytes.length - offset);
+                for (let i = 0; i < chunkLen; i++) {
+                    out[offset + i] = cipherBytes[offset + i] ^ enc[i];
+                }
+                if (chunkLen === 16) {
+                    prev = cipherBytes.slice(offset, offset + 16);
+                }
+                offset += chunkLen;
+                return processBlock();
+            });
+        };
+        return processBlock();
+    };
+
+    // ---- OFB mode ----
+    const aesOfbEncrypt = function(plainBytes, keyBytes, ivBytes) {
+        let feedback = new Uint8Array(ivBytes);
+        const out = new Uint8Array(plainBytes.length);
+        let offset = 0;
+        const processBlock = function() {
+            if (offset >= plainBytes.length) return Promise.resolve(out);
+            return aesBlockEncrypt(keyBytes, feedback).then(function(enc) {
+                feedback = enc;
+                const chunkLen = Math.min(16, plainBytes.length - offset);
+                for (let i = 0; i < chunkLen; i++) {
+                    out[offset + i] = plainBytes[offset + i] ^ enc[i];
+                }
+                offset += chunkLen;
+                return processBlock();
+            });
+        };
+        return processBlock();
+    };
+
+    const aesOfbDecrypt = function(cipherBytes, keyBytes, ivBytes) {
+        // OFB decryption is the same as encryption
+        let feedback = new Uint8Array(ivBytes);
+        const out = new Uint8Array(cipherBytes.length);
+        let offset = 0;
+        const processBlock = function() {
+            if (offset >= cipherBytes.length) return Promise.resolve(out);
+            return aesBlockEncrypt(keyBytes, feedback).then(function(enc) {
+                feedback = enc;
+                const chunkLen = Math.min(16, cipherBytes.length - offset);
+                for (let i = 0; i < chunkLen; i++) {
+                    out[offset + i] = cipherBytes[offset + i] ^ enc[i];
+                }
+                offset += chunkLen;
+                return processBlock();
+            });
+        };
+        return processBlock();
+    };
+
+    // ---- CTR mode ----
+    const aesCtrEncrypt = function(plainBytes, keyBytes, ivBytes) {
+        const counter = new Uint8Array(ivBytes);
+        const out = new Uint8Array(plainBytes.length);
+        let offset = 0;
+        const processBlock = function() {
+            if (offset >= plainBytes.length) return Promise.resolve(out);
+            return aesBlockEncrypt(keyBytes, counter).then(function(enc) {
+                const chunkLen = Math.min(16, plainBytes.length - offset);
+                for (let i = 0; i < chunkLen; i++) {
+                    out[offset + i] = plainBytes[offset + i] ^ enc[i];
+                }
+                // Increment counter
+                for (let i = 15; i >= 0; i--) {
+                    if (++counter[i] !== 0) break;
+                }
+                offset += chunkLen;
+                return processBlock();
+            });
+        };
+        return processBlock();
+    };
+
+    const aesCtrDecrypt = function(cipherBytes, keyBytes, ivBytes) {
+        // CTR decryption is the same as encryption
+        return aesCtrEncrypt(cipherBytes, keyBytes, ivBytes);
+    };
+
+    // ---- Main encrypt function ----
+    const doEncrypt = function() {
+        const plainText = inputText.value;
+        const keyStr = keyInput.value;
+        const ivStr = ivInput.value;
+        const keySize = parseInt(keySizeSelect.value, 10);
+        const mode = modeSelect.value;
+
+        if (!plainText) {
+            setStatus('请输入要加密的明文', 'error');
+            return;
+        }
+        if (!keyStr) {
+            setStatus('请输入密钥', 'error');
+            return;
+        }
+
+        setStatus('正在加密…', 'info');
+        encryptBtn.disabled = true;
+        decryptBtn.disabled = true;
+
+        deriveKeyBytes(keyStr, keySize).then(function(keyBytes) {
+            const ivBytes = getIvBytes(ivStr, mode);
+            const encoder = new TextEncoder();
+            const plainBytes = encoder.encode(plainText);
+
+            let encryptPromise;
+            switch (mode) {
+                case 'ECB': encryptPromise = aesEcbEncrypt(plainBytes, keyBytes); break;
+                case 'CBC': encryptPromise = aesCbcEncrypt(plainBytes, keyBytes, ivBytes); break;
+                case 'CFB': encryptPromise = aesCfbEncrypt(plainBytes, keyBytes, ivBytes); break;
+                case 'OFB': encryptPromise = aesOfbEncrypt(plainBytes, keyBytes, ivBytes); break;
+                case 'CTR': encryptPromise = aesCtrEncrypt(plainBytes, keyBytes, ivBytes); break;
+                default: throw new Error('不支持的加密模式');
+            }
+
+            return encryptPromise.then(function(cipherBytes) {
+                const result = base64Encode(cipherBytes);
+                let ivInfo = '';
+                if (mode !== 'ECB' && (!ivStr || ivStr.trim() === '')) {
+                    ivInfo = ' (自动生成 IV: ' + base64Encode(ivBytes) + ')';
+                }
+                showResult('加密结果 (Base64)', result);
+                setStatus('加密成功' + ivInfo + ' ✓', 'success');
+            });
+        }).catch(function(err) {
+            setStatus('加密失败: ' + err.message, 'error');
+        }).finally(function() {
+            encryptBtn.disabled = false;
+            decryptBtn.disabled = false;
+        });
+    };
+
+    // ---- Main decrypt function ----
+    const doDecrypt = function() {
+        const cipherText = inputText.value.trim();
+        const keyStr = keyInput.value;
+        const ivStr = ivInput.value;
+        const keySize = parseInt(keySizeSelect.value, 10);
+        const mode = modeSelect.value;
+
+        if (!cipherText) {
+            setStatus('请输入要解密的 Base64 密文', 'error');
+            return;
+        }
+        if (!keyStr) {
+            setStatus('请输入密钥', 'error');
+            return;
+        }
+
+        setStatus('正在解密…', 'info');
+        encryptBtn.disabled = true;
+        decryptBtn.disabled = true;
+
+        let cipherBytes;
+        try {
+            cipherBytes = base64Decode(cipherText);
+        } catch (e) {
+            setStatus('密文不是有效的 Base64 编码', 'error');
+            encryptBtn.disabled = false;
+            decryptBtn.disabled = false;
+            return;
+        }
+
+        if (mode !== 'ECB' && mode !== 'CTR' && cipherBytes.length % 16 !== 0) {
+            setStatus('密文长度不是16的倍数，请检查输入', 'error');
+            encryptBtn.disabled = false;
+            decryptBtn.disabled = false;
+            return;
+        }
+
+        deriveKeyBytes(keyStr, keySize).then(function(keyBytes) {
+            const ivBytes = getIvBytes(ivStr, mode);
+
+            let decryptPromise;
+            switch (mode) {
+                case 'ECB': decryptPromise = aesEcbDecrypt(cipherBytes, keyBytes); break;
+                case 'CBC': decryptPromise = aesCbcDecrypt(cipherBytes, keyBytes, ivBytes); break;
+                case 'CFB': decryptPromise = aesCfbDecrypt(cipherBytes, keyBytes, ivBytes); break;
+                case 'OFB': decryptPromise = aesOfbDecrypt(cipherBytes, keyBytes, ivBytes); break;
+                case 'CTR': decryptPromise = aesCtrDecrypt(cipherBytes, keyBytes, ivBytes); break;
+                default: throw new Error('不支持的解密模式');
+            }
+
+            return decryptPromise.then(function(plainBytes) {
+                const decoder = new TextDecoder();
+                const plainText = decoder.decode(plainBytes);
+                showResult('解密结果', plainText);
+                setStatus('解密成功 ✓', 'success');
+            });
+        }).catch(function(err) {
+            setStatus('解密失败: ' + err.message + '（请检查密钥、IV和模式是否正确）', 'error');
+        }).finally(function() {
+            encryptBtn.disabled = false;
+            decryptBtn.disabled = false;
+        });
+    };
+
+    // ---- clear ----
+    const clearAll = function() {
+        inputText.value = '';
+        keyInput.value = '';
+        ivInput.value = '';
+        hideResult();
+        setStatus('已清空，请输入内容后操作', 'info');
+    };
+
+    // ---- swap input/output ----
+    const swapInputOutput = function() {
+        if (resultBox.style.display === 'none' || !resultContent.textContent) {
+            setStatus('没有可交换的结果', 'error');
+            return;
+        }
+        const currentResult = resultContent.textContent;
+        inputText.value = currentResult;
+        hideResult();
+        setStatus('已交换，可进行反向操作', 'info');
+    };
+
+    // ---- copy result ----
+    const copyResult = function() {
+        const text = resultContent.textContent;
+        if (!text) {
+            setStatus('没有可复制的内容', 'error');
+            return;
+        }
+        navigator.clipboard.writeText(text).then(function() {
+            setStatus('已复制到剪贴板 ✓', 'success');
+        }).catch(function() {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            setStatus('已复制到剪贴板 ✓', 'success');
+        });
+    };
+
+    // ---- Mode change hint ----
+    const updateModeHint = function() {
+        const mode = modeSelect.value;
+        const ivField = ivInput.parentElement;
+        if (mode === 'ECB') {
+            ivField.style.opacity = '0.4';
+            ivInput.placeholder = 'ECB 模式不需要 IV';
+        } else {
+            ivField.style.opacity = '1';
+            ivInput.placeholder = '16字节，留空自动填充';
+        }
+    };
+
+    // ---- events ----
+    encryptBtn.addEventListener('click', doEncrypt);
+    decryptBtn.addEventListener('click', doDecrypt);
+    clearBtn.addEventListener('click', clearAll);
+    swapBtn.addEventListener('click', swapInputOutput);
+    copyResultBtn.addEventListener('click', copyResult);
+    modeSelect.addEventListener('change', updateModeHint);
+
+    // Mode hint on load
+    updateModeHint();
+
+    // ---- init ----
+    hideResult();
+    setStatus('选择密钥长度和模式，输入内容后点击加密或解密', 'info');
+})();
+
+// 初始化共享侧边栏
+initSidebar('work');
+</script>
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>robots.txt生成器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线 robots.txt 生成器，可视化添加 User-agent 规则、Allow/Disallow 路径、Crawl-delay 与 Sitemap 声明，一键生成规范的爬虫协议文件，纯前端运行。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="robots.txt生成,爬虫协议,robots文件,Disallow,搜索引擎优化,SEO工具,网站管理,免费工具,在线工具,纯前端处理,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/work/robots-tool.html"/>
+<meta property="og:title" content="robots.txt生成器"/>
+<meta property="og:description" content="可视化配置，规范输出。"/>
+<meta property="og:url" content="https://box.lynvortex.top/work/robots-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="robots.txt生成器"/>
+<meta itemprop="description" content="可视化配置，规范输出。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"编程开发","item":"https://box.lynvortex.top/work.html"},{"@type":"ListItem","position":3,"name":"robots.txt生成器","item":"https://box.lynvortex.top/work/robots-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"robots.txt生成器","url":"https://box.lynvortex.top/work/robots-tool.html","description":"robots.txt生成器","applicationCategory":"编程开发","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>🤖 robots.txt 生成器</h1>
+        <p>可视化配置爬虫协议，一键生成规范文件</p>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>User-agent</label>
+            <select id="ua">
+                <option value="*">* （所有爬虫）</option>
+                <option value="Googlebot">Googlebot</option>
+                <option value="Bingbot">Bingbot</option>
+                <option value="Baiduspider">Baiduspider</option>
+                <option value="Sogou spider">Sogou spider</option>
+                <option value="YisouSpider">YisouSpider（神马）</option>
+                <option value="Bytespider">Bytespider（字节）</option>
+                <option value="custom">自定义…</option>
+            </select>
+        </div>
+        <div class="form-item"><label>规则类型</label>
+            <select id="ruleType">
+                <option value="Disallow">Disallow（禁止）</option>
+                <option value="Allow">Allow（允许）</option>
+            </select>
+        </div>
+        <div class="form-item" style="grid-column:1/3;"><label>路径（如 /admin/ 或 /*.pdf$）</label>
+            <input type="text" id="rulePath" placeholder="/admin/"/>
+        </div>
+        <div class="form-item"><label>Crawl-delay（秒，0 为不加）</label>
+            <input type="number" id="crawlDelay" value="0" min="0" max="30"/>
+        </div>
+        <div class="form-item"><label>Sitemap 地址</label>
+            <input type="text" id="sitemap" placeholder="https://example.com/sitemap.xml"/>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="addBtn">➕ 添加规则</button>
+        <button class="btn btn-outline" id="copyBtn">复制 robots.txt</button>
+        <button class="btn btn-outline" id="downloadBtn">下载文件</button>
+        <button class="btn btn-ghost" id="clearBtn">清空全部</button>
+    </div>
+    <div class="status-bar info" id="statusBar">添加规则后自动生成，可多组 User-agent 叠加</div>
+    <div id="ruleList" style="margin-bottom:16px;"></div>
+    <p style="font-size:0.8em;color:#94a3b8;margin:8px 0;">↓ robots.txt</p>
+    <pre class="output" id="output" style="white-space:pre-wrap;min-height:120px;"></pre>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>🤖 规范输出</h3>
+        <p>按 User-agent 自动分组，注释齐全。</p>
+        <div class="feature-chips"><span class="feature-chip">多组规则</span><span class="feature-chip">Crawl-delay</span><span class="feature-chip">Sitemap</span><span class="feature-chip">一键下载</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用须知</h3>
+        <ul class="tips-list">
+            <li>robots.txt 须放在网站根目录，全部小写命名</li>
+            <li>它只是君子协议，恶意爬虫可能无视规则</li>
+            <li>私有内容应加权限校验，而非仅靠 Disallow</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+var rules = [];
+
+function addRule() {
+    var uaSel = document.getElementById('ua');
+    var ua = uaSel.value;
+    if (ua === 'custom') {
+        ua = prompt('输入自定义 User-agent：');
+        if (!ua) return;
+    }
+    var path = document.getElementById('rulePath').value.trim();
+    var type = document.getElementById('ruleType').value;
+    if (!path) {
+        path = type === 'Disallow' ? '/' : '/';
+    }
+    if (!/^([a-zA-Z0-9.-]+|\*)$/.test(ua.trim())) {
+        setStatus('User-agent 格式不正确', 'error');
+        return;
+    }
+    rules.push({ ua: ua.trim(), type: type, path: path });
+    document.getElementById('rulePath').value = '';
+    render();
+    setStatus('已添加 ' + type + ' 规则（' + ua + '）', 'success');
+}
+
+function render() {
+    var delays = {};
+    var delay = parseInt(document.getElementById('crawlDelay').value);
+    var sm = document.getElementById('sitemap').value.trim();
+    ['crawlDelay', 'sitemap'].forEach(function(id) {
+        document.getElementById(id).addEventListener('input', function() { if (rules.length) render(); });
+    });
+    if (delay > 0 && rules.length) delays['*'] = delay;
+
+    var byUa = {};
+    rules.forEach(function(r, i) {
+        (byUa[r.ua] = byUa[r.ua] || []).push({ r: r, i: i });
+    });
+
+    var list = '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
+    rules.forEach(function(r, i) {
+        var isAllow = r.type === 'Allow';
+        list += '<span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:16px;font-size:0.82em;' +
+            (isAllow ? 'background:#e8f8ef;color:#1e8e5a;' : 'background:#fdeeee;color:#c0392b;') + '">' +
+            '<b>' + r.ua + '</b> ' + r.type + ': ' + escapeHtml(r.path) +
+            ' <button style="background:none;border:none;cursor:pointer;color:inherit;font-weight:bold;" onclick="delRule(' + i + ')">✕</button></span>';
+    });
+    list += '</div>';
+    document.getElementById('ruleList').innerHTML = list || '<p style="color:#94a3b8;font-size:0.85em;">暂无规则，添加后此处显示</p>';
+
+    var out = ['# robots.txt 生成于 ' + new Date().toISOString().slice(0, 10) + ' · 绘萤工具箱'];
+    Object.keys(byUa).forEach(function(ua) {
+        out.push('');
+        out.push('User-agent: ' + ua);
+        byUa[ua].forEach(function(x) {
+            out.push(x.r.type + ': ' + x.r.path);
+        });
+        if (delay > 0 && ua === '*') out.push('Crawl-delay: ' + delay);
+    });
+    if (Object.keys(byUa).length && delay > 0 && !byUa['*']) {
+        out.push('', 'User-agent: *', 'Crawl-delay: ' + delay);
+    }
+    if (sm) {
+        out.push('');
+        out.push('Sitemap: ' + sm);
+    }
+    document.getElementById('output').textContent = out.join('\n');
+}
+
+window.delRule = function(i) {
+    rules.splice(i, 1);
+    render();
+    setStatus('已删除规则', 'info');
+};
+
+function setStatus(msg, cls) {
+    var sb = document.getElementById('statusBar');
+    sb.textContent = msg; sb.className = 'status-bar ' + cls;
+}
+
+document.getElementById('addBtn').onclick = addRule;
+document.getElementById('clearBtn').onclick = function() {
+    rules = [];
+    document.getElementById('crawlDelay').value = 0;
+    document.getElementById('sitemap').value = '';
+    render();
+    setStatus('已清空', 'info');
+};
+document.getElementById('copyBtn').onclick = function() {
+    var t = document.getElementById('output').textContent;
+    if (t) navigator.clipboard.writeText(t).then(function() { setStatus('robots.txt 已复制', 'success'); });
+};
+document.getElementById('downloadBtn').onclick = function() {
+    var t = document.getElementById('output').textContent;
+    if (!rules.length && !document.getElementById('sitemap').value) { setStatus('请先添加规则', 'error'); return; }
+    var blob = new Blob([t], { type: 'text/plain' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'robots.txt';
+    a.click();
+    URL.revokeObjectURL(a.href);
+};
+
+render();
+initSidebar('work');
+</script>
+</body>
+</html>

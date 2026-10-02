@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CSS单位换算器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线 CSS 单位换算器，px、rem、em、vw、vh、pt 互转，支持自定义根字号与视口尺寸，附常用字号速查表，纯前端运行。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="CSS单位换算,px转rem,rem转px,px转vw,vw转换,pt转px,前端单位,响应式单位,免费工具,在线工具,纯前端处理,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/work/css-unit-tool.html"/>
+<meta property="og:title" content="CSS单位换算器"/>
+<meta property="og:description" content="px/rem/em/vw/pt 一键互转。"/>
+<meta property="og:url" content="https://box.lynvortex.top/work/css-unit-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="CSS单位换算器"/>
+<meta itemprop="description" content="px/rem/em/vw/pt 一键互转。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"编程开发","item":"https://box.lynvortex.top/work.html"},{"@type":"ListItem","position":3,"name":"CSS单位换算器","item":"https://box.lynvortex.top/work/css-unit-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"CSS单位换算器","url":"https://box.lynvortex.top/work/css-unit-tool.html","description":"CSS长度单位换算器","applicationCategory":"编程开发","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>📏 CSS 单位换算器</h1>
+        <p>px / rem / em / vw / vh / pt 互转</p>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>数值</label>
+            <input type="number" id="value" value="16" step="0.01"/>
+        </div>
+        <div class="form-item"><label>原始单位</label>
+            <select id="unit">
+                <option value="px">px</option>
+                <option value="rem">rem</option>
+                <option value="em">em（父元素字号）</option>
+                <option value="vw">vw（视口宽 1%）</option>
+                <option value="vh">vh（视口高 1%）</option>
+                <option value="pt">pt（磅）</option>
+            </select>
+        </div>
+        <div class="form-item"><label>根字号 1rem (px)</label>
+            <input type="number" id="rootPx" value="16" min="1"/>
+        </div>
+        <div class="form-item"><label>父元素字号 1em (px)</label>
+            <input type="number" id="emPx" value="16" min="1"/>
+        </div>
+        <div class="form-item"><label>视口宽度 (px)</label>
+            <input type="number" id="vwPx" value="375" min="1"/>
+        </div>
+        <div class="form-item"><label>视口高度 (px)</label>
+            <input type="number" id="vhPx" value="667" min="1"/>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="calcBtn">⚙️ 换算</button>
+        <button class="btn btn-outline" id="copyBtn">复制结果</button>
+    </div>
+    <div class="status-bar info" id="statusBar">修改任意数值即时换算</div>
+    <div id="resultWrap" style="overflow-x:auto;"></div>
+    <p style="font-size:0.8em;color:#94a3b8;margin:16px 0 8px;">常用 rem 速查（根字号 <span id="rootHint">16</span>px）</p>
+    <div id="cheatWrap" style="overflow-x:auto;"></div>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>📏 六种单位</h3>
+        <p>绝对、相对、视口单位全覆盖。</p>
+        <div class="feature-chips"><span class="feature-chip">双向换算</span><span class="feature-chip">自定义基准</span><span class="feature-chip">速查表</span><span class="feature-chip">精度可调</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 换算要点</h3>
+        <ul class="tips-list">
+            <li>1rem = 根元素字号，1em = 父元素字号（相对单位）</li>
+            <li>1vw = 视口宽度 1%，移动端 375px 屏 1vw = 3.75px</li>
+            <li>1pt = 1.333px（96dpi 下 1in = 72pt = 96px）</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+var lastText = '';
+
+function toPx(v, unit, root, em, vw, vh) {
+    switch (unit) {
+        case 'px': return v;
+        case 'rem': return v * root;
+        case 'em': return v * em;
+        case 'vw': return v * vw / 100;
+        case 'vh': return v * vh / 100;
+        case 'pt': return v * 96 / 72;
+    }
+    return v;
+}
+
+function calc() {
+    var v = parseFloat(document.getElementById('value').value);
+    var unit = document.getElementById('unit').value;
+    var root = parseFloat(document.getElementById('rootPx').value) || 16;
+    var em = parseFloat(document.getElementById('emPx').value) || 16;
+    var vw = parseFloat(document.getElementById('vwPx').value) || 375;
+    var vh = parseFloat(document.getElementById('vhPx').value) || 667;
+    if (isNaN(v)) return;
+    var px = toPx(v, unit, root, em, vw, vh);
+    var r = function(x) { return Math.round(x * 10000) / 10000; };
+    var rows = [
+        ['px', r(px)], ['rem', r(px / root)], ['em', r(px / em)],
+        ['vw', r(px * 100 / vw)], ['vh', r(px * 100 / vh)], ['pt', r(px * 72 / 96)]
+    ];
+    var html = '<table style="width:100%;border-collapse:collapse;font-size:0.9em;">';
+    html += '<tr>' + rows.map(function(row) {
+        return '<td style="padding:10px 8px;border:1px solid #e2e8f0;text-align:center;"><div style="font-size:1.35em;font-weight:700;color:#4a90e2;">' + row[1] + '</div><div style="color:#94a3b8;font-size:0.85em;">' + row[0] + '</div></td>';
+    }).join('') + '</tr></table>';
+    document.getElementById('resultWrap').innerHTML = html;
+    lastText = rows.map(function(row) { return v + unit + ' = ' + row[1] + row[0]; }).join('\n');
+    var sb = document.getElementById('statusBar');
+    sb.textContent = v + unit + ' ≈ ' + r(px) + 'px（基准 rem=' + root + ' em=' + em + ' vw=' + vw + ' vh=' + vh + '）';
+    sb.className = 'status-bar success';
+
+    document.getElementById('rootHint').textContent = root;
+    var rems = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 4];
+    var cheat = '<table style="width:100%;border-collapse:collapse;font-size:0.85em;"><tr style="background:#f1f5f9;">' +
+        rems.map(function(x) { return '<th style="padding:7px;border:1px solid #e2e8f0;">' + x + 'rem</th>'; }).join('') +
+        '</tr><tr>' + rems.map(function(x) { return '<td style="padding:7px;border:1px solid #e2e8f0;text-align:center;">' + r(x * root) + 'px</td>'; }).join('') + '</tr></table>';
+    document.getElementById('cheatWrap').innerHTML = cheat;
+}
+
+['value','rootPx','emPx','vwPx','vhPx'].forEach(function(id) {
+    document.getElementById(id).addEventListener('input', calc);
+});
+document.getElementById('unit').addEventListener('change', calc);
+document.getElementById('calcBtn').onclick = calc;
+document.getElementById('copyBtn').onclick = function() {
+    if (lastText) navigator.clipboard.writeText(lastText).then(function() {
+        var sb = document.getElementById('statusBar');
+        sb.textContent = '换算结果已复制'; sb.className = 'status-bar success';
+    });
+};
+
+calc();
+initSidebar('work');
+</script>
+</body>
+</html>

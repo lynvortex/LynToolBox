@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>音频均衡器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="音频均衡器工具，纯前端Web Audio API BiquadFilterNode实现5段图示均衡器，实时调节各频段增益，支持预设与导出WAV，数据本地处理。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.eq-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;}
+@media(max-width:600px){.eq-grid{grid-template-columns:repeat(5,1fr);gap:6px;}}
+.eq-band{text-align:center;}
+.eq-band label{display:block;font-size:.78em;color:#64748b;font-weight:600;margin-bottom:6px;}
+.eq-slider{-webkit-appearance:slider-vertical;writing-mode:bt-lr;width:40px;height:140px;cursor:pointer;}
+.eq-value{font-size:.75em;color:#4a90e2;font-weight:600;margin-top:4px;}
+.eq-presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+.eq-preset{padding:6px 14px;border-radius:6px;border:1px solid #e0e6ed;background:#f8fafc;color:#64748b;cursor:pointer;font-size:.82em;transition:.2s;}
+.eq-preset:hover,.eq-preset.active{background:#4a90e2;color:#fff;border-color:#4a90e2;}
+.progress-bar{height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden;margin:14px 0;display:none;}
+.progress-fill{height:100%;background:linear-gradient(90deg,#4a90e2,#3a7bd5);border-radius:4px;width:0;transition:.3s;}
+</style>
+    <meta name="keywords" content="音频均衡器,在线音频均衡器,音视频处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/media/audio-eq-tool.html" />
+    <meta property="og:title" content="音频均衡器" />
+    <meta property="og:description" content="音频均衡器工具，纯前端Web Audio API BiquadFilterNode实现5段图示均衡器，实时调节各频段增益，支持预设与导出WAV，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/media/audio-eq-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="音频均衡器" />
+    <meta itemprop="description" content="音频均衡器工具，纯前端Web Audio API BiquadFilterNode实现5段图示均衡器，实时调节各频段增益，支持预设与导出WAV，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "音视频处理",
+                "item": "https://box.lynvortex.top/media.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "音频均衡器",
+                "item": "https://box.lynvortex.top/media/audio-eq-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "音频均衡器",
+        "url": "https://box.lynvortex.top/media/audio-eq-tool.html",
+        "description": "5段参数均衡器，调节低中高频增益，实时预览与WAV导出",
+        "applicationCategory": "音视频处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🎚️ 音频均衡器</h1><p>5段图示均衡器，实时调节频段增益</p></div>
+<div class="upload-zone" id="dropZone">📁 点击或拖拽上传音频文件<input type="file" id="fileInput" accept="audio/*" style="display:none;"/></div>
+<div id="editorArea" style="display:none;">
+<div style="text-align:center;margin-bottom:14px;">
+<audio id="srcAudio" controls style="width:100%;"></audio>
+</div>
+<div class="eq-presets">
+<div class="eq-preset active" data-preset="flat">平直</div>
+<div class="eq-preset" data-preset="bass">低音增强</div>
+<div class="eq-preset" data-preset="treble">高音增强</div>
+<div class="eq-preset" data-preset="vocal">人声</div>
+<div class="eq-preset" data-preset="rock">摇滚</div>
+<div class="eq-preset" data-preset="classic">古典</div>
+<div class="eq-preset" data-preset="electronic">电子</div>
+</div>
+<div class="eq-grid" id="eqGrid"></div>
+<div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+<div style="text-align:center;">
+<button class="btn btn-primary" id="processBtn" style="padding:12px 32px;">🎵 应用并导出</button>
+</div>
+<div id="resultArea" style="display:none;margin-top:16px;">
+<h3 style="font-size:.95em;color:#2c3e50;margin-bottom:10px;">✅ 处理结果</h3>
+<audio id="resultAudio" controls style="width:100%;"></audio>
+<div style="text-align:center;margin-top:10px;">
+<button class="btn btn-outline" id="dlBtn" style="padding:10px 24px;">⬇ 下载WAV</button>
+</div>
+</div>
+<button class="btn btn-ghost" id="resetBtn" style="margin-top:14px;">重新上传</button>
+</div>
+<div id="statusBar" class="status-bar info">上传音频，实时调节均衡器</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 音频均衡器</h3><p>5段图示均衡器</p><div class="feature-chips"><span class="feature-chip">60Hz低频</span><span class="feature-chip">250Hz中低</span><span class="feature-chip">1kHz中频</span><span class="feature-chip">4kHz中高</span><span class="feature-chip">12kHz高频</span><span class="feature-chip">WAV导出</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>上传音频后拖动滑块调节各频段增益（-12~+12dB）</li><li>提供平直/低音/高音/人声/摇滚/古典/电子等预设</li><li>使用Web Audio API BiquadFilterNode实时处理</li><li>导出为WAV格式，保留原始采样率</li><li>所有处理在浏览器本地完成，数据不上传</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var audioFile=null,resultBlob=null;
+var dz=document.getElementById('dropZone'),fi=document.getElementById('fileInput');
+var audio=document.getElementById('srcAudio');
+var audioCtx=null,source=null,filters=[];
+var bands=[{freq:60,label:'60Hz'},{freq:250,label:'250Hz'},{freq:1000,label:'1kHz'},{freq:4000,label:'4kHz'},{freq:12000,label:'12kHz'}];
+var gains=[0,0,0,0,0];
+var presets={
+flat:[0,0,0,0,0],bass:[8,6,0,0,0],treble:[0,0,0,6,8],
+vocal:[-3,2,5,2,-2],rock:[5,3,-1,3,5],classic:[0,0,2,2,4],electronic:[6,2,0,4,8]
+};
+dz.onclick=function(){fi.click();};
+dz.ondragover=function(e){e.preventDefault();};
+dz.ondrop=function(e){e.preventDefault();if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);};
+fi.onchange=function(){if(fi.files[0])loadFile(fi.files[0]);};
+function loadFile(file){
+audioFile=file;audio.src=URL.createObjectURL(file);
+dz.style.display='none';document.getElementById('editorArea').style.display='block';
+document.getElementById('statusBar').textContent='已加载: '+file.name;document.getElementById('statusBar').className='status-bar success';
+initAudio();
+}
+function initAudio(){
+if(audioCtx)audioCtx.close();
+audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+source=audioCtx.createMediaElementSource(audio);
+filters=bands.map(function(b){
+var f=audioCtx.createBiquadFilter();f.type='peaking';f.frequency.value=b.freq;f.Q.value=1;f.gain.value=0;return f;
+});
+source.connect(filters[0]);
+for(var i=0;i<filters.length-1;i++)filters[i].connect(filters[i+1]);
+filters[filters.length-1].connect(audioCtx.destination);
+}
+function renderEqGrid(){
+var grid=document.getElementById('eqGrid');grid.innerHTML='';
+bands.forEach(function(b,i){
+var div=document.createElement('div');div.className='eq-band';
+div.innerHTML='<label>'+b.label+'</label><input type="range" class="eq-slider" min="-12" max="12" step="0.5" value="'+gains[i]+'" data-idx="'+i+'" orient="vertical"/><div class="eq-value" id="eqVal'+i+'">'+gains[i]+'dB</div>';
+grid.appendChild(div);
+});
+grid.querySelectorAll('.eq-slider').forEach(function(slider){
+slider.oninput=function(){
+var idx=parseInt(this.dataset.idx);
+gains[idx]=parseFloat(this.value);
+document.getElementById('eqVal'+idx).textContent=gains[idx]+'dB';
+if(filters[idx])filters[idx].gain.value=gains[idx];
+document.querySelectorAll('.eq-preset').forEach(function(p){p.classList.remove('active');});
+};
+});
+}
+renderEqGrid();
+document.querySelectorAll('.eq-preset').forEach(function(btn){
+btn.onclick=function(){
+document.querySelectorAll('.eq-preset').forEach(function(p){p.classList.remove('active');});
+btn.classList.add('active');
+var preset=presets[this.dataset.preset];
+gains=preset.slice();
+renderEqGrid();
+if(filters.length){for(var i=0;i<filters.length;i++)filters[i].gain.value=gains[i];}
+};
+});
+document.getElementById('processBtn').onclick=function(){
+if(!audioFile)return;
+document.getElementById('statusBar').textContent='正在处理音频...';document.getElementById('statusBar').className='status-bar info';
+document.getElementById('progressBar').style.display='block';
+var reader=new FileReader();
+reader.onload=function(e){
+var ctx=new(window.AudioContext||window.webkitAudioContext)();
+ctx.decodeAudioData(e.target.result,function(buffer){
+var procCtx=new(window.OfflineAudioContext||window.webkitOfflineAudioContext)(buffer.numberOfChannels,buffer.length,buffer.sampleRate);
+var src=procCtx.createBufferSource();src.buffer=buffer;
+var procFilters=bands.map(function(b){var f=procCtx.createBiquadFilter();f.type='peaking';f.frequency.value=b.freq;f.Q.value=1;f.gain.value=gains[bands.indexOf(b)];return f;});
+src.connect(procFilters[0]);
+for(var i=0;i<procFilters.length-1;i++)procFilters[i].connect(procFilters[i+1]);
+procFilters[procFilters.length-1].connect(procCtx.destination);
+src.start(0);
+procCtx.startRendering().then(function(rendered){
+document.getElementById('progressFill').style.width='100%';
+var wav=audioBufferToWav(rendered);
+resultBlob=new Blob([wav],{type:'audio/wav'});
+var url=URL.createObjectURL(resultBlob);
+document.getElementById('resultAudio').src=url;
+document.getElementById('resultArea').style.display='block';
+document.getElementById('progressBar').style.display='none';
+document.getElementById('statusBar').textContent='处理完成';document.getElementById('statusBar').className='status-bar success';
+});
+});
+};
+reader.readAsArrayBuffer(audioFile);
+};
+function audioBufferToWav(buffer){
+var numCh=buffer.numberOfChannels,sampleRate=buffer.sampleRate,len=buffer.length*numCh*2+44;
+var arr=new ArrayBuffer(len),view=new DataView(arr);
+var writeStr=function(off,str){for(var i=0;i<str.length;i++)view.setUint8(off+i,str.charCodeAt(i));};
+writeStr(0,'RIFF');view.setUint32(4,len-8,true);writeStr(8,'WAVE');writeStr(12,'fmt ');
+view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,numCh,true);
+view.setUint32(24,sampleRate,true);view.setUint32(28,sampleRate*numCh*2,true);
+view.setUint16(32,numCh*2,true);view.setUint16(34,16,true);writeStr(36,'data');view.setUint32(40,len-44,true);
+var off=44;for(var i=0;i<buffer.length;i++){
+for(var ch=0;ch<numCh;ch++){
+var s=Math.max(-1,Math.min(1,buffer.getChannelData(ch)[i]));
+view.setInt16(off,s<0?s*0x8000:s*0x7FFF,true);off+=2;
+}
+}
+return arr;
+}
+document.getElementById('dlBtn').onclick=function(){if(resultBlob){var a=document.createElement('a');a.href=URL.createObjectURL(resultBlob);a.download='equalized.wav';a.click();}};
+document.getElementById('resetBtn').onclick=function(){dz.style.display='block';document.getElementById('editorArea').style.display='none';audioFile=null;resultBlob=null;fi.value='';document.getElementById('resultArea').style.display='none';document.getElementById('statusBar').textContent='请重新上传';document.getElementById('statusBar').className='status-bar info';};
+initSidebar('media');
+</script>
+</body>
+</html>

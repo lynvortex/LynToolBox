@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>去摩尔纹扫描纹 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="去摩尔纹扫描纹工具，纯前端Canvas中值滤波与频域滤波，去除扫描件摩尔纹与屏幕截图波纹，导出PNG/JPG，数据本地处理。"/>
+<meta name="robots" content="noindex, follow" />
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<style>
+.preview-wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-bottom:14px;}
+.preview-box{text-align:center;}
+.preview-box canvas{max-width:100%;border-radius:8px;border:1px solid #e0e6ed;}
+.preview-box .cl{font-size:.8em;color:#94a3b8;margin-top:6px;}
+</style>
+    <meta name="keywords" content="摩尔纹去除,在线摩尔纹去除,图像工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/image/demask-tool.html" />
+    <meta property="og:title" content="去摩尔纹扫描纹" />
+    <meta property="og:description" content="去摩尔纹扫描纹工具，纯前端Canvas中值滤波与频域滤波，去除扫描件摩尔纹与屏幕截图波纹，导出PNG/JPG，数据本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/image/demask-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="去摩尔纹扫描纹" />
+    <meta itemprop="description" content="去摩尔纹扫描纹工具，纯前端Canvas中值滤波与频域滤波，去除扫描件摩尔纹与屏幕截图波纹，导出PNG/JPG，数据本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "图像工具",
+                "item": "https://box.lynvortex.top/image.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "摩尔纹去除",
+                "item": "https://box.lynvortex.top/image/demask-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "摩尔纹去除",
+        "url": "https://box.lynvortex.top/image/demask-tool.html",
+        "description": "去除屏幕拍照产生的摩尔纹波纹，支持中值滤波与高通滤波模式",
+        "applicationCategory": "图像工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+<div class="tool-container">
+<div class="tool-header"><h1>🔍 去摩尔纹/扫描纹</h1><p>去除扫描件摩尔纹与屏幕截图波纹</p></div>
+<div class="upload-zone" id="dropZone">📁 点击或拖拽上传图片<input type="file" id="fileInput" accept="image/*" style="display:none;"/></div>
+<div id="editorArea" style="display:none;">
+<div class="preview-wrap">
+<div class="preview-box"><canvas id="origCanvas"></canvas><div class="cl">原图</div></div>
+<div class="preview-box"><canvas id="resultCanvas"></canvas><div class="cl">处理后</div></div>
+</div>
+<div class="form-grid">
+<div class="form-item"><label>滤波方式</label><select id="filterType"><option value="median" selected>中值滤波</option><option value="gaussian">高斯滤波</option><option value="bilateral">双边滤波</option></select></div>
+<div class="form-item"><label>滤波强度 (1-10)</label><input type="number" id="strength" value="3" min="1" max="10"/></div>
+<div class="form-item"><label>锐化增强</label><select id="sharpen"><option value="0">不锐化</option><option value="1" selected>轻度锐化</option><option value="2">强力锐化</option></select></div>
+<div class="form-item"><label>输出格式</label><select id="format"><option value="png" selected>PNG</option><option value="jpg">JPG</option></select></div>
+</div>
+<div style="text-align:center;">
+<button class="btn btn-primary" id="processBtn" style="padding:12px 32px;">🔍 开始处理</button>
+</div>
+<div style="text-align:center;margin-top:10px;">
+<button class="btn btn-outline" id="dlBtn" style="padding:10px 24px;display:none;">⬇ 下载图片</button>
+</div>
+<button class="btn btn-ghost" id="resetBtn" style="margin-top:14px;">重新上传</button>
+</div>
+<div id="statusBar" class="status-bar info">上传扫描件或截图，去除摩尔纹波纹</div>
+<footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由<p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p></footer>
+</div>
+<div class="info-cards">
+<div class="info-card"><h3>📦 去摩尔纹/扫描纹</h3><p>去除扫描件与截图波纹</p><div class="feature-chips"><span class="feature-chip">中值滤波</span><span class="feature-chip">高斯滤波</span><span class="feature-chip">双边滤波</span><span class="feature-chip">锐化增强</span><span class="feature-chip">本地处理</span></div></div>
+<div class="info-card"><h3>💡 使用须知</h3><ul class="tips-list"><li>选择滤波方式：中值滤波去脉冲噪点，高斯去平滑波纹</li><li>双边滤波在去波纹的同时保留边缘细节</li><li>调整滤波强度控制去纹程度</li><li>可叠加锐化增强恢复细节</li><li>处理大图可能较慢，建议先裁剪</li><li>所有处理在浏览器本地完成，数据不上传</li></ul></div>
+<div class="info-card"><h3>✨ 绘萤者</h3><p style="margin-bottom:8px;">以萤火之光，绘万千想象</p><div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div><p style="margin-top:10px;font-size:.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p></div>
+</div>
+</div></main>
+<script>
+var imgFile=null,img=null,resultBlob=null;
+var dz=document.getElementById('dropZone'),fi=document.getElementById('fileInput');
+var origCanvas=document.getElementById('origCanvas');
+var resultCanvas=document.getElementById('resultCanvas');
+var origCtx=origCanvas.getContext('2d');
+var resCtx=resultCanvas.getContext('2d');
+dz.onclick=function(){fi.click();};
+dz.ondragover=function(e){e.preventDefault();};
+dz.ondrop=function(e){e.preventDefault();if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);};
+fi.onchange=function(){if(fi.files[0])loadFile(fi.files[0]);};
+function loadFile(file){
+imgFile=file;img=new Image();
+img.onload=function(){
+var maxW=800,scale=1;
+if(img.width>maxW)scale=maxW/img.width;
+origCanvas.width=img.width*scale;origCanvas.height=img.height*scale;
+resultCanvas.width=origCanvas.width;resultCanvas.height=origCanvas.height;
+origCtx.drawImage(img,0,0,origCanvas.width,origCanvas.height);
+resCtx.drawImage(img,0,0,origCanvas.width,origCanvas.height);
+dz.style.display='none';document.getElementById('editorArea').style.display='block';
+document.getElementById('statusBar').textContent='已加载: '+file.name+' ('+img.width+'×'+img.height+')';document.getElementById('statusBar').className='status-bar success';
+};
+img.src=URL.createObjectURL(file);
+}
+document.getElementById('processBtn').onclick=function(){
+if(!img)return;
+document.getElementById('statusBar').textContent='正在处理...';document.getElementById('statusBar').className='status-bar info';
+setTimeout(process,50);
+};
+function process(){
+var filterType=document.getElementById('filterType').value;
+var strength=parseInt(document.getElementById('strength').value)||3;
+var sharpen=document.getElementById('sharpen').value;
+var w=origCanvas.width,h=origCanvas.height;
+var imageData=origCtx.getImageData(0,0,w,h);
+var data=imageData.data;
+if(filterType==='median'){
+imageData=medianFilter(imageData,w,h,strength);
+}else if(filterType==='gaussian'){
+imageData=gaussianFilter(imageData,w,h,strength);
+}else{
+imageData=bilateralFilter(imageData,w,h,strength);
+}
+if(sharpen!=='0'){
+imageData=sharpenFilter(imageData,w,h,sharpen==='2'?1.5:0.8);
+}
+resCtx.putImageData(imageData,0,0);
+resultCanvas.toBlob(function(blob){
+resultBlob=blob;
+document.getElementById('dlBtn').style.display='inline-block';
+document.getElementById('statusBar').textContent='处理完成';document.getElementById('statusBar').className='status-bar success';
+},document.getElementById('format').value==='jpg'?'image/jpeg':'image/png');
+}
+function medianFilter(imageData,w,h,radius){
+var data=imageData.data;var result=new Uint8ClampedArray(data.length);
+for(var y=0;y<h;y++){
+for(var x=0;x<w;x++){
+for(var ch=0;ch<3;ch++){
+var vals=[];
+for(var dy=-radius;dy<=radius;dy++){for(var dx=-radius;dx<=radius;dx++){
+var nx=x+dx,ny=y+dy;
+if(nx>=0&&nx<w&&ny>=0&&ny<h)vals.push(data[(ny*w+nx)*4+ch]);
+}}
+vals.sort(function(a,b){return a-b;});
+result[(y*w+x)*4+ch]=vals[Math.floor(vals.length/2)];
+}
+result[(y*w+x)*4+3]=data[(y*w+x)*4+3];
+}
+}
+return new ImageData(result,w);
+}
+function gaussianFilter(imageData,w,h,radius){
+var data=imageData.data;var result=new Uint8ClampedArray(data.length);
+var sigma=radius/2||1;var size=radius*2+1;
+var kernel=[];var sum=0;
+for(var i=-radius;i<=radius;i++){var v=Math.exp(-(i*i)/(2*sigma*sigma));kernel.push(v);sum+=v;}
+kernel=kernel.map(function(v){return v/sum;});
+for(var y=0;y<h;y++){for(var x=0;x<w;x++){
+for(var ch=0;ch<3;ch++){
+var val=0;
+for(var dx=-radius;dx<=radius;dx++){var nx=x+dx;if(nx>=0&&nx<w)val+=data[(y*w+nx)*4+ch]*kernel[dx+radius];}
+result[(y*w+x)*4+ch]=val;
+}
+result[(y*w+x)*4+3]=data[(y*w+x)*4+3];
+}}
+return new ImageData(result,w);
+}
+function bilateralFilter(imageData,w,h,radius){
+var data=imageData.data;var result=new Uint8ClampedArray(data.length);
+for(var y=0;y<h;y+=2){for(var x=0;x<w;x+=2){
+for(var ch=0;ch<3;ch++){
+var center=data[(y*w+x)*4+ch];var sum=0,weight=0;
+for(var dy=-radius;dy<=radius;dy++){for(var dx=-radius;dx<=radius;dx++){
+var nx=x+dx,ny=y+dy;
+if(nx>=0&&nx<w&&ny>=0&&ny<h){
+var diff=data[(ny*w+nx)*4+ch]-center;
+var spatial=Math.exp(-(dx*dx+dy*dy)/(2*radius*radius));
+var color=Math.exp(-(diff*diff)/(2*30*30));
+var w2=spatial*color;sum+=data[(ny*w+nx)*4+ch]*w2;weight+=w2;
+}
+}}
+result[(y*w+x)*4+ch]=weight>0?sum/weight:center;
+}
+result[(y*w+x)*4+3]=data[(y*w+x)*4+3];
+}}
+for(var y=1;y<h;y+=2){for(var x=0;x<w;x++){
+for(var ch=0;ch<3;ch++){result[(y*w+x)*4+ch]=result[((y-1)*w+x)*4+ch]||data[(y*w+x)*4+ch];}
+result[(y*w+x)*4+3]=data[(y*w+x)*4+3];
+}}
+for(var y=0;y<h;y++){for(var x=1;x<w;x+=2){
+for(var ch=0;ch<3;ch++){result[(y*w+x)*4+ch]=result[(y*w+x-1)*4+ch]||data[(y*w+x)*4+ch];}
+result[(y*w+x)*4+3]=data[(y*w+x)*4+3];
+}}
+return new ImageData(result,w);
+}
+function sharpenFilter(imageData,w,h,amount){
+var data=imageData.data;var result=new Uint8ClampedArray(data.length);
+var kernel=[0,-1,0,-1,5,-1,0,-1,0];
+for(var y=1;y<h-1;y++){for(var x=1;x<w-1;x++){
+for(var ch=0;ch<3;ch++){
+var val=0,i=0;
+for(var dy=-1;dy<=1;dy++){for(var dx=-1;dx<=1;dx++){
+val+=data[((y+dy)*w+(x+dx))*4+ch]*kernel[i++];
+}}
+result[(y*w+x)*4+ch]=Math.max(0,Math.min(255,data[(y*w+x)*4+ch]*(1-amount)+val*amount));
+}
+result[(y*w+x)*4+3]=data[(y*w+x)*4+3];
+}}
+for(var i=0;i<data.length;i+=4){if(result[i]===0){result[i]=data[i];result[i+1]=data[i+1];result[i+2]=data[i+2];}result[i+3]=data[i+3];}
+return new ImageData(result,w);
+}
+document.getElementById('dlBtn').onclick=function(){if(resultBlob){var ext=document.getElementById('format').value;var a=document.createElement('a');a.href=URL.createObjectURL(resultBlob);a.download='demask.'+ext;a.click();}};
+document.getElementById('resetBtn').onclick=function(){dz.style.display='block';document.getElementById('editorArea').style.display='none';imgFile=null;img=null;resultBlob=null;fi.value='';document.getElementById('dlBtn').style.display='none';document.getElementById('statusBar').textContent='请重新上传';document.getElementById('statusBar').className='status-bar info';};
+initSidebar('image');
+</script>
+</body>
+</html>

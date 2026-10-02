@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>网页截图工具 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="网页截图与DOM转图片工具，纯前端使用html2canvas将HTML内容渲染为PNG图片下载，支持自定义尺寸与背景，数据本地处理" />
+    <meta name="robots" content="noindex, follow" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <script src="../assets/sidebar.js"></script>
+    <script src="../assets/html2canvas.min.js"></script>
+    <style>
+        .ss-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        @media (max-width: 768px) { .ss-grid { grid-template-columns: 1fr; } }
+        .ss-pane { display: flex; flex-direction: column; gap: 6px; }
+        .ss-pane .ss-label { font-size: 0.85em; color: #64748b; font-weight: 600; }
+        .ss-code {
+            width: 100%; min-height: 320px; padding: 12px 14px; border: 1px solid #e0e6ed; border-radius: 8px;
+            font-family: 'Courier New', monospace; font-size: 0.85em; outline: none; resize: vertical; background: #0f172a; color: #e2e8f0; line-height: 1.5;
+        }
+        .ss-code:focus { border-color: #4a90e2; }
+        .ss-stage {
+            min-height: 320px; border: 1px solid #e0e6ed; border-radius: 8px; background:
+            repeating-conic-gradient(#f1f5f9 0% 25%, #e2e8f0 0% 50%) 50% / 24px 24px;
+            display: flex; align-items: center; justify-content: center; overflow: auto; padding: 16px;
+        }
+        .ss-target { display: inline-block; }
+        .ss-result { text-align: center; margin-top: 14px; }
+        .ss-result img { max-width: 100%; border: 1px solid #e0e6ed; border-radius: 8px; box-shadow: 0 4px 18px rgba(0,0,0,0.1); }
+        .ss-opts { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+        .ss-opt { display: flex; align-items: center; gap: 6px; font-size: 0.82em; color: #64748b; font-weight: 600; }
+        .ss-opt input[type="number"] { width: 70px; padding: 5px 8px; border: 1px solid #e0e6ed; border-radius: 6px; font-size: 0.88em; }
+        .ss-opt input[type="color"] { width: 38px; height: 30px; padding: 0; border: 1px solid #e0e6ed; border-radius: 6px; cursor: pointer; background: #fff; }
+    </style>
+    <meta name="keywords" content="网页截图,在线网页截图,文档处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/document/screenshot-tool.html" />
+    <meta property="og:title" content="网页截图工具" />
+    <meta property="og:description" content="网页截图与DOM转图片工具，纯前端使用html2canvas将HTML内容渲染为PNG图片下载，支持自定义尺寸与背景，数据本地处理" />
+    <meta property="og:url" content="https://box.lynvortex.top/document/screenshot-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="网页截图工具" />
+    <meta itemprop="description" content="网页截图与DOM转图片工具，纯前端使用html2canvas将HTML内容渲染为PNG图片下载，支持自定义尺寸与背景，数据本地处理" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文档处理",
+                "item": "https://box.lynvortex.top/document.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "网页截图",
+                "item": "https://box.lynvortex.top/document/screenshot-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "网页截图",
+        "url": "https://box.lynvortex.top/document/screenshot-tool.html",
+        "description": "html2canvas将HTML内容渲染为PNG图片下载",
+        "applicationCategory": "文档处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>📸 网页截图</h1>
+                <p>纯前端使用 html2canvas 将 HTML 内容渲染为 PNG 图片下载，支持自定义尺寸与背景，数据本地处理</p>
+            </div>
+
+            <div class="ss-grid">
+                <div class="ss-pane">
+                    <div class="ss-label">HTML / CSS 代码（输入任意 HTML 片段）</div>
+                    <textarea class="ss-code" id="ssCode" spellcheck="false"></textarea>
+                </div>
+                <div class="ss-pane">
+                    <div class="ss-label">实时预览</div>
+                    <div class="ss-stage" id="ssStage">
+                        <div class="ss-target" id="ssTarget"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ss-opts">
+                <div class="ss-opt">
+                    缩放倍数
+                    <input type="number" id="ssScale" min="1" max="4" step="0.5" value="2" />
+                </div>
+                <div class="ss-opt">
+                    背景色
+                    <input type="color" id="ssBg" value="#ffffff" />
+                    <span style="font-weight:400;">（勾选使用透明背景</span>
+                    <input type="checkbox" id="ssTransparent" />
+                    <span style="font-weight:400;">）</span>
+                </div>
+                <span style="flex:1;"></span>
+                <button class="btn btn-outline" id="ssTpl" style="font-size:0.85em;">📋 载入示例</button>
+                <button class="btn btn-ghost" id="ssClear" style="font-size:0.85em;">🗑 清空</button>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn-primary" id="ssShot">📸 截图并下载 PNG</button>
+            </div>
+
+            <div class="ss-result" id="ssResult"></div>
+
+            <div id="statusBar" class="status-bar info">准备就绪，输入 HTML 后点击截图按钮</div>
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 功能说明</h3>
+                <p>左侧输入 HTML/CSS 代码，右侧实时预览，使用 html2canvas 将预览内容渲染为 Canvas 并导出 PNG 图片，可自定义缩放倍数与背景色。</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">DOM转图片</span>
+                    <span class="feature-chip">PNG下载</span>
+                    <span class="feature-chip">自定义尺寸</span>
+                    <span class="feature-chip">背景色</span>
+                    <span class="feature-chip">HTML预览</span>
+                    <span class="feature-chip">离线本地</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>支持输入任意 HTML 片段，可包含内联 style 样式</li>
+                    <li>缩放倍数越高图片越清晰，但渲染耗时增加</li>
+                    <li>html2canvas 对跨域图片有同源策略限制，请使用本地或同源图片</li>
+                    <li>部分 CSS 特性（如 backdrop-filter、部分伪元素）可能无法完美还原</li>
+                    <li>所有渲染在浏览器本地完成，不上传任何内容</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const setStatus = (m, t) => { const s = document.getElementById('statusBar'); s.textContent = m; s.className = 'status-bar ' + (t || 'info'); };
+    const codeEl = document.getElementById('ssCode');
+    const targetEl = document.getElementById('ssTarget');
+
+    function updatePreview() {
+        targetEl.innerHTML = codeEl.value;
+    }
+    codeEl.addEventListener('input', updatePreview);
+
+    const TPL = '<div style="width:320px;padding:28px;border-radius:16px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;font-family:sans-serif;box-shadow:0 12px 30px rgba(118,75,162,0.4);">\n' +
+        '  <div style="font-size:14px;opacity:0.85;letter-spacing:2px;">DRAWING FIREFLY</div>\n' +
+        '  <div style="font-size:30px;font-weight:700;margin:8px 0 14px;">绘萤工具箱</div>\n' +
+        '  <div style="font-size:14px;line-height:1.7;opacity:0.92;">以萤火之光，绘万千想象。<br>探索真正的互联网精神，<br>创造更有意义的互联网。</div>\n' +
+        '  <div style="margin-top:18px;display:inline-block;padding:8px 18px;background:rgba(255,255,255,0.2);border-radius:24px;font-size:13px;font-weight:600;">立即体验</div>\n' +
+        '</div>';
+
+    document.getElementById('ssTpl').addEventListener('click', () => {
+        codeEl.value = TPL;
+        updatePreview();
+        setStatus('示例已载入，可点击截图按钮', 'info');
+    });
+
+    document.getElementById('ssClear').addEventListener('click', () => {
+        codeEl.value = '';
+        updatePreview();
+        document.getElementById('ssResult').innerHTML = '';
+        setStatus('已清空', 'info');
+    });
+
+    document.getElementById('ssShot').addEventListener('click', async () => {
+        if (typeof html2canvas === 'undefined') {
+            setStatus('html2canvas 库未加载，请刷新页面重试', 'error');
+            return;
+        }
+        if (!targetEl.innerHTML.trim()) {
+            setStatus('预览内容为空，请先输入 HTML', 'error');
+            return;
+        }
+        setStatus('正在生成截图...', 'info');
+        try {
+            const scale = parseFloat(document.getElementById('ssScale').value) || 2;
+            const transparent = document.getElementById('ssTransparent').checked;
+            const bgColor = transparent ? null : document.getElementById('ssBg').value;
+            const canvas = await html2canvas(targetEl, {
+                scale: scale,
+                backgroundColor: bgColor,
+                useCORS: true,
+                logging: false
+            });
+            const dataUrl = canvas.toDataURL('image/png');
+            // 显示结果
+            document.getElementById('ssResult').innerHTML = '<img src="' + dataUrl + '" alt="截图结果"/><p style="margin-top:8px;font-size:0.8em;color:#64748b;">截图已生成（' + canvas.width + '×' + canvas.height + 'px）</p>';
+            // 下载
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = 'screenshot_' + Date.now() + '.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setStatus('截图已生成并下载', 'success');
+        } catch (e) {
+            setStatus('截图失败: ' + e.message + '（跨域图片可能受限）', 'error');
+        }
+    });
+
+    // 默认载入示例
+    codeEl.value = TPL;
+    updatePreview();
+
+    initSidebar('document');
+</script>
+</body>
+</html>

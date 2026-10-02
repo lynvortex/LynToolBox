@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MQTT客户端测试 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp" />
+<meta name="description" content="MQTT客户端在线测试工具，纯前端连接MQTT broker，支持订阅主题、发布消息与实时收发调试，基于mqtt.js，适用于物联网协议开发。" />
+<link rel="stylesheet" href="../assets/tool-common.css" />
+<script src="../assets/sidebar.js"></script>
+<script src="../assets/mqtt.min.js"></script>
+<style>
+    /* 工具特有样式 */
+    .conn-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #cbd5e1; margin-right: 6px; vertical-align: middle; }
+    .conn-dot.on { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+    .conn-dot.connecting { background: #f59e0b; animation: blink 1s infinite; }
+    .conn-dot.off { background: #cbd5e1; }
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+    .section-title { font-size: 0.95em; font-weight: 600; color: #2c3e50; margin: 18px 0 10px; padding-left: 10px; border-left: 3px solid #4a90e2; }
+    .qos-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    .qos-row label { display: inline-flex; align-items: center; gap: 4px; font-size: 0.85em; color: #475569; cursor: pointer; font-weight: 500; }
+    .switch-inline { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85em; color: #475569; font-weight: 500; cursor: pointer; }
+
+    .log-area { background: #0f172a; border-radius: 10px; border: 1px solid #1e293b; height: 320px; overflow-y: auto; padding: 10px 12px; font-family: 'Courier New', monospace; font-size: 0.82em; line-height: 1.7; }
+    .log-area::-webkit-scrollbar { width: 8px; }
+    .log-area::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    .log-line { padding: 2px 0; word-break: break-all; white-space: pre-wrap; border-bottom: 1px dashed rgba(255,255,255,0.05); }
+    .log-time { color: #64748b; }
+    .log-tag { display: inline-block; min-width: 42px; text-align: center; border-radius: 4px; padding: 0 6px; font-size: 0.85em; font-weight: 600; margin: 0 4px; }
+    .log-in .log-tag { background: rgba(34,197,94,0.2); color: #4ade80; }
+    .log-out .log-tag { background: rgba(74,144,226,0.25); color: #93c5fd; }
+    .log-sys .log-tag { background: rgba(245,158,11,0.2); color: #fbbf24; }
+    .log-err .log-tag { background: rgba(239,68,68,0.25); color: #fca5a5; }
+    .log-topic { color: #c4b5fd; }
+    .log-msg { color: #e2e8f0; }
+    .log-empty { color: #475569; text-align: center; padding: 40px 0; }
+
+    .stat-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+    .stat-chip { background: #f1f5f9; border-radius: 8px; padding: 6px 12px; font-size: 0.8em; color: #475569; font-family: 'Consolas', monospace; }
+    .stat-chip b { color: #4a90e2; }
+    .sub-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .sub-chip { background: #e0f2fe; color: #0369a1; border-radius: 12px; padding: 3px 8px 3px 10px; font-size: 0.78em; font-family: 'Consolas', monospace; display: inline-flex; align-items: center; gap: 6px; }
+    .sub-chip .rm { cursor: pointer; color: #ef4444; font-weight: 700; }
+</style>
+    <meta name="keywords" content="MQTT客户端测试,在线MQTT客户端测试,网络工具,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/network/mqtt-tool.html" />
+    <meta property="og:title" content="MQTT客户端测试" />
+    <meta property="og:description" content="MQTT客户端在线测试工具，纯前端连接MQTT broker，支持订阅主题、发布消息与实时收发调试，基于mqtt.js，适用于物联网协议开发。" />
+    <meta property="og:url" content="https://box.lynvortex.top/network/mqtt-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="MQTT客户端测试" />
+    <meta itemprop="description" content="MQTT客户端在线测试工具，纯前端连接MQTT broker，支持订阅主题、发布消息与实时收发调试，基于mqtt.js，适用于物联网协议开发。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "网络工具",
+                "item": "https://box.lynvortex.top/network.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "MQTT客户端测试",
+                "item": "https://box.lynvortex.top/network/mqtt-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "MQTT客户端测试",
+        "url": "https://box.lynvortex.top/network/mqtt-tool.html",
+        "description": "连接MQTT broker，订阅发布消息，实时调试物联网协议",
+        "applicationCategory": "网络工具",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content"><div class="main-scroll">
+  <div class="tool-container">
+    <div class="tool-header">
+      <h1>📡 MQTT客户端测试</h1>
+      <p>连接MQTT broker，订阅发布消息，实时调试物联网协议</p>
+    </div>
+
+    <div class="section-title">连接配置</div>
+    <div class="form-grid">
+      <div class="form-item">
+        <label for="brokerInput">Broker 地址</label>
+        <input type="text" id="brokerInput" value="wss://broker.emqx.io:8084/mqtt" spellcheck="false" autocomplete="off" />
+      </div>
+      <div class="form-item">
+        <label for="clientIdInput">Client ID</label>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="clientIdInput" spellcheck="false" autocomplete="off" />
+          <button class="btn btn-outline" id="randIdBtn" style="white-space:nowrap;">随机</button>
+        </div>
+      </div>
+      <div class="form-item">
+        <label for="userInput">用户名（可选）</label>
+        <input type="text" id="userInput" placeholder="留空表示匿名" spellcheck="false" autocomplete="off" />
+      </div>
+      <div class="form-item">
+        <label for="passInput">密码（可选）</label>
+        <input type="password" id="passInput" placeholder="留空表示无密码" spellcheck="false" autocomplete="off" />
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="connectBtn">连接</button>
+      <button class="btn btn-outline" id="disconnectBtn" disabled>断开</button>
+      <span style="font-size:0.85em;color:#64748b;"><span id="connDot" class="conn-dot off"></span><span id="connText">未连接</span></span>
+    </div>
+    <div id="statusBar" class="status-bar info">填写 Broker 信息后点击「连接」，默认为公共测试服务器（EMQX），请勿用于生产。</div>
+
+    <div class="section-title">订阅主题</div>
+    <div class="form-grid">
+      <div class="form-item">
+        <label for="subInput">主题过滤器</label>
+        <input type="text" id="subInput" value="test/huiying/#" placeholder="如 test/huiying/# 或 sensor/+/temp" spellcheck="false" autocomplete="off" />
+        <span class="hint">支持通配符 # 与 +</span>
+      </div>
+      <div class="form-item">
+        <label>订阅 QoS</label>
+        <div class="qos-row" style="padding-top:8px;">
+          <label><input type="radio" name="subQos" value="0" checked /> 0</label>
+          <label><input type="radio" name="subQos" value="1" /> 1</label>
+          <label><input type="radio" name="subQos" value="2" /> 2</label>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="subBtn">订阅</button>
+      <span class="hint" style="margin:0;">已订阅：</span>
+      <div id="subList" class="sub-list"></div>
+    </div>
+
+    <div class="section-title">发布消息</div>
+    <div class="form-grid">
+      <div class="form-item">
+        <label for="pubTopicInput">发布主题</label>
+        <input type="text" id="pubTopicInput" value="test/huiying/hello" spellcheck="false" autocomplete="off" />
+      </div>
+      <div class="form-item">
+        <label>发布 QoS / Retain</label>
+        <div class="qos-row" style="padding-top:8px;">
+          <label><input type="radio" name="pubQos" value="0" checked /> QoS 0</label>
+          <label><input type="radio" name="pubQos" value="1" /> QoS 1</label>
+          <label><input type="radio" name="pubQos" value="2" /> QoS 2</label>
+          <label class="switch-inline"><input type="checkbox" id="retainChk" /> Retain</label>
+        </div>
+      </div>
+    </div>
+    <div class="form-item" style="margin-bottom:12px;">
+      <label for="pubMsgInput">消息内容</label>
+      <textarea id="pubMsgInput" class="code-area" style="min-height:90px;" placeholder="输入要发布的消息（文本）">Hello MQTT from 绘萤工具箱</textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="pubBtn">发布消息</button>
+    </div>
+
+    <div class="section-title">消息日志</div>
+    <div class="stat-row">
+      <span class="stat-chip">收到：<b id="statIn">0</b></span>
+      <span class="stat-chip">发出：<b id="statOut">0</b></span>
+      <span class="stat-chip">合计：<b id="statTotal">0</b> / 200</span>
+    </div>
+    <div id="logArea" class="log-area"><div class="log-empty">暂无消息，连接并订阅后开始接收</div></div>
+    <div class="btn-row" style="margin-top:12px; margin-bottom:0;">
+      <button class="btn btn-ghost" id="clearLogBtn">清空日志</button>
+      <button class="btn btn-ghost" id="autoScrollBtn">自动滚动：开</button>
+    </div>
+
+    <footer class="footer">© 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+  </div>
+
+  <div class="info-cards">
+    <div class="info-card">
+      <h3>📦 功能说明</h3>
+      <p>纯前端基于 mqtt.js 直连 MQTT broker，支持 WSS 加密连接、主题订阅与通配符、按 QoS 0/1/2 发布消息、Retain 保留消息，以及实时区分收发方向的消息日志。</p>
+      <div class="feature-chips">
+        <span class="feature-chip">WSS连接</span>
+        <span class="feature-chip">主题订阅</span>
+        <span class="feature-chip">消息发布</span>
+        <span class="feature-chip">QoS选择</span>
+        <span class="feature-chip">实时日志</span>
+        <span class="feature-chip">断线重连</span>
+      </div>
+    </div>
+    <div class="info-card">
+      <h3>💡 使用须知</h3>
+      <ul class="tips-list">
+        <li>建议使用 <code>wss://</code> 加密连接，浏览器对 <code>ws://</code> 有限制</li>
+        <li>默认 broker 为 EMQX 公共测试服务器，仅供调试，请勿用于生产环境</li>
+        <li>clientId 重复会导致同一客户端被踢线，建议点击「随机」生成</li>
+        <li>消息日志最多保留 200 条，超出自动丢弃最旧记录</li>
+        <li>所有收发在浏览器本地完成，密码仅本地使用不会上传</li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <h3>✨ 绘萤者</h3>
+      <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+      <div class="tool-links">
+        <a href="https://lynvortex.top" target="_blank">完全免费</a>
+        <a href="https://lynvortex.top" target="_blank">开源精神</a>
+        <a href="https://lynvortex.top" target="_blank">极客风范</a>
+        <a href="https://lynvortex.top" target="_blank">协作共创</a>
+      </div>
+      <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+  </div>
+</div></main>
+
+<script>
+initSidebar('network');
+
+(function () {
+    'use strict';
+    var $ = function (id) { return document.getElementById(id); };
+    var statusBar = $('statusBar');
+
+        statusBar.className = 'status-bar ' + type;
+        statusBar.innerHTML = msg;
+    }
+    function esc(s) { return window.escapeHtml(s); }
+
+    var client = null;
+    var subscriptions = {}; // topic -> qos
+    var logs = [];
+    var MAX_LOGS = 200;
+    var statIn = 0, statOut = 0;
+    var autoScroll = true;
+
+    function randomClientId() {
+        return 'huiying_' + Math.random().toString(16).slice(2, 10) + '_' + Date.now().toString(36).slice(-4);
+    }
+    $('clientIdInput').value = randomClientId();
+    $('randIdBtn').addEventListener('click', function () { $('clientIdInput').value = randomClientId(); });
+
+    function setConnState(state, text) {
+        var dot = $('connDot');
+        dot.className = 'conn-dot ' + state;
+        $('connText').textContent = text;
+    }
+
+    /* ---------- 日志 ---------- */
+    function fmtTime(d) {
+        function pad(n) { return n < 10 ? '0' + n : n; }
+        return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()) + '.' + String(d.getMilliseconds()).padStart(3, '0');
+    }
+    function addLog(type, topic, msg) {
+        logs.push({ type: type, time: fmtTime(new Date()), topic: topic, msg: msg });
+        if (logs.length > MAX_LOGS) logs.shift();
+        if (type === 'in') statIn++; else if (type === 'out') statOut++;
+        renderLog();
+    }
+    function renderLog() {
+        var area = $('logArea');
+        if (!logs.length) {
+            area.innerHTML = '<div class="log-empty">暂无消息，连接并订阅后开始接收</div>';
+        } else {
+            var html = logs.map(function (l) {
+                var label = l.type === 'in' ? '收到' : (l.type === 'out' ? '发出' : (l.type === 'err' ? '错误' : '系统'));
+                var topicHtml = l.topic ? '<span class="log-topic">' + esc(l.topic) + '</span> ' : '';
+                return '<div class="log-line log-' + l.type + '"><span class="log-time">' + l.time + '</span><span class="log-tag">' + label + '</span>' + topicHtml + '<span class="log-msg">' + esc(l.msg) + '</span></div>';
+            }).join('');
+            area.innerHTML = html;
+        }
+        $('statIn').textContent = statIn;
+        $('statOut').textContent = statOut;
+        $('statTotal').textContent = logs.length;
+        if (autoScroll) area.scrollTop = area.scrollHeight;
+    }
+
+    /* ---------- 订阅列表 ---------- */
+    function renderSubs() {
+        var keys = Object.keys(subscriptions);
+        var box = $('subList');
+        if (!keys.length) { box.innerHTML = '<span class="hint" style="margin:0;">无</span>'; return; }
+        box.innerHTML = keys.map(function (t) {
+            return '<span class="sub-chip">' + esc(t) + '(q' + subscriptions[t] + ')<span class="rm" data-topic="' + esc(t) + '" title="取消订阅">×</span></span>';
+        }).join('');
+    }
+    $('subList').addEventListener('click', function (e) {
+        var t = e.target.getAttribute('data-topic');
+        if (t && client && client.connected) {
+            client.unsubscribe(t);
+            delete subscriptions[t];
+            renderSubs();
+            addLog('sys', '', '已取消订阅：' + t);
+        } else if (t) {
+            delete subscriptions[t];
+            renderSubs();
+        }
+    });
+
+    /* ---------- 连接 ---------- */
+    function connect() {
+        var broker = $('brokerInput').value.trim();
+        var clientId = $('clientIdInput').value.trim();
+        var username = $('userInput').value.trim();
+        var password = $('passInput').value;
+        if (!broker) { setStatus('⚠️ 请填写 Broker 地址。', 'error')); return; }
+        if (!clientId) { setStatus('⚠️ 请填写 Client ID，或点击「随机」生成。', 'error')); return; }
+        if (typeof mqtt === 'undefined') { setStatus('⚠️ mqtt.js 库未加载，请刷新重试。', 'error')); return; }
+
+        var opts = {
+            clientId: clientId,
+            clean: true,
+            keepalive: 30,
+            connectTimeout: 10000,
+            reconnectPeriod: 3000
+        };
+        if (username) { opts.username = username; opts.password = password; }
+
+        setConnState('connecting', '连接中…');
+        $('connectBtn').disabled = true;
+        setStatus('正在连接 ' + broker + ' …', 'info'));
+
+        try {
+            client = mqtt.connect(broker, opts);
+        } catch (e) {
+            setConnState('off', '未连接');
+            $('connectBtn').disabled = false;
+            setStatus('⚠️ 连接初始化失败：' + e.message, 'error'));
+            return;
+        }
+
+        client.on('connect', function () {
+            setConnState('on', '已连接');
+            $('connectBtn').disabled = true;
+            $('disconnectBtn').disabled = false;
+            setStatus('✓ 已连接到 ' + broker + '（clientId: ' + clientId + '）', 'success'));
+            addLog('sys', '', '连接成功：' + broker);
+            // 重新订阅已有主题
+            var keys = Object.keys(subscriptions);
+            if (keys.length) {
+                keys.forEach(function (t) { client.subscribe(t, { qos: subscriptions[t] }); });
+                addLog('sys', '', '重连后已重新订阅 ' + keys.length + ' 个主题');
+            }
+        });
+        client.on('error', function (err) {
+            addLog('err', '', '错误：' + (err && err.message ? err.message : err));
+            setStatus('⚠️ 连接错误：' + (err && err.message ? err.message : err, 'error')));
+        });
+        client.on('close', function () {
+            setConnState('off', '已断开');
+            setStatus('连接已关闭。', 'info'));
+            addLog('sys', '', '连接已关闭');
+            $('connectBtn').disabled = false;
+            $('disconnectBtn').disabled = true;
+        });
+        client.on('reconnect', function () {
+            setConnState('connecting', '重连中…');
+            setStatus('正在尝试重连…', 'info'));
+            addLog('sys', '', '正在重连…');
+        });
+        client.on('offline', function () {
+            setConnState('off', '离线');
+            addLog('sys', '', '客户端离线');
+        });
+        client.on('message', function (topic, message) {
+            var payload;
+            try {
+                payload = message.toString();
+            } catch (e) {
+                payload = '(二进制数据)';
+            }
+            addLog('in', topic, payload);
+        });
+    }
+
+    function disconnect() {
+        if (client) {
+            try { client.end(true); } catch (e) {}
+            client = null;
+        }
+        subscriptions = {};
+        renderSubs();
+        setConnState('off', '未连接');
+        $('connectBtn').disabled = false;
+        $('disconnectBtn').disabled = true;
+        setStatus('已主动断开连接。', 'info'));
+        addLog('sys', '', '已主动断开');
+    }
+
+    /* ---------- 订阅 ---------- */
+    function subscribe() {
+        var topic = $('subInput').value.trim();
+        var qos = parseInt(document.querySelector('input[name="subQos"]:checked').value, 10);
+        if (!topic) { setStatus('⚠️ 请填写订阅主题。', 'error')); return; }
+        if (!client || !client.connected) { setStatus('⚠️ 请先连接 broker。', 'error')); return; }
+        client.subscribe(topic, { qos: qos }, function (err) {
+            if (err) {
+                setStatus('⚠️ 订阅失败：' + (err.message || err, 'error')));
+                addLog('err', '', '订阅失败：' + (err.message || err));
+            } else {
+                subscriptions[topic] = qos;
+                renderSubs();
+                setStatus('✓ 已订阅：' + topic + '（QoS ' + qos + '）', 'success'));
+                addLog('sys', '', '已订阅：' + topic + '（QoS ' + qos + '）');
+            }
+        });
+    }
+
+    /* ---------- 发布 ---------- */
+    function publish() {
+        var topic = $('pubTopicInput').value.trim();
+        var msg = $('pubMsgInput').value;
+        var qos = parseInt(document.querySelector('input[name="pubQos"]:checked').value, 10);
+        var retain = $('retainChk').checked;
+        if (!topic) { setStatus('⚠️ 请填写发布主题。', 'error')); return; }
+        if (!client || !client.connected) { setStatus('⚠️ 请先连接 broker。', 'error')); return; }
+        client.publish(topic, msg, { qos: qos, retain: retain }, function (err) {
+            if (err) {
+                setStatus('⚠️ 发布失败：' + (err.message || err, 'error')));
+                addLog('err', '', '发布失败：' + (err.message || err));
+            } else {
+                addLog('out', topic, msg);
+                setStatus('✓ 已发布到 ' + topic + '（QoS ' + qos + (retain ? ', retain' : '', 'success')) + '）');
+            }
+        });
+    }
+
+    /* ---------- 事件 ---------- */
+    $('connectBtn').addEventListener('click', connect);
+    $('disconnectBtn').addEventListener('click', disconnect);
+    $('subBtn').addEventListener('click', subscribe);
+    $('pubBtn').addEventListener('click', publish);
+    $('clearLogBtn').addEventListener('click', function () {
+        logs = []; statIn = 0; statOut = 0; renderLog();
+        setStatus('日志已清空。', 'info'));
+    });
+    $('autoScrollBtn').addEventListener('click', function () {
+        autoScroll = !autoScroll;
+        $('autoScrollBtn').textContent = '自动滚动：' + (autoScroll ? '开' : '关');
+        if (autoScroll) $('logArea').scrollTop = $('logArea').scrollHeight;
+    });
+
+    renderSubs();
+    renderLog();
+    setStatus('填写 Broker 信息后点击「连接」，默认为公共测试服务器（EMQX），请勿用于生产。', 'info'));
+})();
+</script>
+</body>
+</html>

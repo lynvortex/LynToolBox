@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>身份证信息解析 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="身份证信息解析工具，纯前端校验与解析18位身份证号，提取生日、性别与归属地，无依赖本地处理。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <script src="../assets/sidebar.js"></script>
+    <style>
+        .id-input-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 18px; }
+        .id-input-row .form-item { flex: 1; min-width: 240px; margin-bottom: 0; }
+        .id-input-row input { font-family: 'Courier New', monospace; letter-spacing: 1px; font-size: 1em; }
+        .hint { font-size: 0.78em; color: #94a3b8; margin-top: 4px; }
+
+        .valid-card { border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; display: flex; align-items: center; gap: 14px; }
+        .valid-card.ok { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
+        .valid-card.bad { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+        .valid-card .vicon { font-size: 2em; }
+        .valid-card .vtext { flex: 1; }
+        .valid-card .vtitle { font-size: 1.1em; font-weight: 700; }
+        .valid-card .vreason { font-size: 0.85em; margin-top: 2px; opacity: 0.9; }
+
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
+        .info-item { background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 10px; padding: 14px; text-align: center; }
+        .info-item .iv { font-size: 1.25em; font-weight: 700; color: #2c3e50; font-family: 'Courier New', monospace; word-break: break-all; }
+        .info-item .il { font-size: 0.76em; color: #94a3b8; margin-top: 4px; }
+        .info-item.gender-m { background: #eff6ff; border-color: #bfdbfe; }
+        .info-item.gender-m .iv { color: #1d4ed8; }
+        .info-item.gender-f { background: #fdf2f8; border-color: #fbcfe8; }
+        .info-item.gender-f .iv { color: #be185d; }
+
+        .region-card { background: linear-gradient(135deg, #4a90e2 0%, #3a7bd5 100%); color: #fff; border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; }
+        .region-card .rt { font-size: 0.8em; opacity: 0.85; }
+        .region-card .rv { font-size: 1.5em; font-weight: 700; margin-top: 4px; }
+        .region-card .rc { font-size: 0.85em; opacity: 0.9; margin-top: 4px; font-family: 'Courier New', monospace; }
+
+        .section-title { font-size: 0.9em; color: #475569; font-weight: 600; margin: 0 0 10px 0; }
+        .check-steps { background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 8px; padding: 14px 16px; font-size: 0.82em; color: #475569; line-height: 1.8; font-family: 'Courier New', monospace; }
+        .check-steps .ok { color: #16a34a; }
+        .check-steps .bad { color: #ef4444; }
+    </style>
+    <meta name="keywords" content="身份证信息解析,在线身份证信息解析,日常通用,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/daily/idcard-tool.html" />
+    <meta property="og:title" content="身份证信息解析" />
+    <meta property="og:description" content="身份证信息解析工具，纯前端校验与解析18位身份证号，提取生日、性别与归属地，无依赖本地处理。" />
+    <meta property="og:url" content="https://box.lynvortex.top/daily/idcard-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="身份证信息解析" />
+    <meta itemprop="description" content="身份证信息解析工具，纯前端校验与解析18位身份证号，提取生日、性别与归属地，无依赖本地处理。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "日常通用",
+                "item": "https://box.lynvortex.top/daily.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "身份证信息解析",
+                "item": "https://box.lynvortex.top/daily/idcard-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "身份证信息解析",
+        "url": "https://box.lynvortex.top/daily/idcard-tool.html",
+        "description": "校验18位身份证，提取生日性别与归属地",
+        "applicationCategory": "日常通用",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🪪 身份证信息解析</h1>
+                <p>校验与解析18位身份证号，提取生日、性别与归属地，无依赖本地处理</p>
+            </div>
+
+            <div class="id-input-row">
+                <div class="form-item">
+                    <label>18位身份证号码</label>
+                    <input type="text" id="idInput" maxlength="18" placeholder="请输入18位身份证号" autocomplete="off" />
+                    <div class="hint">支持末位为 X，数据仅在浏览器本地解析，不会上传</div>
+                </div>
+                <button class="btn btn-primary" id="parseBtn">解析</button>
+                <button class="btn btn-ghost" id="clearBtn">清空</button>
+            </div>
+
+            <div id="resultArea"></div>
+
+            <div id="statusBar" class="status-bar info">输入18位身份证号即可校验并解析，所有处理在浏览器本地完成</div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <!-- 信息卡片 -->
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 身份证信息解析</h3>
+                <p>校验中国18位居民身份证号并提取关键字段</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">合法性校验</span>
+                    <span class="feature-chip">生日提取</span>
+                    <span class="feature-chip">性别判断</span>
+                    <span class="feature-chip">归属地</span>
+                    <span class="feature-chip">校验位</span>
+                    <span class="feature-chip">离线本地</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>仅支持18位第二代居民身份证号码（末位可为X）</li>
+                    <li>校验位采用 GB 11643-1999 标准（ISO 7064:1983.MOD 11-2）</li>
+                    <li>归属地依据前6位行政区划码映射到省级，区县级可能不详</li>
+                    <li>纯前端本地解析，身份证号绝不上传，请放心使用</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    // 省份前2位映射表
+    var PROVINCE_MAP = {
+        '11': '北京市', '12': '天津市', '13': '河北省', '14': '山西省', '15': '内蒙古自治区',
+        '21': '辽宁省', '22': '吉林省', '23': '黑龙江省',
+        '31': '上海市', '32': '江苏省', '33': '浙江省', '34': '安徽省', '35': '福建省', '36': '江西省', '37': '山东省',
+        '41': '河南省', '42': '湖北省', '43': '湖南省', '44': '广东省', '45': '广西壮族自治区', '46': '海南省',
+        '50': '重庆市', '51': '四川省', '52': '贵州省', '53': '云南省', '54': '西藏自治区',
+        '61': '陕西省', '62': '甘肃省', '63': '青海省', '64': '宁夏回族自治区', '65': '新疆维吾尔自治区',
+        '71': '台湾省', '81': '香港特别行政区', '82': '澳门特别行政区'
+    };
+
+    // 校验位权重
+    var WEIGHTS = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
+    var CHECK_CODES = ['1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'];
+
+    var idInput = document.getElementById('idInput');
+    var resultArea = document.getElementById('resultArea');
+    var statusBar = document.getElementById('statusBar');
+
+    // 计算校验位
+    function computeCheckCode(id17) {
+        var sum = 0;
+        for (var i = 0; i < 17; i++) {
+            sum += parseInt(id17.charAt(i), 10) * WEIGHTS[i];
+        }
+        return CHECK_CODES[sum % 11];
+    }
+
+    // 校验日期合法
+    function isValidDate(y, m, d) {
+        if (m < 1 || m > 12) return false;
+        if (d < 1 || d > 31) return false;
+        var date = new Date(y, m - 1, d);
+        if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) return false;
+        // 排除明显不合理年份
+        if (y < 1900 || y > new Date().getFullYear()) return false;
+        return true;
+    }
+
+    // 计算年龄
+    function calcAge(birth) {
+        var today = new Date();
+        var age = today.getFullYear() - birth.getFullYear();
+        var mDiff = today.getMonth() - birth.getMonth();
+        if (mDiff < 0 || (mDiff === 0 && today.getDate() < birth.getDate())) age--;
+        return age;
+    }
+
+    function parse() {
+        var raw = idInput.value.trim().toUpperCase();
+        if (!raw) { setStatus('请输入18位身份证号码', 'error'); resultArea.innerHTML = ''; return; }
+
+        var steps = [];
+        var valid = true;
+        var reasons = [];
+
+        // 1. 长度校验
+        if (raw.length !== 18) {
+            steps.push({ ok: false, text: '长度校验：应为18位，实际 ' + raw.length + ' 位' });
+            valid = false;
+            reasons.push('号码长度必须为18位');
+            renderInvalid(valid, steps, reasons);
+            return;
+        }
+        steps.push({ ok: true, text: '长度校验：18位 ✓' });
+
+        // 2. 字符校验（前17位数字，第18位数字或X）
+        if (!/^\d{17}[\dX]$/.test(raw)) {
+            steps.push({ ok: false, text: '字符校验：前17位须为数字，第18位须为数字或X' });
+            valid = false;
+            reasons.push('前17位必须为数字，第18位为数字或X');
+            renderInvalid(valid, steps, reasons);
+            return;
+        }
+        steps.push({ ok: true, text: '字符校验：前17位数字 + 末位数字/X ✓' });
+
+        // 3. 归属地校验
+        var provinceCode = raw.substring(0, 2);
+        var provinceName = PROVINCE_MAP[provinceCode];
+        if (!provinceName) {
+            steps.push({ ok: false, text: '归属地校验：前2位 "' + provinceCode + '" 无对应省份' });
+            valid = false;
+            reasons.push('前2位行政区划码无对应省份');
+        } else {
+            steps.push({ ok: true, text: '归属地校验：' + provinceCode + ' → ' + provinceName + ' ✓' });
+        }
+
+        // 4. 生日校验
+        var year = parseInt(raw.substring(6, 10), 10);
+        var month = parseInt(raw.substring(10, 12), 10);
+        var day = parseInt(raw.substring(12, 14), 10);
+        var birthOk = isValidDate(year, month, day);
+        if (!birthOk) {
+            steps.push({ ok: false, text: '生日校验：' + year + '-' + month + '-' + day + ' 不是有效日期' });
+            valid = false;
+            reasons.push('第7-14位不是有效的出生日期');
+        } else {
+            steps.push({ ok: true, text: '生日校验：' + year + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0') + ' ✓' });
+        }
+
+        // 5. 校验位校验
+        var id17 = raw.substring(0, 17);
+        var expected = computeCheckCode(id17);
+        var actual = raw.charAt(17);
+        if (expected !== actual) {
+            steps.push({ ok: false, text: '校验位校验：实际 "' + actual + '" ≠ 计算 "' + expected + '"' });
+            valid = false;
+            reasons.push('校验位不正确（正确应为 ' + expected + '）');
+        } else {
+            steps.push({ ok: true, text: '校验位校验：' + actual + ' = ' + expected + ' ✓' });
+        }
+
+        if (!valid) {
+            renderInvalid(valid, steps, reasons);
+            return;
+        }
+
+        // 合法，渲染完整结果
+        var genderCode = parseInt(raw.charAt(16), 10);
+        var isMale = genderCode % 2 === 1;
+        var gender = isMale ? '男' : '女';
+        var birth = new Date(year, month - 1, day);
+        var age = calcAge(birth);
+        var regionCode = raw.substring(0, 6);
+
+        var html = '';
+        // 校验通过卡片
+        html += '<div class="valid-card ok"><div class="vicon">✅</div><div class="vtext"><div class="vtitle">身份证号码合法</div><div class="vreason">已通过长度、字符、归属地、生日与校验位全部校验</div></div></div>';
+
+        // 归属地
+        html += '<div class="region-card"><div class="rt">归属地（前6位行政区划码）</div><div class="rv">' + escapeHtml(provinceName) + '</div><div class="rc">区划码：' + escapeHtml(regionCode) + '</div></div>';
+
+        // 信息网格
+        html += '<div class="info-grid">';
+        html += '<div class="info-item"><div class="iv">' + year + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0') + '</div><div class="il">出生日期</div></div>';
+        html += '<div class="info-item"><div class="iv">' + age + ' 岁</div><div class="il">年龄</div></div>';
+        html += '<div class="info-item gender-' + (isMale ? 'm' : 'f') + '"><div class="iv">' + gender + '</div><div class="il">性别（第17位 ' + genderCode + '）</div></div>';
+        html += '<div class="info-item"><div class="iv">' + escapeHtml(provinceName) + '</div><div class="il">归属省份</div></div>';
+        html += '<div class="info-item"><div class="iv">' + escapeHtml(regionCode) + '</div><div class="il">行政区划码</div></div>';
+        html += '<div class="info-item"><div class="iv">' + escapeHtml(actual) + '</div><div class="il">校验位（第18位）</div></div>';
+        html += '</div>';
+
+        // 校验过程
+        html += '<p class="section-title">校验过程明细</p>';
+        html += '<div class="check-steps">';
+        steps.forEach(function (s) {
+            html += '<div class="' + (s.ok ? 'ok' : 'bad') + '">' + (s.ok ? '✓ ' : '✗ ') + escapeHtml(s.text) + '</div>';
+        });
+        html += '</div>';
+
+        resultArea.innerHTML = html;
+        setStatus('解析成功：' + provinceName + ' · ' + gender + ' · ' + age + '岁，身份证号合法', 'success');
+    }
+
+    function renderInvalid(valid, steps, reasons) {
+        var html = '';
+        html += '<div class="valid-card bad"><div class="vicon">❌</div><div class="vtext"><div class="vtitle">身份证号码不合法</div><div class="vreason">' + escapeHtml(reasons.join('；')) + '</div></div></div>';
+        html += '<p class="section-title">校验过程明细</p>';
+        html += '<div class="check-steps">';
+        steps.forEach(function (s) {
+            html += '<div class="' + (s.ok ? 'ok' : 'bad') + '">' + (s.ok ? '✓ ' : '✗ ') + escapeHtml(s.text) + '</div>';
+        });
+        html += '</div>';
+        resultArea.innerHTML = html;
+        setStatus('校验未通过：' + reasons.join('；'), 'error');
+    }
+
+    document.getElementById('parseBtn').addEventListener('click', parse);
+    document.getElementById('clearBtn').addEventListener('click', function () {
+        idInput.value = ''; resultArea.innerHTML = ''; setStatus('已清空', 'info');
+    });
+    idInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') parse();
+    });
+    // 输入时自动转大写
+    idInput.addEventListener('input', function () {
+        this.value = this.value.toUpperCase();
+    });
+
+    initSidebar('daily');
+</script>
+</body>
+</html>

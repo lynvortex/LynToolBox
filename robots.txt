@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /admin.php
+Disallow: /config.php
+Disallow: /proxy.php
+
+Sitemap: https://box.lynvortex.top/sitemap.xml

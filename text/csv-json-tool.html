@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSV/JSON 互转 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="CSV与JSON互转工具，支持自定义分隔符、表头识别，双向转换。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', -apple-system, sans-serif;
+            background: #f4f7f9;
+            margin: 0;
+            display: flex;
+            height: 100vh; overflow: hidden;
+            color: #333;
+        }
+
+        .mobile-header {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: #fff; padding: 0 16px; align-items: center;
+            justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+        }
+        .mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+        .mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+        .menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #e8845a; }
+
+        .sidebar {
+            width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+            display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+            transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+            position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item {
+            display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+            transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+        }
+        .category-item:hover, .category-item.active { background: #fdf0eb; color: #e8845a; border-left-color: #e8845a; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+        .tool-container {
+            width: 100%;
+            max-width: 960px;
+            background: #fff; border-radius: 12px;
+            padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+        }
+        .tool-header { text-align: center; margin-bottom: 28px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+        .io-wrap {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        @media (max-width: 600px) { .io-wrap { grid-template-columns: 1fr; } }
+
+        .io-block label {
+            display: block; font-size: 0.85em; color: #64748b; margin-bottom: 8px; font-weight: 500;
+        }
+        textarea {
+            width: 100%;
+            height: 280px;
+            padding: 14px;
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            font-size: 0.92em;
+            font-family: 'Consolas', 'Courier New', monospace;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+        textarea:focus { border-color: #4a90e2; }
+        textarea[readonly] { background: #f8fafc; cursor: default; }
+
+        .action-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em;
+            font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap;
+        }
+        .btn-primary { background: #e8845a; color: white; }
+        .btn-primary:hover { background: #d4734a; }
+        .btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .btn-success { background: #34d399; color: white; }
+        .btn-success:hover { background: #2bb981; }
+        .btn-warning { background: #f59e0b; color: white; }
+        .btn-warning:hover { background: #d97706; }
+        .btn-outline { background: transparent; color: #e8845a; border: 1px solid #e8845a; }
+        .btn-outline:hover { background: #e8845a; color: white; }
+        .btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+        .btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+
+        .status-bar {
+            min-height: 20px; font-size: 0.85em;
+            padding: 8px 12px; border-radius: 6px; margin-bottom: 16px;
+        }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+        .footer p { margin: 0; }
+        .footer a { color: #e8845a; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+
+        .info-cards {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-top: 4px;
+        }
+
+        .info-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 22px 24px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+            border: 1px solid #f0f2f5;
+        }
+
+        .info-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1em;
+            color: #2c3e50;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .info-card p {
+            margin: 0 0 10px 0;
+            font-size: 0.82em;
+            color: #64748b;
+        }
+
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip {
+            background: #e0f2fe; color: #0369a1;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace;
+        }
+
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a {
+            font-size: 0.85em; color: #4a90e2; text-decoration: none;
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s;
+        }
+        .tool-links a:hover { background: #e2e8f0; }
+
+        .options-row {
+            display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
+            margin-bottom: 18px; padding: 14px 16px;
+            background: #f8fafc; border-radius: 8px; border: 1px solid #f0f2f5;
+            font-size: 0.85em; color: #475569;
+        }
+        .options-row label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+        .options-row select, .options-row input[type="text"] {
+            padding: 5px 8px; border: 1px solid #e0e6ed; border-radius: 6px;
+            font-size: 0.92em; font-family: inherit; color: #1e293b; outline: none; background: #fff;
+        }
+        .options-row select:focus, .options-row input[type="text"]:focus { border-color: #4a90e2; }
+
+        .dir-row {
+            display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px;
+        }
+
+        @media (max-width: 768px) {
+            body { display: block; height: auto; overflow: auto; }
+            .mobile-header { display: flex; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .close-sidebar { display: block; }
+            .main-content { display: block; }
+            .main-scroll { padding: 72px 16px 32px; gap: 20px;  }
+            .tool-container { padding: 24px 16px; border-radius: 10px; }
+            .tool-header h1 { font-size: 1.3em; }
+            .action-row { gap: 8px; }
+            .btn { padding: 8px 14px; font-size: 0.85em; }
+            .info-card { padding: 18px 16px; }
+            .overlay.active { display: block; }
+            .options-row { gap: 10px; }
+        }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="CSV/JSON互转,在线CSV/JSON互转,文本处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/text/csv-json-tool.html" />
+    <meta property="og:title" content="CSV/JSON 互转" />
+    <meta property="og:description" content="CSV与JSON互转工具，支持自定义分隔符、表头识别，双向转换。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/text/csv-json-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="CSV/JSON 互转" />
+    <meta itemprop="description" content="CSV与JSON互转工具，支持自定义分隔符、表头识别，双向转换。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文本处理",
+                "item": "https://box.lynvortex.top/text.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "CSV/JSON互转",
+                "item": "https://box.lynvortex.top/text/csv-json-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "CSV/JSON互转",
+        "url": "https://box.lynvortex.top/text/csv-json-tool.html",
+        "description": "CSV与JSON双向转换，支持自定义分隔符和表头识别",
+        "applicationCategory": "文本处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>CSV / JSON 互转</h1>
+                <p>纯前端 CSV 与 JSON 双向转换，支持自定义分隔符与表头识别</p>
+            </div>
+
+            <div class="options-row">
+                <label>分隔符：
+                    <select id="delimiterSel">
+                        <option value=",">逗号 ,</option>
+                        <option value=";">分号 ;</option>
+                        <option value="\t">制表符 \t</option>
+                        <option value="|">竖线 |</option>
+                        <option value="custom">自定义</option>
+                    </select>
+                </label>
+                <label id="customDelimWrap" style="display:none;">自定义：
+                    <input type="text" id="customDelim" value="," style="width:60px;" />
+                </label>
+                <label><input type="checkbox" id="hasHeader" checked /> 第一行为表头</label>
+                <label><input type="checkbox" id="trimSpace" checked /> 去除字段首尾空格</label>
+                <label>缩进：
+                    <select id="indentSel">
+                        <option value="2">2 空格</option>
+                        <option value="4">4 空格</option>
+                        <option value="0">压缩</option>
+                    </select>
+                </label>
+            </div>
+
+            <div class="io-wrap">
+                <div class="io-block">
+                    <label>输入（CSV 或 JSON）</label>
+                    <textarea id="inputText" placeholder="在此粘贴 CSV 或 JSON 数据..."></textarea>
+                </div>
+                <div class="io-block">
+                    <label>输出结果</label>
+                    <textarea id="outputText" readonly placeholder="转换结果将显示在这里..."></textarea>
+                </div>
+            </div>
+
+            <div class="dir-row">
+                <button class="btn btn-primary" id="csv2jsonBtn">&#x2192; CSV 转 JSON</button>
+                <button class="btn btn-success" id="json2csvBtn">&#x2190; JSON 转 CSV</button>
+                <button class="btn btn-outline" id="copyBtn">&#x1F4CB; 复制结果</button>
+                <button class="btn btn-ghost" id="clearBtn">&#x1F5D1; 清空</button>
+            </div>
+
+            <div class="status-bar info" id="statusBar">粘贴数据，选择方向后点击转换按钮</div>
+
+            <footer class="footer">
+                &copy; 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+            <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#e8845a;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#e8845a;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>&#x1F4E6; 功能说明</h3>
+                <p>双向转换，灵活适配各种数据格式</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">CSV→JSON</span>
+                    <span class="tld-chip">JSON→CSV</span>
+                    <span class="tld-chip">自定义分隔符</span>
+                    <span class="tld-chip">表头识别</span>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h3>&#x1F4A1; 使用须知</h3>
+                <ul class="tips-list">
+                    <li>所有处理在浏览器本地执行，数据不会上传</li>
+                    <li>CSV 解析支持双引号包裹字段、引号转义（""）与换行</li>
+                    <li>JSON 转 CSV 时，对象数组会自动取并集字段作为表头</li>
+                    <li>分隔符可选逗号、分号、制表符，也可自定义单个字符</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h3>&#x2728; 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    // 侧边栏由 sidebar.js 统一管理
+    initSidebar('text');
+
+    var setStatus = function (msg, type) {
+        var sb = document.getElementById('statusBar');
+        sb.textContent = msg;
+        sb.className = 'status-bar ' + type;
+    };
+
+    // 获取当前分隔符
+    var getDelimiter = function () {
+        var sel = document.getElementById('delimiterSel').value;
+        if (sel === 'custom') {
+            var c = document.getElementById('customDelim').value;
+            return c === '' ? ',' : c;
+        }
+        if (sel === '\\t') return '\t';
+        return sel;
+    };
+
+    // 自定义分隔符输入框显隐
+    document.getElementById('delimiterSel').addEventListener('change', function () {
+        document.getElementById('customDelimWrap').style.display = (this.value === 'custom') ? 'inline-flex' : 'none';
+    });
+
+    // CSV 解析（支持引号、转义、字段内换行）
+    var parseCSV = function (text, delimiter, trimSpace) {
+        var rows = [];
+        var row = [];
+        var field = '';
+        var inQuotes = false;
+        var i = 0;
+        while (i < text.length) {
+            var ch = text[i];
+            if (inQuotes) {
+                if (ch === '"') {
+                    if (text[i + 1] === '"') { field += '"'; i += 2; continue; }
+                    inQuotes = false; i++; continue;
+                } else {
+                    field += ch; i++; continue;
+                }
+            } else {
+                if (ch === '"') { inQuotes = true; i++; continue; }
+                if (ch === delimiter) {
+                    row.push(trimSpace ? field.trim() : field);
+                    field = ''; i++; continue;
+                }
+                if (ch === '\r') { i++; continue; }
+                if (ch === '\n') {
+                    row.push(trimSpace ? field.trim() : field);
+                    rows.push(row); row = []; field = ''; i++; continue;
+                }
+                field += ch; i++; continue;
+            }
+        }
+        if (field !== '' || row.length > 0) {
+            row.push(trimSpace ? field.trim() : field);
+            rows.push(row);
+        }
+        // 去掉末尾完全空行
+        while (rows.length > 0) {
+            var last = rows[rows.length - 1];
+            if (last.length === 1 && last[0] === '') rows.pop();
+            else break;
+        }
+        return rows;
+    };
+
+    // 字段转 CSV（处理引号、分隔符、换行）
+    var toCSVField = function (val, delimiter) {
+        val = String(val == null ? '' : val);
+        var needQuote = val.indexOf('"') !== -1 || val.indexOf(delimiter) !== -1 ||
+            val.indexOf('\n') !== -1 || val.indexOf('\r') !== -1;
+        if (val.indexOf('"') !== -1) val = val.replace(/"/g, '""');
+        if (needQuote) val = '"' + val + '"';
+        return val;
+    };
+
+    // 尝试把字符串值转为合适的 JSON 类型
+    var coerceValue = function (v) {
+        if (v === '') return '';
+        if (v === 'true') return true;
+        if (v === 'false') return false;
+        if (v === 'null') return null;
+        if (/^-?\d+$/.test(v)) {
+            var n = parseInt(v, 10);
+            if (!isNaN(n) && String(n) === v) return n;
+        }
+        if (/^-?\d+\.\d+$/.test(v)) {
+            var f = parseFloat(v);
+            if (!isNaN(f)) return f;
+        }
+        return v;
+    };
+
+    // CSV -> JSON
+    var csvToJson = function () {
+        var input = document.getElementById('inputText').value;
+        if (!input.trim()) { setStatus('请输入 CSV 数据', 'error'); return; }
+        var delimiter = getDelimiter();
+        var hasHeader = document.getElementById('hasHeader').checked;
+        var trimSpace = document.getElementById('trimSpace').checked;
+        var indent = parseInt(document.getElementById('indentSel').value, 10);
+
+        try {
+            var rows = parseCSV(input, delimiter, trimSpace);
+            if (rows.length === 0) { setStatus('未解析到有效数据', 'error'); return; }
+
+            var result;
+            if (hasHeader) {
+                var headers = rows[0];
+                var arr = [];
+                for (var r = 1; r < rows.length; r++) {
+                    if (rows[r].length === 1 && rows[r][0] === '') continue;
+                    var obj = {};
+                    for (var c = 0; c < headers.length; c++) {
+                        var key = headers[c] || ('col_' + c);
+                        var val = c < rows[r].length ? rows[r][c] : '';
+                        obj[key] = coerceValue(val);
+                    }
+                    arr.push(obj);
+                }
+                result = arr;
+            } else {
+                result = rows;
+            }
+
+            var out = indent === 0 ? JSON.stringify(result) : JSON.stringify(result, null, indent);
+            document.getElementById('outputText').value = out;
+            var count = Array.isArray(result) ? result.length : 0;
+            setStatus('CSV 转 JSON 成功，共 ' + count + ' 条记录', 'success');
+        } catch (err) {
+            setStatus('转换失败：' + err.message, 'error');
+        }
+    };
+
+    // JSON -> CSV
+    var jsonToCsv = function () {
+        var input = document.getElementById('inputText').value;
+        if (!input.trim()) { setStatus('请输入 JSON 数据', 'error'); return; }
+        var delimiter = getDelimiter();
+        var hasHeader = document.getElementById('hasHeader').checked;
+
+        try {
+            var data = JSON.parse(input);
+            var rows;
+
+            if (Array.isArray(data)) {
+                if (data.length === 0) {
+                    rows = [];
+                } else if (data.length > 0 && typeof data[0] === 'object' && data[0] !== null && !Array.isArray(data[0])) {
+                    // 对象数组
+                    var headerSet = [];
+                    var seen = {};
+                    for (var i = 0; i < data.length; i++) {
+                        for (var k in data[i]) {
+                            if (Object.prototype.hasOwnProperty.call(data[i], k) && !seen[k]) {
+                                seen[k] = true; headerSet.push(k);
+                            }
+                        }
+                    }
+                    rows = [];
+                    if (hasHeader) rows.push(headerSet.slice());
+                    for (var j = 0; j < data.length; j++) {
+                        var line = [];
+                        for (var h = 0; h < headerSet.length; h++) {
+                            var v = data[j][headerSet[h]];
+                            line.push(v == null ? '' : (typeof v === 'object' ? JSON.stringify(v) : String(v)));
+                        }
+                        rows.push(line);
+                    }
+                } else {
+                    // 简单二维数组
+                    rows = [];
+                    for (var a = 0; a < data.length; a++) {
+                        if (Array.isArray(data[a])) {
+                            rows.push(data[a].map(function (x) { return x == null ? '' : (typeof x === 'object' ? JSON.stringify(x) : String(x)); }));
+                        } else {
+                            rows.push([data[a] == null ? '' : String(data[a])]);
+                        }
+                    }
+                }
+            } else if (typeof data === 'object' && data !== null) {
+                // 单个对象
+                rows = [];
+                if (hasHeader) {
+                    var keys = Object.keys(data);
+                    rows.push(keys.slice());
+                    rows.push(keys.map(function (k) { return data[k] == null ? '' : (typeof data[k] === 'object' ? JSON.stringify(data[k]) : String(data[k])); }));
+                } else {
+                    rows.push(Object.keys(data).map(function (k) { return k + '=' + (data[k] == null ? '' : String(data[k])); }));
+                }
+            } else {
+                setStatus('JSON 不是数组或对象，无法转换', 'error');
+                return;
+            }
+
+            var lines = rows.map(function (row) {
+                return row.map(function (cell) { return toCSVField(cell, delimiter); }).join(delimiter);
+            });
+            document.getElementById('outputText').value = lines.join('\n');
+            setStatus('JSON 转 CSV 成功，共 ' + rows.length + ' 行', 'success');
+        } catch (err) {
+            setStatus('转换失败：' + err.message, 'error');
+        }
+    };
+
+    var copyResult = function () {
+        var output = document.getElementById('outputText').value;
+        if (!output) { setStatus('没有可复制的内容', 'error'); return; }
+        navigator.clipboard.writeText(output).then(function () {
+            setStatus('已复制到剪贴板', 'success');
+        }).catch(function () {
+            document.getElementById('outputText').select();
+            document.execCommand('copy');
+            setStatus('已复制到剪贴板', 'success');
+        });
+    };
+
+    var clearAll = function () {
+        document.getElementById('inputText').value = '';
+        document.getElementById('outputText').value = '';
+        setStatus('已清空', 'info');
+    };
+
+    document.getElementById('csv2jsonBtn').addEventListener('click', csvToJson);
+    document.getElementById('json2csvBtn').addEventListener('click', jsonToCsv);
+    document.getElementById('copyBtn').addEventListener('click', copyResult);
+    document.getElementById('clearBtn').addEventListener('click', clearAll);
+</script>
+</body>
+</html>

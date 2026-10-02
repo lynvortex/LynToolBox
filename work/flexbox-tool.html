@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Flexbox布局生成器 · 绘萤工具箱</title>
+<link rel="icon" type="image/png" href="../logo.webp"/>
+<meta name="description" content="在线 Flexbox 布局可视化生成器，实时预览 justify-content、align-items、flex-wrap、gap 等属性效果，一键复制生成的 CSS 代码，纯前端运行。"/>
+<link rel="stylesheet" href="../assets/tool-common.css"/>
+<script src="../assets/sidebar.js"></script>
+<meta name="keywords" content="Flexbox生成器,flex布局,CSS布局,justify-content,align-items,flexbox可视化,CSS工具,免费工具,在线工具,纯前端处理,绘萤工具箱"/>
+<link rel="canonical" href="https://box.lynvortex.top/work/flexbox-tool.html"/>
+<meta property="og:title" content="Flexbox布局生成器"/>
+<meta property="og:description" content="可视化调节，实时生成 CSS。"/>
+<meta property="og:url" content="https://box.lynvortex.top/work/flexbox-tool.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="绘萤工具箱"/>
+<meta property="og:image" content="https://box.lynvortex.top/logo.webp"/>
+<meta property="og:locale" content="zh_CN"/>
+<meta itemprop="name" content="Flexbox布局生成器"/>
+<meta itemprop="description" content="可视化调节，实时生成 CSS。"/>
+<meta itemprop="image" content="https://box.lynvortex.top/logo.webp"/>
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://box.lynvortex.top/"},{"@type":"ListItem","position":2,"name":"编程开发","item":"https://box.lynvortex.top/work.html"},{"@type":"ListItem","position":3,"name":"Flexbox布局生成器","item":"https://box.lynvortex.top/work/flexbox-tool.html"}]},{"@context":"https://schema.org","@type":"WebApplication","name":"Flexbox布局生成器","url":"https://box.lynvortex.top/work/flexbox-tool.html","description":"Flexbox布局可视化生成器","applicationCategory":"编程开发","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}]
+</script>
+</head>
+<body>
+<main class="main-content">
+<div class="main-scroll">
+<div class="tool-container">
+    <div class="tool-header">
+        <h1>🎯 Flexbox 布局生成器</h1>
+        <p>可视化调节属性，实时预览并生成 CSS</p>
+    </div>
+    <div class="form-grid">
+        <div class="form-item"><label>flex-direction</label>
+            <select id="flexDirection">
+                <option value="row">row（横向→）</option>
+                <option value="row-reverse">row-reverse（横向←）</option>
+                <option value="column">column（纵向↓）</option>
+                <option value="column-reverse">column-reverse（纵向↑）</option>
+            </select>
+        </div>
+        <div class="form-item"><label>justify-content（主轴）</label>
+            <select id="justifyContent">
+                <option value="flex-start">flex-start</option>
+                <option value="center">center</option>
+                <option value="flex-end">flex-end</option>
+                <option value="space-between">space-between</option>
+                <option value="space-around">space-around</option>
+                <option value="space-evenly">space-evenly</option>
+            </select>
+        </div>
+        <div class="form-item"><label>align-items（交叉轴）</label>
+            <select id="alignItems">
+                <option value="stretch">stretch（拉伸）</option>
+                <option value="flex-start">flex-start</option>
+                <option value="center">center</option>
+                <option value="flex-end">flex-end</option>
+                <option value="baseline">baseline</option>
+            </select>
+        </div>
+        <div class="form-item"><label>flex-wrap</label>
+            <select id="flexWrap">
+                <option value="nowrap">nowrap（不换行）</option>
+                <option value="wrap">wrap（换行）</option>
+            </select>
+        </div>
+        <div class="form-item"><label>gap（间距 px）：<span id="gapVal">12</span></label>
+            <input type="range" id="gap" min="0" max="60" value="12"/>
+        </div>
+        <div class="form-item"><label>子元素数量：<span id="childVal">5</span></label>
+            <input type="range" id="childCount" min="1" max="12" value="5"/>
+        </div>
+        <div class="form-item"><label>子项 flex-grow：<span id="growVal">0</span></label>
+            <input type="range" id="grow" min="0" max="5" value="0"/>
+        </div>
+        <div class="form-item"><label>子项 flex-shrink：<span id="shrinkVal">1</span></label>
+            <input type="range" id="shrink" min="0" max="5" value="1"/>
+        </div>
+        <div class="form-item"><label>子项 flex-basis</label>
+            <input type="text" id="basis" value="auto" placeholder="auto / 120px / 30%"/>
+        </div>
+        <div class="form-item"><label>预览高度 px</label>
+            <input type="number" id="previewH" value="220" min="80" max="500"/>
+        </div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-outline" id="copyBtn">复制 CSS</button>
+        <button class="btn btn-ghost" id="resetBtn">重置</button>
+    </div>
+    <div class="status-bar info" id="statusBar">拖动滑块或切换选项实时预览</div>
+    <div id="preview" style="background:#f0f4f8;border:1px dashed #cbd5e1;border-radius:8px;padding:12px;margin-bottom:20px;overflow:auto;">
+        <div id="flexBox"></div>
+    </div>
+    <p style="font-size:0.8em;color:#94a3b8;margin:8px 0;">↓ 生成的 CSS</p>
+    <pre class="output" id="output" style="white-space:pre-wrap;"></pre>
+    <footer class="footer">
+        © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+    </footer>
+</div>
+<div class="info-cards">
+    <div class="info-card">
+        <h3>🎯 可视化布局</h3>
+        <p>所有 Flex 容器属性实时联动预览。</p>
+        <div class="feature-chips"><span class="feature-chip">12 项属性</span><span class="feature-chip">实时预览</span><span class="feature-chip">一键复制</span><span class="feature-chip">响应式建议</span></div>
+    </div>
+    <div class="info-card">
+        <h3>💡 使用技巧</h3>
+        <ul class="tips-list">
+            <li>水平居中：justify-content + align-items 都选 center</li>
+            <li>等宽分栏：子项 grow 设 1，basis 设 0</li>
+            <li>gap 是现代间距方案，替代旧 margin 写法</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>✨ 绘萤者</h3>
+        <p style="margin-bottom:8px;">以萤火之光，绘万千想象</p>
+        <div class="tool-links"><a href="https://lynvortex.top" target="_blank">完全免费</a><a href="https://lynvortex.top" target="_blank">开源精神</a><a href="https://lynvortex.top" target="_blank">极客风范</a><a href="https://lynvortex.top" target="_blank">协作共创</a></div>
+        <p style="margin-top:10px;font-size:0.82em;color:#475569;">绘萤者——探索真正的互联网精神，创造更有意义的互联网。</p>
+    </div>
+</div>
+</div>
+</main>
+<script>
+var defaults = { flexDirection:'row', justifyContent:'flex-start', alignItems:'stretch', flexWrap:'nowrap', gap:12, childCount:5, grow:0, shrink:1, basis:'auto' };
+
+function buildChildren() {
+    var box = document.getElementById('flexBox');
+    var n = parseInt(document.getElementById('childCount').value);
+    box.innerHTML = '';
+    for (var i = 1; i <= n; i++) {
+        var d = document.createElement('div');
+        d.className = 'flex-child';
+        d.textContent = i;
+        box.appendChild(d);
+    }
+}
+
+function render() {
+    var box = document.getElementById('flexBox');
+    var h = parseInt(document.getElementById('previewH').value) || 220;
+    box.style.cssText = 'display:flex;background:#fff;border-radius:6px;min-height:' + h + 'px;padding:8px;transition:all .25s;';
+    box.style.flexDirection = document.getElementById('flexDirection').value;
+    box.style.justifyContent = document.getElementById('justifyContent').value;
+    box.style.alignItems = document.getElementById('alignItems').value;
+    box.style.flexWrap = document.getElementById('flexWrap').value;
+    box.style.gap = document.getElementById('gap').value + 'px';
+
+    var grow = document.getElementById('grow').value;
+    var shrink = document.getElementById('shrink').value;
+    var basis = document.getElementById('basis').value.trim() || 'auto';
+    var kids = box.children;
+    for (var i = 0; i < kids.length; i++) {
+        kids[i].style.cssText = 'flex-grow:' + grow + ';flex-shrink:' + shrink + ';flex-basis:' + basis + ';background:linear-gradient(135deg,#4a90e2,#7bb8f0);color:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;min-width:34px;min-height:34px;padding:8px;';
+    }
+    document.getElementById('gapVal').textContent = document.getElementById('gap').value;
+    document.getElementById('childVal').textContent = document.getElementById('childCount').value;
+    document.getElementById('growVal').textContent = grow;
+    document.getElementById('shrinkVal').textContent = shrink;
+
+    var lines = ['.flex-container {',
+        '    display: flex;',
+        '    flex-direction: ' + box.style.flexDirection + ';',
+        '    justify-content: ' + box.style.justifyContent + ';',
+        '    align-items: ' + box.style.alignItems + ';',
+        '    flex-wrap: ' + box.style.flexWrap + ';',
+        '    gap: ' + document.getElementById('gap').value + 'px;',
+        '}', '',
+        '.flex-container > * {',
+        '    flex-grow: ' + grow + ';',
+        '    flex-shrink: ' + shrink + ';',
+        '    flex-basis: ' + basis + ';',
+        '}'];
+    document.getElementById('output').textContent = lines.join('\n');
+}
+
+['flexDirection','justifyContent','alignItems','flexWrap','gap','grow','shrink','basis','previewH'].forEach(function(id) {
+    document.getElementById(id).addEventListener('input', render);
+    document.getElementById(id).addEventListener('change', render);
+});
+document.getElementById('childCount').addEventListener('input', function() { buildChildren(); render(); });
+
+document.getElementById('copyBtn').onclick = function() {
+    navigator.clipboard.writeText(document.getElementById('output').textContent).then(function() {
+        var sb = document.getElementById('statusBar');
+        sb.textContent = 'CSS 已复制到剪贴板'; sb.className = 'status-bar success';
+        setTimeout(function() { sb.textContent = '拖动滑块或切换选项实时预览'; sb.className = 'status-bar info'; }, 1500);
+    });
+};
+document.getElementById('resetBtn').onclick = function() {
+    for (var k in defaults) {
+        var el = document.getElementById(k);
+        if (el.tagName === 'SELECT') el.value = defaults[k]; else el.value = defaults[k];
+    }
+    document.getElementById('previewH').value = 220;
+    buildChildren(); render();
+};
+
+buildChildren(); render();
+initSidebar('work');
+</script>
+</body>
+</html>

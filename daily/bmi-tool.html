@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BMI计算器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="BMI身体质量指数计算器，输入身高体重快速计算BMI值，判断体重是否健康，支持公制和英制单位。" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 22px; }
+        @media (max-width: 600px) { .input-grid { grid-template-columns: 1fr; } }
+        .unit-toggle { display: flex; gap: 8px; margin-bottom: 18px; }
+        .unit-btn { padding: 8px 22px; border-radius: 8px; border: 1px solid #e0e6ed; background: #f8fafc; cursor: pointer; font-weight: 600; color: #64748b; }
+        .unit-btn.active { background: #4a90e2; color: #fff; border-color: #4a90e2; }
+        .result-card { background: linear-gradient(135deg, #4a90e2 0%, #3a7bd5 100%); color: #fff; border-radius: 14px; padding: 30px; text-align: center; margin-bottom: 20px; }
+        .result-big { font-size: 3em; font-weight: 700; font-family: 'Courier New', monospace; }
+        .result-label { font-size: 1.1em; margin-top: 6px; }
+        .bmi-scale { display: flex; border-radius: 10px; overflow: hidden; height: 28px; margin: 18px 0; }
+        .bmi-scale div { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 0.72em; color: #fff; font-weight: 600; }
+        .indicator { width: 4px; height: 38px; background: #1a1a2e; border-radius: 2px; position: relative; margin: 0 auto; transition: left 0.3s; }
+        .scale-wrap { position: relative; padding: 0 2px; }
+        .scale-labels { display: flex; font-size: 0.72em; color: #94a3b8; margin-top: 4px; }
+        .scale-labels span { flex: 1; text-align: center; }
+        .advice-card { background: #f8fafc; border: 1px solid #e0e6ed; border-radius: 12px; padding: 20px; }
+        .advice-card h4 { color: #2c3e50; margin-bottom: 8px; }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="BMI计算器,在线BMI计算器,日常通用,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/daily/bmi-tool.html" />
+    <meta property="og:title" content="BMI计算器" />
+    <meta property="og:description" content="BMI身体质量指数计算器，输入身高体重快速计算BMI值，判断体重是否健康，支持公制和英制单位。" />
+    <meta property="og:url" content="https://box.lynvortex.top/daily/bmi-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="BMI计算器" />
+    <meta itemprop="description" content="BMI身体质量指数计算器，输入身高体重快速计算BMI值，判断体重是否健康，支持公制和英制单位。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "日常通用",
+                "item": "https://box.lynvortex.top/daily.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "BMI计算器",
+                "item": "https://box.lynvortex.top/daily/bmi-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "BMI计算器",
+        "url": "https://box.lynvortex.top/daily/bmi-tool.html",
+        "description": "输入身高体重计算BMI指数，评估健康体重范围",
+        "applicationCategory": "日常通用",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>⚖️ BMI计算器</h1>
+                <p>计算身体质量指数，评估体重是否在健康范围</p>
+            </div>
+
+            <div class="unit-toggle">
+                <div class="unit-btn active" data-unit="metric">公制 (kg/cm)</div>
+                <div class="unit-btn" data-unit="imperial">英制 (lb/in)</div>
+            </div>
+
+            <div class="input-grid">
+                <div class="form-item"><label id="heightLabel">身高 (cm)</label><input type="number" id="height" value="170" min="50" max="300" step="0.1" /></div>
+                <div class="form-item"><label id="weightLabel">体重 (kg)</label><input type="number" id="weight" value="65" min="10" max="500" step="0.1" /></div>
+            </div>
+
+            <div class="result-card">
+                <div class="result-big" id="bmiValue">—</div>
+                <div class="result-label" id="bmiCategory">请输入身高体重</div>
+            </div>
+
+            <div class="scale-wrap">
+                <div class="bmi-scale">
+                    <div style="background:#4a90e2;">偏瘦</div>
+                    <div style="background:#22c55e;">正常</div>
+                    <div style="background:#f59e0b;">偏胖</div>
+                    <div style="background:#ef4444;">肥胖</div>
+                </div>
+                <div class="indicator" id="indicator" style="position:absolute;top:-5px;left:50%;"></div>
+                <div class="scale-labels">
+                    <span>&lt;18.5</span><span>18.5-24</span><span>24-28</span><span>&gt;28</span>
+                </div>
+            </div>
+
+            <div class="advice-card" id="adviceCard">
+                <h4>💡 健康建议</h4>
+                <p id="adviceText" style="color:#64748b;line-height:1.7;">输入您的身高和体重，获取BMI评估与健康建议。</p>
+            </div>
+
+            <div id="statusBar" class="status-bar info">所有计算在浏览器本地完成</div>
+
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 BMI计算器</h3>
+                <p>身体质量指数计算与健康评估</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">BMI计算</span>
+                    <span class="feature-chip">公制/英制</span>
+                    <span class="feature-chip">健康建议</span>
+                    <span class="feature-chip">离线可用</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>BMI = 体重(kg) / 身高²(m²)</li>
+                    <li>适用于18岁以上成年人</li>
+                    <li>运动员、孕妇等特殊人群仅供参考</li>
+                    <li>纯前端计算，无需网络</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+var unit='metric';
+document.querySelectorAll('.unit-btn').forEach(function(b){
+    b.onclick=function(){
+        document.querySelectorAll('.unit-btn').forEach(function(x){x.classList.remove('active');});
+        b.classList.add('active');
+        unit=b.dataset.unit;
+        if(unit==='metric'){
+            document.getElementById('heightLabel').textContent='身高 (cm)';
+            document.getElementById('weightLabel').textContent='体重 (kg)';
+            document.getElementById('height').value=170;
+            document.getElementById('weight').value=65;
+        }else{
+            document.getElementById('heightLabel').textContent='身高 (in)';
+            document.getElementById('weightLabel').textContent='体重 (lb)';
+            document.getElementById('height').value=67;
+            document.getElementById('weight').value=143;
+        }
+        calc();
+    };
+});
+
+function calc(){
+    var h=parseFloat(document.getElementById('height').value);
+    var w=parseFloat(document.getElementById('weight').value);
+    if(!h||!w||h<=0||w<=0)return;
+    var bmi;
+    if(unit==='metric'){bmi=w/((h/100)*(h/100));}
+    else{bmi=703*w/(h*h);}
+    bmi=Math.round(bmi*10)/10;
+    document.getElementById('bmiValue').textContent=bmi;
+
+    var cat,advice,color;
+    if(bmi<18.5){cat='偏瘦';color='#4a90e2';advice='您的体重偏轻，建议增加营养摄入，适当进行力量训练增加肌肉量。保证每日蛋白质摄入达到1.2-1.5g/kg体重。';}
+    else if(bmi<24){cat='正常 ✓';color='#22c55e';advice='恭喜！您的体重在健康范围内。保持均衡饮食和规律运动，建议每周至少150分钟中等强度有氧运动。';}
+    else if(bmi<28){cat='偏胖';color='#f59e0b';advice='您的体重略超标，建议控制每日热量摄入，增加运动量。减少高糖高脂食物，多吃蔬果和全谷物。';}
+    else{cat='肥胖';color='#ef4444';advice='您的体重超标较多，建议咨询医生或营养师制定减重计划。注意控制饮食，循序渐进增加运动量，定期监测体重和血压。';}
+
+    document.getElementById('bmiCategory').textContent=cat;
+    document.getElementById('adviceText').textContent=advice;
+
+    var pct=Math.max(0,Math.min(100,(bmi/40)*100));
+    document.getElementById('indicator').style.left=pct+'%';
+}
+
+document.getElementById('height').addEventListener('input',calc);
+document.getElementById('weight').addEventListener('input',calc);
+calc();
+initSidebar('daily');
+</script>
+</body>
+</html>

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>音频频谱可视化 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="实时音频频谱可视化分析，支持麦克风输入和文件播放，纯浏览器本地处理" />
+    <link rel="stylesheet" href="../assets/tool-common.css" />
+    <style>
+
+        .av-canvas { width: 100%; height: 300px; background: #0f172a; border-radius: 10px; margin-bottom: 16px; }
+        .av-mode { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; }
+        .av-mode-btn { padding: 8px 18px; border-radius: 8px; border: 1px solid #e0e6ed; background: #f8fafc; cursor: pointer; font-size: 0.88em; transition: 0.2s; }
+        .av-mode-btn.active { background: #4a90e2; color: #fff; border-color: #4a90e2; }
+    
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="音频频谱可视化,在线音频频谱可视化,音视频处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/media/audio-visual-tool.html" />
+    <meta property="og:title" content="音频频谱可视化" />
+    <meta property="og:description" content="实时音频频谱可视化分析，支持麦克风输入和文件播放，纯浏览器本地处理" />
+    <meta property="og:url" content="https://box.lynvortex.top/media/audio-visual-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="音频频谱可视化" />
+    <meta itemprop="description" content="实时音频频谱可视化分析，支持麦克风输入和文件播放，纯浏览器本地处理" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "音视频处理",
+                "item": "https://box.lynvortex.top/media.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "音频频谱可视化",
+                "item": "https://box.lynvortex.top/media/audio-visual-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "音频频谱可视化",
+        "url": "https://box.lynvortex.top/media/audio-visual-tool.html",
+        "description": "实时音频频谱可视化分析，支持麦克风和文件输入",
+        "applicationCategory": "音视频处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>🎵 音频频谱可视化</h1>
+                <p>实时音频频谱可视化分析，支持麦克风输入和文件播放，纯浏览器本地处理</p>
+            </div>
+
+            <div class="av-mode">
+                <div class="av-mode-btn active" data-src="file">📁 音频文件</div>
+                <div class="av-mode-btn" data-src="mic">🎤 麦克风</div>
+            </div>
+            <div class="form-item" style="margin-bottom:16px;" id="avFileArea">
+                <label>选择音频文件</label>
+                <input type="file" id="avFile" accept="audio/*" />
+            </div>
+            <audio id="avAudio" controls style="width:100%;margin-bottom:16px;display:none;"></audio>
+            <canvas class="av-canvas" id="avCanvas"></canvas>
+            <div class="form-grid">
+                <div class="form-item"><label>可视化模式</label><select id="avStyle"><option value="bar">柱状频谱</option><option value="wave">波形图</option><option value="circle">环形频谱</option></select></div>
+                <div class="form-item"><label>颜色主题</label><select id="avColor"><option value="blue">蓝色</option><option value="rainbow">彩虹</option><option value="fire">火焰</option><option value="green">绿色</option></select></div>
+            </div>
+    
+            <div id="statusBar" class="status-bar info">准备就绪，请按提示操作</div>
+            <footer class="footer">
+                © 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+      <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#4a90e2;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📦 音频频谱可视化</h3>
+                <p>基于Web Audio API AnalyserNode实现实时频谱与波形可视化</p>
+                <div class="feature-chips">
+                    <span class="feature-chip">AnalyserNode</span>
+                    <span class="feature-chip">柱状/波形/环形</span>
+                    <span class="feature-chip">麦克风/文件</span>
+                    <span class="feature-chip">多色主题</span>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3>💡 使用须知</h3>
+                <ul class="tips-list">
+                    <li>可选择音频文件播放或使用麦克风实时输入</li>
+                    <li>提供柱状频谱、波形图、环形频谱三种可视化模式</li>
+                    <li>支持蓝色、彩虹、火焰、绿色四种颜色主题</li>
+                    <li>所有音频数据在本地处理，不上传服务器</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>✨ 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+
+    let acCtx = null, analyser = null, source = null, animId = null, curSrc = 'file', mediaElSource = null;
+    const canvas = document.getElementById('avCanvas');
+    const cctx = canvas.getContext('2d');
+    const setStatus = (m,t) => { const s=document.getElementById('statusBar'); s.textContent=m; s.className='status-bar '+(t||'info'); };
+
+    function resizeCanvas() { canvas.width = canvas.offsetWidth; canvas.height = 300; }
+    resizeCanvas(); window.addEventListener('resize', resizeCanvas);
+
+    document.querySelectorAll('.av-mode-btn').forEach(b => b.addEventListener('click', () => {
+        document.querySelectorAll('.av-mode-btn').forEach(x => x.classList.remove('active'));
+        b.classList.add('active'); curSrc = b.dataset.src;
+        document.getElementById('avFileArea').style.display = curSrc === 'file' ? 'flex' : 'none';
+        if (curSrc === 'mic') startMic(); else stopAll();
+    }));
+
+    document.getElementById('avFile').addEventListener('change', e => {
+        const file = e.target.files[0]; if (!file) return;
+        stopAll();
+        acCtx = acCtx || new (window.AudioContext || window.webkitAudioContext)();
+        const audio = document.getElementById('avAudio');
+        audio.src = URL.createObjectURL(file);
+        audio.style.display = 'block';
+        if (source) source.disconnect();
+        if (!mediaElSource) mediaElSource = acCtx.createMediaElementSource(audio);
+        source = mediaElSource;
+        analyser = acCtx.createAnalyser();
+        analyser.fftSize = 2048;
+        source.connect(analyser); analyser.connect(acCtx.destination);
+        audio.play();
+        draw();
+        setStatus('正在播放并可视化', 'info');
+    });
+
+    async function startMic() {
+        stopAll();
+        acCtx = acCtx || new (window.AudioContext || window.webkitAudioContext)();
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            source = acCtx.createMediaStreamSource(stream);
+            analyser = acCtx.createAnalyser();
+            analyser.fftSize = 2048;
+            source.connect(analyser);
+            draw();
+            setStatus('麦克风频谱可视化中', 'info');
+        } catch (e) { setStatus('无法访问麦克风', 'error'); }
+    }
+
+    function stopAll() {
+        if (animId) cancelAnimationFrame(animId);
+        const audio = document.getElementById('avAudio');
+        if (audio) audio.pause();
+        if (source) { try { source.disconnect(); } catch(e){} source = null; }
+    }
+
+    function getColor(i, total, theme) {
+        const t = i / total;
+        if (theme === 'blue') return `hsl(${200 + t*60}, 80%, 60%)`;
+        if (theme === 'rainbow') return `hsl(${t*360}, 80%, 60%)`;
+        if (theme === 'fire') return `hsl(${t*60}, 90%, 60%)`;
+        if (theme === 'green') return `hsl(${100 + t*60}, 80%, 55%)`;
+        return '#4a90e2';
+    }
+
+    function draw() {
+        animId = requestAnimationFrame(draw);
+        if (!analyser) return;
+        const style = document.getElementById('avStyle').value;
+        const theme = document.getElementById('avColor').value;
+        const w = canvas.width, h = canvas.height;
+        cctx.fillStyle = 'rgba(15,23,42,0.3)'; cctx.fillRect(0,0,w,h);
+
+        if (style === 'bar') {
+            const arr = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(arr);
+            const bars = 80; const bw = w / bars;
+            for (let i=0;i<bars;i++) {
+                const v = arr[Math.floor(i*arr.length/bars)] / 255;
+                const bh = v * h * 0.9;
+                cctx.fillStyle = getColor(i, bars, theme);
+                cctx.fillRect(i*bw, h-bh, bw-2, bh);
+            }
+        } else if (style === 'wave') {
+            const arr = new Uint8Array(analyser.fftSize);
+            analyser.getByteTimeDomainData(arr);
+            cctx.strokeStyle = getColor(0, 1, theme); cctx.lineWidth = 2;
+            cctx.beginPath();
+            for (let i=0;i<arr.length;i++) {
+                const x = i / arr.length * w;
+                const y = arr[i] / 128 * h / 2;
+                if (i===0) cctx.moveTo(x,y); else cctx.lineTo(x,y);
+            }
+            cctx.stroke();
+        } else if (style === 'circle') {
+            const arr = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(arr);
+            const bars = 120; const cx = w/2, cy = h/2; const r = Math.min(w,h)/4;
+            for (let i=0;i<bars;i++) {
+                const v = arr[Math.floor(i*arr.length/bars)] / 255;
+                const angle = i / bars * Math.PI * 2;
+                const len = v * r * 1.5;
+                cctx.strokeStyle = getColor(i, bars, theme);
+                cctx.lineWidth = 3;
+                cctx.beginPath();
+                cctx.moveTo(cx + Math.cos(angle)*r, cy + Math.sin(angle)*r);
+                cctx.lineTo(cx + Math.cos(angle)*(r+len), cy + Math.sin(angle)*(r+len));
+                cctx.stroke();
+            }
+        }
+    }
+    
+    initSidebar('media');
+</script>
+</body>
+</html>

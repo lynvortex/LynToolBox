@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>进制转换器 · 绘萤工具箱</title>
+    <link rel="icon" type="image/png" href="../logo.webp" />
+    <meta name="description" content="进制转换器，二进制/八进制/十进制/十六进制互转，支持任意进制(2-36)与位运算。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', -apple-system, sans-serif;
+            background: #f4f7f9;
+            margin: 0;
+            display: flex;
+            height: 100vh; overflow: hidden;
+            color: #333;
+        }
+
+        .mobile-header {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: #fff; padding: 0 16px; align-items: center;
+            justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.07); z-index: 1000;
+        }
+        .mobile-brand { font-size: 1.1em; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+        .mobile-brand img { width: 28px; height: 28px; border-radius: 6px; }
+        .menu-toggle { font-size: 22px; cursor: pointer; background: none; border: none; color: #e8845a; }
+
+        .sidebar {
+            width: 240px; background: #fff; border-right: 1px solid #e1e4e8;
+            display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+            transition: transform 0.3s; z-index: 1001; flex-shrink: 0;
+            position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+        .brand-header { padding: 28px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name-wrap { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .brand-name { font-size: 1.2em; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
+        .close-sidebar { display: none; background: none; border: none; font-size: 22px; color: #909399; cursor: pointer; }
+        .category-list { padding: 16px 0; flex: 1; }
+        .category-item {
+            display: block; padding: 14px 22px; color: #606266; text-decoration: none;
+            transition: all 0.2s; border-left: 4px solid transparent; font-weight: 500; font-size: 0.95em;
+        }
+        .category-item:hover, .category-item.active { background: #fdf0eb; color: #e8845a; border-left-color: #e8845a; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-scroll { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 40px; gap: 24px; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+
+        .tool-container {
+            width: 100%;
+            max-width: 960px;
+            background: #fff; border-radius: 12px;
+            padding: 32px 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+        }
+        .tool-header { text-align: center; margin-bottom: 28px; }
+        .tool-header h1 { margin: 0; color: #2c3e50; font-size: 1.5em; }
+        .tool-header p { color: #94a3b8; margin-top: 6px; font-size: 0.85em; }
+
+        .field-group { margin-bottom: 22px; }
+        .field-row {
+            display: grid;
+            grid-template-columns: 130px 1fr;
+            gap: 14px;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .field-label {
+            font-size: 0.85em; color: #64748b; font-weight: 600;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .base-tag {
+            background: #fdf0eb; color: #e8845a; padding: 2px 8px; border-radius: 10px;
+            font-size: 0.75em; font-family: 'Consolas', monospace; font-weight: 600;
+        }
+        .field-input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-family: 'Consolas', 'Courier New', monospace;
+            outline: none;
+            transition: border-color 0.2s;
+            color: #1e293b;
+            background: #fff;
+        }
+        .field-input:focus { border-color: #4a90e2; box-shadow: 0 0 0 3px rgba(74,144,226,0.12); }
+        .field-input.invalid { border-color: #ef4444; background: #fef2f2; }
+        .field-input[readonly] { background: #f8fafc; color: #475569; }
+
+        .section-title {
+            font-size: 0.95em; color: #2c3e50; font-weight: 600;
+            margin: 0 0 14px 0; padding-bottom: 8px; border-bottom: 2px solid #f0f2f5;
+            display: flex; align-items: center; gap: 6px;
+        }
+
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9em;
+            font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap;
+        }
+        .btn-primary { background: #e8845a; color: white; }
+        .btn-primary:hover { background: #d4734a; }
+        .btn-success { background: #34d399; color: white; }
+        .btn-success:hover { background: #2bb981; }
+        .btn-outline { background: transparent; color: #e8845a; border: 1px solid #e8845a; }
+        .btn-outline:hover { background: #e8845a; color: white; }
+        .btn-ghost { background: transparent; color: #64748b; border: 1px solid transparent; }
+        .btn-ghost:hover { background: #f1f5f9; color: #2c3e50; }
+
+        .action-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+
+        .status-bar {
+            min-height: 20px; font-size: 0.85em;
+            padding: 8px 12px; border-radius: 6px; margin-bottom: 16px;
+        }
+        .status-bar.success { color: #16a34a; background: #f0fdf4; }
+        .status-bar.error { color: #ef4444; background: #fef2f2; }
+        .status-bar.info { color: #64748b; background: #f8fafc; }
+
+        .divider { height: 1px; background: #e1e4e8; margin: 28px 0; }
+
+        .bit-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto 1fr;
+            gap: 12px;
+            align-items: end;
+            margin-bottom: 16px;
+        }
+        .bit-select {
+            padding: 10px 12px; border: 1px solid #e0e6ed; border-radius: 8px;
+            font-size: 0.9em; font-family: inherit; color: #1e293b; outline: none; background: #fff;
+        }
+        .bit-select:focus { border-color: #4a90e2; }
+
+        .bit-result {
+            background: #f8fafc; border: 1px solid #f0f2f5; border-radius: 8px;
+            padding: 14px 16px; font-family: 'Consolas', monospace; font-size: 0.85em;
+            line-height: 1.8; color: #1e293b; word-break: break-all;
+        }
+        .bit-result .res-label { color: #64748b; display: inline-block; width: 70px; font-weight: 600; }
+        .bit-result .res-val { color: #e8845a; font-weight: 600; }
+
+        .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #e1e4e8; text-align: center; color: #909399; font-size: 0.82em; }
+        .footer p { margin: 0; }
+        .footer a { color: #e8845a; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+
+        .info-cards {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-top: 4px;
+        }
+
+        .info-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 22px 24px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+            border: 1px solid #f0f2f5;
+        }
+
+        .info-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1em;
+            color: #2c3e50;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .info-card p {
+            margin: 0 0 10px 0;
+            font-size: 0.82em;
+            color: #64748b;
+        }
+
+        .tld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tld-chip {
+            background: #e0f2fe; color: #0369a1;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 500; font-family: 'Consolas', monospace;
+        }
+
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { font-size: 0.82em; color: #475569; margin-bottom: 4px; line-height: 1.5; }
+
+        .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-links a {
+            font-size: 0.85em; color: #4a90e2; text-decoration: none;
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px; transition: background 0.2s;
+        }
+        .tool-links a:hover { background: #e2e8f0; }
+
+        @media (max-width: 768px) {
+            body { display: block; height: auto; overflow: auto; }
+            .mobile-header { display: flex; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100%; transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .close-sidebar { display: block; }
+            .main-content { display: block; }
+            .main-scroll { padding: 72px 16px 32px; gap: 20px;  }
+            .tool-container { padding: 24px 16px; border-radius: 10px; }
+            .tool-header h1 { font-size: 1.3em; }
+            .action-row { gap: 8px; }
+            .btn { padding: 8px 14px; font-size: 0.85em; }
+            .info-card { padding: 18px 16px; }
+            .overlay.active { display: block; }
+            .field-row { grid-template-columns: 1fr; gap: 6px; }
+            .bit-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+    <script src="../assets/sidebar.js"></script>
+    <meta name="keywords" content="进制转换器,在线进制转换器,文本处理,免费工具,在线工具,纯前端处理,数据不上传,绘萤工具箱" />
+    <link rel="canonical" href="https://box.lynvortex.top/text/base-convert-tool.html" />
+    <meta property="og:title" content="进制转换器" />
+    <meta property="og:description" content="进制转换器，二进制/八进制/十进制/十六进制互转，支持任意进制(2-36)与位运算。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta property="og:url" content="https://box.lynvortex.top/text/base-convert-tool.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="绘萤工具箱" />
+    <meta property="og:image" content="https://box.lynvortex.top/logo.webp" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta itemprop="name" content="进制转换器" />
+    <meta itemprop="description" content="进制转换器，二进制/八进制/十进制/十六进制互转，支持任意进制(2-36)与位运算。绘萤工具箱提供免费在线工具，纯前端处理，数据不上传。" />
+    <meta itemprop="image" content="https://box.lynvortex.top/logo.webp" />
+    <script type="application/ld+json">
+[
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "首页",
+                "item": "https://box.lynvortex.top/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "文本处理",
+                "item": "https://box.lynvortex.top/text.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "进制转换器",
+                "item": "https://box.lynvortex.top/text/base-convert-tool.html"
+            }
+        ]
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "进制转换器",
+        "url": "https://box.lynvortex.top/text/base-convert-tool.html",
+        "description": "二/八/十/十六进制互转，支持任意进制与位运算",
+        "applicationCategory": "文本处理",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        }
+    }
+]
+    </script>
+</head>
+<body>
+
+<main class="main-content">
+    <div class="main-scroll">
+        <div class="tool-container">
+            <div class="tool-header">
+                <h1>进制转换器</h1>
+                <p>二进制 / 八进制 / 十进制 / 十六进制互转，支持任意进制与位运算</p>
+            </div>
+
+            <div class="field-group">
+                <h3 class="section-title">&#x1F501; 实时互转（输入任一进制自动填充其他）</h3>
+                <div class="field-row">
+                    <div class="field-label"><span class="base-tag">BIN</span> 二进制</div>
+                    <input type="text" class="field-input" id="binInput" placeholder="如 1010" autocomplete="off" />
+                </div>
+                <div class="field-row">
+                    <div class="field-label"><span class="base-tag">OCT</span> 八进制</div>
+                    <input type="text" class="field-input" id="octInput" placeholder="如 12" autocomplete="off" />
+                </div>
+                <div class="field-row">
+                    <div class="field-label"><span class="base-tag">DEC</span> 十进制</div>
+                    <input type="text" class="field-input" id="decInput" placeholder="如 10" autocomplete="off" />
+                </div>
+                <div class="field-row">
+                    <div class="field-label"><span class="base-tag">HEX</span> 十六进制</div>
+                    <input type="text" class="field-input" id="hexInput" placeholder="如 a" autocomplete="off" />
+                </div>
+                <div class="action-row">
+                    <button class="btn btn-ghost" id="clearConvertBtn">&#x1F5D1; 清空</button>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="field-group">
+                <h3 class="section-title">&#x1F9EE; 任意进制转换（2 - 36）</h3>
+                <div class="bit-grid">
+                    <div>
+                        <div class="field-label" style="margin-bottom:6px;">源进制</div>
+                        <input type="number" class="field-input" id="fromBase" value="10" min="2" max="36" />
+                    </div>
+                    <div>
+                        <div class="field-label" style="margin-bottom:6px;">数值</div>
+                        <input type="text" class="field-input" id="fromValue" placeholder="输入数值" autocomplete="off" />
+                    </div>
+                    <button class="btn btn-primary" id="anyConvertBtn" style="height:44px;">&#x2192;</button>
+                    <div>
+                        <div class="field-label" style="margin-bottom:6px;">目标进制</div>
+                        <input type="number" class="field-input" id="toBase" value="2" min="2" max="36" />
+                    </div>
+                </div>
+                <div class="bit-result" id="anyResult">
+                    <span class="res-label">结果：</span><span class="res-val" id="anyResultVal">—</span>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="field-group">
+                <h3 class="section-title">&#x2696; 位运算（支持大整数）</h3>
+                <div class="bit-grid">
+                    <div>
+                        <div class="field-label" style="margin-bottom:6px;">操作数 A（十进制）</div>
+                        <input type="text" class="field-input" id="opA" placeholder="如 12" autocomplete="off" />
+                    </div>
+                    <div>
+                        <div class="field-label" style="margin-bottom:6px;">运算</div>
+                        <select class="bit-select" id="opType" style="width:100%;height:44px;">
+                            <option value="and">& (按位与 AND)</option>
+                            <option value="or">| (按位或 OR)</option>
+                            <option value="xor">^ (异或 XOR)</option>
+                            <option value="not">~ (取反 NOT，仅用 A)</option>
+                            <option value="shl">&lt;&lt; (左移，B 为位数)</option>
+                            <option value="shr">&gt;&gt; (右移，B 为位数)</option>
+                        </select>
+                    </div>
+                    <div></div>
+                    <div>
+                        <div class="field-label" style="margin-bottom:6px;">操作数 B（十进制）</div>
+                        <input type="text" class="field-input" id="opB" placeholder="如 10" autocomplete="off" />
+                    </div>
+                </div>
+                <div class="action-row">
+                    <button class="btn btn-primary" id="bitCalcBtn">&#x2696; 计算</button>
+                    <button class="btn btn-ghost" id="clearBitBtn">&#x1F5D1; 清空</button>
+                </div>
+                <div class="bit-result" id="bitResult">
+                    <div><span class="res-label">十进制：</span><span class="res-val" id="bitDec">—</span></div>
+                    <div><span class="res-label">二进制：</span><span class="res-val" id="bitBin">—</span></div>
+                    <div><span class="res-label">十六进制：</span><span class="res-val" id="bitHex">—</span></div>
+                </div>
+            </div>
+
+            <div class="status-bar info" id="statusBar">输入任意进制的数值，其他进制将自动填充</div>
+
+            <footer class="footer">
+                &copy; 2026 绘萤者-Lynvortex · 美梦多彩 理想自由
+            <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#e8845a;text-decoration:underline;font-weight:600;">湘ICP备2026031078号-1</a> <a href="https://beian.mps.gov.cn/#/query/webSearch?code=43050302000259" target="_blank" rel="noopener" style="color:#e8845a;text-decoration:underline;font-weight:600;margin-left:10px;"><img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" alt="公安备案徽标" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;border:0;">湘公网安备43050302000259号</a></p>
+            </footer>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>&#x1F4E6; 功能说明</h3>
+                <p>三大模块，覆盖进制与位运算场景</p>
+                <div class="tld-chips">
+                    <span class="tld-chip">实时互转</span>
+                    <span class="tld-chip">任意进制 2-36</span>
+                    <span class="tld-chip">位运算</span>
+                    <span class="tld-chip">大整数</span>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h3>&#x1F4A1; 使用须知</h3>
+                <ul class="tips-list">
+                    <li>所有处理在浏览器本地执行，数据不会上传</li>
+                    <li>使用 BigInt 处理大整数，突破 53 位精度限制</li>
+                    <li>实时互转区输入任一进制，其他三个进制即时更新</li>
+                    <li>位运算支持与、或、异或、取反、左移、右移（算术右移）</li>
+                    <li>右移为算术右移，保留符号位；十六进制不区分大小写</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h3>&#x2728; 绘萤者</h3>
+                <p style="margin-bottom: 8px;">以萤火之光，绘万千想象</p>
+                <div class="tool-links">
+                    <a href="https://lynvortex.top" target="_blank">完全免费</a>
+                    <a href="https://lynvortex.top" target="_blank">开源精神</a>
+                    <a href="https://lynvortex.top" target="_blank">极客风范</a>
+                    <a href="https://lynvortex.top" target="_blank">协作共创</a>
+                </div>
+                <p style="margin-top:10px; font-size:0.82em; color:#475569;">
+                    绘萤者——探索真正的互联网精神，创造更有意义的互联网。
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    // 侧边栏由 sidebar.js 统一管理
+    initSidebar('text');
+
+    var setStatus = function (msg, type) {
+        var sb = document.getElementById('statusBar');
+        sb.textContent = msg;
+        sb.className = 'status-bar ' + type;
+    };
+
+    var DIGITS = '0123456789abcdefghijklmnopqrstuvwxyz';
+
+    // 任意进制字符串 -> BigInt
+    var strToBigInt = function (str, base) {
+        str = str.trim().toLowerCase();
+        if (str === '') throw new Error('数值为空');
+        var neg = false;
+        if (str[0] === '+') str = str.slice(1);
+        else if (str[0] === '-') { neg = true; str = str.slice(1); }
+        if (str === '') throw new Error('数值为空');
+        // 去除前导 0（保留一个）
+        var result = 0n;
+        var bigBase = BigInt(base);
+        for (var i = 0; i < str.length; i++) {
+            var d = DIGITS.indexOf(str[i]);
+            if (d < 0 || d >= base) throw new Error('字符 "' + str[i] + '" 在 ' + base + ' 进制中无效');
+            result = result * bigBase + BigInt(d);
+        }
+        return neg ? -result : result;
+    };
+
+    // BigInt -> 任意进制字符串
+    var bigIntToStr = function (num, base) {
+        if (num === 0n) return '0';
+        var neg = num < 0n;
+        if (neg) num = -num;
+        var bigBase = BigInt(base);
+        var result = '';
+        while (num > 0n) {
+            var rem = num % bigBase;
+            result = DIGITS[Number(rem)] + result;
+            num = num / bigBase;
+        }
+        return neg ? '-' + result : result;
+    };
+
+    // 实时互转
+    var FIELDS = [
+        { id: 'binInput', base: 2 },
+        { id: 'octInput', base: 8 },
+        { id: 'decInput', base: 10 },
+        { id: 'hexInput', base: 16 }
+    ];
+
+    var updating = false;
+    var syncConvert = function (sourceField) {
+        if (updating) return;
+        updating = true;
+        var srcEl = document.getElementById(sourceField.id);
+        var raw = srcEl.value.trim();
+        // 清除错误状态
+        FIELDS.forEach(function (f) { document.getElementById(f.id).classList.remove('invalid'); });
+
+        if (raw === '') {
+            FIELDS.forEach(function (f) {
+                if (f.id !== sourceField.id) document.getElementById(f.id).value = '';
+            });
+            updating = false;
+            return;
+        }
+        try {
+            var val = strToBigInt(raw, sourceField.base);
+            FIELDS.forEach(function (f) {
+                if (f.id !== sourceField.id) {
+                    document.getElementById(f.id).value = bigIntToStr(val, f.base);
+                }
+            });
+            setStatus('转换成功：' + bigIntToStr(val, 10), 'success');
+        } catch (err) {
+            srcEl.classList.add('invalid');
+            setStatus('输入无效：' + err.message, 'error');
+        }
+        updating = false;
+    };
+
+    FIELDS.forEach(function (f) {
+        document.getElementById(f.id).addEventListener('input', function () { syncConvert(f); });
+    });
+
+    var clearConvert = function () {
+        FIELDS.forEach(function (f) {
+            var el = document.getElementById(f.id);
+            el.value = ''; el.classList.remove('invalid');
+        });
+        setStatus('已清空', 'info');
+    };
+
+    // 任意进制转换
+    var anyConvert = function () {
+        var fromBase = parseInt(document.getElementById('fromBase').value, 10);
+        var toBase = parseInt(document.getElementById('toBase').value, 10);
+        var fromValue = document.getElementById('fromValue').value;
+        if (isNaN(fromBase) || fromBase < 2 || fromBase > 36) { setStatus('源进制必须在 2-36 之间', 'error'); return; }
+        if (isNaN(toBase) || toBase < 2 || toBase > 36) { setStatus('目标进制必须在 2-36 之间', 'error'); return; }
+        if (!fromValue.trim()) { setStatus('请输入数值', 'error'); return; }
+        try {
+            var val = strToBigInt(fromValue, fromBase);
+            var result = bigIntToStr(val, toBase);
+            document.getElementById('anyResultVal').textContent = result;
+            setStatus(fromBase + ' 进制 "' + fromValue + '" = ' + toBase + ' 进制 "' + result + '"', 'success');
+        } catch (err) {
+            document.getElementById('anyResultVal').textContent = '错误';
+            setStatus('转换失败：' + err.message, 'error');
+        }
+    };
+
+    // 位运算
+    var bitCalc = function () {
+        var opType = document.getElementById('opType').value;
+        var aRaw = document.getElementById('opA').value.trim();
+        var bRaw = document.getElementById('opB').value.trim();
+        if (aRaw === '') { setStatus('请输入操作数 A', 'error'); return; }
+        try {
+            var a = strToBigInt(aRaw, 10);
+            var result;
+            if (opType === 'not') {
+                result = ~a;
+            } else {
+                if (bRaw === '') { setStatus('请输入操作数 B', 'error'); return; }
+                var b = strToBigInt(bRaw, 10);
+                if (b < 0n && (opType === 'shl' || opType === 'shr')) { setStatus('移位位数不能为负数', 'error'); return; }
+                switch (opType) {
+                    case 'and': result = a & b; break;
+                    case 'or': result = a | b; break;
+                    case 'xor': result = a ^ b; break;
+                    case 'shl': result = a << b; break;
+                    case 'shr': result = a >> b; break;
+                }
+            }
+            document.getElementById('bitDec').textContent = bigIntToStr(result, 10);
+            document.getElementById('bitBin').textContent = bigIntToStr(result, 2);
+            document.getElementById('bitHex').textContent = bigIntToStr(result, 16).toUpperCase();
+            setStatus('位运算完成', 'success');
+        } catch (err) {
+            document.getElementById('bitDec').textContent = '错误';
+            document.getElementById('bitBin').textContent = '—';
+            document.getElementById('bitHex').textContent = '—';
+            setStatus('计算失败：' + err.message, 'error');
+        }
+    };
+
+    var clearBit = function () {
+        document.getElementById('opA').value = '';
+        document.getElementById('opB').value = '';
+        document.getElementById('bitDec').textContent = '—';
+        document.getElementById('bitBin').textContent = '—';
+        document.getElementById('bitHex').textContent = '—';
+        setStatus('已清空', 'info');
+    };
+
+    document.getElementById('clearConvertBtn').addEventListener('click', clearConvert);
+    document.getElementById('anyConvertBtn').addEventListener('click', anyConvert);
+    document.getElementById('bitCalcBtn').addEventListener('click', bitCalc);
+    document.getElementById('clearBitBtn').addEventListener('click', clearBit);
+    document.getElementById('fromValue').addEventListener('keydown', function (e) { if (e.key === 'Enter') anyConvert(); });
+</script>
+</body>
+</html>
