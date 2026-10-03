@@ -9,8 +9,60 @@
 
 require_once __DIR__ . '/config.php';
 
-// ========== 会话管理 ==========
+// ========== 会话安全配置 ==========
+$secureCookie = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+session_set_cookie_params([
+    'lifetime' => 0,
+    'path'     => '/',
+    'httponly' => true,                       // 防 XSS 窃取会话 Cookie
+    'samesite' => 'Lax',                      // 缓解跨站携带
+    'secure'   => $secureCookie,              // HTTPS 部署时仅经加密通道传输
+]);
 session_start();
+// 防 Session Fixation 的另一半：会话中未建立管理员身份前，每次页面加载都轮换 ID
+if (empty($_SESSION['admin_logged_in'])) {
+    session_regenerate_id(true);
+}
+
+// ========== 登录失败限速（防在线爆破，flock 保证并发安全） ==========
+function loginThrottleCheck() {
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $file = sys_get_temp_dir() . '/box_admin_throttle_' . md5($ip);
+    $fp = @fopen($file, 'c+');
+    if (!$fp) {
+        return; // 限速器故障时不阻塞登录
+    }
+    flock($fp, LOCK_EX);
+    $data = json_decode(stream_get_contents($fp), true);
+    if (!is_array($data) || !isset($data['fails'], $data['since'])) {
+        $data = ['fails' => 0, 'since' => time()];
+    }
+    if (time() - $data['since'] > 600) { // 10 分钟窗口
+        $data = ['fails' => 0, 'since' => time()];
+    }
+    $blocked = $data['fails'] >= 5;
+    if (!$blocked) {
+        $data['fails']++;
+    }
+    ftruncate($fp, 0);
+    rewind($fp);
+    fwrite($fp, json_encode($data));
+    fflush($fp);
+    flock($fp, LOCK_UN);
+    fclose($fp);
+    if ($blocked) {
+        http_response_code(429);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['code' => -1, 'msg' => '失败次数过多，请 10 分钟后再试']);
+        exit;
+    }
+}
+
+function loginThrottleClear() {
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    @unlink(sys_get_temp_dir() . '/box_admin_throttle_' . md5($ip));
+}
 
 // ========== CSRF Token 生成与验证 ==========
 function generateCsrfToken() {
@@ -29,9 +81,18 @@ $action = isset($_GET['action']) ? $_GET['action'] : '';
 
 if ($action === 'login') {
     header('Content-Type: application/json; charset=utf-8');
+    // 安全：未初始化密码哈希时拒绝一切登录（防止 fallback 到公开默认密码）
+    if (ADMIN_PASSWORD_HASH === '') {
+        http_response_code(503);
+        echo json_encode(['code' => -1, 'msg' => '管理后台未初始化：请先在服务器运行 php make-hash.php 生成 data/admin_auth.json']);
+        exit;
+    }
+    // 安全：登录失败限速，防在线爆破
+    loginThrottleCheck();
     $password = isset($_POST['password']) ? $_POST['password'] : '';
 
     if (password_verify($password, ADMIN_PASSWORD_HASH)) {
+        loginThrottleClear();
         // 安全：登录后重新生成 Session ID，防止 Session Fixation
         session_regenerate_id(true);
         $_SESSION['admin_logged_in'] = true;
@@ -95,7 +156,7 @@ if ($action === 'update_pw') {
     if (!is_dir($authDir)) {
         mkdir($authDir, 0755, true);
     }
-    $result = file_put_contents(ADMIN_AUTH_FILE, json_encode(['hash' => $newHash]));
+    $result = file_put_contents(ADMIN_AUTH_FILE, json_encode(['hash' => $newHash]), LOCK_EX);
 
     if ($result === false) {
         http_response_code(500);
@@ -160,7 +221,16 @@ if ($action === 'save_data') {
         }
     }
 
-    $result = file_put_contents(DATA_FILE, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+    // 安全：校验 URL 协议，杜绝 javascript:/data:/vbscript: 等进入 data.json 造成存储型 XSS
+    foreach ($data['tools'] as $tool) {
+        if (!isValidToolUrl($tool['url'])) {
+            http_response_code(400);
+            echo json_encode(['code' => -1, 'msg' => '工具 URL 不合法：' . $tool['url']]);
+            exit;
+        }
+    }
+
+    $result = file_put_contents(DATA_FILE, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), LOCK_EX);
     if ($result === false) {
         http_response_code(500);
         echo json_encode(['code' => -1, 'msg' => '写入文件失败']);
@@ -169,6 +239,21 @@ if ($action === 'save_data') {
 
     echo json_encode(['code' => 200, 'msg' => '保存成功']);
     exit;
+}
+
+// 工具 URL 只允许站内相对路径与 http(s) 链接
+function isValidToolUrl($url) {
+    if (!is_string($url) || $url === '' || strlen($url) > 2048) {
+        return false;
+    }
+    if ($url[0] === '/') {
+        return true; // 站内根相对路径
+    }
+    if (preg_match('#^https?://#i', $url)) {
+        return true; // http(s) 外链
+    }
+    // 其余必须是纯相对路径：拒绝任何协议前缀（javascript: data: vbscript: 等）
+    return !preg_match('#^[a-z][a-z0-9+.\-]*:#i', $url);
 }
 
 if ($action === 'get_config') {

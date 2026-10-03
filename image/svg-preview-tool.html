@@ -406,13 +406,14 @@ function renderSvg() {
         svgCode = '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">' + code + '</svg>';
     }
 
-    // 安全净化：移除脚本标签和事件处理器
+    // 保留净化作为第一道防线
     svgCode = sanitizeSvg(svgCode);
 
     errorBar.style.display = 'none';
-    svgPreview.innerHTML = svgCode;
-
-    let svgEl = svgPreview.querySelector('svg');
+    // 沙箱渲染：DOMParser 解析出的文档是惰性的（脚本不执行），仅用于读取元数据；
+    // 实际渲染放进不带 allow-scripts 的 iframe，SVG 内任何脚本均无法运行
+    const inertDoc = new DOMParser().parseFromString(svgCode, 'text/html');
+    const svgEl = inertDoc.querySelector('svg');
     if (svgEl) {
         let w = svgEl.getAttribute('width') || svgEl.getAttribute('viewBox') || 'auto';
         let h = svgEl.getAttribute('height') || 'auto';
@@ -423,6 +424,7 @@ function renderSvg() {
         downloadBtn.style.display = 'inline-block';
         setStatus('SVG渲染成功', 'success');
     } else {
+        svgPreview.innerHTML = '';
         errorBar.style.display = 'block';
         errorBar.textContent = 'SVG解析错误：无法识别有效的SVG元素，请检查代码';
         document.getElementById('svgWidth').textContent = '-';
@@ -430,7 +432,17 @@ function renderSvg() {
         document.getElementById('svgElementCount').textContent = '-';
         downloadBtn.style.display = 'none';
         setStatus('SVG解析失败，请检查代码', 'error');
+        return;
     }
+    let frame = svgPreview.querySelector('iframe');
+    if (!frame) {
+        frame = document.createElement('iframe');
+        frame.setAttribute('sandbox', '');
+        frame.style.cssText = 'border:0;width:100%;height:100%;background:transparent;';
+        svgPreview.innerHTML = '';
+        svgPreview.appendChild(frame);
+    }
+    frame.srcdoc = svgCode;
 }
 
 function downloadSvg() {

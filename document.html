@@ -146,7 +146,7 @@
         const total = cards.length;
         toolStats.innerHTML = `共 <strong style="color: #f59e0b;">${total}</strong> 个工具`;
 
-        searchInput.addEventListener('input', () => {
+        searchInput.oninput = () => {
             const query = searchInput.value.trim().toLowerCase();
             let visible = 0;
             cards.forEach(card => {
@@ -162,7 +162,7 @@
             toolStats.innerHTML = query
                 ? `找到 <strong style="color: #f59e0b;">${visible}</strong> / ${total} 个工具`
                 : `共 <strong style="color: #f59e0b;">${total}</strong> 个工具`;
-        });
+        };
     };
 
     loadTools();

@@ -48,6 +48,11 @@
     Require all denied
 </FilesMatch>
 
+# 安全：禁止直接访问配置与工具脚本（均仅由服务端 include / CLI 使用）
+<FilesMatch "^(config\.php|config\.example\.php|make-hash\.php)$">
+    Require all denied
+</FilesMatch>
+
 # 安全：禁止访问 data 目录（存储管理员密码哈希等敏感数据）
 <IfModule mod_rewrite.c>
     RewriteRule ^data/ - [F,L]
@@ -56,10 +61,9 @@
 # 安全：禁止目录列表
 Options -Indexes
 
-# 安全头
+# 安全头（X-XSS-Protection 已被现代浏览器废弃，移除）
 <IfModule mod_headers.c>
     Header set X-Content-Type-Options "nosniff"
     Header set X-Frame-Options "SAMEORIGIN"
-    Header set X-XSS-Protection "1; mode=block"
     Header set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>

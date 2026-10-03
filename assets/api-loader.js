@@ -20,6 +20,19 @@ window.escapeHtml = function (str) {
 (function () {
     let _cachedData = null;
 
+    // data.json 中的字段是用户/管理端可控数据，进入 innerHTML 前必须转义
+    const esc = window.escapeHtml;
+
+    // 渲染用 URL 白名单：站内相对路径与 http(s)；拦截 javascript:/data: 等危险协议
+    function safeUrl(u) {
+        const s = String(u == null ? '' : u).trim();
+        if (!s) return '';
+        if (/^https?:\/\//i.test(s)) return esc(s);
+        if (s[0] === '/') return esc(s);
+        if (/^[a-z][a-z0-9+.-]*:/i.test(s)) return '#'; // 含协议前缀但非 http(s)，一律丢弃
+        return esc(s);
+    }
+
     async function loadData() {
         if (_cachedData) return _cachedData;
         try {
@@ -80,11 +93,11 @@ window.escapeHtml = function (str) {
          */
         renderToolCard(tool) {
             return `
-                <a href="${tool.url}" class="tool-card">
-                    <div class="icon-box">${tool.icon || '🔧'}</div>
+                <a href="${safeUrl(tool.url)}" class="tool-card">
+                    <div class="icon-box">${esc(tool.icon || '🔧')}</div>
                     <div class="card-text">
-                        <h3>${tool.name}</h3>
-                        <p>${tool.description || ''}</p>
+                        <h3>${esc(tool.name)}</h3>
+                        <p>${esc(tool.description || '')}</p>
                     </div>
                 </a>
             `;
@@ -110,7 +123,7 @@ window.escapeHtml = function (str) {
             if (!container) return;
             container.innerHTML = categories.map(c => {
                 const active = c.slug === currentSlug ? ' active' : '';
-                return `<a href="${c.slug === 'home' ? 'index.html' : c.slug + '.html'}" class="category-item${active}">${c.icon} ${c.name}</a>`;
+                return `<a href="${c.slug === 'home' ? 'index.html' : safeUrl(c.slug + '.html')}" class="category-item${active}">${esc(c.icon)} ${esc(c.name)}</a>`;
             }).join('');
         }
     };

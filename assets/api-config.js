@@ -4,11 +4,8 @@
  * 前端不存储任何密钥信息
  */
 window.API_CONFIG = {
-    // 使用 PHP 代理（密钥在服务端，安全）
-    useProxy: true,
-    proxyUrl: 'proxy.php',
-
-    // 各接口地址 — 指向本地 PHP 代理（密钥在服务端）
+    // 各接口地址 — 指向本地 PHP 代理（密钥在服务端，安全）
+    // 由 network/ 子目录页面使用，路径固定相对站点根一级深度
     apihz: {
         endpoints: {
             port:     '../proxy.php?action=port',

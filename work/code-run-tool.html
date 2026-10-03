@@ -228,6 +228,7 @@
     };
 
     window.addEventListener('message', (e) => {
+        if (e.source !== preview.contentWindow) return; // 只接受预览 iframe 发来的消息
         if (e.data && e.data.__console) {
             const t = e.data.type === 'error' ? 'err' : e.data.type === 'warn' ? 'warn' : e.data.type === 'info' || e.data.type === 'debug' ? 'info' : '';
             log(e.data.args, t);

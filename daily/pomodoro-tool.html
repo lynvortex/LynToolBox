@@ -210,7 +210,7 @@
     const setStatus = (m, t) => { const sb = document.getElementById('statusBar'); sb.textContent = m; sb.className = 'status-bar ' + (t || 'info'); };
     const RING_LEN = 911; // 2*PI*145
 
-    let activeTimer = null;
+    let pomoTimer = null, swTimer = null, cdTimer = null;
 
     // ============ 番茄钟 ============
     let pomoWork = 25, pomoBrk = 5, pomoSec = 25 * 60, pomoIsWork = true, pomoRunning = false, pomoCount = parseInt(localStorage.getItem('pomoCount') || '0', 10);
@@ -235,13 +235,13 @@
     document.querySelectorAll('#pomodoroPanel .preset-btn').forEach(b => b.addEventListener('click', () => {
         document.querySelectorAll('#pomodoroPanel .preset-btn').forEach(x => x.classList.remove('active'));
         b.classList.add('active'); pomoWork = +b.dataset.work; pomoBrk = +b.dataset.brk;
-        pomoIsWork = true; pomoSec = pomoWork * 60; renderPomo(); if (pomoRunning) { clearInterval(activeTimer); pomoRunning = false; document.getElementById('pomoStart').textContent = '▶ 开始'; }
+        pomoIsWork = true; pomoSec = pomoWork * 60; renderPomo(); if (pomoRunning) { clearInterval(pomoTimer); pomoRunning = false; document.getElementById('pomoStart').textContent = '▶ 开始'; }
     }));
 
     document.getElementById('pomoStart').addEventListener('click', function () {
-        if (pomoRunning) { clearInterval(activeTimer); pomoRunning = false; this.textContent = '▶ 开始'; setStatus('已暂停', 'info'); return; }
+        if (pomoRunning) { clearInterval(pomoTimer); pomoRunning = false; this.textContent = '▶ 开始'; setStatus('已暂停', 'info'); return; }
         pomoRunning = true; this.textContent = '⏸ 暂停'; setStatus(pomoIsWork ? '专注中...' : '休息中...', 'info');
-        activeTimer = setInterval(() => {
+        pomoTimer = setInterval(() => {
             pomoSec--;
             if (pomoSec <= 0) {
                 if (pomoIsWork) { pomoCount++; localStorage.setItem('pomoCount', pomoCount); pomoCountEl.textContent = pomoCount; setStatus('🍅 一个番茄完成！进入休息', 'success'); try { notify('番茄完成', '专注结束，休息一下吧～'); } catch (e) {} }
@@ -251,7 +251,7 @@
             renderPomo();
         }, 1000);
     });
-    document.getElementById('pomoReset').addEventListener('click', () => { clearInterval(activeTimer); pomoRunning = false; pomoIsWork = true; pomoSec = pomoWork * 60; renderPomo(); document.getElementById('pomoStart').textContent = '▶ 开始'; setStatus('已重置', 'info'); });
+    document.getElementById('pomoReset').addEventListener('click', () => { clearInterval(pomoTimer); pomoRunning = false; pomoIsWork = true; pomoSec = pomoWork * 60; renderPomo(); document.getElementById('pomoStart').textContent = '▶ 开始'; setStatus('已重置', 'info'); });
     document.getElementById('pomoSkip').addEventListener('click', () => { pomoIsWork = !pomoIsWork; pomoSec = (pomoIsWork ? pomoWork : pomoBrk) * 60; renderPomo(); setStatus('已跳过', 'info'); });
 
     // ============ 秒表 ============
@@ -259,9 +259,9 @@
     const swTime = document.getElementById('swTime');
     const fmtSw = (ms) => { const t = Math.floor(ms / 10); const h = Math.floor(t / 360000), m = Math.floor(t / 6000) % 60, s = Math.floor(t / 100) % 60, cs = t % 100; return (h ? String(h).padStart(2, '0') + ':' : '') + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0') + '.' + String(cs).padStart(2, '0'); };
     document.getElementById('swStart').addEventListener('click', function () {
-        if (swRunning) { swElapsed += Date.now() - swStart; swRunning = false; clearInterval(activeTimer); this.textContent = '▶ 继续'; return; }
+        if (swRunning) { swElapsed += Date.now() - swStart; swRunning = false; clearInterval(swTimer); this.textContent = '▶ 继续'; return; }
         swRunning = true; swStart = Date.now(); this.textContent = '⏸ 暂停';
-        activeTimer = setInterval(() => { swTime.textContent = fmtSw(swElapsed + Date.now() - swStart); }, 50);
+        swTimer = setInterval(() => { swTime.textContent = fmtSw(swElapsed + Date.now() - swStart); }, 50);
     });
     document.getElementById('swLap').addEventListener('click', () => {
         if (!swRunning && !swElapsed) return;
@@ -270,7 +270,7 @@
         swLaps.push({ total: cur, diff: cur - prev });
         document.getElementById('swLaps').innerHTML = swLaps.map((l, i) => `<div class="lap-row"><span>#${i + 1}</span><span>+${fmtSw(l.diff)}</span><span>${fmtSw(l.total)}</span></div>`).join('');
     });
-    document.getElementById('swReset').addEventListener('click', () => { clearInterval(activeTimer); swElapsed = 0; swRunning = false; swLaps = []; swTime.textContent = '00:00.00'; document.getElementById('swLaps').innerHTML = ''; document.getElementById('swStart').textContent = '▶ 开始'; });
+    document.getElementById('swReset').addEventListener('click', () => { clearInterval(swTimer); swElapsed = 0; swRunning = false; swLaps = []; swTime.textContent = '00:00.00'; document.getElementById('swLaps').innerHTML = ''; document.getElementById('swStart').textContent = '▶ 开始'; });
 
     // ============ 倒计时 ============
     let cdTotal = 600, cdSec = 600, cdRunning = false;
@@ -280,22 +280,22 @@
     renderCd();
     document.querySelectorAll('#countdownPanel .preset-btn').forEach(b => b.addEventListener('click', () => {
         document.querySelectorAll('#countdownPanel .preset-btn').forEach(x => x.classList.remove('active'));
-        b.classList.add('active'); cdTotal = cdSec = +b.dataset.sec; renderCd(); if (cdRunning) { clearInterval(activeTimer); cdRunning = false; document.getElementById('cdStart').textContent = '▶ 开始'; }
+        b.classList.add('active'); cdTotal = cdSec = +b.dataset.sec; renderCd(); if (cdRunning) { clearInterval(cdTimer); cdRunning = false; document.getElementById('cdStart').textContent = '▶ 开始'; }
     }));
     document.getElementById('cdCustom').addEventListener('change', (e) => {
         const m = e.target.value.match(/^(\d+):(\d+)$/); if (!m) { setStatus('格式应为 分:秒，如 05:30', 'error'); return; }
         cdTotal = cdSec = +m[1] * 60 + +m[2]; renderCd();
     });
     document.getElementById('cdStart').addEventListener('click', function () {
-        if (cdRunning) { clearInterval(activeTimer); cdRunning = false; this.textContent = '▶ 继续'; return; }
+        if (cdRunning) { clearInterval(cdTimer); cdRunning = false; this.textContent = '▶ 继续'; return; }
         if (cdSec <= 0) { cdSec = cdTotal; renderCd(); }
         cdRunning = true; this.textContent = '⏸ 暂停';
-        activeTimer = setInterval(() => {
+        cdTimer = setInterval(() => {
             cdSec--; renderCd();
-            if (cdSec <= 0) { clearInterval(activeTimer); cdRunning = false; this.textContent = '▶ 开始'; setStatus('⏰ 倒计时结束！', 'success'); try { notify('倒计时结束', '时间到！'); } catch (e) {} try { beep(); } catch (e) {} }
+            if (cdSec <= 0) { clearInterval(cdTimer); cdRunning = false; this.textContent = '▶ 开始'; setStatus('⏰ 倒计时结束！', 'success'); try { notify('倒计时结束', '时间到！'); } catch (e) {} try { beep(); } catch (e) {} }
         }, 1000);
     });
-    document.getElementById('cdReset').addEventListener('click', () => { clearInterval(activeTimer); cdRunning = false; cdSec = cdTotal; renderCd(); document.getElementById('cdStart').textContent = '▶ 开始'; });
+    document.getElementById('cdReset').addEventListener('click', () => { clearInterval(cdTimer); cdRunning = false; cdSec = cdTotal; renderCd(); document.getElementById('cdStart').textContent = '▶ 开始'; });
 
     function notify(t, b) { if ('Notification' in window && Notification.permission === 'granted') new Notification(t, { body: b }); }
     function beep() { try { const ac = new (window.AudioContext || window.webkitAudioContext)(); const o = ac.createOscillator(); const g = ac.createGain(); o.connect(g); g.connect(ac.destination); o.frequency.value = 880; g.gain.setValueAtTime(0.3, ac.currentTime); g.gain.exponentialRampToValueAtTime(0.01, ac.currentTime + 0.6); o.start(); o.stop(ac.currentTime + 0.6); } catch (e) {} }
@@ -310,7 +310,7 @@
         document.getElementById('stopwatchPanel').style.display = m === 'stopwatch' ? 'block' : 'none';
         document.getElementById('countdownPanel').style.display = m === 'countdown' ? 'block' : 'none';
         // 停止所有正在运行的计时器，防止后台泄漏
-        if (activeTimer) { clearInterval(activeTimer); activeTimer = null; }
+        clearInterval(pomoTimer); clearInterval(swTimer); clearInterval(cdTimer);
         if (pomoRunning) { pomoRunning = false; document.getElementById('pomoStart').textContent = '▶ 开始'; }
         if (swRunning) { swElapsed += Date.now() - swStart; swRunning = false; document.getElementById('swStart').textContent = '▶ 继续'; }
         if (cdRunning) { cdRunning = false; document.getElementById('cdStart').textContent = '▶ 继续'; }

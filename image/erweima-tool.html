@@ -590,13 +590,14 @@
                             return;
                         }
                         const img = document.getElementById('qrResultImg');
-                        img.src = canvas.toDataURL('image/png');
+                        // 先注册 onload 再赋值 src，避免大图/缓存场景不触发
                         img.onload = () => {
                             document.getElementById('generateResult').style.display = 'block';
                             setStatus('二维码生成成功！', 'success');
                             btn.disabled = false;
                             btn.textContent = '✨ 生成二维码';
                         };
+                        img.src = canvas.toDataURL('image/png');
                     });
                 } catch (err) {
                     setStatus('生成失败：' + err.message, 'error');

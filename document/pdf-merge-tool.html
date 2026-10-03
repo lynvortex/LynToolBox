@@ -185,8 +185,9 @@
     });
 
     function renderMergeList() {
+        // 文件名来自外部文件元数据，必须转义后再进 innerHTML
         document.getElementById('pmMergeList').innerHTML = mergeFiles.map((f, i) => `
-            <div class="pm-file"><span class="pm-name">${f.name} (${(f.size/1048576).toFixed(2)} MB)</span>
+            <div class="pm-file"><span class="pm-name">${escapeHtml(f.name)} (${(f.size/1048576).toFixed(2)} MB)</span>
             <span class="pm-up" onclick="moveMerge(${i},-1)">↑</span><span class="pm-down" onclick="moveMerge(${i},1)">↓</span><span class="pm-del" onclick="delMerge(${i})">🗑</span></div>
         `).join('');
     }

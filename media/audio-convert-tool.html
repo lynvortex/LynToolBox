@@ -138,6 +138,7 @@
 <script>
 
     let convCtx = null;
+    let convUrls = []; // 本次会话产生的 blob URL，重新转换时统一回收
     const setStatus = (m,t) => { const s=document.getElementById('statusBar'); s.textContent=m; s.className='status-bar '+(t||'info'); };
 
     document.getElementById('convFile').addEventListener('change', e => {
@@ -150,6 +151,7 @@
         const rate = +document.getElementById('convRate').value;
         const result = document.getElementById('convResult');
         result.innerHTML = '';
+        convUrls.forEach(u => URL.revokeObjectURL(u)); convUrls = [];
         convCtx = convCtx || new (window.AudioContext || window.webkitAudioContext)();
         if (convCtx.state === 'suspended') await convCtx.resume();
 
@@ -175,9 +177,29 @@
                     blob = await p;
                 }
                 const url = URL.createObjectURL(blob);
+                convUrls.push(url);
                 const name = files[i].name.replace(/\.[^.]+$/, '') + '.' + fmt;
-                result.innerHTML += `<div class="conv-item"><span style="flex:1;font-size:0.88em;">${name}</span><audio controls src="${url}" style="height:36px;"></audio><button class="btn btn-outline" style="padding:6px 12px;font-size:0.8em;" onclick="dl('${url}','${name}')">⬇</button></div>`;
-            } catch (e) { result.innerHTML += `<div class="conv-item" style="color:#ef4444;">${files[i].name} 转换失败: ${e.message}</div>`; }
+                // 文件名是外部可控数据，用 textContent + 事件绑定，杜绝注入 innerHTML/onclick
+                const item = document.createElement('div');
+                item.className = 'conv-item';
+                const label = document.createElement('span');
+                label.style.cssText = 'flex:1;font-size:0.88em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+                label.textContent = name;
+                const audio = document.createElement('audio');
+                audio.controls = true; audio.src = url; audio.style.cssText = 'height:36px;';
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-outline'; btn.style.cssText = 'padding:6px 12px;font-size:0.8em;';
+                btn.textContent = '⬇';
+                btn.addEventListener('click', () => dl(url, name));
+                item.append(label, audio, btn);
+                result.appendChild(item);
+            } catch (e) {
+                const item = document.createElement('div');
+                item.className = 'conv-item';
+                item.style.color = '#ef4444';
+                item.textContent = files[i].name + ' 转换失败: ' + (e && e.message ? e.message : e);
+                result.appendChild(item);
+            }
         }
         setStatus('转换完成', 'success');
     });

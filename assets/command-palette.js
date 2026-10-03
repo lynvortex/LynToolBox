@@ -95,12 +95,21 @@
             return;
         }
         results.innerHTML = filtered.map(function (t, i) {
-            var url = t.url.indexOf('http') === 0 ? t.url : pathPrefix + t.url;
+            var url = safeToolUrl(t.url);
             return '<a href="' + url + '" class="cmd-item' + (i === 0 ? ' selected' : '') + '">\
-<div class="cmd-item-icon">' + (t.icon || '🔧') + '</div>\
+<div class="cmd-item-icon">' + escapeHtml(t.icon || '🔧') + '</div>\
 <div class="cmd-item-text"><div class="cmd-item-name">' + escapeHtml(t.name) + '</div><div class="cmd-item-desc">' + escapeHtml(t.description || '') + '</div></div>\
 <div class="cmd-item-cat">' + escapeHtml(t.category_slug) + '</div></a>';
         }).join('');
+    }
+
+    // 工具链接：相对路径加前缀；http(s) 原样；其余协议（javascript: 等）一律置空
+    function safeToolUrl(u) {
+        var s = String(u == null ? '' : u).trim();
+        if (!s) return '#';
+        if (/^https?:\/\//i.test(s)) return escapeHtml(s);
+        if (/^[a-z][a-z0-9+.-]*:/i.test(s)) return '#';
+        return escapeHtml(pathPrefix + s);
     }
 
     function show() {

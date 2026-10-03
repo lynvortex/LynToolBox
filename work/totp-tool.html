@@ -189,15 +189,33 @@
     function arrayToWordArray(u8) { let w = [], i; for (i=0;i<u8.length;i+=4) w.push((u8[i]<<24)|(u8[i+1]<<16)|(u8[i+2]<<8)|u8[i+3]); return CryptoJS.lib.WordArray.create(w, u8.length); }
     function wordArrayToArray(wa) { const a = new Uint8Array(wa.sigBytes); for(let i=0;i<wa.words.length;i++){a[i*4]=(wa.words[i]>>>24)&0xff;a[i*4+1]=(wa.words[i]>>>16)&0xff;a[i*4+2]=(wa.words[i]>>>8)&0xff;a[i*4+3]=wa.words[i]&0xff;} return a; }
 
+    let updating = false; // 重入守卫：上一轮未完成时跳过本轮，避免结果交叉
+
     async function updateCodes() {
-        if (activeIdx >= 0 && accounts[activeIdx]) {
-            const code = await generateTOTP(accounts[activeIdx].secret);
-            document.getElementById('totpCode').textContent = code;
+        if (updating) return;
+        updating = true;
+        try {
+            if (activeIdx >= 0 && accounts[activeIdx]) {
+                const code = await generateTOTP(accounts[activeIdx].secret);
+                document.getElementById('totpCode').textContent = code;
+            }
             const remaining = 30 - Math.floor(Date.now() / 1000) % 30;
             document.getElementById('totpCountdown').textContent = remaining + ' 秒后刷新';
             document.getElementById('totpRing').style.strokeDashoffset = 163 * (1 - remaining / 30);
+            await refreshListCodes(remaining);
+        } finally { updating = false; }
+    }
+
+    // 每秒只刷新码值与进度条，不重建列表 DOM（避免悬停/滚动状态丢失）
+    async function refreshListCodes(remaining) {
+        const list = document.getElementById('totpList');
+        const items = list.querySelectorAll('.totp-item');
+        if (items.length !== accounts.length) { await renderList(); return; }
+        for (let i = 0; i < accounts.length; i++) {
+            const code = await generateTOTP(accounts[i].secret);
+            items[i].querySelector('.totp-item-code').textContent = code;
+            items[i].querySelector('.totp-item-bar > div').style.width = (remaining / 30 * 100) + '%';
         }
-        renderList();
     }
 
     async function renderList() {
@@ -239,7 +257,9 @@
         input.onchange = async (e) => {
             const file = e.target.files[0]; if (!file) return;
             const img = new Image();
+            const objUrl = URL.createObjectURL(file);
             img.onload = async () => {
+                URL.revokeObjectURL(objUrl);
                 const canvas = document.createElement('canvas');
                 canvas.width = img.width; canvas.height = img.height;
                 canvas.getContext('2d').drawImage(img, 0, 0);
@@ -255,7 +275,8 @@
                     } else setStatus('二维码中未找到密钥', 'error');
                 } else setStatus('未识别到有效二维码', 'error');
             };
-            img.src = URL.createObjectURL(file);
+            img.onerror = () => URL.revokeObjectURL(objUrl);
+            img.src = objUrl;
         };
         input.click();
     });

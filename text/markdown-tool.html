@@ -537,7 +537,12 @@ function hello() {
     };
 
     // 输入即时渲染
-    document.getElementById('inputText').addEventListener('input', renderMarkdown);
+    // 150ms 防抖：大文档下避免每次按键都全量重渲染
+    let mdDebounce = null;
+    document.getElementById('inputText').addEventListener('input', () => {
+        clearTimeout(mdDebounce);
+        mdDebounce = setTimeout(renderMarkdown, 150);
+    });
     document.getElementById('copyHtmlBtn').addEventListener('click', copyHtml);
     document.getElementById('clearBtn').addEventListener('click', clearAll);
 

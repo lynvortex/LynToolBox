@@ -130,9 +130,23 @@ function run() {
 
     document.getElementById('output').textContent = out;
     document.getElementById('stats').textContent = a + ' B → ' + b + ' B（省 ' + pct + '%）';
-    document.getElementById('previewA').innerHTML = '<div style="width:80px;height:80px;display:flex;align-items:center;justify-content:center;">' + input.replace(/width="\d+"/, 'width="64"').replace(/height="\d+"/', 'height="64"') + '</div>';
-    document.getElementById('previewB').innerHTML = '<div style="width:80px;height:80px;display:flex;align-items:center;justify-content:center;">' + out.replace(/width="\d+"/, 'width="64"').replace(/height="\d+"/', 'height="64"') + '</div>';
+    sandboxPreview(document.getElementById('previewA'), input);
+    sandboxPreview(document.getElementById('previewB'), out);
     setStatus('压缩完成，体积 ' + a + 'B → ' + b + 'B', pct > 0 ? 'success' : 'info');
+}
+
+// 预览统一走不带 allow-scripts 的 iframe 沙箱：SVG 里的脚本/事件处理器无法执行
+function sandboxPreview(el, code) {
+    var svg = /<svg[\s>]/i.test(code.trim()) ? code : '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">' + code + '</svg>';
+    var frame = el.querySelector('iframe');
+    if (!frame) {
+        frame = document.createElement('iframe');
+        frame.setAttribute('sandbox', '');
+        frame.style.cssText = 'border:0;width:64px;height:64px;background:transparent;';
+        el.innerHTML = '';
+        el.appendChild(frame);
+    }
+    frame.srcdoc = svg;
 }
 
 function setStatus(msg, cls) {

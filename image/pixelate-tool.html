@@ -127,7 +127,13 @@ function render() {
 }
 
 ['blockSize', 'levels', 'sat'].forEach(function(id){
-    document.getElementById(id).addEventListener('input', render);
+    // rAF 节流：拖动滑块时每帧最多重算一次，避免全图像素处理阻塞主线程
+    var pending = false;
+    document.getElementById(id).addEventListener('input', function(){
+        if (pending) return;
+        pending = true;
+        requestAnimationFrame(function(){ pending = false; render(); });
+    });
 });
 document.getElementById('dlBtn').onclick = function(){
     outCanvas.toBlob(function(blob){

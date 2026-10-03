@@ -148,14 +148,28 @@ function render() {
         state.habits.forEach(function(h, i) {
             var done = todayDone.indexOf(h) !== -1;
             var s = streak(h), t = totalDays(h);
-            html += '<div style="display:flex;align-items:center;gap:14px;padding:14px 18px;border:1px solid ' + (done ? '#a9dfbf' : '#e2e8f0') + ';border-radius:10px;margin-bottom:10px;background:' + (done ? '#f0faf3' : '#fff') + ';cursor:pointer;" onclick="toggleHabit(\'' + h.replace(/'/g, "\\'") + '\')">' +
+            // 习惯名通过 data-* 属性 + 事件委托传递，不再拼进内联 onclick 的 JS 字符串（防注入）
+            html += '<div data-habit="' + escapeHtml(h) + '" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border:1px solid ' + (done ? '#a9dfbf' : '#e2e8f0') + ';border-radius:10px;margin-bottom:10px;background:' + (done ? '#f0faf3' : '#fff') + ';cursor:pointer;">' +
                 '<div style="width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;background:' + (done ? '#27ae60' : '#cbd5e1') + '">' + (done ? '✓' : i + 1) + '</div>' +
                 '<div style="flex:1;min-width:0;"><div style="font-weight:600;color:#2c3e50;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(h) + '</div>' +
                 '<div style="font-size:0.78em;color:#94a3b8;margin-top:2px;">累计 ' + t + ' 天</div></div>' +
                 '<div style="text-align:right;"><div style="font-size:1.3em;font-weight:700;color:' + (s >= 7 ? '#e67e22' : '#4a90e2') + ';">🔥 ' + s + '</div><div style="font-size:0.72em;color:#94a3b8;">连续天数</div></div>' +
-                '<button class="btn btn-ghost" style="padding:4px 8px;font-size:0.85em;" onclick="event.stopPropagation();delHabit(\'' + h.replace(/'/g, "\\'") + '\')">✕</button></div>';
+                '<button class="btn btn-ghost" data-del="' + escapeHtml(h) + '" style="padding:4px 8px;font-size:0.85em;">✕</button></div>';
         });
         list.innerHTML = html;
+        // 事件委托绑定打卡与删除
+        list.querySelectorAll('[data-habit]').forEach(function(el) {
+            el.addEventListener('click', function(e) {
+                if (e.target.closest('[data-del]')) return; // 删除按钮单独处理
+                window.toggleHabit(el.getAttribute('data-habit'));
+            });
+        });
+        list.querySelectorAll('[data-del]').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                window.delHabit(btn.getAttribute('data-del'));
+            });
+        });
     }
     renderCalendar();
 }

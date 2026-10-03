@@ -189,7 +189,7 @@
         `).join('');
     }
     window.downloadRec = i => { const a=document.createElement('a'); a.href=recordings[i].url; a.download=recordings[i].name+'.webm'; a.click(); };
-    window.deleteRec = i => { recordings.splice(i,1); renderList(); setStatus('已删除', 'info'); };
+    window.deleteRec = i => { URL.revokeObjectURL(recordings[i].url); recordings.splice(i,1); renderList(); setStatus('已删除', 'info'); };
     
     initSidebar('media');
 </script>

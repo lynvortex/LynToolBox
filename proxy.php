@@ -4,9 +4,9 @@
  * 将 API 密钥保存在服务端，前端通过此代理调用第三方 API
  *
  * 安全措施：
- * 1. SSRF 防护 - 拒绝内网地址
+ * 1. 频率限制（flock 加锁，防并发绕过）
  * 2. SSL 证书验证 - 防止中间人攻击
- * 3. 频率限制 - 防止 API 滥用
+ * 3. 同源限制 - 不再开放跨域，防止第三方站点白嫖 API 配额
  */
 
 require_once __DIR__ . '/config.php';
@@ -33,39 +33,20 @@ $paramMap = [
     'portscan' => ['address'],
 ];
 
-// ========== SSRF 防护：检查是否为内网地址 ==========
-function isPrivateAddress($host) {
-    // 移除协议前缀和路径
-    $host = preg_replace('#^(https?://)?#', '', $host);
-    $host = explode('/', $host)[0];
-    $host = explode(':', $host)[0];
-
-    // 检查特殊主机名
-    $blockedHosts = ['localhost', '0.0.0.0', 'metadata.google.internal'];
-    foreach ($blockedHosts as $b) {
-        if (strcasecmp($host, $b) === 0) return true;
-    }
-
-    // 解析 IP 地址
-    $ip = gethostbyname($host);
-    if ($ip === $host) return false; // 无法解析，放行（可能是域名）
-
-    // 检查私有 IP 段
-    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
-        return true; // 是私有或保留地址
-    }
-
-    return false;
-}
-
-// ========== 频率限制 ==========
+// ========== 频率限制（flock 保证并发安全） ==========
 function checkRateLimit() {
     $clientIp = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     $limitFile = sys_get_temp_dir() . '/box_rate_' . md5($clientIp);
 
-    $data = ['count' => 0, 'time' => time()];
-    if (file_exists($limitFile)) {
-        $data = json_decode(file_get_contents($limitFile), true) ?: $data;
+    $fp = @fopen($limitFile, 'c+');
+    if (!$fp) {
+        return; // 限速器自身故障时不阻塞正常业务
+    }
+    flock($fp, LOCK_EX);
+    $raw = stream_get_contents($fp);
+    $data = json_decode($raw, true);
+    if (!is_array($data) || !isset($data['count'], $data['time'])) {
+        $data = ['count' => 0, 'time' => time()];
     }
 
     // 每分钟最多 15 次请求
@@ -75,7 +56,12 @@ function checkRateLimit() {
         $data['count']++;
     }
 
-    file_put_contents($limitFile, json_encode($data));
+    ftruncate($fp, 0);
+    rewind($fp);
+    fwrite($fp, json_encode($data));
+    fflush($fp);
+    flock($fp, LOCK_UN);
+    fclose($fp);
 
     if ($data['count'] > 15) {
         http_response_code(429);
@@ -87,26 +73,25 @@ function checkRateLimit() {
 
 // ========== 处理请求 ==========
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, OPTIONS');
-header('Access-Control-Allow-Headers: *');
 
+// 页面与代理同源部署，无需开放跨域；开放 * 等于把付费 API 配额公开给任意第三方站点
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);
     exit;
 }
 
-// 频率限制检查
-checkRateLimit();
-
 $action = isset($_GET['action']) ? trim($_GET['action']) : '';
 if (!$action || !isset($endpoints[$action])) {
+    checkRateLimit();
     http_response_code(400);
     echo json_encode(['code' => -1, 'msg' => '无效的 action 参数']);
     exit;
 }
 
-// SSRF 防护：检查用户传入的主机参数
+// 频率限制检查（action 合法之后才计数，避免无效请求白白消耗额度）
+checkRateLimit();
+
+// SSRF 防护：检查用户传入的主机参数（防止把内网地址交给第三方探测接口）
 $hostParams = ['host', 'domain', 'url', 'address'];
 foreach ($paramMap[$action] as $key) {
     if (in_array($key, $hostParams) && isset($_GET[$key])) {
@@ -155,10 +140,52 @@ $error = curl_error($ch);
 curl_close($ch);
 
 if ($error) {
+    // 详细错误只写日志，避免向客户端泄露服务器内网信息
+    error_log('[proxy.php] action=' . $action . ' curl error: ' . $error);
     http_response_code(502);
-    echo json_encode(['code' => -1, 'msg' => '代理请求失败: ' . $error]);
+    echo json_encode(['code' => -1, 'msg' => '代理请求失败，请稍后再试']);
     exit;
 }
 
 http_response_code($httpCode);
 echo $response;
+
+// ========== SSRF 防护：检查是否为内网地址 ==========
+function isPrivateAddress($host) {
+    // 移除协议前缀和路径
+    $host = preg_replace('#^(https?://)?#i', '', $host);
+    $host = explode('/', $host)[0];
+    // IPv6 字面量 [::1] → ::1
+    $host = trim($host, '[]');
+
+    if ($host === '') {
+        return true; // 空主机名一律拒绝
+    }
+    // IPv6 字面量（含冒号）直接按 IP 校验
+    if (strpos($host, ':') !== false) {
+        return filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false;
+    }
+
+    // 检查特殊主机名
+    $blockedHosts = ['localhost', '0.0.0.0', 'metadata.google.internal', '169.254.169.254'];
+    foreach ($blockedHosts as $b) {
+        if (strcasecmp($host, $b) === 0) return true;
+    }
+
+    // 主机本身就是 IP 字面量时直接校验（覆盖十六进制/十进制等写法之外的标准形式）
+    if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false
+        && filter_var($host, FILTER_VALIDATE_IP) !== false) {
+        return true;
+    }
+
+    // 解析 IP 地址
+    $ip = gethostbyname($host);
+    if ($ip === $host) return false; // 无法解析（如纯 IPv6 域名），放行交给第三方接口
+
+    // 检查私有 IP 段
+    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+        return true; // 是私有或保留地址
+    }
+
+    return false;
+}
